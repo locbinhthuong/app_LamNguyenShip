@@ -20,20 +20,31 @@ const server = http.createServer(app);
 const corsOptions = {
   origin: (origin, callback) => {
     const allowedOrigins = [
-      process.env.DRIVER_APP_URL || 'http://localhost:5173',
-      process.env.ADMIN_APP_URL || 'http://localhost:5174',
+      process.env.DRIVER_APP_URL,
+      process.env.ADMIN_APP_URL,
+      process.env.CLIENT_URL,
       'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:5175',
       'http://localhost:5176',
       'http://localhost:5177',
-    ];
-    // Dev mode: allow any localhost port
-    if (!origin || origin.includes('localhost')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    ].filter(Boolean);
+
+    if (!origin) {
+      return callback(null, true);
     }
+    if (allowedOrigins.includes(origin) || origin.includes('localhost')) {
+      return callback(null, true);
+    }
+    try {
+      const host = new URL(origin).hostname;
+      if (host.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 };
