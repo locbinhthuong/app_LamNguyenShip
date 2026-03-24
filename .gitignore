@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment files (contain secrets)
+.env
+.env.*
+!.env.development
+!.env.production
+!.env.example
+
+# Build outputs
+build/
+dist/
+*.tsbuildinfo
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Runtime data
+pids/
+*.pid
+*.seed
+
+# Coverage
+coverage/
+*.lcov
+
+# Backend
+backend/uploads/
+backend/data/
+*.sqlite
+*.db
+
+# Android / iOS build
+*.apk
+*.ipa
