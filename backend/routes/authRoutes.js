@@ -25,6 +25,9 @@ router.get('/driver/me', verifyToken, onlyDriver, authController.getDriverProfil
 // PUT /api/auth/driver/status
 router.put('/driver/status', verifyToken, onlyDriver, authController.updateDriverStatus);
 
+// POST /api/auth/zalo/login
+router.post('/zalo/login', authController.zaloLogin);
+
 // ==================== ADMIN AUTH ====================
 
 // POST /api/auth/admin/login

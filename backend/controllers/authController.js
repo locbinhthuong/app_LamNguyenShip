@@ -1,7 +1,52 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const axios = require('axios');
 const Driver = require('../models/Driver');
 const Admin = require('../models/Admin');
+
+// Helper: Lấy thông tin user từ Zalo OAuth code
+const exchangeZaloCode = async (code) => {
+  try {
+    const ZALO_APP_ID = process.env.ZALO_APP_ID;
+    const ZALO_APP_SECRET = process.env.ZALO_APP_SECRET;
+
+    if (!ZALO_APP_ID || !ZALO_APP_SECRET) {
+      throw new Error('Thiếu cấu hình ZALO_APP_ID hoặc ZALO_APP_SECRET');
+    }
+
+    // Exchange code lấy access token
+    const tokenRes = await axios.post(
+      'https://oauth.zaloapp.com/v4/oauth/token',
+      new URLSearchParams({
+        app_id: ZALO_APP_ID,
+        app_secret: ZALO_APP_SECRET,
+        code,
+        grant_type: 'authorization_code'
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    const { access_token } = tokenRes.data;
+
+    if (!access_token) {
+      throw new Error('Không lấy được access_token từ Zalo');
+    }
+
+    // Lấy thông tin user từ access token
+    const userRes = await axios.get('https://graph.zalo.me/v2/me', {
+      params: { access_token, fields: 'id,name,picture' }
+    });
+
+    return {
+      zaloId: String(userRes.data.id),
+      name: userRes.data.name,
+      avatar: userRes.data.picture?.data?.url || null
+    };
+  } catch (error) {
+    console.error('Zalo exchange error:', error.response?.data || error.message);
+    throw new Error('Không lấy được thông tin từ Zalo');
+  }
+};
 
 const authController = {
   // ==================== DRIVER ====================
@@ -193,6 +238,84 @@ const authController = {
       res.status(500).json({
         success: false,
         message: 'Lỗi server'
+      });
+    }
+  },
+
+  // ==================== ZALO LOGIN ====================
+
+  // POST /api/auth/zalo/login - Đăng nhập / đăng ký bằng Zalo
+  zaloLogin: async (req, res) => {
+    try {
+      const { authCode } = req.body;
+
+      if (!authCode) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mã xác thực Zalo là bắt buộc'
+        });
+      }
+
+      // Lấy thông tin user từ Zalo
+      const zaloUser = await exchangeZaloCode(authCode);
+      const { zaloId, name, avatar } = zaloUser;
+
+      // Tìm driver theo zaloId
+      let driver = await Driver.findOne({ zaloId });
+      let isNewUser = false;
+
+      if (!driver) {
+        // Tạo tài khoản mới nếu chưa có
+        isNewUser = true;
+        driver = new Driver({
+          name: name || 'Tài Xế Zalo',
+          phone: zaloId, // tạm dùng zaloId làm phone
+          password: await bcrypt.hash(zaloId, 10), // mật khẩu ngẫu nhiên
+          zaloId,
+          avatar: avatar || null,
+          status: 'active'
+        });
+        await driver.save();
+      }
+
+      // Cập nhật lastActive
+      driver.lastActive = new Date();
+      await driver.save();
+
+      // Generate token
+      const token = jwt.sign(
+        { id: driver._id, role: 'driver', phone: driver.phone },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: isNewUser ? 'Đăng ký tài xế thành công' : 'Đăng nhập thành công',
+        data: {
+          token,
+          driver: {
+            id: driver._id,
+            name: driver.name,
+            phone: driver.phone,
+            avatar: driver.avatar,
+            vehicleType: driver.vehicleType,
+            licensePlate: driver.licensePlate,
+            status: driver.status,
+            driverCode: driver.driverCode,
+            stats: driver.stats,
+            isOnline: driver.isOnline,
+            completionRate: driver.completionRate,
+            isNewUser
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error zaloLogin:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi đăng nhập Zalo',
+        error: error.message
       });
     }
   },

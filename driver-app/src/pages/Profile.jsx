@@ -5,9 +5,9 @@ export default function Profile() {
   const { driver, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-900 pb-24 sm:pb-28">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 pt-12 text-center">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-6 pt-[max(3rem,env(safe-area-inset-top))] text-center">
         <div className="w-20 h-20 bg-white/20 rounded-full mx-auto flex items-center justify-center mb-3">
           <span className="text-4xl">👤</span>
         </div>
@@ -20,25 +20,25 @@ export default function Profile() {
       </div>
 
       {/* Stats */}
-      <div className="p-4">
-        <div className="grid grid-cols-3 gap-3">
-          <div className="bg-slate-800 rounded-2xl p-4 text-center border border-slate-700">
-            <p className="text-2xl font-bold text-green-400">{driver?.stats?.completedOrders || 0}</p>
-            <p className="text-slate-400 text-xs mt-1">Hoàn thành</p>
+      <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-2xl border border-slate-700 bg-slate-800 p-3 text-center sm:p-4">
+            <p className="text-lg font-bold text-green-400 sm:text-2xl">{driver?.stats?.completedOrders || 0}</p>
+            <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">Hoàn thành</p>
           </div>
-          <div className="bg-slate-800 rounded-2xl p-4 text-center border border-slate-700">
-            <p className="text-2xl font-bold text-yellow-400">{driver?.stats?.rating || 0}⭐</p>
-            <p className="text-slate-400 text-xs mt-1">Đánh giá</p>
+          <div className="rounded-2xl border border-slate-700 bg-slate-800 p-3 text-center sm:p-4">
+            <p className="text-lg font-bold text-yellow-400 sm:text-2xl">{driver?.stats?.rating || 0}⭐</p>
+            <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">Đánh giá</p>
           </div>
-          <div className="bg-slate-800 rounded-2xl p-4 text-center border border-slate-700">
-            <p className="text-2xl font-bold text-blue-400">{driver?.completionRate || 0}%</p>
-            <p className="text-slate-400 text-xs mt-1">Tỷ lệ</p>
+          <div className="rounded-2xl border border-slate-700 bg-slate-800 p-3 text-center sm:p-4">
+            <p className="text-lg font-bold text-blue-400 sm:text-2xl">{driver?.completionRate || 0}%</p>
+            <p className="mt-1 text-[10px] text-slate-400 sm:text-xs">Tỷ lệ</p>
           </div>
         </div>
       </div>
 
       {/* Menu */}
-      <div className="p-4 space-y-3">
+      <div className="mx-auto max-w-lg space-y-3 p-4 sm:max-w-xl">
         <div className="bg-slate-800 rounded-2xl overflow-hidden border border-slate-700">
           <div className="p-4 flex justify-between items-center border-b border-slate-700">
             <span className="text-white">Mã tài xế</span>
@@ -67,8 +67,8 @@ export default function Profile() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 max-w-[430px] mx-auto">
-        <div className="flex justify-around py-3">
+      <div className="bottom-nav-safe">
+        <div className="mx-auto flex max-w-xl justify-around py-3">
           <Link to="/" className="flex flex-col items-center text-slate-400">
             <span className="text-xl">🏠</span>
             <span className="text-xs mt-1">Trang chủ</span>

@@ -54,9 +54,9 @@ export default function MyOrders() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-900 pb-24 sm:pb-28">
       {/* Header */}
-      <div className="bg-slate-800 p-4 pt-10">
+      <div className="bg-slate-800 p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="flex items-center gap-3 mb-4">
           <Link to="/" className="text-white text-xl">←</Link>
           <h1 className="text-lg font-bold text-white">Đơn của tôi</h1>
@@ -84,7 +84,7 @@ export default function MyOrders() {
       </div>
 
       {/* List */}
-      <div className="p-4">
+      <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -118,8 +118,8 @@ export default function MyOrders() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 max-w-[430px] mx-auto">
-        <div className="flex justify-around py-3">
+      <div className="bottom-nav-safe">
+        <div className="mx-auto flex max-w-xl justify-around py-3">
           <Link to="/" className="flex flex-col items-center text-slate-400">
             <span className="text-xl">🏠</span>
             <span className="text-xs mt-1">Trang chủ</span>

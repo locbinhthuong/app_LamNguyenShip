@@ -44,30 +44,53 @@ export default function CreateDriver() {
   };
 
   return (
-    <div className="p-6 max-w-xl">
-      <h1 className="text-2xl font-bold text-white mb-6">👤 Thêm Tài Xế Mới</h1>
+    <div className="mx-auto max-w-xl p-4 pb-8 sm:p-6">
+      <h1 className="mb-5 text-lg font-bold text-white sm:mb-6 sm:text-2xl">👤 Thêm Tài Xế Mới</h1>
 
-      <div className="card">
-        {error && <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-xl mb-4">{error}</div>}
+      <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 sm:p-6">
+        {error && (
+          <div className="mb-4 rounded-xl border border-red-500/50 bg-red-500/20 px-4 py-3 text-sm text-red-300">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">Họ tên *</label>
-            <input name="name" value={form.name} onChange={handleChange} placeholder="Trần Văn Tài" className="input-field" />
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">Họ tên <span className="text-red-400">*</span></label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Trần Văn Tài"
+              className="input-field"
+            />
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">Số điện thoại *</label>
-            <input name="phone" value={form.phone} onChange={handleChange} placeholder="0911111111" className="input-field" />
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">Số điện thoại <span className="text-red-400">*</span></label>
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="0911111111"
+              className="input-field"
+            />
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">Mật khẩu *</label>
-            <input name="password" value={form.password} onChange={handleChange} type="password" placeholder="Ít nhất 6 ký tự" className="input-field" />
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">Mật khẩu <span className="text-red-400">*</span></label>
+            <input
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              type="password"
+              placeholder="Ít nhất 6 ký tự"
+              className="input-field"
+            />
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">Loại xe</label>
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">Loại xe</label>
             <select name="vehicleType" value={form.vehicleType} onChange={handleChange} className="input-field">
               <option value="motorcycle">🏍️ Xe máy</option>
               <option value="car">🚗 Ô tô</option>
@@ -76,15 +99,36 @@ export default function CreateDriver() {
           </div>
 
           <div>
-            <label className="block text-gray-300 text-sm font-medium mb-2">Biển số xe</label>
-            <input name="licensePlate" value={form.licensePlate} onChange={handleChange} placeholder="59P1-12345" className="input-field" />
+            <label className="mb-1.5 block text-sm font-medium text-gray-300">Biển số xe</label>
+            <input
+              name="licensePlate"
+              value={form.licensePlate}
+              onChange={handleChange}
+              placeholder="59P1-12345"
+              className="input-field"
+            />
           </div>
 
-          <div className="flex gap-3 pt-4">
-            <button type="submit" disabled={loading} className="btn-primary flex-1">
-              {loading ? 'Đang thêm...' : '✅ Thêm tài xế'}
+          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => navigate('/drivers')}
+              className="btn-secondary w-full px-6 sm:w-auto"
+            >
+              ← Hủy
             </button>
-            <button type="button" onClick={() => navigate('/drivers')} className="btn-secondary px-6">Hủy</button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Đang thêm...
+                </>
+              ) : '✅ Thêm tài xế'}
+            </button>
           </div>
         </form>
       </div>

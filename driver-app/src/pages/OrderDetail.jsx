@@ -87,7 +87,7 @@ export default function OrderDetail() {
   if (!order) return null;
 
   return (
-    <div className="min-h-screen bg-slate-900 pb-32">
+    <div className="min-h-screen bg-slate-900 pb-36 sm:pb-40">
       {showToast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
           showToast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
@@ -97,14 +97,16 @@ export default function OrderDetail() {
       )}
 
       {/* Header */}
-      <div className="bg-slate-800 p-4 pt-8">
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate(-1)} className="text-white text-xl">←</button>
-          <div>
-            <h1 className="text-lg font-bold text-white">Chi tiết đơn hàng</h1>
-            <p className="text-slate-400 text-sm">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
+      <div className="bg-slate-800 p-4 pt-[max(2rem,env(safe-area-inset-top))]">
+        <div className="mb-4 flex flex-wrap items-start gap-3">
+          <button type="button" onClick={() => navigate(-1)} className="shrink-0 text-xl text-white">
+            ←
+          </button>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-base font-bold text-white sm:text-lg">Chi tiết đơn hàng</h1>
+            <p className="truncate text-sm text-slate-400">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
           </div>
-          <span className="ml-auto bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+          <span className="shrink-0 rounded-full bg-blue-500 px-2 py-1 text-xs font-bold text-white sm:px-3 sm:text-sm">
             {STATUS_LABELS[order.status] || order.status}
           </span>
         </div>
@@ -119,7 +121,7 @@ export default function OrderDetail() {
         )}
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="mx-auto max-w-lg space-y-4 p-4 sm:max-w-xl">
         {/* Addresses */}
         <div className="card">
           <div className="flex items-start gap-3 mb-4">
@@ -142,12 +144,15 @@ export default function OrderDetail() {
         {/* Customer */}
         <div className="card">
           <p className="text-xs text-slate-400 mb-2">THÔNG TIN KHÁCH HÀNG</p>
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-white font-medium">{order.customerName}</p>
-              <p className="text-slate-400 text-sm">{order.customerPhone}</p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="font-medium text-white">{order.customerName}</p>
+              <p className="text-sm text-slate-400">{order.customerPhone}</p>
             </div>
-            <a href={`tel:${order.customerPhone}`} className="bg-green-500 text-white px-4 py-2 rounded-full font-bold text-sm">
+            <a
+              href={`tel:${order.customerPhone}`}
+              className="shrink-0 rounded-full bg-green-500 px-4 py-2 text-center text-sm font-bold text-white"
+            >
               📞 Gọi
             </a>
           </div>
@@ -169,7 +174,7 @@ export default function OrderDetail() {
               <p className="text-yellow-300 text-sm">📝 {order.note}</p>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="bg-slate-700 rounded-xl p-3">
               <p className="text-slate-400 text-xs">Phí giao hàng</p>
               <p className="text-green-400 font-bold text-lg">{order.deliveryFee?.toLocaleString()}đ</p>
@@ -217,13 +222,15 @@ export default function OrderDetail() {
       </div>
 
       {/* Bottom Action */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-800 p-4 border-t border-slate-700 max-w-[430px] mx-auto">
-        {getActionButton()}
-        {order.status === 'ACCEPTED' || order.status === 'PICKED_UP' || order.status === 'DELIVERING' ? (
-          <button onClick={() => handleAction('cancel')} disabled={actionLoading} className="btn-danger mt-2">
-            Hủy đơn
-          </button>
-        ) : null}
+      <div className="bottom-nav-safe p-4">
+        <div className="mx-auto max-w-xl space-y-2">
+          {getActionButton()}
+          {order.status === 'ACCEPTED' || order.status === 'PICKED_UP' || order.status === 'DELIVERING' ? (
+            <button type="button" onClick={() => handleAction('cancel')} disabled={actionLoading} className="btn-danger mt-2">
+              Hủy đơn
+            </button>
+          ) : null}
+        </div>
       </div>
     </div>
   );

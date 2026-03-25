@@ -46,9 +46,9 @@ function OrderCard({ order, onAccept, loading }) {
         </div>
       </div>
 
-      <div className="flex justify-between items-center text-sm text-slate-400 mb-3">
-        <span>👤 {order.customerName}</span>
-        <span>📞 {order.customerPhone}</span>
+      <div className="mb-3 flex flex-col gap-1 text-sm text-slate-400 sm:flex-row sm:justify-between">
+        <span className="truncate">👤 {order.customerName}</span>
+        <span className="shrink-0">📞 {order.customerPhone}</span>
       </div>
 
       {order.note && (
@@ -207,7 +207,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 pb-20">
+    <div className="min-h-screen bg-slate-900 pb-24 sm:pb-28">
       {/* Toast */}
       {showToast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
@@ -218,59 +218,73 @@ export default function Home() {
       )}
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 pt-10">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">🚚 LamNguyenShip</h1>
-            <p className="text-blue-200 text-sm">{driver?.name || 'Tài xế'}</p>
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-lg font-bold sm:text-xl">🚚 LamNguyenShip</h1>
+            <p className="truncate text-sm text-blue-200">{driver?.name || 'Tài xế'}</p>
           </div>
-          <div className="flex gap-2">
-            <button onClick={toggleOnline} className={`px-4 py-2 rounded-full font-bold text-sm transition-all ${
-              driver?.isOnline ? 'bg-green-500 text-white' : 'bg-slate-600 text-slate-300'
-            }`}>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              onClick={toggleOnline}
+              className={`rounded-full px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:text-sm ${
+                driver?.isOnline ? 'bg-green-500 text-white' : 'bg-slate-600 text-slate-300'
+              }`}
+            >
               {driver?.isOnline ? '🟢 Online' : '⚫ Offline'}
             </button>
-            <button onClick={handleLogout} className="bg-white/20 px-3 py-2 rounded-full text-white">🚪</button>
+            <button type="button" onClick={handleLogout} className="rounded-full bg-white/20 px-3 py-2 text-white">
+              🚪
+            </button>
           </div>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-2 mt-4">
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold">{driver?.stats?.completedOrders || 0}</p>
-            <p className="text-xs opacity-80">Hoàn thành</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-xl bg-white/20 p-2 text-center sm:p-3">
+            <p className="text-xl font-bold sm:text-2xl">{driver?.stats?.completedOrders || 0}</p>
+            <p className="text-[10px] opacity-80 sm:text-xs">Hoàn thành</p>
           </div>
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold">{driver?.stats?.rating || 0}⭐</p>
-            <p className="text-xs opacity-80">Đánh giá</p>
+          <div className="rounded-xl bg-white/20 p-2 text-center sm:p-3">
+            <p className="text-xl font-bold sm:text-2xl">{driver?.stats?.rating || 0}⭐</p>
+            <p className="text-[10px] opacity-80 sm:text-xs">Đánh giá</p>
           </div>
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold">{availableOrders.length}</p>
-            <p className="text-xs opacity-80">Chờ nhận</p>
+          <div className="rounded-xl bg-white/20 p-2 text-center sm:p-3">
+            <p className="text-xl font-bold sm:text-2xl">{availableOrders.length}</p>
+            <p className="text-[10px] opacity-80 sm:text-xs">Chờ nhận</p>
           </div>
-          <div className="bg-white/20 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold">{myActiveOrders.length}</p>
-            <p className="text-xs opacity-80">Đang giao</p>
+          <div className="rounded-xl bg-white/20 p-2 text-center sm:p-3">
+            <p className="text-xl font-bold sm:text-2xl">{myActiveOrders.length}</p>
+            <p className="text-[10px] opacity-80 sm:text-xs">Đang giao</p>
           </div>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-slate-800 sticky top-0 z-10">
-        <button onClick={() => setFilter('available')} className={`flex-1 py-3 text-sm font-bold transition-all ${
-          filter === 'available' ? 'text-blue-400 border-b-2 border-blue-400 bg-slate-700' : 'text-slate-400'
-        }`}>
+      <div className="sticky top-0 z-10 flex bg-slate-800">
+        <button
+          type="button"
+          onClick={() => setFilter('available')}
+          className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
+            filter === 'available' ? 'border-b-2 border-blue-400 bg-slate-700 text-blue-400' : 'text-slate-400'
+          }`}
+        >
           📥 Chờ nhận ({availableOrders.length})
         </button>
-        <button onClick={() => setFilter('active')} className={`flex-1 py-3 text-sm font-bold transition-all ${
-          filter === 'active' ? 'text-blue-400 border-b-2 border-blue-400 bg-slate-700' : 'text-slate-400'
-        }`}>
+        <button
+          type="button"
+          onClick={() => setFilter('active')}
+          className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
+            filter === 'active' ? 'border-b-2 border-blue-400 bg-slate-700 text-blue-400' : 'text-slate-400'
+          }`}
+        >
           🚚 Đang giao ({myActiveOrders.length})
         </button>
       </div>
 
       {/* Content */}
-      <div className="p-4">
+      <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -307,8 +321,8 @@ export default function Home() {
       </div>
 
       {/* Bottom Nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-800 border-t border-slate-700 max-w-[430px] mx-auto">
-        <div className="flex justify-around py-3">
+      <div className="bottom-nav-safe">
+        <div className="mx-auto flex max-w-xl justify-around py-3">
           <Link to="/" className="flex flex-col items-center text-blue-400">
             <span className="text-xl">🏠</span>
             <span className="text-xs mt-1">Trang chủ</span>
