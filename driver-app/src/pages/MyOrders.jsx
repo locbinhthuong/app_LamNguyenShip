@@ -43,7 +43,9 @@ export default function MyOrders() {
 
   const filteredOrders = filter === 'all'
     ? orders
-    : orders.filter(o => o.status === filter);
+    : filter === 'DELIVERING'
+      ? orders.filter(o => ['PICKED_UP', 'DELIVERING', 'ACCEPTED'].includes(o.status))
+      : orders.filter(o => o.status === filter);
 
   const counts = {
     all: orders.length,
@@ -66,8 +68,8 @@ export default function MyOrders() {
         <div className="flex gap-2 overflow-x-auto pb-2">
           {[
             { key: 'all', label: 'Tất cả' },
-            { key: 'ACCEPTED', label: 'Đang giao' },
-            { key: 'DELIVERING', label: 'Hoàn thành' },
+            { key: 'DELIVERING', label: 'Đang giao' },
+            { key: 'COMPLETED', label: 'Hoàn thành' },
             { key: 'CANCELLED', label: 'Đã hủy' }
           ].map(tab => (
             <button
@@ -127,6 +129,10 @@ export default function MyOrders() {
           <Link to="/my-orders" className="flex flex-col items-center text-blue-400">
             <span className="text-xl">📋</span>
             <span className="text-xs mt-1">Đơn của tôi</span>
+          </Link>
+          <Link to="/earnings" className="flex flex-col items-center text-slate-400">
+            <span className="text-xl">💰</span>
+            <span className="text-xs mt-1">Thu nhập</span>
           </Link>
           <Link to="/profile" className="flex flex-col items-center text-slate-400">
             <span className="text-xl">👤</span>

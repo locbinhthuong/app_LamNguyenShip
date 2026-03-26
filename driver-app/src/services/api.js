@@ -91,4 +91,10 @@ export const cancelOrder = async (id, reason) => {
   return response.data;
 };
 
+// ==================== REVENUE ====================
+export const getDriverRevenue = async () => {
+  const response = await api.get('/api/revenue/driver/me');
+  return response.data;
+};
+
 export default api;

@@ -32,8 +32,10 @@ export default function Layout() {
     { to: '/',         end: true,  icon: '📊', label: 'Dashboard' },
     { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
     { to: '/orders/create',        icon: '➕', label: 'Tạo đơn hàng' },
-    { to: '/drivers',               icon: '🚗', label: 'Tài xế' },
-    { to: '/drivers/create',        icon: '👤', label: 'Thêm tài xế' },
+    { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
+    { to: '/revenue',              icon: '💰', label: 'Doanh thu' },
+    { to: '/drivers',              icon: '🚗', label: 'Tài xế' },
+    { to: '/drivers/create',       icon: '👤', label: 'Thêm tài xế' },
   ];
 
   return (

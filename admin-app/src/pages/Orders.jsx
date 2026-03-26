@@ -12,11 +12,11 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  PENDING: 'Chờ nhận',
+  PENDING: 'Đang xử lí',
   ACCEPTED: 'Đã nhận',
   PICKED_UP: 'Đã lấy',
   DELIVERING: 'Đang giao',
-  COMPLETED: 'Hoàn thành',
+  COMPLETED: 'Hoàn tất',
   CANCELLED: 'Đã hủy'
 };
 
@@ -24,12 +24,22 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [tabCounts, setTabCounts] = useState({});
+
+  const tabs = [
+    { key: '', label: 'Tất cả' },
+    { key: 'PENDING', label: 'Đang xử lí', color: 'yellow' },
+    { key: 'ACCEPTED', label: 'Đã có tài xế nhận', color: 'blue' },
+    { key: 'PICKED_UP,DELIVERING', label: 'Đang giao', color: 'orange' },
+    { key: 'COMPLETED', label: 'Đã hoàn tất', color: 'green' },
+    { key: 'CANCELLED', label: 'Đã hủy', color: 'red' },
+  ];
 
   const load = useCallback(async () => {
     try {
       const params = filter ? { status: filter } : {};
-      const response = await getOrders(params);
-      setOrders(response.data || []);
+      const { orders: list } = await getOrders(params);
+      setOrders(list);
     } catch (err) {
       console.error(err);
     } finally {
@@ -37,7 +47,12 @@ export default function Orders() {
     }
   }, [filter]);
 
-  useEffect(() => { load(); const interval = setInterval(load, 10000); return () => clearInterval(interval); }, [load]);
+  useEffect(() => {
+    setLoading(true);
+    load();
+    const interval = setInterval(load, 10000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   const handleDelete = async (id) => {
     if (!confirm('Xóa đơn hàng này?')) return;
@@ -49,13 +64,13 @@ export default function Orders() {
     }
   };
 
-  const tabs = [
-    { key: '', label: 'Tất cả' },
-    { key: 'PENDING', label: 'Chờ nhận' },
-    { key: 'ACCEPTED', label: 'Đã nhận' },
-    { key: 'COMPLETED', label: 'Hoàn thành' },
-    { key: 'CANCELLED', label: 'Đã hủy' }
-  ];
+  const tabColorMap = {
+    yellow: 'text-yellow-400',
+    blue: 'text-blue-400',
+    orange: 'text-orange-400',
+    green: 'text-green-400',
+    red: 'text-red-400',
+  };
 
   return (
     <div className="p-4 pb-8 sm:p-6">
@@ -66,21 +81,33 @@ export default function Orders() {
         </Link>
       </div>
 
+      {/* Header + Tabs */}
+      <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-lg font-bold text-white sm:text-2xl">📦 Quản lý Đơn hàng</h1>
+        <Link to="/orders/create" className="btn-primary shrink-0 text-center text-sm sm:w-auto sm:px-6 sm:text-base">
+          + Tạo đơn
+        </Link>
+      </div>
+
       {/* Tabs */}
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
-        {tabs.map(tab => (
-          <button
-            key={tab.key}
-            onClick={() => setFilter(tab.key)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all sm:px-4 sm:py-2 sm:text-sm ${
-              filter === tab.key
-                ? 'bg-orange-500 text-white'
-                : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+        {tabs.map(tab => {
+          const isActive = filter === tab.key;
+          const colorClass = tab.color ? tabColorMap[tab.color] : 'text-gray-300';
+          return (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition-all sm:px-4 sm:py-2 sm:text-sm ${
+                isActive
+                  ? 'bg-orange-500 text-white'
+                  : `bg-gray-800 ${colorClass} hover:bg-gray-700`
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}

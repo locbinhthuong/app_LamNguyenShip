@@ -1,6 +1,8 @@
 const Order = require('../models/Order');
 const Driver = require('../models/Driver');
 const { validationResult } = require('express-validator');
+const { emitNewOrder, emitOrderAccepted, emitOrderPickedUp, emitOrderDelivering, emitOrderCompleted, emitOrderCancelled } = require('../sockets/index');
+const { startOfTodayVietnam } = require('../utils/todayVietnam');
 
 const orderController = {
   // GET /api/orders - Lấy danh sách đơn hàng
@@ -11,7 +13,8 @@ const orderController = {
       let query = {};
 
       if (status) {
-        query.status = status.toUpperCase();
+        const statuses = status.split(',').map(s => s.trim().toUpperCase());
+        query.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
       }
 
       if (driverId) {
@@ -163,9 +166,12 @@ const orderController = {
 
       await order.save();
 
-      // Emit socket
+      // Emit socket — plain object để createdAt luôn có trong JSON (Mongoose doc đôi khi serialize lệch)
       if (req.io) {
-        req.io.emit('new_order', order);
+        const payload = typeof order.toObject === 'function'
+          ? order.toObject({ virtuals: true })
+          : order;
+        emitNewOrder(req.io, payload);
       }
 
       console.log(`[Order] Created: ${order._id} by ${req.admin.name}`);
@@ -214,8 +220,7 @@ const orderController = {
 
       // Emit socket
       if (req.io) {
-        req.io.emit('order_accepted', order);
-        req.io.to(`driver_${req.driver._id}`).emit('order_accepted', order);
+        emitOrderAccepted(req.io, order);
       }
 
       console.log(`[Order] Accepted: ${order._id} by ${req.driver.name}`);
@@ -256,7 +261,7 @@ const orderController = {
       }
 
       if (req.io) {
-        req.io.emit('order_picked_up', order);
+        emitOrderPickedUp(req.io, order);
       }
 
       res.status(200).json({
@@ -294,7 +299,7 @@ const orderController = {
       }
 
       if (req.io) {
-        req.io.emit('order_delivering', order);
+        emitOrderDelivering(req.io, order);
       }
 
       res.status(200).json({
@@ -356,7 +361,7 @@ const orderController = {
       }
 
       if (req.io) {
-        req.io.emit('order_completed', order);
+        emitOrderCompleted(req.io, order);
       }
 
       console.log(`[Order] Completed: ${order._id}`);
@@ -418,7 +423,7 @@ const orderController = {
       }
 
       if (req.io) {
-        req.io.emit('order_cancelled', order);
+        emitOrderCancelled(req.io, order);
       }
 
       res.status(200).json({
@@ -465,6 +470,28 @@ const orderController = {
   // GET /api/orders/stats/dashboard - Thống kê dashboard (Admin)
   getDashboardStats: async (req, res) => {
     try {
+      // Đầu ngày theo giờ Việt Nam (Render chạy UTC — setHours(0) local sẽ lệch 7h)
+      const startOfToday = startOfTodayVietnam();
+
+      // Đơn hoàn thành / doanh thu "trong ngày" = theo thời điểm giao (deliveredAt), không phải ngày tạo đơn
+      const completedTodayMatch = {
+        status: 'COMPLETED',
+        $or: [
+          { deliveredAt: { $gte: startOfToday } },
+          { deliveredAt: null, updatedAt: { $gte: startOfToday } },
+        ],
+      };
+      const cancelledTodayMatch = {
+        status: 'CANCELLED',
+        $or: [
+          { cancelledAt: { $gte: startOfToday } },
+          { cancelledAt: null, updatedAt: { $gte: startOfToday } },
+        ],
+      };
+
+      // Đơn tạo "hôm nay" VN: sử dụng $gte bình thường vì timestamps: true tự động sinh Date obj
+      const todayCreatedQuery = Order.countDocuments({ createdAt: { $gte: startOfToday } });
+
       const [
         totalOrders,
         pendingOrders,
@@ -472,7 +499,12 @@ const orderController = {
         completedOrders,
         cancelledOrders,
         totalDrivers,
-        activeDrivers
+        activeDrivers,
+        // Trong ngày VN
+        todayCreated,
+        todayCompleted,
+        todayCancelled,
+        todayRevenue,
       ] = await Promise.all([
         Order.countDocuments(),
         Order.countDocuments({ status: 'PENDING' }),
@@ -480,8 +512,17 @@ const orderController = {
         Order.countDocuments({ status: 'COMPLETED' }),
         Order.countDocuments({ status: 'CANCELLED' }),
         Driver.countDocuments(),
-        Driver.countDocuments({ isOnline: true })
+        Driver.countDocuments({ isOnline: true }),
+        todayCreatedQuery,
+        Order.countDocuments(completedTodayMatch),
+        Order.countDocuments(cancelledTodayMatch),
+        Order.aggregate([
+          { $match: completedTodayMatch },
+          { $group: { _id: null, total: { $sum: '$codAmount' } } },
+        ]),
       ]);
+
+      const revenueToday = todayRevenue[0]?.total || 0;
 
       // Top drivers
       const topDrivers = await Driver.find()
@@ -506,6 +547,12 @@ const orderController = {
             active: activeOrders,
             completed: completedOrders,
             cancelled: cancelledOrders
+          },
+          today: {
+            total: todayCreated,
+            completed: todayCompleted,
+            cancelled: todayCancelled,
+            revenue: revenueToday,
           },
           drivers: {
             total: totalDrivers,

@@ -331,6 +331,10 @@ export default function Home() {
             <span className="text-xl">📋</span>
             <span className="text-xs mt-1">Đơn của tôi</span>
           </Link>
+          <Link to="/earnings" className="flex flex-col items-center text-slate-400">
+            <span className="text-xl">💰</span>
+            <span className="text-xs mt-1">Thu nhập</span>
+          </Link>
           <Link to="/profile" className="flex flex-col items-center text-slate-400">
             <span className="text-xl">👤</span>
             <span className="text-xs mt-1">Cá nhân</span>

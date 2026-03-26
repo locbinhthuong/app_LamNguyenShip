@@ -5,7 +5,19 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5174,
-    host: true
+    host: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      // Socket.IO không đi qua /api — cần proxy WebSocket để Dashboard (API_BASE_URL rỗng) nối đúng backend
+      '/socket.io': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
   },
   build: {
     outDir: 'dist',

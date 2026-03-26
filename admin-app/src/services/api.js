@@ -1,9 +1,24 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+/**
+ * Khi build production mà CI không có VITE_API_URL, không được fallback về localhost
+ * (trình duyệt sẽ gọi máy người dùng → Axios báo "Network Error").
+ */
+const DEFAULT_PRODUCTION_API = 'https://app-lamnguyenship.onrender.com';
+
+function resolveApiBaseUrl() {
+  const raw = import.meta.env.VITE_API_URL;
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  if (trimmed !== '') return trimmed;
+  if (import.meta.env.PROD) return DEFAULT_PRODUCTION_API;
+  return '';
+}
+
+/** Base URL API (dev có thể '' để dùng proxy Vite → /api) */
+export const API_BASE_URL = resolveApiBaseUrl();
 
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 60000,
 });
@@ -41,14 +56,21 @@ export const getAdminProfile = async () => {
 };
 
 // ==================== ORDERS ====================
+/** Trả về { orders, pagination } — cùng kiểu unwrap như getDashboardStats, tránh nhầm cấp .data */
 export const getOrders = async (params) => {
   const response = await api.get('/api/orders', { params });
-  return response.data;
+  const body = response.data;
+  if (body?.success && Array.isArray(body.data)) {
+    return { orders: body.data, pagination: body.pagination || {} };
+  }
+  throw new Error(body?.message || 'Không tải danh sách đơn');
 };
 
 export const getDashboardStats = async () => {
   const response = await api.get('/api/orders/stats/dashboard');
-  return response.data;
+  const body = response.data;
+  if (body?.success && body?.data != null) return body.data;
+  throw new Error(body?.message || 'Không tải được thống kê');
 };
 
 export const createOrder = async (data) => {
@@ -89,6 +111,12 @@ export const resetDriverPassword = async (id, newPassword) => {
 
 export const deleteDriver = async (id) => {
   const response = await api.delete(`/api/drivers/${id}`);
+  return response.data;
+};
+
+// ==================== REVENUE ====================
+export const getRevenueStats = async () => {
+  const response = await api.get('/api/revenue/stats');
   return response.data;
 };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE_URL } from '../services/api';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -20,7 +21,11 @@ export default function Login() {
       await login(phone, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Đăng nhập thất bại');
+      const msg = err.response?.data?.message || err.message || 'Đăng nhập thất bại';
+      const isNetwork = err.code === 'ERR_NETWORK' || msg === 'Network Error';
+      setError(isNetwork
+        ? 'Không kết nối được máy chủ. Kiểm tra backend đang chạy (port 5000) hoặc cấu hình VITE_API_URL.'
+        : msg);
     } finally {
       setLoading(false);
     }
@@ -63,7 +68,7 @@ export default function Login() {
       const authCode = authenResponse.code;
 
       // Gửi code lên backend
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/zalo/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/zalo/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ authCode })

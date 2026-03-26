@@ -1,0 +1,220 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+// KHÔNG dùng react-leaflet để tránh lỗi tương thích Vite Production
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import { io } from 'socket.io-client';
+import { getDrivers, getOrders } from '../services/api';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
+
+// Hàm tạo Icon thuần (Tránh lỗi CJS/ESM)
+const getMotorbikeIcon = () => {
+    return L.icon({
+        iconUrl: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    });
+};
+
+export default function DriverMap() {
+  const [loading, setLoading] = useState(true);
+  const [onlineCount, setOnlineCount] = useState(0);
+  
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const markersRef = useRef({});
+  
+  // Lưu trữ state cho map để render marker (Ref để tránh re-render bản đồ liên tục)
+  const dataRef = useRef({
+      drivers: {},
+      orders: {}
+  });
+
+  // Hàm vẽ/cập nhật Markers thuần túy
+  const updateMapMarkers = useCallback(() => {
+    if (!mapInstance.current) return;
+    const { drivers, orders } = dataRef.current;
+    
+    setOnlineCount(Object.keys(drivers).length);
+
+    Object.values(drivers).forEach(driver => {
+      const activeJobs = orders[driver.id] || [];
+      const latlng = [driver.lat, driver.lng];
+
+      let jobsHtml = '';
+      if (activeJobs.length > 0) {
+        jobsHtml = activeJobs.map((job, idx) => `
+          <div style="background: #fff7ed; padding: 8px; border-radius: 4px; border: 1px solid #fed7aa; margin-bottom: ${idx < activeJobs.length - 1 ? '6px' : '0'};">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <p style="margin: 0; font-size: 10px; font-weight: bold; color: ${job.status === 'ACCEPTED' ? '#f97316' : '#2563eb'}; text-transform: uppercase;">
+                      ${job.status === 'ACCEPTED' ? 'Đang đi lấy' : 'Đang chở hàng'}
+                  </p>
+                  <span style="font-size: 9px; padding: 2px 4px; background: #fdba74; border-radius: 4px; color: #fff; font-weight: bold;">${job.orderCode ? job.orderCode.slice(-6) : 'ORDER'}</span>
+              </div>
+              <p style="margin: 0 0 2px 0; font-size: 12px; font-weight: 600;">👤 ${job.customerName}</p>
+              <p style="margin: 0 0 4px 0; font-size: 11px; color: #4b5563;">🏠 ${job.deliveryAddress}</p>
+              <p style="margin: 0; font-size: 12px; font-weight: bold; color: #16a34a;">💰 COD: ${job.codAmount?.toLocaleString()}đ</p>
+          </div>
+        `).join('');
+      } else {
+        jobsHtml = `
+          <div style="background: #f3f4f6; padding: 8px; border-radius: 4px;">
+              <p style="margin: 0; font-size: 11px; color: #6b7280; font-style: italic;">🚦 Đang chạy rỗng chờ đơn</p>
+          </div>
+        `;
+      }
+
+      // Nội dung Popup
+      const popupHtml = `
+        <div style="padding: 4px; min-width: 220px; max-height: 250px; overflow-y: auto; font-family: sans-serif;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <h3 style="margin: 0; color: #ea580c; font-weight: bold; font-size: 16px;">${driver.name}</h3>
+                ${activeJobs.length > 0 ? `<span style="font-size: 10px; background: #ef4444; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;">${activeJobs.length} ĐƠN</span>` : ''}
+            </div>
+            ${driver.phone ? `<p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">📞 ${driver.phone}</p>` : ''}
+            
+            ${jobsHtml}
+            
+            <p style="margin: 8px 0 0 0; font-size: 10px; color: #9ca3af; text-align: right;">
+                Cập nhật: ${new Date(driver.updatedAt).toLocaleTimeString()}
+            </p>
+        </div>
+      `;
+
+      if (markersRef.current[driver.id]) {
+        // Đã có marker, chỉ cần dời vị trí và cập nhật popup
+        markersRef.current[driver.id].setLatLng(latlng);
+        markersRef.current[driver.id].getPopup().setContent(popupHtml);
+      } else {
+        // Tạo marker mới
+        const marker = L.marker(latlng, { icon: getMotorbikeIcon() }).addTo(mapInstance.current);
+        marker.bindPopup(popupHtml);
+        markersRef.current[driver.id] = marker;
+      }
+    });
+
+    // Căn giữa bản đồ nếu có tài xế và chưa từng căn
+    if (Object.keys(drivers).length > 0 && mapInstance.current._hasCentered !== true) {
+      const firstDriver = Object.values(drivers)[0];
+      mapInstance.current.setView([firstDriver.lat, firstDriver.lng], 14);
+      mapInstance.current._hasCentered = true;
+    }
+  }, []);
+
+  const loadInitialData = useCallback(async () => {
+    try {
+      const [resDrivers, resOrders] = await Promise.all([
+          getDrivers(),
+          getOrders({ status: 'ACCEPTED,PICKED_UP,DELIVERING' })
+      ]);
+
+      const allDrivers = resDrivers.data || [];
+      const onlineDrivers = allDrivers.filter(d => d.isOnline && d.currentLocation?.lat);
+
+      const driversObj = {};
+      onlineDrivers.forEach(d => {
+        driversObj[d._id] = {
+          id: d._id,
+          name: d.name,
+          phone: d.phone,
+          lat: d.currentLocation.lat,
+          lng: d.currentLocation.lng,
+          updatedAt: d.currentLocation.updatedAt
+        };
+      });
+
+      const ordersObj = {};
+      (resOrders.orders || []).forEach(o => {
+        if (o.assignedTo) {
+          const driverId = o.assignedTo._id || o.assignedTo;
+          if (!ordersObj[driverId]) ordersObj[driverId] = [];
+          ordersObj[driverId].push(o); 
+        }
+      });
+
+      // Ghi vào Ref để render
+      dataRef.current = { drivers: driversObj, orders: ordersObj };
+      updateMapMarkers();
+
+    } catch (err) {
+      console.error('Lỗi lấy dữ liệu bản đồ:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [updateMapMarkers]);
+
+  useEffect(() => {
+    // 1. Khởi tạo bản đồ thuần Túy
+    if (mapRef.current && !mapInstance.current) {
+        mapInstance.current = L.map(mapRef.current).setView([10.762622, 106.660172], 13); // TPHCM Mặc định
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(mapInstance.current);
+    }
+
+    loadInitialData();
+
+    // 2. Kết nối Socket Realtime
+    const token = localStorage.getItem('admin_token');
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect', () => console.log('✅ Admin Map Socket Connected!'));
+
+    // Lắng nghe Tọa độ Realme
+    socket.on('driver_location_update', (data) => {
+      const _id = data.driverId;
+      const existing = dataRef.current.drivers[_id] || {};
+      
+      dataRef.current.drivers[_id] = {
+          ...existing,
+          id: _id,
+          name: data.name || existing.name || 'Tài xế',
+          lat: data.lat,
+          lng: data.lng,
+          updatedAt: data.timestamp
+      };
+      updateMapMarkers();
+    });
+
+    // Lắng nghe thay đổi trạng thái đơn
+    const reloadOrders = () => loadInitialData();
+    socket.on('order_accepted', reloadOrders);
+    socket.on('order_picked_up', reloadOrders);
+    socket.on('order_delivering', reloadOrders);
+    socket.on('order_completed', reloadOrders);
+
+    return () => {
+      socket.disconnect();
+      // Xóa bản đồ khi tắt trang
+      if (mapInstance.current) {
+          mapInstance.current.remove();
+          mapInstance.current = null;
+      }
+    };
+  }, [loadInitialData, updateMapMarkers]);
+
+  return (
+    <div className="flex flex-col h-full w-full p-4 sm:p-6" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-white sm:text-2xl">🗺️ Bản Đồ Theo Dõi Tài Xế</h1>
+        <div className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-bold text-green-400">
+          🟢 Đang gửi vị trí: {onlineCount}
+        </div>
+      </div>
+      
+      <div className="relative z-0 flex-1 w-full overflow-hidden rounded-2xl border-4 border-gray-700 shadow-xl" style={{ minHeight: '500px' }}>
+        {/* Vùng chứa bản đồ thuần */}
+        {loading && (
+          <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-gray-800">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+          </div>
+        )}
+        <div ref={mapRef} style={{ height: '100%', width: '100%' }}></div>
+      </div>
+    </div>
+  );
+}

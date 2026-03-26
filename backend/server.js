@@ -11,6 +11,7 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/authRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const driverRoutes = require('./routes/driverRoutes');
+const revenueRoutes = require('./routes/revenueRoutes');
 const { setupSocket } = require('./sockets/index');
 
 const app = express();
@@ -86,10 +87,16 @@ app.use((req, res, next) => {
   next();
 });
 
-// ==================== ROUTES ====================
-app.use('/api/auth', authRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/drivers', driverRoutes);
+// ==================== PUBLIC ENDPOINTS (trước routes) ====================
+
+// Root
+app.get('/', (req, res) => {
+  res.json({
+    message: 'LamNguyenShip API Server',
+    version: '1.0.0',
+    docs: '/api/health'
+  });
+});
 
 // Health check
 app.get('/api/health', async (req, res) => {
@@ -103,14 +110,18 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Root
-app.get('/', (req, res) => {
-  res.json({
-    message: 'LamNguyenShip API Server',
-    version: '1.0.0',
-    docs: '/api/health'
-  });
+// Keep-alive endpoint — gọi mỗi 10 phút để Render không bị sleep
+// Response nhanh nhất, không query DB
+app.get('/api/ping', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json({ success: true, timestamp: Date.now() });
 });
+
+// ==================== ROUTES ====================
+app.use('/api/auth', authRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/drivers', driverRoutes);
+app.use('/api/revenue', revenueRoutes);
 
 // ==================== ERROR HANDLING ====================
 app.use((err, req, res, next) => {

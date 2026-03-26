@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getDashboardStats } from '../services/api';
+import { io } from 'socket.io-client';
+import { getDashboardStats, API_BASE_URL } from '../services/api';
+import { startOfTodayVietnam } from '../utils/todayVietnam';
 
 const STATUS_COLORS = {
   PENDING: 'bg-yellow-500',
@@ -23,19 +25,140 @@ const STATUS_LABELS = {
 export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   const load = useCallback(async () => {
     try {
-      const response = await getDashboardStats();
-      setStats(response.data);
+      setLoadError(null);
+      const data = await getDashboardStats();
+      setStats(data);
     } catch (err) {
       console.error(err);
+      const msg =
+        err.response?.data?.message ||
+        err.message ||
+        'Không tải được thống kê (kiểm tra GET /api/orders/stats/dashboard và token admin).';
+      setLoadError(msg);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(); const interval = setInterval(load, 15000); return () => clearInterval(interval); }, [load]);
+  useEffect(() => {
+    // Load lần đầu
+    load();
+
+    // Socket.io: cập nhật số liệu TỨC THÌ khi có sự kiện
+    const token = localStorage.getItem('admin_token');
+    if (!token) return;
+
+    const socket = io(API_BASE_URL || window.location.origin, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect', () => console.log('[Dashboard] Socket connected'));
+    socket.on('connect_error', (err) => console.error('[Dashboard] Socket error:', err.message));
+
+    // Khi có đơn mới → tăng số PENDING, tăng tổng
+    // Sự kiện new_order = đơn vừa tạo trên server → luôn +1 "đơn hôm nay" (tránh lệch do parse createdAt / múi giờ trình duyệt). Polling load() sẽ đồng bộ lại.
+    socket.on('new_order', (order) => {
+      setStats(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          orders: {
+            ...prev.orders,
+            total: prev.orders.total + 1,
+            pending: prev.orders.pending + 1,
+          },
+          today: {
+            ...prev.today,
+            total: (prev.today?.total || 0) + 1,
+          },
+          recentOrders: [order, ...(prev.recentOrders || [])].slice(0, 10),
+        };
+      });
+    });
+
+    socket.on('order_accepted', () => {
+      setStats(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          orders: {
+            ...prev.orders,
+            pending: Math.max(0, prev.orders.pending - 1),
+            active: prev.orders.active + 1,
+          },
+        };
+      });
+    });
+
+    // Lấy hàng / đang giao → cập nhật lại
+    socket.on('order_picked_up', () => {
+      // PICKED_UP vẫn tính active → không đổi số
+    });
+
+    socket.on('order_delivering', () => {
+      // DELIVERING vẫn tính active → không đổi số
+    });
+
+    // Hoàn thành → giảm ACTIVE, tăng COMPLETED
+    socket.on('order_completed', (order) => {
+      setStats(prev => {
+        if (!prev) return prev;
+        const todayStart = startOfTodayVietnam();
+        const deliveredAt = order.deliveredAt ? new Date(order.deliveredAt) : new Date();
+        const isDeliveredToday = deliveredAt >= todayStart;
+        const codAmt = order.codAmount || 0;
+        return {
+          ...prev,
+          orders: {
+            ...prev.orders,
+            active: Math.max(0, prev.orders.active - 1),
+            completed: prev.orders.completed + 1,
+          },
+          today: {
+            ...prev.today,
+            completed: isDeliveredToday ? (prev.today?.completed || 0) + 1 : (prev.today?.completed || 0),
+            revenue: isDeliveredToday ? (prev.today?.revenue || 0) + codAmt : (prev.today?.revenue || 0),
+          },
+        };
+      });
+    });
+
+    socket.on('order_cancelled', (order) => {
+      setStats(prev => {
+        if (!prev) return prev;
+        const todayStart = startOfTodayVietnam();
+        const cancelledAt = order.cancelledAt ? new Date(order.cancelledAt) : new Date();
+        const isCancelledToday = cancelledAt >= todayStart;
+        // Sau hủy status luôn CANCELLED — dùng acceptedAt để biết đã vào luồng tài xế chưa
+        const wasInDriverFlow = Boolean(order.acceptedAt);
+        return {
+          ...prev,
+          orders: {
+            ...prev.orders,
+            pending: !wasInDriverFlow ? Math.max(0, prev.orders.pending - 1) : prev.orders.pending,
+            active: wasInDriverFlow ? Math.max(0, prev.orders.active - 1) : prev.orders.active,
+            cancelled: prev.orders.cancelled + 1,
+          },
+          today: {
+            ...prev.today,
+            cancelled: isCancelledToday ? (prev.today?.cancelled || 0) + 1 : (prev.today?.cancelled || 0),
+          },
+        };
+      });
+    });
+
+    // Backup: polling 15s phòng khi socket lỗi
+    const interval = setInterval(load, 15000);
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
+  }, [load]);
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center">
@@ -43,63 +166,145 @@ export default function Dashboard() {
     </div>
   );
 
+  if (!stats && loadError) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="max-w-md text-sm text-red-400">{loadError}</p>
+        <p className="max-w-md text-xs text-gray-500">
+          Trang Đơn hàng dùng <code className="rounded bg-gray-800 px-1">GET /api/orders</code>; Dashboard dùng{' '}
+          <code className="rounded bg-gray-800 px-1">GET /api/orders/stats/dashboard</code>. Nếu chỉ một trong hai lỗi, mở tab Network (F12) để xem status code.
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoading(true);
+            load();
+          }}
+          className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600"
+        >
+          Thử lại
+        </button>
+      </div>
+    );
+  }
+
   const o = stats?.orders || {};
+  const t = stats?.today || {};
 
   return (
     <div className="p-4 pb-8 sm:p-6">
 
-      {/* Tiêu đề */}
-      <div className="mb-5 flex items-center gap-2">
-        <h1 className="text-lg font-bold text-white sm:text-2xl">📊 Dashboard</h1>
-        <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-400 sm:text-xs">
-          LIVE
-        </span>
+      {/* Tiêu đề + ngày */}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-lg font-bold text-white sm:text-2xl">📊 Dashboard</h1>
+          <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-400 sm:text-xs">
+            LIVE
+          </span>
+        </div>
+        <div className="text-xs text-gray-500">
+          {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+        </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="mb-6 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
-        {[
-          { label: 'Tổng đơn', value: o.total || 0, color: 'text-white', bg: 'bg-gray-800', border: 'border-gray-700' },
-          { label: 'Chờ xử lý', value: o.pending || 0, color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30' },
-          { label: 'Đang giao', value: o.active || 0, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30' },
-          { label: 'Hoàn thành', value: o.completed || 0, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' },
-        ].map((item, i) => (
-          <div key={i} className={`rounded-2xl border p-3 text-center sm:p-4 ${item.bg} ${item.border}`}>
-            <p className={`mb-0.5 text-2xl font-black sm:text-3xl ${item.color}`}>{item.value}</p>
-            <p className="text-[10px] uppercase tracking-wide text-gray-400 sm:text-xs">{item.label}</p>
+      {/* 4 chỉ số chính — hero row */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {/* Shipper online */}
+        <div className="group rounded-2xl border border-green-500/30 bg-gradient-to-b from-green-500/15 to-green-500/5 p-4 text-center transition-all hover:border-green-500/60">
+          <p className="mb-1 text-3xl font-black text-green-400 sm:text-4xl">
+            {stats?.drivers?.active || 0}
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-green-300 sm:text-xs">Shipper Online</p>
+          <p className="mt-1 text-[9px] text-gray-600 sm:text-[10px]">
+            / {stats?.drivers?.total || 0} tổng tài xế
+          </p>
+        </div>
+
+        {/* Đơn hàng hôm nay */}
+        <div className="group rounded-2xl border border-orange-500/30 bg-gradient-to-b from-orange-500/15 to-orange-500/5 p-4 text-center transition-all hover:border-orange-500/60">
+          <p className="mb-1 text-3xl font-black text-orange-400 sm:text-4xl">
+            {t.total ?? 0}
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-orange-300 sm:text-xs">Đơn hàng hôm nay</p>
+          <p className="mt-1 text-[9px] text-gray-600 sm:text-[10px]">theo ngày tạo đơn</p>
+        </div>
+
+        {/* Đơn đang xử lí */}
+        <div className="group rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/15 to-blue-500/5 p-4 text-center transition-all hover:border-blue-500/60">
+          <p className="mb-1 text-3xl font-black text-blue-400 sm:text-4xl">
+            {o.active ?? 0}
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-blue-300 sm:text-xs">Đơn đang xử lí</p>
+          <p className="mt-1 text-[9px] text-gray-600 sm:text-[10px]">chờ tài xế nhận: {o.pending ?? 0}</p>
+        </div>
+
+        {/* Đơn hoàn thành */}
+        <Link
+          to="/orders?status=COMPLETED"
+          className="group rounded-2xl border border-green-500/30 bg-gradient-to-b from-green-500/10 to-green-500/3 p-4 text-center transition-all hover:border-green-500/60 active:scale-95"
+        >
+          <p className="mb-1 text-3xl font-black text-green-400 sm:text-4xl">
+            {o.completed ?? 0}
+          </p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-green-300 sm:text-xs">Đơn hoàn thành</p>
+          <p className="mt-1 text-[9px] text-gray-600 sm:text-[10px]">xem chi tiết →</p>
+        </Link>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
+        <Link
+          to="/orders/create"
+          className="flex items-center gap-2 rounded-2xl border border-orange-500/30 bg-orange-500/10 p-3 transition-all active:scale-95"
+        >
+          <span className="text-xl">📦</span>
+          <div>
+            <p className="text-xs font-bold text-white">Tạo đơn mới</p>
+            <p className="text-[10px] text-gray-500">Thêm đơn hàng</p>
           </div>
-        ))}
+        </Link>
+        <Link
+          to="/orders"
+          className="flex items-center gap-2 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-3 transition-all active:scale-95"
+        >
+          <span className="text-xl">📋</span>
+          <div>
+            <p className="text-xs font-bold text-white">Danh sách đơn</p>
+            <p className="text-[10px] text-gray-500">Xem tất cả đơn</p>
+          </div>
+        </Link>
+        <Link
+          to="/drivers"
+          className="flex items-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-500/10 p-3 transition-all active:scale-95"
+        >
+          <span className="text-xl">🚗</span>
+          <div>
+            <p className="text-xs font-bold text-white">Tài xế</p>
+            <p className="text-[10px] text-gray-500">{stats?.drivers?.total || 0} tài xế</p>
+          </div>
+        </Link>
       </div>
 
-      {/* Driver stats + Recent Orders — xếp cột trên mobile */}
-      <div className="mb-6 grid grid-cols-1 gap-4 xl:grid-cols-2">
+      {/* Tài xế online + Đơn gần đây */}
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 
-        {/* Tài xế */}
+        {/* Tài xế online */}
         <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-bold text-white">🚗 Tài xế</h2>
+            <h2 className="flex items-center gap-1.5 font-bold text-white">
+              <span>🚗</span> Tài xế online
+            </h2>
             <Link to="/drivers" className="text-xs text-orange-400 hover:underline">Xem tất cả →</Link>
           </div>
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <div className="rounded-xl bg-gray-700 p-3 text-center">
-              <p className="text-xl font-black text-white">{stats?.drivers?.total || 0}</p>
-              <p className="text-[10px] text-gray-400">Tổng</p>
-            </div>
-            <div className="rounded-xl bg-green-500/10 p-3 text-center">
-              <p className="text-xl font-black text-green-400">{stats?.drivers?.active || 0}</p>
-              <p className="text-[10px] text-gray-400">Online</p>
-            </div>
-          </div>
           {(stats?.topDrivers || []).length === 0 ? (
-            <p className="py-3 text-center text-xs text-gray-500">Chưa có tài xế</p>
+            <p className="py-4 text-center text-xs text-gray-500">Chưa có tài xế nào</p>
           ) : (
-            <div className="space-y-1">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-gray-500">Top tài xế</p>
-              {stats?.topDrivers?.map((d, i) => (
+            <div className="space-y-1.5">
+              {stats?.topDrivers?.slice(0, 6).map((d, i) => (
                 <div key={d._id} className="flex items-center justify-between rounded-xl bg-gray-700/50 px-3 py-2">
                   <div className="flex items-center gap-2">
-                    <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black ${
-                      i === 0 ? 'bg-yellow-500 text-black' : i === 1 ? 'bg-gray-400 text-black' : 'bg-orange-800 text-orange-200'
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
+                      i === 0 ? 'bg-yellow-500 text-black' : 'bg-gray-600 text-gray-300'
                     }`}>{i + 1}</span>
                     <div>
                       <p className="text-xs font-medium text-white">{d.name}</p>
@@ -108,7 +313,7 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-green-400">{d.stats?.completedOrders || 0}</p>
-                    <p className="text-[10px] text-gray-500">đơn</p>
+                    <p className="text-[10px] text-gray-500">đơn hoàn thành</p>
                   </div>
                 </div>
               ))}
@@ -119,7 +324,9 @@ export default function Dashboard() {
         {/* Đơn gần đây */}
         <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="font-bold text-white">📦 Đơn gần đây</h2>
+            <h2 className="flex items-center gap-1.5 font-bold text-white">
+              <span>📦</span> Đơn gần đây
+            </h2>
             <Link to="/orders" className="text-xs text-orange-400 hover:underline">Xem tất cả →</Link>
           </div>
           {(stats?.recentOrders || []).length === 0 ? (
@@ -128,8 +335,8 @@ export default function Dashboard() {
               <p className="text-xs text-gray-500">Chưa có đơn hàng nào</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {stats?.recentOrders?.map(order => (
+            <div className="space-y-1.5">
+              {stats?.recentOrders?.slice(0, 8).map(order => (
                 <div key={order._id} className="flex items-center justify-between rounded-xl bg-gray-700/40 px-3 py-2.5">
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-mono text-xs font-bold text-orange-400">
@@ -145,30 +352,6 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
-        <Link
-          to="/orders/create"
-          className="group flex flex-col items-center justify-center gap-1 rounded-2xl border border-orange-500/30 bg-orange-500/10 p-4 text-center transition-all active:scale-95 sm:flex-row sm:text-left"
-        >
-          <span className="text-2xl sm:text-3xl">📦</span>
-          <div>
-            <p className="text-sm font-bold text-white">Tạo đơn mới</p>
-            <p className="text-[10px] text-gray-400">Thêm đơn hàng vào hệ thống</p>
-          </div>
-        </Link>
-        <Link
-          to="/drivers/create"
-          className="group flex flex-col items-center justify-center gap-1 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-4 text-center transition-all active:scale-95 sm:flex-row sm:text-left"
-        >
-          <span className="text-2xl sm:text-3xl">👤</span>
-          <div>
-            <p className="text-sm font-bold text-white">Thêm tài xế</p>
-            <p className="text-[10px] text-gray-400">Đăng ký tài xế mới</p>
-          </div>
-        </Link>
       </div>
     </div>
   );

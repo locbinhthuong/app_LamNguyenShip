@@ -36,6 +36,32 @@ const setupSocket = (io) => {
       socket.emit('pong', { timestamp: Date.now() });
     });
 
+    // Cập nhật vị trí GPS từ tài xế
+    socket.on('update_location', async (data) => {
+      if (socket.user.role === 'driver') {
+        const { lat, lng } = data;
+        
+        // Phát realtime tới Admin
+        io.to('admins').emit('driver_location_update', {
+          driverId: socket.user.id,
+          name: socket.user.name,
+          lat,
+          lng,
+          timestamp: Date.now()
+        });
+
+        // Tối ưu: Chỉ ghi thẳng DB (không đợi) để Admin F5 vẫn thấy
+        try {
+          const Driver = require('../models/Driver');
+          await Driver.findByIdAndUpdate(socket.user.id, {
+            currentLocation: { lat, lng, updatedAt: new Date() }
+          });
+        } catch (e) {
+          console.error('[Socket] Lỗi lưu GPS:', e.message);
+        }
+      }
+    });
+
     socket.on('disconnect', () => {
       console.log(`[Socket] Client disconnected: ${socket.id}`);
     });

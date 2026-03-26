@@ -6,6 +6,8 @@ import Orders from './pages/Orders';
 import CreateOrder from './pages/CreateOrder';
 import Drivers from './pages/Drivers';
 import CreateDriver from './pages/CreateDriver';
+import DriverMap from './pages/DriverMap';
+import Revenue from './pages/Revenue';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }) => {
@@ -22,8 +24,10 @@ export default function App() {
         <Route index element={<Dashboard />} />
         <Route path="orders" element={<Orders />} />
         <Route path="orders/create" element={<CreateOrder />} />
+        <Route path="driver-map" element={<DriverMap />} />
         <Route path="drivers" element={<Drivers />} />
         <Route path="drivers/create" element={<CreateDriver />} />
+        <Route path="revenue" element={<Revenue />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
