@@ -20,8 +20,6 @@ const driverSchema = new mongoose.Schema({
   },
   zaloId: {
     type: String,
-    default: null,
-    unique: true,
     sparse: true
   },
   avatar: {
