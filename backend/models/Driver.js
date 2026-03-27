@@ -16,10 +16,10 @@ const driverSchema = new mongoose.Schema({
   password: {
     type: String,
     required: [true, 'Mật khẩu là bắt buộc'],
-    minlength: [6, 'Mật khẩu phải ít nhất 6 ký tự']
   },
   zaloId: {
     type: String,
+    unique: true,
     sparse: true
   },
   avatar: {
