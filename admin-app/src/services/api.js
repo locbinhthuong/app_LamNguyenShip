@@ -78,6 +78,16 @@ export const createOrder = async (data) => {
   return response.data;
 };
 
+export const updateOrder = async (id, data) => {
+  const response = await api.put(`/api/orders/${id}`, data);
+  return response.data;
+};
+
+export const cancelOrder = async (id, reason) => {
+  const response = await api.post(`/api/orders/${id}/cancel`, { reason });
+  return response.data;
+};
+
 export const deleteOrder = async (id) => {
   const response = await api.delete(`/api/orders/${id}`);
   return response.data;
@@ -104,6 +114,18 @@ export const updateDriver = async (id, data) => {
   return response.data;
 };
 
+export const uploadDriverAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const response = await api.post('/api/upload/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+  return response.data;
+};
+
 export const resetDriverPassword = async (id, newPassword) => {
   const response = await api.put(`/api/drivers/${id}/reset-password`, { newPassword });
   return response.data;
@@ -117,6 +139,11 @@ export const deleteDriver = async (id) => {
 // ==================== REVENUE ====================
 export const getRevenueStats = async () => {
   const response = await api.get('/api/revenue/stats');
+  return response.data;
+};
+
+export const getDriverStatsAdmin = async (id) => {
+  const response = await api.get(`/api/revenue/driver-stats/${id}`);
   return response.data;
 };
 

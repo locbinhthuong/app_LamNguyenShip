@@ -8,11 +8,12 @@ import Drivers from './pages/Drivers';
 import CreateDriver from './pages/CreateDriver';
 import DriverMap from './pages/DriverMap';
 import Revenue from './pages/Revenue';
+import DriverDetail from './pages/DriverDetail';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }) => {
   const { admin, loading } = useAuth();
-  if (loading) return <div className="flex items-center justify-center min-h-screen bg-gray-900"><div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" /></div>;
+  if (loading) return <div className="flex items-center justify-center min-h-screen bg-slate-50"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>;
   return admin ? children : <Navigate to="/login" />;
 };
 
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="driver-map" element={<DriverMap />} />
         <Route path="drivers" element={<Drivers />} />
         <Route path="drivers/create" element={<CreateDriver />} />
+        <Route path="drivers/:id" element={<DriverDetail />} />
         <Route path="revenue" element={<Revenue />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />

@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { io } from 'socket.io-client';
 import { getDrivers, deleteDriver, resetDriverPassword } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
+import PromptModal from '../components/PromptModal';
 
 const STATUS_COLORS = {
   active: 'bg-green-500',
@@ -20,10 +23,15 @@ export default function Drivers() {
   const [filter, setFilter] = useState('');
   const [search, setSearch] = useState('');
 
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false });
+  const [promptModal, setPromptModal] = useState({ isOpen: false });
+
   const load = useCallback(async () => {
     try {
       const params = {};
-      if (filter) params.status = filter;
+      if (filter === 'banned') params.status = 'banned';
+      else if (filter === 'online') params.isOnline = 'true';
+      else if (filter === 'offline') params.isOnline = 'false';
       if (search) params.search = search;
       const response = await getDrivers(params);
       setDrivers(response.data || []);
@@ -34,33 +42,75 @@ export default function Drivers() {
     }
   }, [filter, search]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { 
+    load(); 
+    
+    // Real-time socket for Online/Offline status
+    const token = localStorage.getItem('admin_token');
+    const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Xóa tài xế "${name}"?`)) return;
+    socket.on('driver_status_change', (data) => {
+      setDrivers(prev => prev.map(d => 
+        d._id === data.driverId ? { ...d, isOnline: data.isOnline } : d
+      ));
+    });
+
+    return () => socket.disconnect();
+  }, [load]);
+
+  const requestDelete = (id, name) => {
+    setConfirmModal({
+      ...confirmModal,
+      isOpen: true,
+      data: id,
+      name,
+      title: 'Xóa tài khoản?',
+      message: `Hành động thao tác xóa đối với tài xế "${name}" là không thể đảo ngược.`
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    const { data } = confirmModal;
+    setConfirmModal({ ...confirmModal, isOpen: false });
     try {
-      await deleteDriver(id);
+      await deleteDriver(data);
       await load();
     } catch (err) {
       alert('Không thể xóa tài xế');
     }
   };
 
-  const handleResetPassword = async (id, name) => {
-    const newPass = prompt(`Reset mật khẩu cho "${name}":\nNhập mật khẩu mới (ít nhất 6 ký tự):`);
-    if (!newPass || newPass.length < 6) return;
+  const requestResetPassword = (id, name) => {
+    setPromptModal({
+      isOpen: true,
+      data: id,
+      name,
+      title: 'Khôi phục Mật khẩu',
+      message: `Khôi phục tài khoản thủ công cho tài xế "${name}":`,
+      placeholder: 'Gõ mật khẩu mới (ít nhất 6 ký tự)..'
+    });
+  };
+
+  const handlePromptSubmit = async (newPass) => {
+    const { data, name } = promptModal;
+    if (!newPass || newPass.length < 6) return alert('Mật khẩu chưa đủ 6 ký tự!');
+    setPromptModal({ ...promptModal, isOpen: false });
     try {
-      await resetDriverPassword(id, newPass);
-      alert(`Đã reset mật khẩu cho "${name}"\nMật khẩu mới: ${newPass}`);
+      await resetDriverPassword(data, newPass);
+      alert(`Đã đổi mật khẩu thành công cho tài xế "${name}"!`);
     } catch (err) {
-      alert('Không thể reset mật khẩu');
+      alert('Không thể đổi mật khẩu, vui lòng thử lại.');
     }
   };
 
   const tabs = [
     { key: '', label: 'Tất cả' },
-    { key: 'active', label: 'Hoạt động' },
-    { key: 'inactive', label: 'Không hoạt động' },
+    { key: 'online', label: 'Online' },
+    { key: 'offline', label: 'Offline' },
     { key: 'banned', label: 'Bị khóa' }
   ];
 
@@ -73,7 +123,7 @@ export default function Drivers() {
   return (
     <div className="p-4 pb-8 sm:p-6">
       <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-lg font-bold text-white sm:text-2xl">🚗 Quản lý Tài Xế</h1>
+        <h1 className="text-lg font-bold text-slate-800 sm:text-2xl">🚗 Quản lý Tài Xế</h1>
         <Link to="/drivers/create" className="btn-primary shrink-0 text-center text-sm sm:w-auto sm:px-6 sm:text-base">
           + Thêm tài xế
         </Link>
@@ -92,7 +142,7 @@ export default function Drivers() {
           {tabs.map(tab => (
             <button key={tab.key} onClick={() => setFilter(tab.key)}
               className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all sm:px-4 sm:py-2 sm:text-sm ${
-                filter === tab.key ? 'bg-orange-500 text-white' : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                filter === tab.key ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-blue-50 hover:bg-blue-100'
               }`}>
               {tab.label}
             </button>
@@ -102,13 +152,13 @@ export default function Drivers() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
         </div>
       ) : drivers.length === 0 ? (
-        <div className="rounded-2xl border border-gray-700 bg-gray-800 py-16 text-center">
+        <div className="rounded-2xl border border-slate-200 bg-white py-16 text-center">
           <p className="mb-2 text-5xl">🚗</p>
-          <p className="text-sm text-gray-500">Chưa có tài xế nào</p>
-          <Link to="/drivers/create" className="mt-3 inline-block text-sm text-orange-400 hover:underline">
+          <p className="text-sm text-slate-500">Chưa có tài xế nào</p>
+          <Link to="/drivers/create" className="mt-3 inline-block text-sm text-blue-600 hover:underline">
             Thêm tài xế đầu tiên
           </Link>
         </div>
@@ -116,42 +166,56 @@ export default function Drivers() {
         <div className="space-y-2 sm:space-y-0">
           {/* Mobile card list */}
           {drivers.map(driver => (
-            <div key={driver._id} className="rounded-2xl border border-gray-700 bg-gray-800 p-4 sm:hidden">
+            <div key={driver._id} className="rounded-2xl border border-slate-200 bg-white p-4 sm:hidden">
               <div className="mb-3 flex items-center gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-orange-500 font-bold text-white">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
                   {driver.name?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-white">{driver.name}</p>
-                  <p className="text-xs text-gray-400">{VEHICLE_EMOJI[driver.vehicleType]} {driver.phone}</p>
+                  <p className="truncate text-sm font-bold text-slate-800">{driver.name}</p>
+                  <p className="text-xs text-slate-500">{VEHICLE_EMOJI[driver.vehicleType]} {driver.phone}</p>
                 </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${STATUS_COLORS[driver.status]}`}>
-                  {STATUS_LABELS[driver.status]}
-                </span>
+                <div className="flex flex-col items-end gap-1">
+                  {driver.status === 'banned' ? (
+                    <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white bg-red-500">
+                      🔒 Bị khóa
+                    </span>
+                  ) : driver.isOnline ? (
+                    <span className="shrink-0 rounded-full bg-green-500/20 border border-green-500/50 px-2 py-0.5 text-[10px] font-bold text-green-600">
+                      🟢 Online
+                    </span>
+                  ) : (
+                    <span className="shrink-0 rounded-full bg-slate-100 border border-slate-300 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+                      ⚫ Offline
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="mb-3 grid grid-cols-3 gap-2">
-                <div className="rounded-xl bg-gray-700/50 p-2 text-center">
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-blue-50/50 p-2 text-center">
                   <p className="text-sm font-bold text-green-400">{driver.stats?.completedOrders || 0}</p>
-                  <p className="text-[10px] text-gray-400">Hoàn thành</p>
+                  <p className="text-[10px] text-slate-500">Hoàn thành</p>
                 </div>
-                <div className="rounded-xl bg-gray-700/50 p-2 text-center">
-                  <p className="text-sm font-bold text-yellow-400">{driver.stats?.rating || 0}⭐</p>
-                  <p className="text-[10px] text-gray-400">Đánh giá</p>
-                </div>
-                <div className="rounded-xl bg-gray-700/50 p-2 text-center">
-                  <p className="text-sm font-bold text-orange-400">{driver.driverCode}</p>
-                  <p className="text-[10px] text-gray-400">Mã TX</p>
+                <div className="rounded-xl bg-blue-50/50 p-2 text-center">
+                  <p className="text-sm font-bold text-blue-600">{driver.driverCode}</p>
+                  <p className="text-[10px] text-slate-500">Mã TX</p>
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-3">
+                <Link
+                  to={`/drivers/${driver._id}`}
+                  className="flex-1 rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-bold text-blue-600 text-center transition-all hover:bg-blue-600/20"
+                >
+                  👁️ Chi tiết
+                </Link>
                 <button
-                  onClick={() => handleResetPassword(driver._id, driver.name)}
+                  onClick={() => requestResetPassword(driver._id, driver.name)}
                   className="flex-1 rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-400 transition-all hover:bg-blue-500/20"
                 >
-                  🔑 Reset MK
+                  🔑 Reset
                 </button>
                 <button
-                  onClick={() => handleDelete(driver._id, driver.name)}
+                  onClick={() => requestDelete(driver._id, driver.name)}
                   className="flex-1 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-bold text-red-400 transition-all hover:bg-red-500/20"
                 >
                   🗑️ Xóa
@@ -161,42 +225,67 @@ export default function Drivers() {
           ))}
 
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto rounded-2xl border border-gray-700 bg-gray-800 sm:block">
+          <div className="hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white sm:block">
             <table className="w-full min-w-[680px]">
               <thead>
-                <tr className="border-b border-gray-700">
+                <tr className="border-b border-slate-200">
                   <th className="table-th">Tài xế</th>
                   <th className="table-th">Mã</th>
                   <th className="table-th">Xe</th>
                   <th className="table-th">Trạng thái</th>
                   <th className="table-th">Hoàn thành</th>
-                  <th className="table-th">Đánh giá</th>
                   <th className="table-th">Hành động</th>
                 </tr>
               </thead>
               <tbody>
                 {drivers.map(driver => (
-                  <tr key={driver._id} className="hover:bg-gray-700/50">
+                  <tr key={driver._id} className="hover:bg-blue-50/50">
                     <td className="table-td">
-                      <p className="font-medium text-white">{driver.name}</p>
-                      <p className="text-gray-500 text-xs">{driver.phone}</p>
+                      <p className="font-medium text-slate-800">{driver.name}</p>
+                      <p className="text-slate-500 text-xs">{driver.phone}</p>
                     </td>
-                    <td className="table-td font-mono text-orange-400">{driver.driverCode}</td>
-                    <td className="table-td text-gray-300 text-sm">
+                    <td className="table-td font-mono text-blue-600">{driver.driverCode}</td>
+                    <td className="table-td text-slate-600 text-sm">
                       {VEHICLE_EMOJI[driver.vehicleType]}
                       {driver.licensePlate && <span className="ml-1 text-xs">({driver.licensePlate})</span>}
                     </td>
                     <td className="table-td">
-                      <span className={`rounded-full px-2 py-1 text-xs font-bold text-white ${STATUS_COLORS[driver.status]}`}>
-                        {STATUS_LABELS[driver.status]}
-                      </span>
+                      <div className="flex flex-col items-start gap-1">
+                        {driver.status === 'banned' ? (
+                          <span className="rounded-full px-2 py-1 text-xs font-bold text-white bg-red-500">
+                            🔒 Bị khóa
+                          </span>
+                        ) : driver.isOnline ? (
+                          <span className="rounded-full bg-green-500/20 border border-green-500/50 px-2 py-0.5 text-[10px] font-bold text-green-600">
+                            🟢 Online
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-slate-100 border border-slate-300 px-2 py-0.5 text-[10px] font-bold text-slate-500">
+                            ⚫ Offline
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="table-td font-bold text-green-400">{driver.stats?.completedOrders || 0}</td>
-                    <td className="table-td text-yellow-400">{driver.stats?.rating || 0}⭐</td>
                     <td className="table-td">
                       <div className="flex gap-2">
-                        <button onClick={() => handleResetPassword(driver._id, driver.name)} className="text-xs text-blue-400 hover:text-blue-300">🔑 Reset MK</button>
-                        <button onClick={() => handleDelete(driver._id, driver.name)} className="text-xs text-red-400 hover:text-red-300">🗑️ Xóa</button>
+                        <button
+                          onClick={() => requestResetPassword(driver._id, driver.name)}
+                          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
+                        >
+                          🔑 Reset Pass
+                        </button>
+                        <Link to={`/drivers/${driver._id}`}
+                          className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
+                        >
+                          🔍 Chi tiết / Sửa
+                        </Link>
+                        <button
+                          onClick={() => requestDelete(driver._id, driver.name)}
+                          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-50 transition-colors"
+                        >
+                          🗑️ Xóa
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -206,6 +295,25 @@ export default function Drivers() {
           </div>
         </div>
       )}
+
+      {/* Tích hợp Modals */}
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isDestructive={true}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmModal({ ...confirmModal, isOpen: false })}
+      />
+      <PromptModal
+        isOpen={promptModal.isOpen}
+        title={promptModal.title}
+        message={promptModal.message}
+        placeholder={promptModal.placeholder}
+        type="text"
+        onSubmit={handlePromptSubmit}
+        onCancel={() => setPromptModal({ ...promptModal, isOpen: false })}
+      />
     </div>
   );
 }

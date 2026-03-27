@@ -8,7 +8,7 @@ const STATUS_COLORS = {
   PENDING: 'bg-yellow-500',
   ACCEPTED: 'bg-blue-500',
   PICKED_UP: 'bg-yellow-500',
-  DELIVERING: 'bg-orange-500',
+  DELIVERING: 'bg-blue-600',
   COMPLETED: 'bg-green-500',
   CANCELLED: 'bg-red-500'
 };
@@ -162,7 +162,7 @@ export default function Dashboard() {
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center">
-      <div className="h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
     </div>
   );
 
@@ -170,9 +170,9 @@ export default function Dashboard() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="max-w-md text-sm text-red-400">{loadError}</p>
-        <p className="max-w-md text-xs text-gray-500">
-          Trang Đơn hàng dùng <code className="rounded bg-gray-800 px-1">GET /api/orders</code>; Dashboard dùng{' '}
-          <code className="rounded bg-gray-800 px-1">GET /api/orders/stats/dashboard</code>. Nếu chỉ một trong hai lỗi, mở tab Network (F12) để xem status code.
+        <p className="max-w-md text-xs text-slate-500">
+          Trang Đơn hàng dùng <code className="rounded bg-white px-1">GET /api/orders</code>; Dashboard dùng{' '}
+          <code className="rounded bg-white px-1">GET /api/orders/stats/dashboard</code>. Nếu chỉ một trong hai lỗi, mở tab Network (F12) để xem status code.
         </p>
         <button
           type="button"
@@ -180,7 +180,7 @@ export default function Dashboard() {
             setLoading(true);
             load();
           }}
-          className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600"
+          className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700"
         >
           Thử lại
         </button>
@@ -197,12 +197,12 @@ export default function Dashboard() {
       {/* Tiêu đề + ngày */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg font-bold text-white sm:text-2xl">📊 Dashboard</h1>
-          <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-400 sm:text-xs">
+          <h1 className="text-lg font-bold text-slate-800 sm:text-2xl">📊 Dashboard</h1>
+          <span className="rounded-full bg-blue-600/20 px-2 py-0.5 text-[10px] font-bold text-blue-600 sm:text-xs">
             LIVE
           </span>
         </div>
-        <div className="text-xs text-gray-500">
+        <div className="text-xs text-slate-500">
           {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </div>
       </div>
@@ -221,21 +221,21 @@ export default function Dashboard() {
         </div>
 
         {/* Đơn hàng hôm nay */}
-        <div className="group rounded-2xl border border-orange-500/30 bg-gradient-to-b from-orange-500/15 to-orange-500/5 p-4 text-center transition-all hover:border-orange-500/60">
-          <p className="mb-1 text-3xl font-black text-orange-400 sm:text-4xl">
+        <div className="group rounded-2xl border border-blue-600/30 bg-gradient-to-b from-orange-500/15 to-orange-500/5 p-4 text-center transition-all hover:border-blue-600/60">
+          <p className="mb-1 text-3xl font-black text-blue-600 sm:text-4xl">
             {t.total ?? 0}
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-orange-300 sm:text-xs">Đơn hàng hôm nay</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-blue-500 sm:text-xs">Đơn hàng hôm nay</p>
           <p className="mt-1 text-[9px] text-gray-600 sm:text-[10px]">theo ngày tạo đơn</p>
         </div>
 
         {/* Đơn đang xử lí */}
         <div className="group rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/15 to-blue-500/5 p-4 text-center transition-all hover:border-blue-500/60">
-          <p className="mb-1 text-3xl font-black text-blue-400 sm:text-4xl">
+          <p className="mb-1 text-3xl font-black text-blue-500 sm:text-4xl">
             {o.active ?? 0}
           </p>
-          <p className="text-[10px] font-bold uppercase tracking-wide text-blue-300 sm:text-xs">Đơn đang xử lí</p>
-          <p className="mt-1 text-[9px] text-gray-600 sm:text-[10px]">chờ tài xế nhận: {o.pending ?? 0}</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-blue-600 sm:text-xs">Đơn đã có tài xế</p>
+          <p className="mt-1 text-[9px] text-slate-500 sm:text-[10px] font-medium">Đơn treo chờ nhận: <span className="text-yellow-500 font-bold">{o.pending ?? 0}</span></p>
         </div>
 
         {/* Đơn hoàn thành */}
@@ -255,12 +255,12 @@ export default function Dashboard() {
       <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3">
         <Link
           to="/orders/create"
-          className="flex items-center gap-2 rounded-2xl border border-orange-500/30 bg-orange-500/10 p-3 transition-all active:scale-95"
+          className="flex items-center gap-2 rounded-2xl border border-blue-600/30 bg-blue-600/10 p-3 transition-all active:scale-95"
         >
           <span className="text-xl">📦</span>
           <div>
-            <p className="text-xs font-bold text-white">Tạo đơn mới</p>
-            <p className="text-[10px] text-gray-500">Thêm đơn hàng</p>
+            <p className="text-xs font-bold text-slate-800">Tạo đơn mới</p>
+            <p className="text-[10px] text-slate-500">Thêm đơn hàng</p>
           </div>
         </Link>
         <Link
@@ -269,8 +269,8 @@ export default function Dashboard() {
         >
           <span className="text-xl">📋</span>
           <div>
-            <p className="text-xs font-bold text-white">Danh sách đơn</p>
-            <p className="text-[10px] text-gray-500">Xem tất cả đơn</p>
+            <p className="text-xs font-bold text-slate-800">Danh sách đơn</p>
+            <p className="text-[10px] text-slate-500">Xem tất cả đơn</p>
           </div>
         </Link>
         <Link
@@ -279,8 +279,8 @@ export default function Dashboard() {
         >
           <span className="text-xl">🚗</span>
           <div>
-            <p className="text-xs font-bold text-white">Tài xế</p>
-            <p className="text-[10px] text-gray-500">{stats?.drivers?.total || 0} tài xế</p>
+            <p className="text-xs font-bold text-slate-800">Tài xế</p>
+            <p className="text-[10px] text-slate-500">{stats?.drivers?.total || 0} tài xế</p>
           </div>
         </Link>
       </div>
@@ -289,31 +289,31 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
 
         {/* Tài xế online */}
-        <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-1.5 font-bold text-white">
+            <h2 className="flex items-center gap-1.5 font-bold text-slate-800">
               <span>🚗</span> Tài xế online
             </h2>
-            <Link to="/drivers" className="text-xs text-orange-400 hover:underline">Xem tất cả →</Link>
+            <Link to="/drivers" className="text-xs text-blue-600 hover:underline">Xem tất cả →</Link>
           </div>
           {(stats?.topDrivers || []).length === 0 ? (
-            <p className="py-4 text-center text-xs text-gray-500">Chưa có tài xế nào</p>
+            <p className="py-4 text-center text-xs text-slate-500">Chưa có tài xế nào</p>
           ) : (
             <div className="space-y-1.5">
               {stats?.topDrivers?.slice(0, 6).map((d, i) => (
-                <div key={d._id} className="flex items-center justify-between rounded-xl bg-gray-700/50 px-3 py-2">
+                <div key={d._id} className="flex items-center justify-between rounded-xl bg-blue-50/50 px-3 py-2">
                   <div className="flex items-center gap-2">
                     <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-black ${
-                      i === 0 ? 'bg-yellow-500 text-black' : 'bg-gray-600 text-gray-300'
+                      i === 0 ? 'bg-yellow-500 text-black' : 'bg-gray-600 text-slate-600'
                     }`}>{i + 1}</span>
                     <div>
-                      <p className="text-xs font-medium text-white">{d.name}</p>
-                      <p className="text-[10px] text-gray-500">{d.phone}</p>
+                      <p className="text-xs font-medium text-slate-800">{d.name}</p>
+                      <p className="text-[10px] text-slate-500">{d.phone}</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold text-green-400">{d.stats?.completedOrders || 0}</p>
-                    <p className="text-[10px] text-gray-500">đơn hoàn thành</p>
+                    <p className="text-[10px] text-slate-500">đơn hoàn thành</p>
                   </div>
                 </div>
               ))}
@@ -322,29 +322,29 @@ export default function Dashboard() {
         </div>
 
         {/* Đơn gần đây */}
-        <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-1.5 font-bold text-white">
+            <h2 className="flex items-center gap-1.5 font-bold text-slate-800">
               <span>📦</span> Đơn gần đây
             </h2>
-            <Link to="/orders" className="text-xs text-orange-400 hover:underline">Xem tất cả →</Link>
+            <Link to="/orders" className="text-xs text-blue-600 hover:underline">Xem tất cả →</Link>
           </div>
           {(stats?.recentOrders || []).length === 0 ? (
             <div className="py-8 text-center">
               <p className="mb-1 text-3xl">📦</p>
-              <p className="text-xs text-gray-500">Chưa có đơn hàng nào</p>
+              <p className="text-xs text-slate-500">Chưa có đơn hàng nào</p>
             </div>
           ) : (
             <div className="space-y-1.5">
               {stats?.recentOrders?.slice(0, 8).map(order => (
-                <div key={order._id} className="flex items-center justify-between rounded-xl bg-gray-700/40 px-3 py-2.5">
+                <div key={order._id} className="flex items-center justify-between rounded-xl bg-blue-50 hover:bg-blue-100/40 px-3 py-2.5">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-xs font-bold text-orange-400">
+                    <p className="truncate font-mono text-xs font-bold text-blue-600">
                       #{order.orderCode || order._id?.slice(-8).toUpperCase()}
                     </p>
-                    <p className="truncate text-[10px] text-gray-400">{order.customerName} · {order.customerPhone}</p>
+                    <p className="truncate text-[10px] text-slate-500">{order.customerName} · {order.customerPhone}</p>
                   </div>
-                  <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white ${STATUS_COLORS[order.status]}`}>
+                  <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-slate-800 ${STATUS_COLORS[order.status]}`}>
                     {STATUS_LABELS[order.status] || order.status}
                   </span>
                 </div>

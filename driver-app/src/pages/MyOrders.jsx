@@ -15,7 +15,7 @@ const STATUS_COLORS = {
   PENDING: 'bg-yellow-500',
   ACCEPTED: 'bg-blue-500',
   PICKED_UP: 'bg-yellow-500',
-  DELIVERING: 'bg-orange-500',
+  DELIVERING: 'bg-blue-600',
   COMPLETED: 'bg-green-500',
   CANCELLED: 'bg-red-500'
 };
@@ -56,12 +56,12 @@ export default function MyOrders() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 pb-24 sm:pb-28">
+    <div className="min-h-screen bg-slate-50 pb-24 sm:pb-28">
       {/* Header */}
-      <div className="bg-slate-800 p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="bg-white p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="flex items-center gap-3 mb-4">
-          <Link to="/" className="text-white text-xl">←</Link>
-          <h1 className="text-lg font-bold text-white">Đơn của tôi</h1>
+          <Link to="/" className="text-slate-800 text-xl">←</Link>
+          <h1 className="text-lg font-bold text-slate-800">Đơn của tôi</h1>
         </div>
 
         {/* Filter Tabs */}
@@ -104,12 +104,12 @@ export default function MyOrders() {
               onClick={() => navigate(`/order/${order._id}`)}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className="text-white font-bold">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-                <span className={`status-badge ${STATUS_COLORS[order.status]} text-white`}>
+                <span className="text-slate-800 font-bold">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+                <span className={`status-badge ${STATUS_COLORS[order.status]} text-slate-800`}>
                   {STATUS_LABELS[order.status]}
                 </span>
               </div>
-              <p className="text-slate-400 text-sm mb-1">📍 {order.deliveryAddress?.slice(0, 50)}...</p>
+              <p className="text-slate-500 text-sm mb-1">📍 {order.deliveryAddress?.slice(0, 50)}...</p>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-green-400 font-bold">+{order.deliveryFee?.toLocaleString()}đ</span>
                 <span className="text-slate-500 text-xs">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</span>
@@ -122,7 +122,7 @@ export default function MyOrders() {
       {/* Bottom Nav */}
       <div className="bottom-nav-safe">
         <div className="mx-auto flex max-w-xl justify-around py-3">
-          <Link to="/" className="flex flex-col items-center text-slate-400">
+          <Link to="/" className="flex flex-col items-center text-slate-500">
             <span className="text-xl">🏠</span>
             <span className="text-xs mt-1">Trang chủ</span>
           </Link>
@@ -130,13 +130,9 @@ export default function MyOrders() {
             <span className="text-xl">📋</span>
             <span className="text-xs mt-1">Đơn của tôi</span>
           </Link>
-          <Link to="/earnings" className="flex flex-col items-center text-slate-400">
+          <Link to="/earnings" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
             <span className="text-xl">💰</span>
-            <span className="text-xs mt-1">Thu nhập</span>
-          </Link>
-          <Link to="/profile" className="flex flex-col items-center text-slate-400">
-            <span className="text-xl">👤</span>
-            <span className="text-xs mt-1">Cá nhân</span>
+            <span className="text-xs mt-1 font-medium">Thu nhập</span>
           </Link>
         </div>
       </div>

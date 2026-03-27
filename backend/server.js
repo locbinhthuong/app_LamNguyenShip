@@ -12,6 +12,7 @@ const authRoutes = require('./routes/authRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const driverRoutes = require('./routes/driverRoutes');
 const revenueRoutes = require('./routes/revenueRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 const { setupSocket } = require('./sockets/index');
 
 const app = express();
@@ -53,7 +54,10 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // ==================== SECURITY ====================
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({ 
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -122,6 +126,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/drivers', driverRoutes);
 app.use('/api/revenue', revenueRoutes);
+app.use('/api/upload', uploadRoutes);
+
+// Phục vụ các File tĩnh từ thư mục /uploads
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ==================== ERROR HANDLING ====================
 app.use((err, req, res, next) => {

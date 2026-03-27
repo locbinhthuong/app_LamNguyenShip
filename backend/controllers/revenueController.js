@@ -15,6 +15,7 @@ const revenueController = {
       startOfWeek.setDate(today.getDate() + diffToMonday);
 
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
 
       // 1. Lấy tất cả đơn hoàn thành (Có doanh thu thực)
       const completedOrders = await Order.find({ status: 'COMPLETED' })
@@ -39,7 +40,7 @@ const revenueController = {
         if (date >= startOfWeek) weeklyRevenue += fee;
         if (date >= startOfMonth) monthlyRevenue += fee;
 
-        // Quản lý Công Nợ Tài Xế (Mảng)
+        // Quản lý Công Nợ Tài Xế (Mảng) theo ngày
         if (order.assignedTo) {
           const driverId = order.assignedTo._id.toString();
           if (!driverDebts[driverId]) {
@@ -47,14 +48,37 @@ const revenueController = {
               driverId: driverId,
               name: order.assignedTo.name,
               phone: order.assignedTo.phone,
-              totalOrders: 0,
-              totalFee: 0,
-              debt: 0
+              totalOrders: 0, totalFee: 0,
+              todayOrders: 0, todayFee: 0,
+              weekOrders: 0, weekFee: 0,
+              monthOrders: 0, monthFee: 0,
+              yearOrders: 0, yearFee: 0,
+              debt: 0  // Đây sẽ là công nợ HÔM NAY
             };
           }
+          
+          // Tổng số đơn và tổng doanh thu mọi thời đại
           driverDebts[driverId].totalOrders += 1;
           driverDebts[driverId].totalFee += fee;
-          driverDebts[driverId].debt = driverDebts[driverId].totalFee * 0.15; // Phí nền tảng 15%
+
+          // Cập nhật các KPI con
+          if (date >= today) {
+            driverDebts[driverId].todayOrders += 1;
+            driverDebts[driverId].todayFee += fee;
+            driverDebts[driverId].debt += fee * 0.15; // Công nợ
+          }
+          if (date >= startOfWeek) {
+            driverDebts[driverId].weekOrders += 1;
+            driverDebts[driverId].weekFee += fee;
+          }
+          if (date >= startOfMonth) {
+            driverDebts[driverId].monthOrders += 1;
+            driverDebts[driverId].monthFee += fee;
+          }
+          if (date >= startOfYear) {
+            driverDebts[driverId].yearOrders += 1;
+            driverDebts[driverId].yearFee += fee;
+          }
         }
       });
 
@@ -154,25 +178,130 @@ const revenueController = {
         }
       });
 
-      const totalDebt = totalFee * 0.15; // Nợ 15% nền tảng
+      const totalDebt = dailyFee * 0.15; // Chỉ tính nợ 15% nền tảng TRONG NGÀY HÔM NAY
 
       res.status(200).json({
         success: true,
         data: {
           totalOrders: completedOrders.length,
           totalFee,
-          dailyFee,
-          weeklyFee,
-          monthlyFee,
+          dailyFee, // Trả lại key cũ dailyFee
+          weeklyFee, // Trả lại...
+          monthlyFee, 
           totalDebt,
           chartData: chartDataArray,
-          recentOrders
+          recentOrders 
         }
       });
       
     } catch (error) {
       console.error('Lỗi lấy thống kê doanh thu tài xế:', error);
       res.status(500).json({ success: false, message: 'Lỗi server khi tải doanh thu cá nhân' });
+    }
+  },
+
+  // GET /api/revenue/driver-stats/:id - Admin xem chi tiết doanh thu 1 tài xế
+  getDriverStatsAdmin: async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const startOfWeek = new Date(today);
+      const dayOfWeek = startOfWeek.getDay();
+      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      startOfWeek.setDate(today.getDate() + diffToMonday);
+
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      // Lấy các đơn hàng của driver này đã hoàn thành
+      const completedOrders = await Order.find({ 
+        assignedTo: id,
+        status: 'COMPLETED' 
+      }).sort({ createdAt: -1 });
+
+      let totalFee = 0;
+      let dailyFee = 0;
+      let weeklyFee = 0;
+      let monthlyFee = 0;
+      let dailyOrders = 0;
+      let totalOrdersCount = 0;
+
+      // Danh sách lịch sử hiển thị
+      const recentOrders = [];
+
+      // Khởi tạo mảng dữ liệu biểu đồ 7 ngày
+      const chartDataArray = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const dayMap = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+        chartDataArray.push({
+          dateObj: d,
+          dateStr: `${d.getDate()}/${d.getMonth() + 1}`,
+          label: dayMap[d.getDay()],
+          fee: 0,
+          orders: 0
+        });
+      }
+
+      completedOrders.forEach(order => {
+        const fee = order.deliveryFee || 0;
+        const dateStrFromDB = order.deliveredAt || order.updatedAt;
+        const date = new Date(dateStrFromDB);
+        
+        totalOrdersCount++;
+        totalFee += fee;
+        if (date >= today) {
+          dailyFee += fee;
+          dailyOrders++;
+        }
+        if (date >= startOfWeek) weeklyFee += fee;
+        if (date >= startOfMonth) monthlyFee += fee;
+
+        // Điền vào biểu đồ
+        for (let i = 0; i < 7; i++) {
+          const chartDate = chartDataArray[i].dateObj;
+          if (date.getDate() === chartDate.getDate() && 
+              date.getMonth() === chartDate.getMonth() && 
+              date.getFullYear() === chartDate.getFullYear()) {
+             chartDataArray[i].fee += fee;
+             chartDataArray[i].orders += 1;
+             break;
+          }
+        }
+
+        if (recentOrders.length < 20) {
+          recentOrders.push({
+            id: order._id,
+            orderCode: order.orderCode || order._id.toString().slice(-8).toUpperCase(),
+            customerName: order.customerName,
+            deliveryFee: fee,
+            date: date
+          });
+        }
+      });
+
+      const totalDebt = dailyFee * 0.15; // Nợ trong ngày
+
+      res.status(200).json({
+        success: true,
+        data: {
+          todayOrders: dailyOrders,
+          todayRevenue: dailyFee,
+          weeklyRevenue: weeklyFee,
+          monthlyRevenue: monthlyFee,
+          totalRevenue: totalFee,
+          totalOrders: totalOrdersCount,
+          totalDebt,
+          chartData: chartDataArray,
+          recentOrders
+        }
+      });
+    } catch (error) {
+      console.error('Lỗi lấy thống kê doanh thu tài xế (Admin):', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi tải doanh thu cá nhân của tài xế' });
     }
   }
 };

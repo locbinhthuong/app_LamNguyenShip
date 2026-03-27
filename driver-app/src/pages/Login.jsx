@@ -121,20 +121,20 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-900">
+    <div className="flex min-h-screen flex-col bg-slate-50">
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 pt-[max(4rem,env(safe-area-inset-top))] text-center">
         <div className="w-20 h-20 bg-white rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-xl">
           <span className="text-4xl">🚚</span>
         </div>
-        <h1 className="text-3xl font-bold text-white">LamNguyenShip</h1>
+        <h1 className="text-3xl font-bold text-slate-800">LamNguyenShip</h1>
         <p className="text-blue-200 mt-2">Ứng dụng dành cho Tài Xế</p>
       </div>
 
       {/* Form */}
       <div className="-mt-6 flex-1 p-4 pb-8 sm:p-6">
-        <div className="mx-auto max-w-md rounded-3xl border border-slate-700 bg-slate-800 p-6 shadow-2xl">
-          <h2 className="text-xl font-bold text-white mb-6 text-center">Đăng Nhập</h2>
+        <div className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <h2 className="text-xl font-bold text-slate-800 mb-6 text-center">Đăng Nhập</h2>
 
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-xl mb-4 text-sm">
@@ -199,7 +199,7 @@ export default function Login() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
                 >
                   {showPassword ? '👁️' : '👁️‍🗨️'}
                 </button>

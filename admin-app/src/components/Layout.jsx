@@ -1,11 +1,37 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { io } from 'socket.io-client';
+import { API_BASE_URL } from '../services/api';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notification, setNotification] = useState(null);
+
+  // Xử lý Global Notification Socket
+  useEffect(() => {
+    const token = localStorage.getItem('admin_token');
+    if (!token) return;
+
+    const socket = io(API_BASE_URL || window.location.origin, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('order_updated', (order) => {
+      if (order.status === 'PENDING' && order.cancelReason) {
+        setNotification({
+          message: `🚫 Tài xế vừa từ chối đơn hàng #${order.orderCode || order._id.slice(-8).toUpperCase()}`,
+          reason: order.cancelReason
+        });
+        setTimeout(() => setNotification(null), 10000);
+      }
+    });
+
+    return () => socket.disconnect();
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? 'hidden' : '';
@@ -24,22 +50,36 @@ export default function Layout() {
 
   const navClass = ({ isActive }) =>
     `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all ${isActive
-      ? 'bg-orange-500/20 text-orange-400'
-      : 'text-gray-300 hover:bg-gray-700 hover:text-orange-300'
+      ? 'bg-blue-600/20 text-blue-600'
+      : 'text-slate-600 hover:bg-blue-50 hover:bg-blue-100 hover:text-blue-500'
     }`;
 
   const NAV_ITEMS = [
     { to: '/',         end: true,  icon: '📊', label: 'Dashboard' },
     { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
-    { to: '/orders/create',        icon: '➕', label: 'Tạo đơn hàng' },
     { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
     { to: '/revenue',              icon: '💰', label: 'Doanh thu' },
     { to: '/drivers',              icon: '🚗', label: 'Tài xế' },
-    { to: '/drivers/create',       icon: '👤', label: 'Thêm tài xế' },
   ];
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-gray-900">
+    <div className="flex min-h-screen overflow-x-hidden bg-slate-50">
+
+      {/* GLOBAL TOAST POPUP */}
+      {notification && (
+        <div className="fixed top-4 right-4 z-[9999] max-w-[90vw] sm:max-w-sm rounded-xl border border-red-500/30 bg-white p-4 shadow-2xl animate-bounce">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div className="flex-1">
+              <p className="font-bold text-slate-800 text-sm mb-1">{notification.message}</p>
+              <p className="text-red-400 text-xs font-medium bg-red-500/10 px-2 py-1 rounded inline-block whitespace-normal break-words break-all">
+                Lý do: {notification.reason}
+              </p>
+            </div>
+            <button onClick={() => setNotification(null)} className="text-slate-500 hover:text-slate-800 shrink-0">✖</button>
+          </div>
+        </div>
+      )}
 
       {sidebarOpen && (
         <button
@@ -52,15 +92,15 @@ export default function Layout() {
       )}
 
       <aside
-        className="fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col bg-gray-800 shadow-2xl"
+        className="fixed inset-y-0 left-0 z-50 flex w-72 shrink-0 flex-col bg-white shadow-2xl"
         style={{
           transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
           transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
         }}
       >
-        <div className="border-b border-gray-700 p-5">
-          <h1 className="text-lg font-bold text-orange-500">🚚 LamNguyenShip</h1>
-          <p className="mt-0.5 text-xs text-gray-400">Quản trị hệ thống</p>
+        <div className="border-b border-slate-200 p-5">
+          <h1 className="text-lg font-bold text-blue-600">🚚 LamNguyenShip</h1>
+          <p className="mt-0.5 text-xs text-slate-500">Quản trị hệ thống</p>
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-4">
@@ -78,14 +118,14 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="border-t border-gray-700 p-4">
+        <div className="border-t border-slate-200 p-4">
           <div className="mb-3 flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500 font-bold text-white">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-600 font-bold text-white">
               {admin?.name?.[0]?.toUpperCase() || 'A'}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-white">{admin?.name || 'Admin'}</p>
-              <p className="truncate text-xs text-gray-400">{admin?.role || 'Quản trị'}</p>
+              <p className="truncate text-sm font-medium text-slate-800">{admin?.name || 'Admin'}</p>
+              <p className="truncate text-xs text-slate-500">{admin?.role || 'Quản trị'}</p>
             </div>
           </div>
           <button
@@ -99,18 +139,18 @@ export default function Layout() {
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-gray-700 bg-gray-800 px-4 shadow-sm">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b border-slate-200 bg-white px-4 shadow-sm">
           <button
             type="button"
             aria-label="Mở menu"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white transition-colors hover:bg-gray-700 active:bg-gray-600"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-800 transition-colors hover:bg-blue-50 hover:bg-blue-100 active:bg-gray-600"
             onClick={() => setSidebarOpen(true)}
           >
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="truncate text-sm font-bold text-orange-400">🚚 LamNguyenShip</span>
+          <span className="truncate text-sm font-bold text-blue-600">🚚 LamNguyenShip</span>
         </header>
 
         <main className="min-w-0 flex-1 overflow-auto">

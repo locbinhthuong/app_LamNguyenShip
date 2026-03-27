@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const setupSocket = (io) => {
   // Middleware: Authenticate socket connections
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
 
     if (!token) {
@@ -11,6 +11,16 @@ const setupSocket = (io) => {
 
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Kiểm tra Single Session cho Driver
+      if (decoded.role === 'driver') {
+        const Driver = require('../models/Driver');
+        const driver = await Driver.findById(decoded.id);
+        if (driver && driver.sessionToken && driver.sessionToken !== token) {
+          return next(new Error('Phiên đăng nhập không hợp lệ'));
+        }
+      }
+
       socket.user = decoded;
       next();
     } catch (error) {
@@ -101,6 +111,10 @@ const emitOrderCancelled = (io, order) => {
   io.to('admins').emit('order_cancelled', order);
 };
 
+const emitDriverStatusChange = (io, driverData) => {
+  io.to('admins').emit('driver_status_change', driverData);
+};
+
 const emitToDriver = (io, driverId, event, data) => {
   io.to(`driver_${driverId}`).emit(event, data);
 };
@@ -113,5 +127,6 @@ module.exports = {
   emitOrderDelivering,
   emitOrderCompleted,
   emitOrderCancelled,
+  emitDriverStatusChange,
   emitToDriver
 };

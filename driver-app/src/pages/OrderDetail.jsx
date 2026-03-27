@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getOrderById, acceptOrder, pickedUpOrder, deliveringOrder, completeOrder, cancelOrder } from '../services/api';
+import { getOrderById, acceptOrder, pickedUpOrder, completeOrder, cancelOrder } from '../services/api';
 
-const STATUS_STEPS = ['ACCEPTED', 'PICKED_UP', 'DELIVERING', 'COMPLETED'];
+const STATUS_STEPS = ['ACCEPTED', 'PICKED_UP', 'COMPLETED'];
 const STATUS_LABELS = {
   PENDING: 'Chờ nhận',
   ACCEPTED: 'Đã nhận',
@@ -49,9 +49,7 @@ export default function OrderDetail() {
       const actions = {
         accept: acceptOrder,
         pickup: pickedUpOrder,
-        deliver: deliveringOrder,
-        complete: completeOrder,
-        cancel: cancelOrder
+        complete: completeOrder
       };
       await actions[action](id);
       showNotification('Cập nhật thành công!');
@@ -70,8 +68,7 @@ export default function OrderDetail() {
     }
     if (order.assignedTo?._id === driver?._id || order.assignedTo === driver?._id) {
       if (order.status === 'ACCEPTED') return <button onClick={() => handleAction('pickup')} disabled={actionLoading} className="btn-warning">📦 Đã lấy hàng</button>;
-      if (order.status === 'PICKED_UP') return <button onClick={() => handleAction('deliver')} disabled={actionLoading} className="btn-primary">🚚 Bắt đầu giao</button>;
-      if (order.status === 'DELIVERING') return <button onClick={() => handleAction('complete')} disabled={actionLoading} className="btn-success">✅ Hoàn thành giao hàng</button>;
+      if (order.status === 'PICKED_UP') return <button onClick={() => handleAction('complete')} disabled={actionLoading} className="btn-success">✅ Hoàn thành giao hàng</button>;
     }
     return null;
   };
@@ -79,7 +76,7 @@ export default function OrderDetail() {
   const currentStep = STATUS_STEPS.indexOf(order?.status);
 
   if (loading) return (
-    <div className="flex justify-center items-center min-h-screen bg-slate-900">
+    <div className="flex justify-center items-center min-h-screen bg-slate-50">
       <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
     </div>
   );
@@ -87,7 +84,7 @@ export default function OrderDetail() {
   if (!order) return null;
 
   return (
-    <div className="min-h-screen bg-slate-900 pb-36 sm:pb-40">
+    <div className="min-h-screen bg-slate-50 pb-36 sm:pb-40">
       {showToast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
           showToast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
@@ -97,14 +94,14 @@ export default function OrderDetail() {
       )}
 
       {/* Header */}
-      <div className="bg-slate-800 p-4 pt-[max(2rem,env(safe-area-inset-top))]">
+      <div className="bg-white p-4 pt-[max(2rem,env(safe-area-inset-top))]">
         <div className="mb-4 flex flex-wrap items-start gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="shrink-0 text-xl text-white">
+          <button type="button" onClick={() => navigate(-1)} className="shrink-0 text-xl text-slate-800">
             ←
           </button>
           <div className="min-w-0 flex-1">
-            <h1 className="text-base font-bold text-white sm:text-lg">Chi tiết đơn hàng</h1>
-            <p className="truncate text-sm text-slate-400">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
+            <h1 className="text-base font-bold text-slate-800 sm:text-lg">Chi tiết đơn hàng</h1>
+            <p className="truncate text-sm text-slate-500">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
           </div>
           <span className="shrink-0 rounded-full bg-blue-500 px-2 py-1 text-xs font-bold text-white sm:px-3 sm:text-sm">
             {STATUS_LABELS[order.status] || order.status}
@@ -127,27 +124,27 @@ export default function OrderDetail() {
           <div className="flex items-start gap-3 mb-4">
             <span className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 font-bold">📦</span>
             <div className="flex-1">
-              <p className="text-xs text-slate-400 mb-1">LẤY HÀNG</p>
-              <p className="text-white font-medium">{order.pickupAddress}</p>
+              <p className="text-xs text-slate-500 mb-1">LẤY HÀNG</p>
+              <p className="text-slate-800 font-medium">{order.pickupAddress}</p>
             </div>
           </div>
           <div className="border-l-2 border-dashed border-slate-600 ml-4 h-4 mb-4" />
           <div className="flex items-start gap-3">
             <span className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 font-bold">🏁</span>
             <div className="flex-1">
-              <p className="text-xs text-slate-400 mb-1">GIAO HÀNG</p>
-              <p className="text-white font-medium">{order.deliveryAddress}</p>
+              <p className="text-xs text-slate-500 mb-1">GIAO HÀNG</p>
+              <p className="text-slate-800 font-medium">{order.deliveryAddress}</p>
             </div>
           </div>
         </div>
 
         {/* Customer */}
         <div className="card">
-          <p className="text-xs text-slate-400 mb-2">THÔNG TIN KHÁCH HÀNG</p>
+          <p className="text-xs text-slate-500 mb-2">THÔNG TIN KHÁCH HÀNG</p>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <p className="font-medium text-white">{order.customerName}</p>
-              <p className="text-sm text-slate-400">{order.customerPhone}</p>
+              <p className="font-medium text-slate-800">{order.customerName}</p>
+              <p className="text-sm text-slate-500">{order.customerPhone}</p>
             </div>
             <a
               href={`tel:${order.customerPhone}`}
@@ -160,12 +157,12 @@ export default function OrderDetail() {
 
         {/* Order Info */}
         <div className="card">
-          <p className="text-xs text-slate-400 mb-2">THÔNG TIN ĐƠN HÀNG</p>
+          <p className="text-xs text-slate-500 mb-2">THÔNG TIN ĐƠN HÀNG</p>
           {order.items?.length > 0 && (
             <div className="mb-3">
-              <p className="text-slate-400 text-xs mb-1">Hàng hóa:</p>
+              <p className="text-slate-500 text-xs mb-1">Hàng hóa:</p>
               {order.items.map((item, i) => (
-                <p key={i} className="text-white text-sm">• {item}</p>
+                <p key={i} className="text-slate-800 text-sm">• {item}</p>
               ))}
             </div>
           )}
@@ -176,12 +173,12 @@ export default function OrderDetail() {
           )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="bg-slate-700 rounded-xl p-3">
-              <p className="text-slate-400 text-xs">Phí giao hàng</p>
+              <p className="text-slate-500 text-xs">Phí giao hàng</p>
               <p className="text-green-400 font-bold text-lg">{order.deliveryFee?.toLocaleString()}đ</p>
             </div>
             <div className="bg-slate-700 rounded-xl p-3">
-              <p className="text-slate-400 text-xs">Thu hộ (COD)</p>
-              <p className="text-orange-400 font-bold text-lg">{order.codAmount?.toLocaleString()}đ</p>
+              <p className="text-slate-500 text-xs">Thu hộ (COD)</p>
+              <p className="text-blue-600 font-bold text-lg">{order.codAmount?.toLocaleString()}đ</p>
             </div>
           </div>
         </div>
@@ -189,12 +186,12 @@ export default function OrderDetail() {
         {/* Timeline */}
         {order.acceptedAt && (
           <div className="card">
-            <p className="text-xs text-slate-400 mb-3">TIMELINE</p>
+            <p className="text-xs text-slate-500 mb-3">TIMELINE</p>
             <div className="space-y-2">
               <div className="flex gap-3">
                 <span className="text-green-400">✓</span>
                 <div>
-                  <p className="text-white text-sm">Nhận đơn</p>
+                  <p className="text-slate-800 text-sm">Nhận đơn</p>
                   <p className="text-slate-500 text-xs">{new Date(order.acceptedAt).toLocaleString('vi-VN')}</p>
                 </div>
               </div>
@@ -202,7 +199,7 @@ export default function OrderDetail() {
                 <div className="flex gap-3">
                   <span className="text-yellow-400">✓</span>
                   <div>
-                    <p className="text-white text-sm">Lấy hàng</p>
+                    <p className="text-slate-800 text-sm">Lấy hàng</p>
                     <p className="text-slate-500 text-xs">{new Date(order.pickedUpAt).toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
@@ -211,7 +208,7 @@ export default function OrderDetail() {
                 <div className="flex gap-3">
                   <span className="text-blue-400">✓</span>
                   <div>
-                    <p className="text-white text-sm">Giao hàng</p>
+                    <p className="text-slate-800 text-sm">Giao hàng</p>
                     <p className="text-slate-500 text-xs">{new Date(order.deliveredAt).toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
@@ -221,15 +218,9 @@ export default function OrderDetail() {
         )}
       </div>
 
-      {/* Bottom Action */}
       <div className="bottom-nav-safe p-4">
         <div className="mx-auto max-w-xl space-y-2">
           {getActionButton()}
-          {order.status === 'ACCEPTED' || order.status === 'PICKED_UP' || order.status === 'DELIVERING' ? (
-            <button type="button" onClick={() => handleAction('cancel')} disabled={actionLoading} className="btn-danger mt-2">
-              Hủy đơn
-            </button>
-          ) : null}
         </div>
       </div>
     </div>

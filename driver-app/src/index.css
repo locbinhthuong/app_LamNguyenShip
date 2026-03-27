@@ -8,7 +8,7 @@
   }
   
   body {
-    @apply min-h-screen w-full bg-slate-900 font-sans antialiased;
+    @apply min-h-screen w-full bg-slate-50 font-sans antialiased;
   }
   
   input, textarea, select {
@@ -34,11 +34,11 @@
   }
   
   .input-field {
-    @apply w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+    @apply w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
   }
   
   .card {
-    @apply bg-slate-800 rounded-2xl p-4 border border-slate-700;
+    @apply bg-white rounded-2xl p-4 border border-slate-200;
   }
   
   .status-badge {
@@ -46,7 +46,7 @@
   }
 
   .bottom-nav-safe {
-    @apply fixed bottom-0 left-0 right-0 z-30 border-t border-slate-700 bg-slate-800;
+    @apply fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white;
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
   }
 }

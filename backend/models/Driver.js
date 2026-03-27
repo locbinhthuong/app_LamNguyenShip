@@ -61,6 +61,10 @@ const driverSchema = new mongoose.Schema({
   lastActive: {
     type: Date,
     default: null
+  },
+  sessionToken: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true,

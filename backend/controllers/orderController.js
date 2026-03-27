@@ -190,6 +190,68 @@ const orderController = {
     }
   },
 
+  // PUT /api/orders/:id - Sửa thông tin đơn hàng / Thu hồi đơn (Admin)
+  updateOrder: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { customerName, customerPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, status } = req.body;
+
+      const orderToUpdate = await Order.findById(id);
+      if (!orderToUpdate) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+      }
+
+      // Xử lý nhánh "Thu hồi về Lưu Nháp (DRAFT)" (Gỡ bỏ tài xế, ẩn khỏi chợ)
+      if (status === 'DRAFT' && orderToUpdate.status !== 'DRAFT') {
+        orderToUpdate.status = 'DRAFT';
+        orderToUpdate.assignedTo = null;
+        orderToUpdate.acceptedAt = undefined;
+        orderToUpdate.pickedUpAt = undefined;
+        
+        // Tước đơn khỏi map của Admin và xóa trên App của tài xế (như hủy nhưng thực ra là thu hồi ẩn)
+        if (req.io) {
+          req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn
+          const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
+          req.io.to('admins').emit('order_updated', payload); // Cập nhật map admin
+        }
+      }
+
+      // Xử lý nhánh "Đưa lên Đơn Treo" (Từ DRAFT lên PENDING)
+      if (status === 'PENDING' && orderToUpdate.status === 'DRAFT') {
+        orderToUpdate.status = 'PENDING';
+        
+        // Phát socket đăng đơn lại lên chợ cho tài xế
+        if (req.io) {
+          const { emitNewOrder } = require('../sockets/index');
+          const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
+          emitNewOrder(req.io, payload); // Báo có đơn PENDING mới cho tất cả
+          req.io.to('admins').emit('order_updated', payload); // Cập nhật map admin
+        }
+      }
+
+      // Cập nhật thông tin text
+      if (customerName) orderToUpdate.customerName = customerName;
+      if (customerPhone) orderToUpdate.customerPhone = customerPhone;
+      if (pickupAddress) orderToUpdate.pickupAddress = pickupAddress;
+      if (deliveryAddress) orderToUpdate.deliveryAddress = deliveryAddress;
+      if (items !== undefined) orderToUpdate.items = items;
+      if (note !== undefined) orderToUpdate.note = note;
+      if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
+      if (deliveryFee !== undefined) orderToUpdate.deliveryFee = deliveryFee;
+
+      await orderToUpdate.save();
+
+      res.status(200).json({
+        success: true,
+        message: 'Cập nhật đơn hàng thành công',
+        data: orderToUpdate
+      });
+    } catch (error) {
+      console.error('Error updateOrder:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi sửa đơn hàng' });
+    }
+  },
+
   // POST /api/orders/:id/accept - Tài xế nhận đơn
   acceptOrder: async (req, res) => {
     try {
@@ -380,49 +442,34 @@ const orderController = {
     }
   },
 
-  // POST /api/orders/:id/cancel - Hủy đơn hàng
+  // POST /api/orders/:id/cancel - Hủy đơn hàng (Chỉ dành cho Admin)
   cancelOrder: async (req, res) => {
     try {
       const { id } = req.params;
       const { reason } = req.body;
 
-      let query = { _id: id, status: { $in: ['PENDING', 'ACCEPTED'] } };
-
-      // Nếu là driver, chỉ hủy đơn của mình
-      // Nếu là admin, hủy được mọi đơn
       if (req.driver) {
-        query.assignedTo = req.driver._id;
+        return res.status(403).json({ success: false, message: 'Tài xế không có quyền tự ý hủy đơn. Vui lòng liên hệ tổng đài.' });
       }
 
+      // VỚI ADMIN: HỦY CHẾT TRƠN ĐƠN HÀNG (CANCELLED)
       const order = await Order.findOneAndUpdate(
-        query,
+        { _id: id, status: { $in: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'] } },
         {
           status: 'CANCELLED',
           cancelledAt: new Date(),
-          cancelledBy: req.driver ? req.driver._id : req.admin._id,
-          cancelReason: reason || 'Hủy bởi ' + (req.driver ? 'tài xế' : 'admin')
+          cancelledBy: req.admin._id,
+          cancelReason: reason || 'Hủy bởi admin'
         },
         { new: true }
       );
 
       if (!order) {
-        return res.status(400).json({
-          success: false,
-          message: 'Không thể hủy đơn hàng này'
-        });
-      }
-
-      // Update driver stats if cancelled by driver
-      if (req.driver) {
-        await Driver.findByIdAndUpdate(req.driver._id, {
-          $inc: {
-            'stats.cancelledOrders': 1,
-            'stats.totalOrders': 1
-          }
-        });
+        return res.status(400).json({ success: false, message: 'Không thể hủy đơn hàng này' });
       }
 
       if (req.io) {
+        const { emitOrderCancelled } = require('../sockets/index');
         emitOrderCancelled(req.io, order);
       }
 

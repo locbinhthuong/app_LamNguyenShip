@@ -25,9 +25,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('driver_token');
-      localStorage.removeItem('driver_info');
-      window.location.href = '/login';
+      if (localStorage.getItem('driver_token')) {
+        window.dispatchEvent(new CustomEvent('api_unauthorized', { 
+          detail: { message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác hoặc phiên làm việc hết hạn!' } 
+        }));
+      } else {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -46,6 +50,23 @@ export const getDriverProfile = async () => {
 
 export const updateDriverStatus = async (isOnline, lat, lng) => {
   const response = await api.put('/api/auth/driver/status', { isOnline, lat, lng });
+  return response.data;
+};
+
+export const updateMyProfile = async (profileData) => {
+  const response = await api.put('/api/auth/driver/me', profileData);
+  return response.data;
+};
+
+export const uploadDriverAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const response = await api.post('/api/upload/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
   return response.data;
 };
 

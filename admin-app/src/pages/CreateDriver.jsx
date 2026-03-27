@@ -45,9 +45,9 @@ export default function CreateDriver() {
 
   return (
     <div className="mx-auto max-w-xl p-4 pb-8 sm:p-6">
-      <h1 className="mb-5 text-lg font-bold text-white sm:mb-6 sm:text-2xl">👤 Thêm Tài Xế Mới</h1>
+      <h1 className="mb-5 text-lg font-bold text-slate-800 sm:mb-6 sm:text-2xl">👤 Thêm Tài Xế Mới</h1>
 
-      <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 sm:p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
         {error && (
           <div className="mb-4 rounded-xl border border-red-500/50 bg-red-500/20 px-4 py-3 text-sm text-red-300">
             {error}
@@ -56,7 +56,7 @@ export default function CreateDriver() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Họ tên <span className="text-red-400">*</span></label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Họ tên <span className="text-red-400">*</span></label>
             <input
               name="name"
               value={form.name}
@@ -67,7 +67,7 @@ export default function CreateDriver() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Số điện thoại <span className="text-red-400">*</span></label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Số điện thoại <span className="text-red-400">*</span></label>
             <input
               name="phone"
               value={form.phone}
@@ -78,7 +78,7 @@ export default function CreateDriver() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Mật khẩu <span className="text-red-400">*</span></label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Mật khẩu <span className="text-red-400">*</span></label>
             <input
               name="password"
               value={form.password}
@@ -90,7 +90,7 @@ export default function CreateDriver() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Loại xe</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Loại xe</label>
             <select name="vehicleType" value={form.vehicleType} onChange={handleChange} className="input-field">
               <option value="motorcycle">🏍️ Xe máy</option>
               <option value="car">🚗 Ô tô</option>
@@ -99,7 +99,7 @@ export default function CreateDriver() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Biển số xe</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Biển số xe</label>
             <input
               name="licensePlate"
               value={form.licensePlate}

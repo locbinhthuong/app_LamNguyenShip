@@ -7,10 +7,23 @@ import { getDrivers, getOrders } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
-// Hàm tạo Icon thuần (Tránh lỗi CJS/ESM)
-const getMotorbikeIcon = () => {
-    return L.icon({
-        iconUrl: 'https://cdn-icons-png.flaticon.com/512/3202/3202926.png',
+// Hàm tạo Icon thuần có Badge số dư động
+const getMotorbikeIcon = (activeOrderCount, status) => {
+    let badgeHtml = '';
+    if (activeOrderCount > 0) {
+        let bgColor = '#3b82f6'; // Xanh biển mặc định (Đang giao)
+        if (status === 'ACCEPTED') bgColor = '#f97316'; // Cam (Đang lấy)
+        badgeHtml = `<div style="position: absolute; top: -8px; right: -12px; background: ${bgColor}; color: white; border-radius: 12px; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1000;">${activeOrderCount} ĐƠN</div>`;
+    }
+
+    return L.divIcon({
+        className: 'custom-driver-marker',
+        html: `
+            <div style="position: relative; width: 40px; height: 40px;">
+                <img src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" style="width: 100%; height: 100%; drop-shadow(0 4px 6px rgba(0,0,0,0.3))" />
+                ${badgeHtml}
+            </div>
+        `,
         iconSize: [40, 40],
         iconAnchor: [20, 40],
         popupAnchor: [0, -40]
@@ -37,6 +50,14 @@ export default function DriverMap() {
     const { drivers, orders } = dataRef.current;
     
     setOnlineCount(Object.keys(drivers).length);
+
+    // Xóa marker nếu driver đã offline hoặc bị mất khỏi danh sách
+    Object.keys(markersRef.current).forEach(id => {
+      if (!drivers[id]) {
+        mapInstance.current.removeLayer(markersRef.current[id]);
+        delete markersRef.current[id];
+      }
+    });
 
     Object.values(drivers).forEach(driver => {
       const activeJobs = orders[driver.id] || [];
@@ -82,13 +103,17 @@ export default function DriverMap() {
         </div>
       `;
 
+      const firstOrderStatus = activeJobs.length > 0 ? activeJobs[0].status : null;
+      const currentIcon = getMotorbikeIcon(activeJobs.length, firstOrderStatus);
+
       if (markersRef.current[driver.id]) {
-        // Đã có marker, chỉ cần dời vị trí và cập nhật popup
+        // Đã có marker, chỉ cần dời vị trí và cập nhật popup và icon tĩnh
         markersRef.current[driver.id].setLatLng(latlng);
+        markersRef.current[driver.id].setIcon(currentIcon);
         markersRef.current[driver.id].getPopup().setContent(popupHtml);
       } else {
         // Tạo marker mới
-        const marker = L.marker(latlng, { icon: getMotorbikeIcon() }).addTo(mapInstance.current);
+        const marker = L.marker(latlng, { icon: currentIcon }).addTo(mapInstance.current);
         marker.bindPopup(popupHtml);
         markersRef.current[driver.id] = marker;
       }
@@ -148,8 +173,8 @@ export default function DriverMap() {
     // 1. Khởi tạo bản đồ thuần Túy
     if (mapRef.current && !mapInstance.current) {
         mapInstance.current = L.map(mapRef.current).setView([10.762622, 106.660172], 13); // TPHCM Mặc định
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; OpenStreetMap contributors'
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+            attribution: '&copy; Google Maps'
         }).addTo(mapInstance.current);
     }
 
@@ -180,12 +205,33 @@ export default function DriverMap() {
       updateMapMarkers();
     });
 
+    // Lắng nghe thay đổi trạng thái Online/Offline để gỡ/thêm marker
+    socket.on('driver_status_change', (data) => {
+      const _id = data.driverId;
+      if (!data.isOnline) {
+        delete dataRef.current.drivers[_id];
+      } else if (data.lat && data.lng) {
+        const existing = dataRef.current.drivers[_id] || {};
+        dataRef.current.drivers[_id] = {
+            ...existing,
+            id: _id,
+            lat: data.lat,
+            lng: data.lng,
+            updatedAt: data.updatedAt
+        };
+      }
+      updateMapMarkers();
+    });
+
     // Lắng nghe thay đổi trạng thái đơn
     const reloadOrders = () => loadInitialData();
     socket.on('order_accepted', reloadOrders);
     socket.on('order_picked_up', reloadOrders);
     socket.on('order_delivering', reloadOrders);
     socket.on('order_completed', reloadOrders);
+    socket.on('order_cancelled', reloadOrders);
+    socket.on('order_updated', reloadOrders);
+    socket.on('new_order', reloadOrders);
 
     return () => {
       socket.disconnect();
@@ -200,17 +246,17 @@ export default function DriverMap() {
   return (
     <div className="flex flex-col h-full w-full p-4 sm:p-6" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-white sm:text-2xl">🗺️ Bản Đồ Theo Dõi Tài Xế</h1>
-        <div className="rounded-lg bg-gray-800 px-4 py-2 text-sm font-bold text-green-400">
+        <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">🗺️ Bản Đồ Theo Dõi Tài Xế</h1>
+        <div className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-400">
           🟢 Đang gửi vị trí: {onlineCount}
         </div>
       </div>
       
-      <div className="relative z-0 flex-1 w-full overflow-hidden rounded-2xl border-4 border-gray-700 shadow-xl" style={{ minHeight: '500px' }}>
+      <div className="relative z-0 flex-1 w-full overflow-hidden rounded-2xl border-4 border-slate-200 shadow-xl" style={{ minHeight: '500px' }}>
         {/* Vùng chứa bản đồ thuần */}
         {loading && (
-          <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-gray-800">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent" />
+          <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-white">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
           </div>
         )}
         <div ref={mapRef} style={{ height: '100%', width: '100%' }}></div>

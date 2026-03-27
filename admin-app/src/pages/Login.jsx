@@ -91,18 +91,18 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-900 p-4 py-8 sm:py-12">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-orange-500 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
             <span className="text-3xl">🚚</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">LamNguyenShip</h1>
-          <p className="text-gray-400 mt-1">Quản trị hệ thống</p>
+          <h1 className="text-2xl font-bold text-slate-800">LamNguyenShip</h1>
+          <p className="text-slate-500 mt-1">Quản trị hệ thống</p>
         </div>
 
         <div className="card">
-          <h2 className="text-lg font-bold text-white mb-6">Đăng nhập Admin</h2>
+          <h2 className="text-lg font-bold text-slate-800 mb-6">Đăng nhập Admin</h2>
 
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-xl mb-4 text-sm">
@@ -142,11 +142,11 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-2">Số điện thoại</label>
+              <label className="block text-slate-600 text-sm font-medium mb-2">Số điện thoại</label>
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0909123456" className="input-field" />
             </div>
             <div>
-              <label className="block text-gray-300 text-sm font-medium mb-2">Mật khẩu</label>
+              <label className="block text-slate-600 text-sm font-medium mb-2">Mật khẩu</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="input-field" />
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full">
@@ -155,7 +155,7 @@ export default function Login() {
           </form>
         </div>
 
-        <div className="text-center mt-6 text-gray-500 text-sm">
+        <div className="text-center mt-6 text-slate-500 text-sm">
           <p>Tài khoản demo: 0909123456 / admin123</p>
         </div>
       </div>

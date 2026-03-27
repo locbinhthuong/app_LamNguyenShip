@@ -1,13 +1,15 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import OrderDetail from './pages/OrderDetail';
 import MyOrders from './pages/MyOrders';
-import Profile from './pages/Profile';
 import Earnings from './pages/Earnings';
+import AlertModal from './components/AlertModal';
+
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 const PrivateRoute = ({ children }) => {
   const { driver, loading } = useAuth();
@@ -19,62 +21,65 @@ const PrivateRoute = ({ children }) => {
   return driver ? children : <Navigate to="/login" />;
 };
 
-export default function App() {
-  const { driver } = useAuth();
+function AppContent() {
+  const { driver, logout } = useAuth();
   const socketRef = useRef(null);
-  const watchId = useRef(null);
-  const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
+  const navigate = useNavigate();
+  const [logoutAlert, setLogoutAlert] = useState(null);
 
   useEffect(() => {
-    // Chỉ bật theo dõi vị trí nếu đã có thông tin tài xế và đang ONLINE
-    if (driver && driver.isOnline) {
-      const token = localStorage.getItem('driver_token');
+    // 1) Lắng nghe sự kiện từ axios interceptor
+    const handleUnauthorized = (e) => {
+      setLogoutAlert(e.detail?.message || 'Phiên đăng nhập không hợp lệ.');
+    };
+    window.addEventListener('api_unauthorized', handleUnauthorized);
 
-      // 1. Kết nối với Server Socket
-      socketRef.current = io(API_BASE_URL, {
-        auth: { token },
-        transports: ['websocket', 'polling']
+    return () => window.removeEventListener('api_unauthorized', handleUnauthorized);
+  }, []);
+
+  useEffect(() => {
+    if (driver) {
+      socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
+      socketRef.current.emit('driver_join', driver._id);
+
+      socketRef.current.on('force_logout', (data) => {
+        setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');
       });
 
-      socketRef.current.on('connect', () => console.log('✅ Driver Socket Connected!'));
-
-      // 2. Lắng nghe GPS liên tục
-      if (navigator.geolocation) {
-        watchId.current = navigator.geolocation.watchPosition(
-          (pos) => {
-            const { latitude: lat, longitude: lng } = pos.coords;
-            if (socketRef.current?.connected) {
-              socketRef.current.emit('update_location', { lat, lng });
-            }
-          },
-          (err) => console.warn('Lỗi định vị:', err.message),
-          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 } // Realtime accuracy
-        );
-      }
+      return () => {
+        if (socketRef.current) socketRef.current.disconnect();
+      };
     }
+  }, [driver]);
 
-    // Dọn dẹp: Khi tài xế tắt Online hoặc tắt App
-    return () => {
-      if (watchId.current) {
-        navigator.geolocation.clearWatch(watchId.current);
-        watchId.current = null;
-      }
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
-  }, [driver?.isOnline, driver?._id]); // Chạy lại khi trạng thái isOnline thay đổi
+  const handleForceLogoutClose = () => {
+    setLogoutAlert(null);
+    logout();
+    navigate('/login');
+  };
 
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-      <Route path="/order/:id" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
-      <Route path="/my-orders" element={<PrivateRoute><MyOrders /></PrivateRoute>} />
-      <Route path="/earnings" element={<PrivateRoute><Earnings /></PrivateRoute>} />
-      <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/login" element={driver ? <Navigate to="/" /> : <Login />} />
+        <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
+        <Route path="/order/:id" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
+        <Route path="/my-orders" element={<PrivateRoute><MyOrders /></PrivateRoute>} />
+        <Route path="/earnings" element={<PrivateRoute><Earnings /></PrivateRoute>} />
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+
+      <AlertModal 
+        isOpen={!!logoutAlert}
+        title="Đăng xuất bắt buộc"
+        message={logoutAlert}
+        onConfirm={handleForceLogoutClose}
+        isError={true}
+      />
+    </>
   );
+}
+
+export default function App() {
+  return <AppContent />;
 }

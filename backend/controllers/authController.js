@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const Driver = require('../models/Driver');
 const Admin = require('../models/Admin');
+const { emitDriverStatusChange } = require('../sockets/index');
 
 // Helper: Lấy thông tin user từ Zalo OAuth code
 const exchangeZaloCode = async (code) => {
@@ -86,6 +87,9 @@ const authController = {
         { expiresIn: '30d' }
       );
 
+      driver.sessionToken = token;
+      await driver.save();
+
       res.status(201).json({
         success: true,
         message: 'Đăng ký tài xế thành công',
@@ -144,16 +148,24 @@ const authController = {
         });
       }
 
-      // Update last active
-      driver.lastActive = new Date();
-      await driver.save();
-
       // Generate token
       const token = jwt.sign(
         { id: driver._id, role: 'driver', phone: driver.phone },
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
       );
+
+      // Bắn tia kích văng người dùng CŨ trước khi cấp vé cho người sửa MỚI
+      if (req.io) {
+        req.io.to(`driver_${driver._id}`).emit('force_logout', { 
+          message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!' 
+        });
+      }
+
+      // Update sessionToken & last active
+      driver.sessionToken = token;
+      driver.lastActive = new Date();
+      await driver.save();
 
       res.status(200).json({
         success: true,
@@ -170,7 +182,8 @@ const authController = {
             driverCode: driver.driverCode,
             stats: driver.stats,
             isOnline: driver.isOnline,
-            completionRate: driver.completionRate
+            completionRate: driver.completionRate,
+            avatar: driver.avatar
           }
         }
       });
@@ -205,6 +218,39 @@ const authController = {
     }
   },
 
+  // PUT /api/auth/driver/me - Cập nhật thông tin tài xế
+  updateOwnProfile: async (req, res) => {
+    try {
+      const { name, vehicleType, licensePlate, avatar } = req.body;
+      const updateData = {};
+      if (name) updateData.name = name;
+      if (vehicleType) updateData.vehicleType = vehicleType;
+      if (licensePlate !== undefined) updateData.licensePlate = licensePlate;
+      if (avatar !== undefined) updateData.avatar = avatar;
+
+      const driver = await Driver.findByIdAndUpdate(
+        req.driver._id,
+        updateData,
+        { new: true, runValidators: true }
+      ).select('-password');
+
+      res.status(200).json({
+        success: true,
+        message: 'Cập nhật thông tin thành công',
+        data: {
+          ...driver.toJSON(),
+          completionRate: driver.completionRate
+        }
+      });
+    } catch (error) {
+      console.error('Error updateOwnProfile:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi cập nhật thông tin'
+      });
+    }
+  },
+
   // PUT /api/auth/driver/status - Cập nhật trạng thái online/offline
   updateDriverStatus: async (req, res) => {
     try {
@@ -227,6 +273,16 @@ const authController = {
         updateData,
         { new: true }
       ).select('-password');
+
+      if (req.io) {
+        emitDriverStatusChange(req.io, {
+          driverId: driver._id,
+          isOnline: driver.isOnline,
+          lat: driver.currentLocation?.lat,
+          lng: driver.currentLocation?.lng,
+          updatedAt: driver.currentLocation?.updatedAt || new Date()
+        });
+      }
 
       res.status(200).json({
         success: true,

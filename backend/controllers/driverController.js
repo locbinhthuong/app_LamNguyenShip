@@ -123,13 +123,14 @@ const driverController = {
   updateDriver: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, vehicleType, licensePlate, status } = req.body;
+      const { name, vehicleType, licensePlate, status, avatar } = req.body;
 
       const updateData = {};
       if (name) updateData.name = name;
       if (vehicleType) updateData.vehicleType = vehicleType;
       if (licensePlate !== undefined) updateData.licensePlate = licensePlate;
       if (status) updateData.status = status;
+      if (avatar !== undefined) updateData.avatar = avatar;
 
       const driver = await Driver.findByIdAndUpdate(
         id,

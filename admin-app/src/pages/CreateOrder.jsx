@@ -54,9 +54,9 @@ export default function CreateOrder() {
 
   return (
     <div className="mx-auto max-w-3xl p-4 pb-8 sm:p-6">
-      <h1 className="mb-5 text-lg font-bold text-white sm:mb-6 sm:text-2xl">📦 Tạo Đơn hàng Mới</h1>
+      <h1 className="mb-5 text-lg font-bold text-slate-800 sm:mb-6 sm:text-2xl">📦 Tạo Đơn hàng Mới</h1>
 
-      <div className="rounded-2xl border border-gray-700 bg-gray-800 p-4 sm:p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
         {error && (
           <div className="mb-4 rounded-xl border border-red-500/50 bg-red-500/20 px-4 py-3 text-sm text-red-300">
             {error}
@@ -66,7 +66,7 @@ export default function CreateOrder() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-300">Tên khách hàng <span className="text-red-400">*</span></label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">Tên khách hàng <span className="text-red-400">*</span></label>
               <input
                 name="customerName"
                 value={form.customerName}
@@ -76,7 +76,7 @@ export default function CreateOrder() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-300">Số điện thoại <span className="text-red-400">*</span></label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">Số điện thoại <span className="text-red-400">*</span></label>
               <input
                 name="customerPhone"
                 value={form.customerPhone}
@@ -88,7 +88,7 @@ export default function CreateOrder() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Địa chỉ lấy hàng <span className="text-red-400">*</span></label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ lấy hàng <span className="text-red-400">*</span></label>
             <input
               name="pickupAddress"
               value={form.pickupAddress}
@@ -99,7 +99,7 @@ export default function CreateOrder() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Địa chỉ giao hàng <span className="text-red-400">*</span></label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ giao hàng <span className="text-red-400">*</span></label>
             <input
               name="deliveryAddress"
               value={form.deliveryAddress}
@@ -110,7 +110,7 @@ export default function CreateOrder() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Hàng hóa <span className="text-gray-500">(mỗi dòng 1 món)</span></label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Hàng hóa <span className="text-slate-500">(mỗi dòng 1 món)</span></label>
             <textarea
               name="items"
               value={form.items}
@@ -122,7 +122,7 @@ export default function CreateOrder() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-300">Ghi chú</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Ghi chú</label>
             <input
               name="note"
               value={form.note}
@@ -134,7 +134,7 @@ export default function CreateOrder() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-300">Thu hộ (COD)</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">Thu hộ (COD)</label>
               <input
                 name="codAmount"
                 value={form.codAmount}
@@ -145,7 +145,7 @@ export default function CreateOrder() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-300">Phí giao hàng</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">Phí giao hàng</label>
               <input
                 name="deliveryFee"
                 value={form.deliveryFee}

@@ -40,7 +40,10 @@ router.post('/', verifyToken, onlyAdmin, [
   body('deliveryAddress').trim().notEmpty().withMessage('Địa chỉ giao hàng là bắt buộc')
 ], orderController.createOrder);
 
-// POST /api/orders/:id/cancel - Hủy đơn (Admin hoặc Driver)
+// PUT /api/orders/:id - Sửa thông tin đơn hàng / Thu hồi đơn (Admin)
+router.put('/:id', verifyToken, onlyAdmin, orderController.updateOrder);
+
+// POST /api/orders/:id/cancel - Hủy đơn (Admin)
 router.post('/:id/cancel', verifyToken, driverOrAdmin, orderController.cancelOrder);
 
 // DELETE /api/orders/:id - Xóa đơn hàng (Admin)

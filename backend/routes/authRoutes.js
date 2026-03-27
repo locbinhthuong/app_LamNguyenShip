@@ -22,6 +22,9 @@ router.post('/driver/login', [
 // GET /api/auth/driver/me
 router.get('/driver/me', verifyToken, onlyDriver, authController.getDriverProfile);
 
+// PUT /api/auth/driver/me
+router.put('/driver/me', verifyToken, onlyDriver, authController.updateOwnProfile);
+
 // PUT /api/auth/driver/status
 router.put('/driver/status', verifyToken, onlyDriver, authController.updateDriverStatus);
 
