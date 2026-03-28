@@ -1,7 +1,10 @@
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+if (API_URL && !API_URL.endsWith('/api')) {
+  API_URL = `${API_URL}/api`;
+}
 let socket = null;
 
 // Axios instance for HTTP requests
