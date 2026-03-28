@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const Driver = require('../models/Driver');
 const Admin = require('../models/Admin');
+const User = require('../models/User'); // Thêm model User
 
 // Verify JWT token
 const verifyToken = async (req, res, next) => {
@@ -152,9 +153,39 @@ const driverOrAdmin = async (req, res, next) => {
   next();
 };
 
+// Chỉ cho phép Khách hàng (Cá nhân hoặc Shop)
+const onlyCustomer = async (req, res, next) => {
+  if (req.user.role !== 'CUSTOMER' && req.user.role !== 'SHOP') {
+    return res.status(403).json({
+      success: false,
+      message: 'Chỉ khách hàng mới được thực hiện thao tác này'
+    });
+  }
+
+  // Load customer data
+  const customer = await User.findById(req.user.id);
+  if (!customer) {
+    return res.status(404).json({
+      success: false,
+      message: 'Tài khoản không tồn tại'
+    });
+  }
+
+  if (!customer.isActive) {
+    return res.status(403).json({
+      success: false,
+      message: 'Tài khoản đã bị khóa'
+    });
+  }
+
+  req.customer = customer;
+  next();
+};
+
 module.exports = {
   verifyToken,
   onlyDriver,
   onlyAdmin,
-  driverOrAdmin
+  driverOrAdmin,
+  onlyCustomer
 };

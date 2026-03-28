@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
-import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile } from '../services/api';
+import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl } from '../services/api';
 
 const STATUS_CONFIG = {
   ACCEPTED: { label: 'Đã nhận', color: 'bg-blue-500', textColor: 'text-blue-400' },
@@ -11,6 +11,16 @@ const STATUS_CONFIG = {
   DELIVERING: { label: 'Đang giao', color: 'bg-blue-600', textColor: 'text-blue-600' },
   COMPLETED: { label: 'Hoàn thành', color: 'bg-green-500', textColor: 'text-green-400' },
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', textColor: 'text-red-400' }
+};
+
+const getServiceBadge = (type) => {
+  switch(type) {
+    case 'DAT_XE': return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 CHỞ KHÁCH</span>;
+    case 'MUA_HO': return <span className="bg-lime-100 text-lime-700 px-2 py-0.5 rounded text-[10px] font-bold border border-lime-200">🛒 MUA HỘ</span>;
+    case 'DIEU_PHOI': return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">🛠️ KÈM THỢ</span>;
+    case 'GIAO_HANG':
+    default: return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">📦 GIAO HÀNG</span>;
+  }
 };
 
 function OrderCard({ order, onAccept, loading }) {
@@ -23,8 +33,9 @@ function OrderCard({ order, onAccept, loading }) {
   return (
     <div className="card mb-3" onClick={() => navigate(`/order/${order._id}`)}>
       <div className="flex justify-between items-start mb-3">
-        <div>
-          <span className="text-xs text-slate-500">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs text-slate-500 line-clamp-1">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+          <div>{getServiceBadge(order.serviceType)}</div>
         </div>
         <span className="text-sm font-bold text-blue-600">
           {order.codAmount?.toLocaleString()}đ COD
@@ -96,8 +107,11 @@ function ActiveOrderCard({ order, onAction, loading }) {
 
   return (
     <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-4 mb-4 shadow-xl" onClick={() => navigate(`/order/${order._id}`)}>
-      <div className="flex justify-between items-center mb-2">
-        <span className="font-bold text-slate-800">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex flex-col gap-1">
+          <span className="font-bold text-slate-800 bg-white/50 px-2 py-0.5 rounded inline-block text-xs">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+          <div className="mt-0.5">{getServiceBadge(order.serviceType)}</div>
+        </div>
         <span className={`status-badge ${config.color} text-slate-800`}>{config.label}</span>
       </div>
 
@@ -142,6 +156,110 @@ export default function Home() {
   const [logoutModal, setLogoutModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
 
+  // GPS Tracking States
+  const [gpsStatus, setGpsStatus] = useState('OFF'); // OFF | FINDING | TRACKING | ERROR
+  const watchIdRef = useRef(null);
+
+  const toggleGPS = () => {
+    if (gpsStatus !== 'OFF' || !driver?.isOnline) {
+      // Tắt GPS
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      if (gpsStatus !== 'OFF') {
+        if (window.driverSocket && window.driverSocket.connected) {
+          window.driverSocket.emit('stop_location');
+        }
+        showNotification('Đã tắt chia sẻ vị trí', 'error');
+      }
+      setGpsStatus('OFF');
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      showNotification('Thiết bị không hỗ trợ định vị GPS', 'error');
+      setGpsStatus('ERROR');
+      return;
+    }
+
+    setGpsStatus('FINDING');
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        setGpsStatus('TRACKING');
+        if (window.driverSocket && window.driverSocket.connected) {
+          window.driverSocket.emit('update_location', {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          });
+        }
+      },
+      (err) => {
+        setGpsStatus('ERROR');
+        showNotification('Cần cấp quyền Vị Trí (Location) trong Cài đặt', 'error');
+      },
+      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+    );
+  };
+
+  // Tự động quản lý Bật/Tắt định vị dựa theo trạng thái Online của Tài Xế
+  useEffect(() => {
+    // 1. Tự động bật GPS nếu Tài xế đang Online (Ví dụ: Lúc mới Load/Refresh trang)
+    if (driver?.isOnline && gpsStatus === 'OFF' && watchIdRef.current === null) {
+      if (!navigator.geolocation) {
+        setGpsStatus('ERROR');
+        return;
+      }
+      setGpsStatus('FINDING');
+
+      const handleSuccess = (pos) => {
+        setGpsStatus('TRACKING');
+        if (window.driverSocket && window.driverSocket.connected) {
+          window.driverSocket.emit('update_location', {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude
+          });
+        }
+      };
+
+      const handleError = (err) => {
+        console.error("GPS Error:", err);
+        setGpsStatus('ERROR');
+      };
+
+      // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên (khắc phục lỗi xoay hoài lúc mới load)
+      navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
+        enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
+      });
+
+      // Sau đó khởi động máy quét liên tục
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        handleSuccess,
+        handleError,
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      );
+    } 
+    // 2. Tự động tắt GPS, huỷ vệ tinh nếu chuyển sang trạng thái Offline
+    else if (!driver?.isOnline && gpsStatus !== 'OFF') {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+      setGpsStatus('OFF');
+      // Đảm bảo Máy chủ nhận được lệnh xóa cục GPS cuối cùng trên Bản đồ
+      if (window.driverSocket && window.driverSocket.connected) {
+        window.driverSocket.emit('stop_location');
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [driver?.isOnline]);
+
+  useEffect(() => {
+    return () => {
+      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+    };
+  }, []);
+
   const showNotification = (message, type = 'success') => {
     setShowToast({ message, type });
     setTimeout(() => setShowToast(null), 3000);
@@ -165,8 +283,31 @@ export default function Home() {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 10000);
-    return () => clearInterval(interval);
+    // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
+    const interval = setInterval(loadData, 30000);
+
+    // Lắng nghe Socket để cập nhật TỨC THỜI
+    const socket = window.driverSocket;
+    if (socket) {
+      socket.on('new_order', loadData);
+      socket.on('order_accepted', loadData);
+      socket.on('order_cancelled', loadData);
+      socket.on('order_picked_up', loadData);
+      socket.on('order_delivering', loadData);
+      socket.on('order_completed', loadData);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (socket) {
+        socket.off('new_order', loadData);
+        socket.off('order_accepted', loadData);
+        socket.off('order_cancelled', loadData);
+        socket.off('order_picked_up', loadData);
+        socket.off('order_delivering', loadData);
+        socket.off('order_completed', loadData);
+      }
+    };
   }, [loadData]);
 
   const handleAccept = async (orderId) => {
@@ -240,7 +381,7 @@ export default function Home() {
           >
             <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-2 border-white/50 shadow-sm relative">
               {driver?.avatar ? (
-                <img src={driver.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-xl font-bold text-blue-500">
                   {driver?.name?.charAt(0).toUpperCase() || '👤'}
@@ -256,19 +397,36 @@ export default function Home() {
               <p className="text-[10px] text-blue-200 mt-0.5">{driver?.driverCode || 'Xem hồ sơ ➔'}</p>
             </div>
           </div>
-          <div className="flex shrink-0 gap-2">
+          <div className="flex shrink-0 gap-2 items-center flex-wrap justify-end max-w-[140px]">
             <button
               type="button"
               onClick={toggleOnline}
-              className={`rounded-full px-3 py-2 text-xs font-bold transition-all sm:px-4 sm:text-sm ${
+              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all w-full sm:text-sm shadow-sm ${
                 driver?.isOnline ? 'bg-green-500 text-white' : 'bg-slate-600 text-slate-300'
               }`}
             >
               {driver?.isOnline ? '🟢 Online' : '⚫ Offline'}
             </button>
             <button
+              type="button"
+              onClick={toggleGPS}
+              disabled={!driver?.isOnline}
+              className={`rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-bold transition-all w-full flex items-center justify-center gap-1 shadow-sm ${
+                !driver?.isOnline ? 'bg-white/10 text-white/40 cursor-not-allowed' :
+                gpsStatus === 'OFF' ? 'bg-white/20 text-white hover:bg-white/30' :
+                gpsStatus === 'FINDING' ? 'bg-yellow-500 text-white animate-pulse' :
+                gpsStatus === 'TRACKING' ? 'bg-green-400 text-slate-900 border-2 border-green-200' :
+                'bg-red-500 text-white'
+              }`}
+            >
+              {gpsStatus === 'OFF' ? '📍 Bật Vị Trí' :
+               gpsStatus === 'FINDING' ? '⏳ Đang dò Vệ Tinh...' :
+               gpsStatus === 'TRACKING' ? '📡 Đang Phát GPS' :
+               '⚠️ Lỗi GPS (Thử lại)'}
+            </button>
+            <button
               onClick={() => setLogoutModal(true)}
-              className="ml-auto flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white"
+              className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
             >
               🚪
             </button>

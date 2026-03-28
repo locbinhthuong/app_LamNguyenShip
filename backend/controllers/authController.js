@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const Driver = require('../models/Driver');
 const Admin = require('../models/Admin');
+const User = require('../models/User'); // Thêm model User
 const { emitDriverStatusChange } = require('../sockets/index');
 
 // Helper: Lấy thông tin user từ Zalo OAuth code
@@ -453,6 +454,149 @@ const authController = {
       });
     } catch (error) {
       console.error('Error getAdminProfile:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server'
+      });
+    }
+  },
+
+  // ==================== CUSTOMER / SHOP ====================
+
+  // POST /api/auth/customer/register
+  registerCustomer: async (req, res) => {
+    try {
+      const { name, phone, password, role, shopName, shopAddress } = req.body;
+
+      // Check phone exists
+      const existingUser = await User.findOne({ phone });
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Số điện thoại đã được đăng ký'
+        });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const userRole = (role === 'SHOP') ? 'SHOP' : 'CUSTOMER';
+
+      // Create user
+      const user = new User({
+        name,
+        phone,
+        password: hashedPassword,
+        role: userRole,
+        shopName: userRole === 'SHOP' ? shopName : null,
+        shopAddress: userRole === 'SHOP' ? shopAddress : null
+      });
+
+      await user.save();
+
+      // Generate token
+      const token = jwt.sign(
+        { id: user._id, role: user.role, phone: user.phone },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Đăng ký thành công',
+        data: {
+          token,
+          user: {
+            id: user._id,
+            name: user.name,
+            phone: user.phone,
+            role: user.role,
+            shopName: user.shopName,
+            shopAddress: user.shopAddress
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error registerCustomer:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi đăng ký',
+        error: error.message
+      });
+    }
+  },
+
+  // POST /api/auth/customer/login
+  loginCustomer: async (req, res) => {
+    try {
+      const { phone, password } = req.body;
+
+      // Find user
+      const user = await User.findOne({ phone });
+      if (!user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Số điện thoại hoặc mật khẩu không đúng'
+        });
+      }
+
+      // Check password
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: 'Số điện thoại hoặc mật khẩu không đúng'
+        });
+      }
+
+      if (!user.isActive) {
+        return res.status(403).json({
+          success: false,
+          message: 'Tài khoản đã bị vô hiệu hóa'
+        });
+      }
+
+      // Generate token
+      const token = jwt.sign(
+        { id: user._id, role: user.role, phone: user.phone },
+        process.env.JWT_SECRET,
+        { expiresIn: '30d' }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Đăng nhập thành công',
+        data: {
+          token,
+          user: {
+            id: user._id,
+            name: user.name,
+            phone: user.phone,
+            role: user.role,
+            shopName: user.shopName,
+            shopAddress: user.shopAddress
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Error loginCustomer:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi đăng nhập',
+        error: error.message
+      });
+    }
+  },
+
+  // GET /api/auth/customer/me
+  getCustomerProfile: async (req, res) => {
+    try {
+      res.status(200).json({
+        success: true,
+        data: req.customer
+      });
+    } catch (error) {
+      console.error('Error getCustomerProfile:', error);
       res.status(500).json({
         success: false,
         message: 'Lỗi server'

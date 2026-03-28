@@ -208,9 +208,9 @@ export default function DriverMap() {
     // Lắng nghe thay đổi trạng thái Online/Offline để gỡ/thêm marker
     socket.on('driver_status_change', (data) => {
       const _id = data.driverId;
-      if (!data.isOnline) {
+      if (!data.isOnline || !data.lat || !data.lng) {
         delete dataRef.current.drivers[_id];
-      } else if (data.lat && data.lng) {
+      } else {
         const existing = dataRef.current.drivers[_id] || {};
         dataRef.current.drivers[_id] = {
             ...existing,

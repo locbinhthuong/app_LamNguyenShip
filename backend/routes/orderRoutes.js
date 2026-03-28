@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { verifyToken, onlyDriver, onlyAdmin, driverOrAdmin } = require('../middleware/auth');
+const { verifyToken, onlyDriver, onlyAdmin, driverOrAdmin, onlyCustomer } = require('../middleware/auth');
 
 // ==================== PUBLIC (Driver - Đăng nhập rồi) ====================
 
@@ -53,5 +53,13 @@ router.delete('/:id', verifyToken, onlyAdmin, orderController.deleteOrder);
 
 // GET /api/orders/:id - Chi tiết đơn hàng (cả Driver và Admin)
 router.get('/:id', verifyToken, driverOrAdmin, orderController.getOrderById);
+
+// ==================== CUSTOMER / SHOP ====================
+
+// POST /api/orders/customer - Tạo đơn hàng (Customer/Shop)
+router.post('/customer', verifyToken, onlyCustomer, orderController.createCustomerOrder);
+
+// GET /api/orders/customer/my - Lấy đơn hàng của chính mình (Customer/Shop)
+router.get('/customer/my', verifyToken, onlyCustomer, orderController.getCustomerOrders);
 
 module.exports = router;

@@ -7,6 +7,7 @@ export default function CreateOrder() {
   const [form, setForm] = useState({
     customerName: '',
     customerPhone: '',
+    pickupPhone: '',
     pickupAddress: '',
     deliveryAddress: '',
     items: '',
@@ -36,6 +37,7 @@ export default function CreateOrder() {
       await createOrder({
         customerName: form.customerName,
         customerPhone: form.customerPhone,
+        pickupPhone: form.pickupPhone,
         pickupAddress: form.pickupAddress,
         deliveryAddress: form.deliveryAddress,
         items,
@@ -76,7 +78,7 @@ export default function CreateOrder() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">Số điện thoại <span className="text-red-400">*</span></label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">SĐT Khách Nhận (Giao đến) <span className="text-red-400">*</span></label>
               <input
                 name="customerPhone"
                 value={form.customerPhone}
@@ -87,15 +89,27 @@ export default function CreateOrder() {
             </div>
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ lấy hàng <span className="text-red-400">*</span></label>
-            <input
-              name="pickupAddress"
-              value={form.pickupAddress}
-              onChange={handleChange}
-              placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
-              className="input-field"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ lấy hàng (Shop) <span className="text-red-400">*</span></label>
+              <input
+                name="pickupAddress"
+                value={form.pickupAddress}
+                onChange={handleChange}
+                placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">SĐT Điểm lấy (Shop)</label>
+              <input
+                name="pickupPhone"
+                value={form.pickupPhone}
+                onChange={handleChange}
+                placeholder="0911222333"
+                className="input-field"
+              />
+            </div>
           </div>
 
           <div>

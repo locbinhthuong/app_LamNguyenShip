@@ -146,11 +146,12 @@ const orderController = {
         });
       }
 
-      const { customerName, customerPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, pickupCoordinates, deliveryCoordinates } = req.body;
+      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, pickupCoordinates, deliveryCoordinates } = req.body;
 
       const order = new Order({
         customerName,
         customerPhone,
+        pickupPhone: pickupPhone || '',
         pickupAddress,
         deliveryAddress,
         items: items || [],
@@ -190,11 +191,87 @@ const orderController = {
     }
   },
 
+  // POST /api/orders/customer - Tạo đơn hàng (Customer / Shop)
+  createCustomerOrder: async (req, res) => {
+    try {
+      const customerId = req.customer._id;
+      const { 
+        serviceType, customerName, customerPhone, pickupPhone,
+        pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates, 
+        items, note, packageDetails, rideDetails, codAmount
+      } = req.body;
+
+      if (!pickupCoordinates || !pickupCoordinates.lat || !pickupCoordinates.lng) {
+        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tọa độ điểm đón hợp lệ' });
+      }
+
+      if (serviceType !== 'DIEU_PHOI' && (!deliveryCoordinates || !deliveryCoordinates.lat || !deliveryCoordinates.lng)) {
+        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tọa độ điểm đến hợp lệ' });
+      }
+
+      const order = new Order({
+        serviceType: serviceType || 'GIAO_HANG',
+        customerId,
+        customerName: customerName || req.customer.name,
+        customerPhone: customerPhone || req.customer.phone,
+        pickupPhone: pickupPhone || '',
+        pickupAddress,
+        deliveryAddress,
+        pickupCoordinates,
+        deliveryCoordinates,
+        items: items || [],
+        note: note || '',
+        packageDetails: packageDetails || {},
+        rideDetails: rideDetails || {},
+        codAmount: codAmount || 0,
+        deliveryFee: 0, // Admin hoặc hệ thống sẽ tính giá sau, hoặc tính từ Frontend gửi lên
+        status: 'DRAFT',
+        ipAddress: req.ip
+      });
+
+      await order.save();
+
+      if (req.io) {
+        const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+        emitNewOrder(req.io, payload);
+      }
+
+      console.log(`[Order] Created (Customer App): ${order._id} by ${req.customer.phone}`);
+
+      res.status(201).json({
+        success: true,
+        message: 'Tạo đơn hàng thành công',
+        data: order
+      });
+    } catch (error) {
+      console.error('Error createCustomerOrder:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi tạo đơn hàng' });
+    }
+  },
+
+  // GET /api/orders/customer/my - Khách lấy đơn của mình
+  getCustomerOrders: async (req, res) => {
+    try {
+      const orders = await Order.find({ customerId: req.customer._id })
+        .populate('assignedTo', 'name phone driverCode vehicleType')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.status(200).json({
+        success: true,
+        data: orders
+      });
+    } catch (error) {
+      console.error('Error getCustomerOrders:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
   // PUT /api/orders/:id - Sửa thông tin đơn hàng / Thu hồi đơn (Admin)
   updateOrder: async (req, res) => {
     try {
       const { id } = req.params;
-      const { customerName, customerPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, status } = req.body;
+      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, status } = req.body;
 
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
@@ -232,6 +309,7 @@ const orderController = {
       // Cập nhật thông tin text
       if (customerName) orderToUpdate.customerName = customerName;
       if (customerPhone) orderToUpdate.customerPhone = customerPhone;
+      if (pickupPhone !== undefined) orderToUpdate.pickupPhone = pickupPhone;
       if (pickupAddress) orderToUpdate.pickupAddress = pickupAddress;
       if (deliveryAddress) orderToUpdate.deliveryAddress = deliveryAddress;
       if (items !== undefined) orderToUpdate.items = items;
@@ -240,6 +318,27 @@ const orderController = {
       if (deliveryFee !== undefined) orderToUpdate.deliveryFee = deliveryFee;
 
       await orderToUpdate.save();
+
+      if (req.io) {
+        const { emitToDriver } = require('../sockets/index');
+        const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
+        
+        // Emit tới Admin map
+        req.io.to('admins').emit('order_updated', payload);
+        
+        // Emit tới Khách hàng/Shop đã tạo đơn
+        if (orderToUpdate.customerId) {
+          const creatorId = orderToUpdate.customerId._id || orderToUpdate.customerId;
+          req.io.to(`customer_${creatorId.toString()}`).emit('order_updated', payload);
+          req.io.to(`shop_${creatorId.toString()}`).emit('order_updated', payload);
+        }
+
+        // Emit tới Tài xế nhận đơn (nếu có)
+        if (orderToUpdate.assignedTo) {
+          const driverId = orderToUpdate.assignedTo._id || orderToUpdate.assignedTo;
+          emitToDriver(req.io, driverId.toString(), 'order_updated', payload);
+        }
+      }
 
       res.status(200).json({
         success: true,

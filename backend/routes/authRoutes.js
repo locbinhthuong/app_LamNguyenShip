@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { verifyToken, onlyDriver, onlyAdmin } = require('../middleware/auth');
+const { verifyToken, onlyDriver, onlyAdmin, onlyCustomer } = require('../middleware/auth');
 
 // ==================== DRIVER AUTH ====================
 
@@ -41,5 +41,23 @@ router.post('/admin/login', [
 
 // GET /api/auth/admin/me
 router.get('/admin/me', verifyToken, onlyAdmin, authController.getAdminProfile);
+
+// ==================== CUSTOMER/SHOP AUTH ====================
+
+// POST /api/auth/customer/register
+router.post('/customer/register', [
+  body('name').trim().notEmpty().withMessage('Tên là bắt buộc'),
+  body('phone').trim().notEmpty().withMessage('Số điện thoại là bắt buộc'),
+  body('password').isLength({ min: 6 }).withMessage('Mật khẩu phải ít nhất 6 ký tự')
+], authController.registerCustomer);
+
+// POST /api/auth/customer/login
+router.post('/customer/login', [
+  body('phone').trim().notEmpty().withMessage('Số điện thoại là bắt buộc'),
+  body('password').notEmpty().withMessage('Mật khẩu là bắt buộc')
+], authController.loginCustomer);
+
+// GET /api/auth/customer/me
+router.get('/customer/me', verifyToken, onlyCustomer, authController.getCustomerProfile);
 
 module.exports = router;

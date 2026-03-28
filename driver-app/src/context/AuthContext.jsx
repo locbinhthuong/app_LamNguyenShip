@@ -51,7 +51,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (localStorage.getItem('driver_token')) {
+      try {
+        await updateDriverStatus(false);
+      } catch (e) {
+        console.error('Không thể offline trước khi đăng xuất', e);
+      }
+    }
     localStorage.removeItem('driver_token');
     localStorage.removeItem('driver_info');
     setDriver(null);

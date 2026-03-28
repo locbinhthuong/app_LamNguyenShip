@@ -1,6 +1,22 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
+  // Phân loại hình thức dịch vụ
+  serviceType: {
+    type: String,
+    enum: ['GIAO_HANG', 'DAT_XE', 'MUA_HO', 'DIEU_PHOI'],
+    default: 'GIAO_HANG',
+    index: true
+  },
+
+  // Liên kết người dùng (Customer App)
+  customerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null,
+    index: true
+  },
+
   // Thông tin khách hàng
   customerName: {
     type: String,
@@ -10,7 +26,12 @@ const orderSchema = new mongoose.Schema({
   },
   customerPhone: {
     type: String,
-    required: [true, 'Số điện thoại là bắt buộc'],
+    required: [true, 'Số điện thoại khách (giao hàng) là bắt buộc'],
+    trim: true
+  },
+  pickupPhone: {
+    type: String,
+    default: '',
     trim: true
   },
 
@@ -36,14 +57,23 @@ const orderSchema = new mongoose.Schema({
     lng: { type: Number, default: null }
   },
 
-  // Thông tin đơn hàng
-  items: {
-    type: [String],
-    default: []
-  },
+  // Ghi chú chung
   note: {
     type: String,
     default: ''
+  },
+
+  // Chi tiết dịch vụ: MUA_HO / GIAO_HANG
+  packageDetails: {
+    weight: { type: String, default: '' },
+    itemsToBuy: { type: [String], default: [] }, // Cho mua hộ (ví dụ: ["Cơm sườn", "Trà đá"])
+    isFragile: { type: Boolean, default: false }
+  },
+
+  // Chi tiết dịch vụ: DAT_XE
+  rideDetails: {
+    vehicleType: { type: String, enum: ['XE_MAY', 'OTO'], default: 'XE_MAY' },
+    passengerCount: { type: Number, default: 1 }
   },
 
   // Trạng thái đơn hàng
@@ -93,7 +123,7 @@ const orderSchema = new mongoose.Schema({
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Admin',
-    required: true
+    default: null // Đã đổi thành null vì Khách hàng từ Customer App cũng có thể tạo đơn
   },
 
   // Thông tin thanh toán

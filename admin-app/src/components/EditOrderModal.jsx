@@ -4,6 +4,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
+    pickupPhone: '',
     pickupAddress: '',
     deliveryAddress: '',
     codAmount: 0,
@@ -16,6 +17,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
       setFormData({
         customerName: order.customerName || '',
         customerPhone: order.customerPhone || '',
+        pickupPhone: order.pickupPhone || '',
         pickupAddress: order.pickupAddress || '',
         deliveryAddress: order.deliveryAddress || '',
         codAmount: order.codAmount || 0,
@@ -55,14 +57,20 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Số điện thoại</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Giao đến</label>
               <input type="text" name="customerPhone" value={formData.customerPhone} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
             </div>
           </div>
           
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Địa chỉ lấy hàng</label>
-            <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Địa chỉ lấy hàng</label>
+              <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Nơi lấy</label>
+              <input type="text" name="pickupPhone" value={formData.pickupPhone} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+            </div>
           </div>
           
           <div>

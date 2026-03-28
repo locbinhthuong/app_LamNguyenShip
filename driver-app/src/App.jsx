@@ -39,7 +39,12 @@ function AppContent() {
 
   useEffect(() => {
     if (driver) {
-      socketRef.current = io(SOCKET_URL, { transports: ['websocket'] });
+      socketRef.current = io(SOCKET_URL, { 
+        transports: ['websocket'],
+        auth: { token: localStorage.getItem('driver_token') }
+      });
+      window.driverSocket = socketRef.current;
+      
       socketRef.current.emit('driver_join', driver._id);
 
       socketRef.current.on('force_logout', (data) => {
@@ -48,6 +53,7 @@ function AppContent() {
 
       return () => {
         if (socketRef.current) socketRef.current.disconnect();
+        window.driverSocket = null;
       };
     }
   }, [driver]);

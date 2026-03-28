@@ -20,6 +20,16 @@ const STATUS_COLORS = {
   CANCELLED: 'bg-red-500'
 };
 
+const getServiceBadge = (type) => {
+  switch(type) {
+    case 'DAT_XE': return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 CHỞ KHÁCH</span>;
+    case 'MUA_HO': return <span className="bg-lime-100 text-lime-700 px-2 py-0.5 rounded text-[10px] font-bold border border-lime-200">🛒 MUA HỘ</span>;
+    case 'DIEU_PHOI': return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">🛠️ KÈM THỢ</span>;
+    case 'GIAO_HANG':
+    default: return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">📦 GIAO HÀNG</span>;
+  }
+};
+
 export default function MyOrders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
@@ -104,8 +114,11 @@ export default function MyOrders() {
               onClick={() => navigate(`/order/${order._id}`)}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className="text-slate-800 font-bold">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-                <span className={`status-badge ${STATUS_COLORS[order.status]} text-slate-800`}>
+                <div className="flex flex-col gap-1">
+                  <span className="text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded text-xs inline-block">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+                  <div className="mt-0.5">{getServiceBadge(order.serviceType)}</div>
+                </div>
+                <span className={`status-badge ${STATUS_COLORS[order.status]} text-slate-800 shrink-0 mt-1`}>
                   {STATUS_LABELS[order.status]}
                 </span>
               </div>

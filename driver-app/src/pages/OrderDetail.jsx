@@ -122,10 +122,20 @@ export default function OrderDetail() {
         {/* Addresses */}
         <div className="card">
           <div className="flex items-start gap-3 mb-4">
-            <span className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 font-bold">📦</span>
-            <div className="flex-1">
-              <p className="text-xs text-slate-500 mb-1">LẤY HÀNG</p>
-              <p className="text-slate-800 font-medium">{order.pickupAddress}</p>
+            <span className="w-8 h-8 shrink-0 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 font-bold">📦</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-xs text-slate-500 font-bold uppercase">Lấy Hàng Tại</p>
+                <a 
+                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.pickupAddress)}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
+                >
+                  🗺️ MỞ BẢN ĐỒ
+                </a>
+              </div>
+              <p className="text-slate-800 font-bold text-sm leading-snug">{order.pickupAddress}</p>
             </div>
           </div>
           <div className="border-l-2 border-dashed border-slate-600 ml-4 h-4 mb-4" />
@@ -138,20 +148,30 @@ export default function OrderDetail() {
           </div>
         </div>
 
-        {/* Customer */}
+        {/* Liên Hệ */}
         <div className="card">
-          <p className="text-xs text-slate-500 mb-2">THÔNG TIN KHÁCH HÀNG</p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <p className="font-medium text-slate-800">{order.customerName}</p>
-              <p className="text-sm text-slate-500">{order.customerPhone}</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">LIÊN HỆ</p>
+          <div className="flex flex-col gap-4">
+            {order.pickupPhone && (
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div className="min-w-0 pr-2 flex-1">
+                  <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">SĐT Nơi Lấy (Shop)</p>
+                  <p className="text-orange-600 font-black text-xl tracking-wider">{order.pickupPhone}</p>
+                </div>
+                <a href={`tel:${order.pickupPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-orange-400 to-orange-500 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center gap-2 border border-orange-400">
+                  <span className="text-lg">📞</span> GỌI
+                </a>
+              </div>
+            )}
+            <div className="flex items-center justify-between pt-1">
+              <div className="min-w-0 pr-2 flex-1">
+                <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">{order.customerName || 'Khách Nhận'}</p>
+                <p className="text-blue-600 font-black text-xl tracking-wider">{order.customerPhone}</p>
+              </div>
+              <a href={`tel:${order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center gap-2 border border-blue-500">
+                <span className="text-lg">📞</span> GỌI
+              </a>
             </div>
-            <a
-              href={`tel:${order.customerPhone}`}
-              className="shrink-0 rounded-full bg-green-500 px-4 py-2 text-center text-sm font-bold text-white"
-            >
-              📞 Gọi
-            </a>
           </div>
         </div>
 

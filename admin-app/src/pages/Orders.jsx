@@ -4,6 +4,9 @@ import { getOrders, deleteOrder, updateOrder, cancelOrder } from '../services/ap
 import EditOrderModal from '../components/EditOrderModal';
 import ConfirmModal from '../components/ConfirmModal';
 import CancelRecallModal from '../components/CancelRecallModal';
+import { io } from 'socket.io-client';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 const STATUS_COLORS = {
   DRAFT: 'bg-slate-500',
@@ -16,7 +19,7 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  DRAFT: 'Treo sửa',
+  DRAFT: 'Chờ báo giá',
   PENDING: 'Chờ tài xế',
   ACCEPTED: 'Đã nhận',
   PICKED_UP: 'Đã lấy',
@@ -37,7 +40,7 @@ export default function Orders() {
 
   const tabs = [
     { key: '', label: 'Tất cả' },
-    { key: 'DRAFT', label: 'Treo sửa', color: 'slate' },
+    { key: 'DRAFT', label: 'Chờ báo giá', color: 'purple' },
     { key: 'PENDING', label: 'Chờ tài xế', color: 'yellow' },
     { key: 'ACCEPTED', label: 'Đã nhận', color: 'blue' },
     { key: 'PICKED_UP,DELIVERING', label: 'Đang giao', color: 'orange' },
@@ -60,8 +63,28 @@ export default function Orders() {
   useEffect(() => {
     setLoading(true);
     load();
-    const interval = setInterval(load, 10000);
-    return () => clearInterval(interval);
+    const interval = setInterval(load, 30000); // Tăng lên 30s vì đã có Realtime
+
+    const token = localStorage.getItem('admin_token');
+    if (!token) return;
+
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('new_order', load);
+    socket.on('order_accepted', load);
+    socket.on('order_picked_up', load);
+    socket.on('order_delivering', load);
+    socket.on('order_completed', load);
+    socket.on('order_cancelled', load);
+    socket.on('order_updated', load);
+
+    return () => {
+      clearInterval(interval);
+      socket.disconnect();
+    };
   }, [load]);
 
   const openDeleteConfirm = (id) => {
@@ -80,8 +103,8 @@ export default function Orders() {
       isOpen: true,
       type: 'publish',
       data: id,
-      title: 'Tiếp tục treo đơn?',
-      message: 'Đơn hàng sẽ ngay lập tức được đăng lên chợ và truyền tới thiết bị của tất cả tài xế.',
+      title: 'Phát lệnh Đăng Đơn?',
+      message: 'Sau khi đã cập nhật Phí Giao Hàng, bạn có chắc muốn truyền đơn hàng này tới thiết bị của tất cả tài xế không?',
       isDestructive: false,
       confirmText: '🚀 Đăng đơn'
     });

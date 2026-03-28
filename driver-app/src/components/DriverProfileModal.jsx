@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { uploadDriverAvatar } from '../services/api';
+import { uploadDriverAvatar, getFullImageUrl } from '../services/api';
 
 export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -104,7 +104,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
             <div className="flex flex-col items-center mb-6">
               <div className="w-24 h-24 rounded-full bg-blue-100 border-4 border-blue-50 overflow-hidden flex items-center justify-center mb-3 shadow-inner">
                 {driver?.avatar ? (
-                  <img src={driver.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                  <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-4xl font-bold text-blue-500">
                     {driver?.name?.charAt(0).toUpperCase() || '👤'}
@@ -155,7 +155,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
                   className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center mb-2 shadow-sm cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors relative group"
                 >
                   {avatarPreview ? (
-                    <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                    <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
                   ) : (
                     <span className="text-2xl text-slate-400">📷</span>
                   )}

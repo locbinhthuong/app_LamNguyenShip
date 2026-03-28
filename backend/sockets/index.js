@@ -34,11 +34,17 @@ const setupSocket = (io) => {
     // Join room theo role
     if (socket.user.role === 'driver') {
       socket.join(`driver_${socket.user.id}`);
-      socket.join('drivers'); // Tất cả drivers
+      socket.join('drivers');
       console.log(`[Socket] Driver ${socket.user.id} joined driver room`);
-    } else {
-      socket.join('admins'); // Tất cả admins
+    } else if (['admin', 'manager', 'staff'].includes(socket.user.role)) {
+      socket.join('admins');
       console.log(`[Socket] Admin ${socket.user.id} joined admin room`);
+    } else if (socket.user.role?.toLowerCase() === 'customer') {
+      socket.join(`customer_${socket.user.id}`);
+      console.log(`[Socket] Customer ${socket.user.id} joined customer room`);
+    } else if (socket.user.role?.toLowerCase() === 'shop') {
+      socket.join(`shop_${socket.user.id}`);
+      console.log(`[Socket] Shop ${socket.user.id} joined shop room`);
     }
 
     // Ping/pong
@@ -72,8 +78,32 @@ const setupSocket = (io) => {
       }
     });
 
-    socket.on('disconnect', () => {
+    // Dừng phát GPS từ tài xế
+    socket.on('stop_location', async () => {
+      if (socket.user.role === 'driver') {
+        try {
+          const Driver = require('../models/Driver');
+          const driver = await Driver.findByIdAndUpdate(socket.user.id, {
+            currentLocation: null
+          }, { new: true });
+          if (driver) {
+            io.to('admins').emit('driver_status_change', {
+              driverId: driver._id,
+              isOnline: driver.isOnline,
+              lat: null,
+              lng: null
+            });
+          }
+        } catch (e) {
+          console.error('[Socket] Lỗi stop GPS:', e.message);
+        }
+      }
+    });
+
+    socket.on('disconnect', async () => {
       console.log(`[Socket] Client disconnected: ${socket.id}`);
+      // LƯU Ý: Không được tự tiện set isOnline = false hay xóa GPS ở đây, 
+      // vì tài xế có thể chỉ đang chạy dưới nền (Background) hoặc rớt mạng 4G tạm thời.
     });
   });
 
@@ -81,34 +111,50 @@ const setupSocket = (io) => {
 };
 
 // Helper functions
+const broadcastToCreator = (io, order, eventName) => {
+  if (order.customerId) {
+    const creatorId = order.customerId._id || order.customerId;
+    io.to(`customer_${creatorId.toString()}`).emit(eventName, order);
+    io.to(`shop_${creatorId.toString()}`).emit(eventName, order);
+  }
+};
+
 const emitNewOrder = (io, order) => {
-  io.to('drivers').emit('new_order', order);
+  if (order.status !== 'DRAFT') {
+    io.to('drivers').emit('new_order', order);
+  }
   io.to('admins').emit('new_order', order);
+  broadcastToCreator(io, order, 'new_order');
 };
 
 const emitOrderAccepted = (io, order) => {
   io.to('drivers').emit('order_accepted', order);
   io.to('admins').emit('order_accepted', order);
+  broadcastToCreator(io, order, 'order_accepted');
 };
 
 const emitOrderPickedUp = (io, order) => {
   io.to('drivers').emit('order_picked_up', order);
   io.to('admins').emit('order_picked_up', order);
+  broadcastToCreator(io, order, 'order_picked_up');
 };
 
 const emitOrderDelivering = (io, order) => {
   io.to('drivers').emit('order_delivering', order);
   io.to('admins').emit('order_delivering', order);
+  broadcastToCreator(io, order, 'order_delivering');
 };
 
 const emitOrderCompleted = (io, order) => {
   io.to('drivers').emit('order_completed', order);
   io.to('admins').emit('order_completed', order);
+  broadcastToCreator(io, order, 'order_completed');
 };
 
 const emitOrderCancelled = (io, order) => {
   io.to('drivers').emit('order_cancelled', order);
   io.to('admins').emit('order_cancelled', order);
+  broadcastToCreator(io, order, 'order_cancelled');
 };
 
 const emitDriverStatusChange = (io, driverData) => {
