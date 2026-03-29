@@ -235,6 +235,12 @@ const authController = {
         { new: true, runValidators: true }
       ).select('-password');
 
+      // Báo mộng cho Admin biết Tài xế vừa đổi Tên/Biển Số/Avatar để Update tức thời
+      if (req.io) {
+        const { emitDriverStatusChange } = require('../sockets/index');
+        emitDriverStatusChange(req.io, driver);
+      }
+
       res.status(200).json({
         success: true,
         message: 'Cập nhật thông tin thành công',

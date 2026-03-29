@@ -461,48 +461,44 @@ export default function Home() {
     // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
     const interval = setInterval(loadData, 30000);
 
-    // Lắng nghe Socket để cập nhật TỨC THỜI
-    const socket = window.driverSocket;
-    if (socket) {
-      socket.on('new_order', () => {
-         loadData();
-         startAlarm();
-         
-         // Nếu thợ đang lướt Zalo/Facebook và Background Sync chạy, phát ngay Thông báo Popup điện thoại Native!
-         if (Capacitor.isNativePlatform()) {
-            import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
-              LocalNotifications.schedule({
-                notifications: [
-                  {
-                    title: "HỆ THỐNG ĐIỀU PHỐI",
-                    body: "🔔 CÓ ĐƠN HÀNG MỚI! Bấm vào đây để xem và giật đơn ngay!",
-                    id: Math.floor(Math.random() * 1000000), // ID duy nhất
-                    schedule: { at: new Date(Date.now() + 100) },
-                    sound: null, // Dùng tiếng chuông mặc định của hệ thống OS
-                    smallIcon: "ic_stat_icon_config_sample", // Sẽ fallback về icon app nếu chưa cấu hình icon
-                  }
-                ]
-              });
-            }).catch(console.error);
-         }
-      });
-      socket.on('order_accepted', loadData);
-      socket.on('order_cancelled', loadData);
-      socket.on('order_picked_up', loadData);
-      socket.on('order_delivering', loadData);
-      socket.on('order_completed', loadData);
-    }
+    // Lắng nghe tín hiệu Window do App.jsx phát (Đảm bảo 100% không trượt Socket Delay)
+    const handleNewOrder = () => {
+       loadData();
+       startAlarm();
+       
+       if (Capacitor.isNativePlatform()) {
+          import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
+            LocalNotifications.schedule({
+              notifications: [
+                {
+                  title: "HỆ THỐNG ĐIỀU PHỐI",
+                  body: "🔔 CÓ ĐƠN HÀNG MỚI! Bấm vào đây để xem và giật đơn ngay!",
+                  id: Math.floor(Math.random() * 1000000),
+                  schedule: { at: new Date(Date.now() + 100) },
+                  sound: null,
+                  smallIcon: "ic_stat_icon_config_sample",
+                }
+              ]
+            });
+          }).catch(console.error);
+       }
+    };
+
+    window.addEventListener('driver_new_order', handleNewOrder);
+    window.addEventListener('driver_order_accepted', loadData);
+    window.addEventListener('driver_order_cancelled', loadData);
+    window.addEventListener('driver_order_picked_up', loadData);
+    window.addEventListener('driver_order_delivering', loadData);
+    window.addEventListener('driver_order_completed', loadData);
 
     return () => {
       clearInterval(interval);
-      if (socket) {
-        socket.off('new_order', loadData);
-        socket.off('order_accepted', loadData);
-        socket.off('order_cancelled', loadData);
-        socket.off('order_picked_up', loadData);
-        socket.off('order_delivering', loadData);
-        socket.off('order_completed', loadData);
-      }
+      window.removeEventListener('driver_new_order', handleNewOrder);
+      window.removeEventListener('driver_order_accepted', loadData);
+      window.removeEventListener('driver_order_cancelled', loadData);
+      window.removeEventListener('driver_order_picked_up', loadData);
+      window.removeEventListener('driver_order_delivering', loadData);
+      window.removeEventListener('driver_order_completed', loadData);
       stopAlarm();
     };
   }, [loadData, startAlarm, stopAlarm]);

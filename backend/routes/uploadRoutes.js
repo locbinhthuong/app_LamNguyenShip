@@ -45,9 +45,8 @@ router.post('/avatar', verifyToken, upload.single('image'), (req, res) => {
       return res.status(400).json({ success: false, message: 'Chưa có file nào được tải lên.' });
     }
 
-    // Gắn Host URL vào File. Với Dev server (chạy local ngrok hoặc ip):
-    const hostUrl = `${req.protocol}://${req.get('host')}`;
-    const fileUrl = `${hostUrl}/uploads/${req.file.filename}`;
+    // Gắn đường dẫn tương đối để App Tự Nội Suy từ VITE_API_URL, chống lại lỗi Mixed Content từ Proxy HTTP -> HTTPS
+    const fileUrl = `/uploads/${req.file.filename}`;
 
     res.status(200).json({
       success: true,

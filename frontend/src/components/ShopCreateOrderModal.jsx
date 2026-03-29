@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, MapPin, Phone, User, Package, DollarSign, StickyNote, Banknote, Navigation } from 'lucide-react';
 import { api } from '../services/api';
+import LocationPicker from './LocationPicker';
 
 const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const isSubmittingRef = React.useRef(false);
+  const [mapConfig, setMapConfig] = useState(null);
   
   // Dữ liệu Shop mặc định (Từ LocalStorage)
   const savedShopAddress = localStorage.getItem('shopAddress') || '';
@@ -13,9 +15,10 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
   const [form, setForm] = useState({
     pickupAddress: localStorage.getItem('savedShopLocation') ? JSON.parse(localStorage.getItem('savedShopLocation')).address : (localStorage.getItem('shopAddress') || ''),
     pickupPhone: savedShopPhone,
-    customerName: '', // Tên khách nhận
-    customerPhone: '', // SĐT khách nhận
+    receiverName: '', // Tên khách nhận (Chuẩn form backend)
+    receiverPhone: '', // SĐT khách nhận (Chuẩn form backend)
     deliveryAddress: '', // Giao đến đâu
+    deliveryCoordinates: null, // Toạ độ khách nhận
     packageDescription: '',
     codAmount: '',
     note: ''
@@ -52,8 +55,8 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
     }
     const savedLoc = JSON.parse(savedLocStr);
 
-    if (!form.customerName.trim() || !form.customerPhone.trim() || !form.deliveryAddress.trim()) {
-      return alert('Vui lòng nhập đầy đủ Tên, SĐT Khách và Địa chỉ giao hàng!');
+    if (!form.receiverName.trim() || !form.receiverPhone.trim() || !form.deliveryAddress.trim()) {
+      return alert('Vui lòng nhập đầy đủ Tên, SĐT Khách nhận và Địa chỉ giao hàng!');
     }
 
     let isSuccess = false;
@@ -62,13 +65,15 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
     try {
       const payload = {
         serviceType: 'GIAO_HANG',
-        customerName: form.customerName.trim(),
-        customerPhone: form.customerPhone.trim(),
-        pickupPhone: form.pickupPhone.trim(),
+        senderName: localStorage.getItem('shopName') || 'Cửa hàng',
+        senderPhone: form.pickupPhone.trim(),
+        receiverName: form.receiverName.trim(),
+        receiverPhone: form.receiverPhone.trim(),
+        pickupPhone: form.pickupPhone.trim(), // Lưu lại thêm để chắc chắn SĐT đặt cuốc
         pickupAddress: form.pickupAddress.trim(),
         deliveryAddress: form.deliveryAddress.trim(),
         pickupCoordinates: { lat: savedLoc.lat, lng: savedLoc.lng }, 
-        deliveryCoordinates: { lat: 10.050, lng: 105.750 },
+        deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
         packageDetails: { description: form.packageDescription },
         note: form.note,
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
@@ -87,9 +92,10 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
         // Reset form sạch bong (Trừ thông tin Shop)
         setForm(prev => ({
           ...prev,
-          customerName: '',
-          customerPhone: '',
+          receiverName: '',
+          receiverPhone: '',
           deliveryAddress: '',
+          deliveryCoordinates: null,
           packageDescription: '',
           codAmount: '',
           note: ''
@@ -163,21 +169,29 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <input 
-                  type="text" name="customerName" value={form.customerName} onChange={handleChange}
+                  type="text" name="receiverName" value={form.receiverName} onChange={handleChange}
                   placeholder="Tên người nhận *"
                   className="w-full text-sm font-medium text-slate-800 border-b border-slate-200 pb-2 focus:border-blue-500 outline-none transition-colors placeholder-slate-300"
                 />
                 <input 
-                  type="tel" name="customerPhone" value={form.customerPhone} onChange={handleChange}
+                  type="tel" name="receiverPhone" value={form.receiverPhone} onChange={handleChange}
                   placeholder="SĐT Khách *"
                   className="w-full text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 focus:border-blue-500 outline-none transition-colors placeholder-slate-400"
                 />
               </div>
-              <input 
-                type="text" name="deliveryAddress" value={form.deliveryAddress} onChange={handleChange}
-                placeholder="Địa chỉ giao đến *"
-                className="w-full text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 focus:border-blue-500 outline-none transition-colors placeholder-slate-400"
-              />
+              <div className="flex items-center bg-white border-b border-slate-200 focus-within:border-blue-500 transition-colors">
+                <input 
+                  type="text" name="deliveryAddress" value={form.deliveryAddress} onChange={handleChange}
+                  placeholder="Địa chỉ giao đến *"
+                  className="w-full text-sm font-bold text-slate-800 pb-2 outline-none placeholder-slate-400 bg-transparent flex-1"
+                />
+                <div 
+                  className="p-2 mb-2 text-blue-600 bg-blue-50 rounded-lg cursor-pointer active:scale-95 transition-transform"
+                  onClick={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
+                >
+                  <MapPin size={18} />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -233,6 +247,17 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
       </div>
+
+      <LocationPicker 
+        isOpen={mapConfig !== null}
+        onClose={() => setMapConfig(null)}
+        initialPosition={mapConfig?.pos}
+        onSelect={(loc) => {
+          if (mapConfig?.type === 'delivery') {
+            setForm({ ...form, deliveryAddress: loc.address, deliveryCoordinates: { lat: loc.lat, lng: loc.lng } });
+          }
+        }}
+      />
     </div>
   );
 };

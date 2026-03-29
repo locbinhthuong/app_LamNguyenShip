@@ -26,14 +26,13 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
     if (!form.pickupAddress.trim()) return alert('Vui lòng nhập tên/địa chỉ hoặc chọn Tiệm/Quán cần mua!');
     if (!form.deliveryAddress.trim()) return alert('Vui lòng nhập địa chỉ giao tới cho bạn!');
     if (!form.itemsToBuy.trim()) return alert('Vui lòng liệt kê món bạn muốn tài xế mua dùm!');
-    if (!form.customerName.trim() || !form.customerPhone.trim()) {
-      return alert('Vui lòng nhập Tên và SĐT để tài xế liên hệ!');
-    }
+    // Không cần validate tên/SĐT nữa vì Backend/App đã tự móc ra từ phiên Đăng nhập
+    // if (!form.customerName.trim() || !form.customerPhone.trim()) { ... }
 
     onBooking({
       serviceType: 'MUA_HO',
-      customerName: form.customerName.trim(),
-      customerPhone: form.customerPhone.trim(),
+      customerName: customerData?.name || form.customerName,
+      customerPhone: defaultPhone || form.customerPhone,
       pickupAddress: form.pickupAddress.trim(),
       pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
       deliveryAddress: form.deliveryAddress.trim(),
@@ -138,21 +137,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       </div>
 
       {/* THÔNG TIN KHÁCH HÀNG */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">THÔNG TIN LIÊN HỆ CỦA BẠN</label>
-        <div className="grid grid-cols-2 gap-2">
-          <input 
-            type="text" placeholder="Tên của bạn *"
-            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-gray-800"
-            value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})}
-          />
-          <input 
-            type="tel" placeholder="SĐT của bạn *"
-            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-blue-600"
-            value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
-          />
-        </div>
-      </div>
+      {/* ĐÃ ẨN KHỐI THÔNG TIN KHÁCH HÀNG - LẤY TỰ ĐỘNG TỪ ACCOUNT */}
 
       {/* FLOAT BUTTON */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50 pb-[max(1rem,env(safe-area-inset-bottom))]">

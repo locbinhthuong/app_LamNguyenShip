@@ -27,9 +27,8 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.pickupAddress.trim()) return alert('Vui lòng chọn hoặc nhập Vị Trí Giao Dịch!');
-    if (!form.customerName.trim() || !form.customerPhone.trim()) {
-      return alert('Vui lòng nhập Tên và SĐT để tài xế liên hệ!');
-    }
+    // Lấy thông tin từ Account, không cần bắt nhập tay
+    // if (!form.customerName.trim() || !form.customerPhone.trim()) { ... }
 
     if (subType === 'NAP_TIEN' || subType === 'RUT_TIEN') {
       if (!form.bankName.trim() || !form.bankAccount.trim() || !form.bankAccountName.trim()) {
@@ -49,8 +48,8 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
     onBooking({
       serviceType: 'DIEU_PHOI',
       subServiceType: subType, // NAP_TIEN, RUT_TIEN, GAP_TRUC_TIEP
-      customerName: form.customerName.trim(),
-      customerPhone: form.customerPhone.trim(),
+      customerName: customerData?.name || form.customerName,
+      customerPhone: defaultPhone || form.customerPhone,
       pickupAddress: form.pickupAddress.trim(),
       pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
       deliveryAddress: '', // Điều phối thường chỉ cần 1 điểm (Nơi khách đứng)
@@ -179,21 +178,8 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
         </div>
       )}
 
-      {/* THÔNG TIN KHÁCH HÀNG */}
+      {/* THÔNG TIN KHÁCH HÀNG ĐÃ ĐƯỢC ẨN VÌ TỰ LẤY TỪ ACCOUNT DỮ LIỆU CHÍNH */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">THÔNG TIN LIÊN HỆ CỦA BẠN</label>
-        <div className="grid grid-cols-2 gap-2">
-          <input 
-            type="text" placeholder="Tên của bạn *"
-            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-gray-800"
-            value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})}
-          />
-          <input 
-            type="tel" placeholder="SĐT của bạn *"
-            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-blue-600"
-            value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
-          />
-        </div>
         <div>
           <textarea 
             rows="2"
