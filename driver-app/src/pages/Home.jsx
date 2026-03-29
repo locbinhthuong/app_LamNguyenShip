@@ -160,9 +160,48 @@ export default function Home() {
   const [gpsStatus, setGpsStatus] = useState('OFF'); // OFF | FINDING | TRACKING | ERROR
   const watchIdRef = useRef(null);
 
+  // WAKELOCK (Chống tắt màn hình)
+  const wakeLockRef = useRef(null);
+
+  const requestWakeLock = async () => {
+    if ('wakeLock' in navigator) {
+      try {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+        wakeLockRef.current.addEventListener('release', () => {
+          console.log('WakeLock bị nhả (Màn hình có thể tắt)');
+        });
+        console.log('WakeLock kích hoạt: Đã ép sáng màn hình!');
+      } catch (err) {
+        console.error('WakeLock Error:', err);
+      }
+    }
+  };
+
+  const releaseWakeLock = () => {
+    if (wakeLockRef.current !== null) {
+      wakeLockRef.current.release()
+        .then(() => { wakeLockRef.current = null; })
+        .catch(console.error);
+    }
+  };
+
+  // Khôi phục WakeLock nếu Tài xế vuốt ẩn App rồi mở lại (Hệ điều hành tự cắt WakeLock khi ẩn)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && driver?.isOnline) {
+        requestWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [driver?.isOnline]);
+
   const toggleGPS = () => {
     if (gpsStatus !== 'OFF' || !driver?.isOnline) {
       // Tắt GPS
+      releaseWakeLock(); // Trả màn hình về bình thường
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
@@ -187,6 +226,7 @@ export default function Home() {
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
         setGpsStatus('TRACKING');
+        requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
         if (window.driverSocket && window.driverSocket.connected) {
           window.driverSocket.emit('update_location', {
             lat: pos.coords.latitude,
@@ -214,6 +254,7 @@ export default function Home() {
 
       const handleSuccess = (pos) => {
         setGpsStatus('TRACKING');
+        requestWakeLock(); // Ép sáng màn hình
         if (window.driverSocket && window.driverSocket.connected) {
           window.driverSocket.emit('update_location', {
             lat: pos.coords.latitude,
@@ -241,6 +282,7 @@ export default function Home() {
     } 
     // 2. Tự động tắt GPS, huỷ vệ tinh nếu chuyển sang trạng thái Offline
     else if (!driver?.isOnline && gpsStatus !== 'OFF') {
+      releaseWakeLock(); // Nhả màn hình
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
         watchIdRef.current = null;
@@ -256,6 +298,7 @@ export default function Home() {
 
   useEffect(() => {
     return () => {
+      releaseWakeLock();
       if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
     };
   }, []);
