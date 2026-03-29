@@ -4,7 +4,6 @@ import { getOrders, deleteOrder, updateOrder, cancelOrder } from '../services/ap
 import EditOrderModal from '../components/EditOrderModal';
 import ConfirmModal from '../components/ConfirmModal';
 import CancelRecallModal from '../components/CancelRecallModal';
-import { io } from 'socket.io-client';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
@@ -65,25 +64,11 @@ export default function Orders() {
     load();
     const interval = setInterval(load, 30000); // Tăng lên 30s vì đã có Realtime
 
-    const token = localStorage.getItem('admin_token');
-    if (!token) return;
-
-    const socket = io(API_BASE_URL, {
-      auth: { token },
-      transports: ['websocket', 'polling']
-    });
-
-    socket.on('new_order', load);
-    socket.on('order_accepted', load);
-    socket.on('order_picked_up', load);
-    socket.on('order_delivering', load);
-    socket.on('order_completed', load);
-    socket.on('order_cancelled', load);
-    socket.on('order_updated', load);
+    window.addEventListener('refresh_admin_orders', load);
 
     return () => {
       clearInterval(interval);
-      socket.disconnect();
+      window.removeEventListener('refresh_admin_orders', load);
     };
   }, [load]);
 
@@ -220,9 +205,26 @@ export default function Orders() {
           {orders.map(order => (
             <div key={order._id} className="rounded-2xl border border-slate-200 bg-white p-4 sm:hidden">
               <div className="mb-2 flex items-start justify-between gap-2">
-                <p className="font-mono text-sm font-bold text-blue-600">
-                  #{order.orderCode || order._id?.slice(-8).toUpperCase()}
-                </p>
+                <div className="flex flex-col gap-1">
+                  <p className="font-mono text-sm font-bold text-blue-600">
+                    {order.orderCode || order._id?.slice(-8).toUpperCase()}
+                  </p>
+                  <div>
+                    {order.serviceType === 'DAT_XE' ? (
+                      <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">
+                        {order.subServiceType === 'XE_OM' ? '🛵 XE ÔM' : order.subServiceType === 'LAI_HO_XE_MAY' ? '🔑 LÁI HỘ (MÁY)' : order.subServiceType === 'LAI_HO_OTO' ? '🚗 LÁI HỘ (ÔTÔ)' : '🛵 ĐẶT XE'}
+                      </span>
+                    ) : order.serviceType === 'DIEU_PHOI' ? (
+                      <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200">
+                        {order.subServiceType === 'NAP_TIEN' ? '🏦 NẠP TIỀN' : order.subServiceType === 'RUT_TIEN' ? '💵 RÚT TIỀN' : '🛠️ ĐIỀU PHỐI'}
+                      </span>
+                    ) : order.serviceType === 'MUA_HO' ? (
+                      <span className="text-[10px] font-bold bg-lime-100 text-lime-700 px-1.5 py-0.5 rounded border border-lime-200">🛒 MUA HỘ</span>
+                    ) : (
+                      <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200">📦 GIAO HÀNG</span>
+                    )}
+                  </div>
+                </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold text-slate-800 ${STATUS_COLORS[order.status]}`}>
                     {STATUS_LABELS[order.status] || order.status}
@@ -236,7 +238,14 @@ export default function Orders() {
               )}
               <p className="mb-1 text-sm font-medium text-slate-800">{order.customerName}</p>
               <p className="mb-1 text-xs text-slate-500">{order.customerPhone}</p>
-              <p className="mb-2 truncate text-xs text-slate-500">{order.deliveryAddress}</p>
+              {order.serviceType === 'DAT_XE' ? (
+                 <div className="mb-2 text-xs text-slate-500 flex flex-col gap-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <p className="truncate"><span className="text-orange-500 font-bold">📍</span> {order.pickupAddress}</p>
+                    <p className="truncate"><span className="text-blue-500 font-bold">🏁</span> {order.deliveryAddress}</p>
+                 </div>
+              ) : (
+                 <p className="mb-2 truncate text-xs text-slate-500">{order.deliveryAddress}</p>
+              )}
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <p className="text-sm font-bold text-blue-600 mr-auto">Phí giao: {order.deliveryFee?.toLocaleString()}đ</p>
                 {(order.status === 'DRAFT' || order.status === 'COMPLETED') && (
@@ -271,7 +280,7 @@ export default function Orders() {
                 <tr className="border-b border-slate-200">
                   <th className="table-th">Mã</th>
                   <th className="table-th">Khách hàng</th>
-                  <th className="table-th">Địa chỉ giao</th>
+                  <th className="table-th">Lộ trình / Địa chỉ giao</th>
                   <th className="table-th">Tài xế</th>
                   <th className="table-th">Trạng thái</th>
                   <th className="table-th">PHÍ GIAO HÀNG</th>
@@ -281,12 +290,38 @@ export default function Orders() {
               <tbody>
                 {orders.map(order => (
                   <tr key={order._id} className="hover:bg-blue-50/50">
-                    <td className="table-td font-mono text-blue-600">{order.orderCode || order._id?.slice(-8).toUpperCase()}</td>
+                    <td className="table-td text-left">
+                      <p className="font-mono text-sm font-bold text-blue-600">{order.orderCode || order._id?.slice(-8).toUpperCase()}</p>
+                      <div className="mt-1">
+                        {order.serviceType === 'DAT_XE' ? (
+                          <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap">
+                            {order.subServiceType === 'XE_OM' ? '🛵 XE ÔM' : order.subServiceType === 'LAI_HO_XE_MAY' ? '🔑 LÁI HỘ (MÁY)' : order.subServiceType === 'LAI_HO_OTO' ? '🚗 LÁI HỘ (ÔTÔ)' : '🛵 ĐẶT XE'}
+                          </span>
+                        ) : order.serviceType === 'DIEU_PHOI' ? (
+                          <span className="text-[10px] font-bold bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 whitespace-nowrap">
+                            {order.subServiceType === 'NAP_TIEN' ? '🏦 NẠP TIỀN' : order.subServiceType === 'RUT_TIEN' ? '💵 RÚT TIỀN' : '🛠️ ĐIỀU PHỐI'}
+                          </span>
+                        ) : order.serviceType === 'MUA_HO' ? (
+                          <span className="text-[10px] font-bold bg-lime-100 text-lime-700 px-1.5 py-0.5 rounded border border-lime-200 whitespace-nowrap">🛒 MUA HỘ</span>
+                        ) : (
+                          <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200 whitespace-nowrap">📦 GIAO HÀNG</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="table-td">
                       <p className="text-slate-800">{order.customerName}</p>
                       <p className="text-slate-500 text-xs">{order.customerPhone}</p>
                     </td>
-                    <td className="table-td max-w-xs truncate text-slate-600 text-xs">{order.deliveryAddress}</td>
+                    <td className="table-td max-w-xs text-slate-600 text-xs">
+                       {order.serviceType === 'DAT_XE' ? (
+                          <div className="flex flex-col gap-1">
+                             <div className="flex items-start gap-1"><span className="text-orange-500 font-bold shrink-0">📍 Đón:</span> <span className="truncate">{order.pickupAddress}</span></div>
+                             <div className="flex items-start gap-1"><span className="text-blue-500 font-bold shrink-0">🏁 Đến:</span> <span className="truncate">{order.deliveryAddress}</span></div>
+                          </div>
+                       ) : (
+                          <span className="truncate block">{order.deliveryAddress}</span>
+                       )}
+                    </td>
                     <td className="table-td text-slate-600 text-sm">{order.assignedTo?.name || '—'}</td>
                     <td className="table-td">
                       <div className="flex flex-col items-start gap-1">

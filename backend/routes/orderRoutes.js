@@ -2,7 +2,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { verifyToken, onlyDriver, onlyAdmin, driverOrAdmin, onlyCustomer } = require('../middleware/auth');
+const { verifyToken, onlyDriver, onlyAdmin, driverOrAdmin, onlyCustomer, anyAuthenticatedUser } = require('../middleware/auth');
 
 // ==================== PUBLIC (Driver - Đăng nhập rồi) ====================
 
@@ -51,8 +51,8 @@ router.delete('/:id', verifyToken, onlyAdmin, orderController.deleteOrder);
 
 // ==================== COMMON ====================
 
-// GET /api/orders/:id - Chi tiết đơn hàng (cả Driver và Admin)
-router.get('/:id', verifyToken, driverOrAdmin, orderController.getOrderById);
+// GET /api/orders/:id - Chi tiết đơn hàng (Admin, Driver, Customer, Shop)
+router.get('/:id', verifyToken, anyAuthenticatedUser, orderController.getOrderById);
 
 // ==================== CUSTOMER / SHOP ====================
 

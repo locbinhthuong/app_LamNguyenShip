@@ -1,0 +1,192 @@
+import React, { useState, useEffect } from 'react';
+import { MapPin, ShoppingBag, Navigation } from 'lucide-react';
+import LocationPicker from '../LocationPicker';
+
+export default function PurchaseForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
+  const [form, setForm] = useState({
+    customerName: customerData?.name || '',
+    customerPhone: defaultPhone || '',
+    pickupAddress: '', // Tiệm/Quán
+    pickupCoordinates: null,
+    deliveryAddress: defaultLocation?.address || '', // Giao cho khách
+    deliveryCoordinates: defaultLocation?.coordinates || null,
+    itemsToBuy: ''
+  });
+
+  const [mapConfig, setMapConfig] = useState(null);
+
+  useEffect(() => {
+    if (defaultLocation?.address) {
+      setForm(prev => ({ ...prev, deliveryAddress: defaultLocation.address, deliveryCoordinates: defaultLocation.coordinates }));
+    }
+  }, [defaultLocation]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!form.pickupAddress.trim()) return alert('Vui lòng nhập tên/địa chỉ hoặc chọn Tiệm/Quán cần mua!');
+    if (!form.deliveryAddress.trim()) return alert('Vui lòng nhập địa chỉ giao tới cho bạn!');
+    if (!form.itemsToBuy.trim()) return alert('Vui lòng liệt kê món bạn muốn tài xế mua dùm!');
+    if (!form.customerName.trim() || !form.customerPhone.trim()) {
+      return alert('Vui lòng nhập Tên và SĐT để tài xế liên hệ!');
+    }
+
+    onBooking({
+      serviceType: 'MUA_HO',
+      customerName: form.customerName.trim(),
+      customerPhone: form.customerPhone.trim(),
+      pickupAddress: form.pickupAddress.trim(),
+      pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
+      deliveryAddress: form.deliveryAddress.trim(),
+      deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
+      note: '',
+      packageDetails: {
+        description: `NHỜ MUA: ${form.itemsToBuy.trim()}`,
+        itemsToBuy: [form.itemsToBuy.trim()]
+      }
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4 pb-28">
+      
+      {/* KHUYẾN CÁO */}
+      <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
+        <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
+        <p className="text-xs text-blue-800 leading-relaxed font-medium">
+          Bạn chỉ trả tiền sau khi nhận được hàng. Giá món đồ và Phí đi lấy sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.
+        </p>
+      </div>
+
+      {/* THÔNG TIN HÀNH TRÌNH */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+        
+        {/* ĐIỂM MUA HÀNG (QUÁN) */}
+        <div className="flex items-start gap-4">
+          <div className="flex flex-col items-center mt-1">
+            <div className="w-4 h-4 rounded-full bg-orange-100 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-orange-600"></div>
+            </div>
+            <div className="w-0.5 h-10 bg-gray-200 mt-1"></div>
+          </div>
+          <div className="flex-1 border-b border-gray-100 pb-3">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+              MUA Ở ĐÂU (TÊN TIỆM / ĐỊA CHỈ)
+            </label>
+            <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-orange-300">
+              <input 
+                type="text"
+                placeholder="VD: Cơm sườn 68 Lý Thường Kiệt..."
+                className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+                value={form.pickupAddress}
+                onChange={e => setForm({...form, pickupAddress: e.target.value})}
+              />
+              <div 
+                className="bg-orange-50 p-3 text-orange-600 cursor-pointer active:bg-orange-100 flex items-center justify-center border-l border-orange-100"
+                onClick={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
+              >
+                <MapPin size={20} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ĐIỂM GIAO ĐẾN */}
+        <div className="flex items-start gap-4 -mt-1">
+          <div className="flex flex-col items-center mt-1">
+            <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+            </div>
+          </div>
+          <div className="flex-1">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+              GIAO ĐẾN ĐÂU CHO BẠN
+            </label>
+            <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300">
+              <input 
+                type="text"
+                placeholder="Nhập địa chỉ nhận của bạn..."
+                className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+                value={form.deliveryAddress}
+                onChange={e => setForm({...form, deliveryAddress: e.target.value})}
+              />
+              <div 
+                className="bg-sky-50 p-3 text-sky-600 cursor-pointer active:bg-sky-100 flex items-center justify-center border-l border-sky-100"
+                onClick={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
+              >
+                <MapPin size={20} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* DANH SÁCH MÓN ĐỒ */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block flex items-center gap-1">
+           <ShoppingBag size={14} className="text-orange-500" /> BẠN MUỐN MUA GÌ?
+        </label>
+        <div>
+          <textarea 
+            rows="3"
+            placeholder="Liệt kê chi tiết món đồ (Ví dụ: 1 Cơm sườn bì, 2 trà đá - Nhớ chan nhiều nước mắm...)"
+            className="w-full text-sm font-medium text-gray-800 bg-orange-50/50 border border-orange-100 p-3 rounded-xl outline-none focus:border-orange-300 focus:bg-white transition-colors resize-none placeholder:font-normal"
+            value={form.itemsToBuy}
+            onChange={e => setForm({...form, itemsToBuy: e.target.value})}
+          ></textarea>
+        </div>
+      </div>
+
+      {/* THÔNG TIN KHÁCH HÀNG */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">THÔNG TIN LIÊN HỆ CỦA BẠN</label>
+        <div className="grid grid-cols-2 gap-2">
+          <input 
+            type="text" placeholder="Tên của bạn *"
+            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-gray-800"
+            value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})}
+          />
+          <input 
+            type="tel" placeholder="SĐT của bạn *"
+            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-blue-600"
+            value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
+          />
+        </div>
+      </div>
+
+      {/* FLOAT BUTTON */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <button 
+          disabled={loading}
+          type="submit"
+          className="w-full bg-blue-600 active:bg-blue-700 text-white font-bold text-sm sm:text-base py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+        >
+          {loading ? (
+            <>
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+              <span>ĐANG XỬ LÝ...</span>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <ShoppingBag size={20} />
+              <span>GỞI ĐƠN MUA HỘ</span>
+            </div>
+          )}
+        </button>
+      </div>
+
+      <LocationPicker 
+        isOpen={mapConfig !== null}
+        onClose={() => setMapConfig(null)}
+        initialPosition={mapConfig?.pos}
+        onSelect={(loc) => {
+          if (mapConfig?.type === 'pickup') {
+            setForm({ ...form, pickupAddress: loc.address, pickupCoordinates: { lat: loc.lat, lng: loc.lng } });
+          } else if (mapConfig?.type === 'delivery') {
+            setForm({ ...form, deliveryAddress: loc.address, deliveryCoordinates: { lat: loc.lat, lng: loc.lng } });
+          }
+        }}
+      />
+    </form>
+  );
+}

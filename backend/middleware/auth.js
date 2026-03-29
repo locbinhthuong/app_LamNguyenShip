@@ -182,10 +182,40 @@ const onlyCustomer = async (req, res, next) => {
   next();
 };
 
+// Cho phép tất cả user đăng nhập (Customer, Shop, Driver, Admin)
+const anyAuthenticatedUser = async (req, res, next) => {
+  // Có token là ok, jwt middleware đã parse req.user
+  if (!req.user || !req.user.role) {
+     return res.status(401).json({ success: false, message: 'Yêu cầu xác thực' });
+  }
+
+  const role = req.user.role.toUpperCase();
+
+  // Tùy theo role, gán thông tin vào req để controller truy cập
+  if (role === 'CUSTOMER' || role === 'SHOP') {
+    const customer = await User.findById(req.user.id);
+    if (!customer) return res.status(404).json({ success: false, message: 'Tài khoản không tồn tại' });
+    req.customer = customer;
+  } else if (role === 'DRIVER') {
+    const driver = await Driver.findById(req.user.id);
+    if (!driver) return res.status(404).json({ success: false, message: 'Tài xế không tồn tại' });
+    req.driver = driver;
+  } else if (['ADMIN', 'MANAGER', 'STAFF'].includes(role)) {
+    const admin = await Admin.findById(req.user.id);
+    if (!admin) return res.status(404).json({ success: false, message: 'Admin không tồn tại' });
+    req.admin = admin;
+  } else {
+    return res.status(403).json({ success: false, message: 'Không có quyền truy cập' });
+  }
+
+  next();
+};
+
 module.exports = {
   verifyToken,
   onlyDriver,
   onlyAdmin,
   driverOrAdmin,
-  onlyCustomer
+  onlyCustomer,
+  anyAuthenticatedUser
 };

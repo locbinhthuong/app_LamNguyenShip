@@ -9,8 +9,12 @@ import ActivityList from './pages/customer/ActivityList';
 import CustomerLayout from './components/CustomerLayout';
 import CustomerProfile from './pages/customer/CustomerProfile';
 import CustomerNotifications from './pages/customer/CustomerNotifications';
+import OrderDetail from './pages/customer/OrderDetail';
+import { useAuthSocket } from './hooks/useAuthSocket';
 
 function App() {
+  useAuthSocket();
+
   return (
     <div className="mobile-container min-h-screen bg-gray-50 flex flex-col font-sans">
       <Routes>
@@ -64,6 +68,14 @@ function App() {
           element={
             <ProtectedRoute allowedRole="CUSTOMER">
               <BookingFlow />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/customer/order/:id" 
+          element={
+            <ProtectedRoute allowedRole="CUSTOMER">
+              <OrderDetail />
             </ProtectedRoute>
           } 
         />

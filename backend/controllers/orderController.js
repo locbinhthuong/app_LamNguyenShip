@@ -196,36 +196,39 @@ const orderController = {
     try {
       const customerId = req.customer._id;
       const { 
-        serviceType, customerName, customerPhone, pickupPhone,
+        serviceType, subServiceType, customerName, customerPhone, pickupPhone,
+        senderName, senderPhone, receiverName, receiverPhone,
         pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates, 
-        items, note, packageDetails, rideDetails, codAmount
+        items, note, packageDetails, rideDetails, financialDetails, codAmount
       } = req.body;
 
       if (!pickupCoordinates || !pickupCoordinates.lat || !pickupCoordinates.lng) {
-        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tọa độ điểm đón hợp lệ' });
-      }
-
-      if (serviceType !== 'DIEU_PHOI' && (!deliveryCoordinates || !deliveryCoordinates.lat || !deliveryCoordinates.lng)) {
-        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tọa độ điểm đến hợp lệ' });
+        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tọa độ điểm đón hoặc giao dịch hợp lệ' });
       }
 
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
+        subServiceType: subServiceType || null,
         customerId,
         customerName: customerName || req.customer.name,
         customerPhone: customerPhone || req.customer.phone,
         pickupPhone: pickupPhone || '',
+        senderName: senderName || '',
+        senderPhone: senderPhone || '',
+        receiverName: receiverName || '',
+        receiverPhone: receiverPhone || '',
         pickupAddress,
-        deliveryAddress,
+        deliveryAddress: deliveryAddress || '',
         pickupCoordinates,
-        deliveryCoordinates,
+        deliveryCoordinates: deliveryCoordinates || null,
         items: items || [],
         note: note || '',
         packageDetails: packageDetails || {},
         rideDetails: rideDetails || {},
+        financialDetails: financialDetails || {},
         codAmount: codAmount || 0,
-        deliveryFee: 0, // Admin hoặc hệ thống sẽ tính giá sau, hoặc tính từ Frontend gửi lên
-        status: 'DRAFT',
+        deliveryFee: 0, // Admin tính giá sau (Phí Ship)
+        status: 'DRAFT', // Khách tạo đơn xong phải chờ Admin tính phí Ship -> status: DRAFT
         ipAddress: req.ip
       });
 
@@ -271,8 +274,13 @@ const orderController = {
   updateOrder: async (req, res) => {
     try {
       const { id } = req.params;
-      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, status } = req.body;
-
+      const { 
+        customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, receiverPhone,
+        items, note, codAmount, deliveryFee, status,
+        bulkyFee, surcharge, // Các phí mới
+        vehicleClass, // Cập nhật loại xe nếu cần
+        bankName, bankAccount, bankAccountName, transactionAmount // Nạp Rút
+      } = req.body;
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
@@ -299,10 +307,9 @@ const orderController = {
         
         // Phát socket đăng đơn lại lên chợ cho tài xế
         if (req.io) {
-          const { emitNewOrder } = require('../sockets/index');
           const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-          emitNewOrder(req.io, payload); // Báo có đơn PENDING mới cho tất cả
-          req.io.to('admins').emit('order_updated', payload); // Cập nhật map admin
+          req.io.to('drivers').emit('new_order', payload); // Báo có đơn PENDING mới CHO TÀI XẾ (Kêu chuông bên lái xe)
+          req.io.to('admins').emit('order_updated', payload); // Cập nhật danh sách bên Admin (KHÔNG GỌI new_order để TRÁNH KÊU CHUÔNG vì chính admin là người gõ Enter treo lên!)
         }
       }
 
@@ -310,12 +317,36 @@ const orderController = {
       if (customerName) orderToUpdate.customerName = customerName;
       if (customerPhone) orderToUpdate.customerPhone = customerPhone;
       if (pickupPhone !== undefined) orderToUpdate.pickupPhone = pickupPhone;
+      if (receiverPhone !== undefined) orderToUpdate.receiverPhone = receiverPhone;
       if (pickupAddress) orderToUpdate.pickupAddress = pickupAddress;
       if (deliveryAddress) orderToUpdate.deliveryAddress = deliveryAddress;
       if (items !== undefined) orderToUpdate.items = items;
       if (note !== undefined) orderToUpdate.note = note;
       if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
       if (deliveryFee !== undefined) orderToUpdate.deliveryFee = deliveryFee;
+
+      // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
+      if (bulkyFee !== undefined) {
+        if (!orderToUpdate.packageDetails) orderToUpdate.packageDetails = {};
+        orderToUpdate.packageDetails.bulkyFee = bulkyFee;
+      }
+      if (surcharge !== undefined) {
+        if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};
+        orderToUpdate.rideDetails.surcharge = surcharge;
+      }
+      if (vehicleClass !== undefined) {
+        if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};
+        orderToUpdate.rideDetails.vehicleClass = vehicleClass;
+      }
+      
+      // Tài chính Nạp rút
+      if (bankName !== undefined || bankAccount !== undefined || bankAccountName !== undefined || transactionAmount !== undefined) {
+        if (!orderToUpdate.financialDetails) orderToUpdate.financialDetails = {};
+        if (bankName !== undefined) orderToUpdate.financialDetails.bankName = bankName;
+        if (bankAccount !== undefined) orderToUpdate.financialDetails.bankAccount = bankAccount;
+        if (bankAccountName !== undefined) orderToUpdate.financialDetails.bankAccountName = bankAccountName;
+        if (transactionAmount !== undefined) orderToUpdate.financialDetails.transactionAmount = transactionAmount;
+      }
 
       await orderToUpdate.save();
 
@@ -502,8 +533,7 @@ const orderController = {
       // Update driver stats
       await Driver.findByIdAndUpdate(req.driver._id, {
         $inc: {
-          'stats.completedOrders': 1,
-          'stats.totalOrders': 1
+          'stats.completedOrders': 1
         }
       });
 
@@ -598,6 +628,11 @@ const orderController = {
           success: false,
           message: 'Không tìm thấy đơn hàng'
         });
+      }
+
+      if (req.io) {
+        req.io.emit('order_deleted_event', id);
+        req.io.emit('refresh_orders_data');
       }
 
       res.status(200).json({

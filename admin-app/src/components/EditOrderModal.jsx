@@ -4,11 +4,15 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
-    pickupPhone: '',
+    receiverPhone: '',
     pickupAddress: '',
     deliveryAddress: '',
     codAmount: 0,
     deliveryFee: 0,
+    bankName: '',
+    bankAccount: '',
+    bankAccountName: '',
+    transactionAmount: 0,
     note: ''
   });
 
@@ -17,11 +21,18 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
       setFormData({
         customerName: order.customerName || '',
         customerPhone: order.customerPhone || '',
-        pickupPhone: order.pickupPhone || '',
+        receiverPhone: order.receiverPhone || '',
         pickupAddress: order.pickupAddress || '',
         deliveryAddress: order.deliveryAddress || '',
         codAmount: order.codAmount || 0,
         deliveryFee: order.deliveryFee || 0,
+        bulkyFee: order.packageDetails?.bulkyFee || 0,
+        surcharge: order.rideDetails?.surcharge || 0,
+        vehicleClass: order.rideDetails?.vehicleClass || '',
+        bankName: order.financialDetails?.bankName || '',
+        bankAccount: order.financialDetails?.bankAccount || '',
+        bankAccountName: order.financialDetails?.bankAccountName || '',
+        transactionAmount: order.financialDetails?.transactionAmount || 0,
         note: order.note || ''
       });
     }
@@ -33,7 +44,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'codAmount' || name === 'deliveryFee' ? Number(value) : value
+      [name]: ['codAmount', 'deliveryFee', 'bulkyFee', 'surcharge', 'transactionAmount'].includes(name) ? Number(value) : value
     }));
   };
 
@@ -46,7 +57,19 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
       <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-bold text-slate-800">Cập nhật Đơn #{order.orderCode || order._id.slice(-8)}</h2>
+          <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+            Cập nhật Đơn #{order.orderCode || order._id.slice(-8)}
+            {order.serviceType === 'DAT_XE' && (
+               <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full whitespace-nowrap">
+                 {order.subServiceType === 'XE_OM' ? '🛵 XE ÔM' : order.subServiceType === 'LAI_HO_XE_MAY' ? '🔑 LÁI HỘ (MÁY)' : order.subServiceType === 'LAI_HO_OTO' ? '🚗 LÁI HỘ (Ô TÔ)' : '🛵 ĐẶT XE'}
+               </span>
+            )}
+            {order.serviceType === 'DIEU_PHOI' && (
+               <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap">
+                 {order.subServiceType === 'NAP_TIEN' ? '🏦 NẠP TIỀN' : order.subServiceType === 'RUT_TIEN' ? '💵 RÚT TIỀN' : 'ĐIỀU PHỐI'}
+               </span>
+            )}
+          </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-red-500 rounded-lg p-2 bg-slate-100 font-bold">✕ Đóng</button>
         </div>
         
@@ -57,37 +80,96 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Giao đến</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                {order.serviceType === 'DAT_XE' ? 'SĐT Đặt Cuốc / Khách' : 'SĐT Đặt Cuốc'}
+              </label>
               <input type="text" name="customerPhone" value={formData.customerPhone} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
             </div>
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Địa chỉ lấy hàng</label>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                {order.serviceType === 'DAT_XE' ? 'Điểm Đón Khách' : (order.serviceType === 'DIEU_PHOI' ? 'Nơi Gặp Mặt / Lấy Tiền' : 'Địa chỉ lấy hàng')}
+              </label>
               <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Nơi lấy</label>
-              <input type="text" name="pickupPhone" value={formData.pickupPhone} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
-            </div>
+            {order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Người Nhận</label>
+                <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+              </div>
+            )}
           </div>
           
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Địa chỉ giao hàng</label>
-            <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+          {order.serviceType !== 'DIEU_PHOI' && (
+            <div>
+               <label className="block text-xs font-semibold text-slate-600 mb-1">
+                 {order.serviceType === 'DAT_XE' ? 'Điểm Đến / Trả Khách' : 'Địa chỉ giao hàng'}
+               </label>
+               <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+            </div>
+          )}
+
+          {/* Dành riêng cho Đơn Lái Hộ (Nạp / Rút) */}
+          {(order.serviceType === 'DIEU_PHOI' && (order.subServiceType === 'NAP_TIEN' || order.subServiceType === 'RUT_TIEN')) && (
+            <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 space-y-3">
+              <label className="block text-xs font-bold text-blue-600 tracking-wider">THÔNG TIN GIAO DỊCH TÀI CHÍNH</label>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                   <label className="block text-xs font-semibold text-slate-600 mb-1">Ngân Hàng</label>
+                   <input type="text" name="bankName" value={formData.bankName} onChange={handleChange} className="w-full rounded-lg border border-blue-200 p-2 text-sm bg-white focus:border-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                   <label className="block text-xs font-semibold text-slate-600 mb-1">Số Tài Khoản</label>
+                   <input type="text" name="bankAccount" value={formData.bankAccount} onChange={handleChange} className="w-full rounded-lg border border-blue-200 p-2 text-sm bg-white font-bold text-blue-700 focus:border-blue-500 focus:outline-none" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                   <label className="block text-xs font-semibold text-slate-600 mb-1">Tên Chủ Tài Khoản</label>
+                   <input type="text" name="bankAccountName" value={formData.bankAccountName} onChange={handleChange} className="w-full rounded-lg border border-blue-200 p-2 text-sm bg-white uppercase font-bold focus:border-blue-500 focus:outline-none" />
+                </div>
+                <div>
+                   <label className="block text-xs font-semibold text-orange-600 mb-1">Số Tiền Nạp / Rút</label>
+                   <input type="number" name="transactionAmount" value={formData.transactionAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-orange-50 font-bold focus:border-orange-500 focus:outline-none" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            {order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
+               <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tiền thu hộ (COD)</label>
+                  <input type="number" name="codAmount" value={formData.codAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+               </div>
+            )}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">
+                 {order.serviceType === 'DAT_XE' ? 'Cước xe' : 'Phí giao hàng (Ship)'}
+              </label>
+              <input type="number" name="deliveryFee" value={formData.deliveryFee} onChange={handleChange} min="0" required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Tiền thu hộ (COD)</label>
-              <input type="number" name="codAmount" value={formData.codAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+            <div className={(order.serviceType !== 'GIAO_HANG') ? 'hidden' : ''}>
+              <label className="block text-xs font-semibold text-orange-500 mb-1">Phí Cồng Kềnh</label>
+              <input type="number" name="bulkyFee" value={formData.bulkyFee} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-100" />
             </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Cước phí giao hàng</label>
-              <input type="number" name="deliveryFee" value={formData.deliveryFee} onChange={handleChange} min="0" required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+            <div className={(order.serviceType !== 'DAT_XE') ? 'hidden' : ''}>
+              <label className="block text-xs font-semibold text-teal-600 mb-1">Phụ Phí Lái Hộ / Gọi Xe</label>
+              <input type="number" name="surcharge" value={formData.surcharge} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-100" />
             </div>
           </div>
+
+          {order.serviceType === 'DAT_XE' && (
+            <div>
+              <label className="block text-xs font-semibold text-purple-600 mb-1">Dòng Xe / Loại Xe Khách Cung Cấp</label>
+              <input type="text" name="vehicleClass" value={formData.vehicleClass || ''} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 font-bold focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-100" placeholder="Chỉ áp dụng Xe ôm hoặc Lái hộ" />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Ghi chú</label>

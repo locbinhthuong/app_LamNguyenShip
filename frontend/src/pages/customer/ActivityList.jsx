@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Clock, PackageCheck, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { api, connectSocket, disconnectSocket } from '../../services/api';
+import { api } from '../../services/api';
 
 const ActivityList = () => {
   const navigate = useNavigate();
@@ -24,22 +24,10 @@ const ActivityList = () => {
   useEffect(() => {
     fetchOrders();
 
-    const token = localStorage.getItem('customerToken');
-    if (token) {
-      // Vì role đã được nhúng trong token, ta truyền tạm 'customer' 
-      const socket = connectSocket(token, 'customer');
-
-      const events = [
-        'new_order', 'order_accepted', 'order_picked_up', 
-        'order_delivering', 'order_completed', 'order_cancelled', 'order_updated'
-      ];
-      events.forEach(event => socket.on(event, fetchOrders));
-
-      return () => {
-        events.forEach(event => socket.off(event, fetchOrders));
-        disconnectSocket();
-      };
-    }
+    window.addEventListener('refresh_orders_data', fetchOrders);
+    return () => {
+      window.removeEventListener('refresh_orders_data', fetchOrders);
+    };
   }, []);
 
   const getStatusConfig = (status) => {
@@ -74,13 +62,22 @@ const ActivityList = () => {
           orders.map((order) => {
             const statusCfg = getStatusConfig(order.status);
             return (
-              <div key={order._id} className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden">
+              <div 
+                key={order._id} 
+                className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all"
+                onClick={() => navigate(`/customer/order/${order._id}`)}
+              >
                 {/* Status Bar */}
                 <div className={`absolute top-0 left-0 w-1.5 h-full ${statusCfg.bg.replace('bg-', 'bg-').replace('-50', '-500')}`}></div>
                 
                 <div className="flex justify-between items-center mb-3 pl-2">
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-gray-800">{order.serviceType === 'GIAO_HANG' ? 'Giao Hàng' : (order.serviceType === 'DAT_XE' ? 'Đặt Xe' : 'Mua Hộ')}</span>
+                    <span className="text-sm font-bold text-gray-800">
+                      {order.serviceType === 'GIAO_HANG' ? 'Giao Hàng' :
+                       order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Tài Xế (Xe Ôm)' : 'Lái Hộ') :
+                       order.serviceType === 'DIEU_PHOI' ? (order.subServiceType === 'NAP_TIEN' ? 'Nạp Tiền' : order.subServiceType === 'RUT_TIEN' ? 'Rút Tiền' : 'Điều Phối') :
+                       'Mua Hộ'}
+                    </span>
                     <span className="text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
                   <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold ${statusCfg.bg} ${statusCfg.color}`}>
@@ -111,9 +108,9 @@ const ActivityList = () => {
                         <p className="text-[10px] text-gray-500">Tài xế nhận đơn</p>
                       </div>
                     </div>
-                    <button className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm">
-                      Gọi Tài Xế
-                    </button>
+                    <a href={`tel:${order.assignedTo.phone}`} onClick={(e) => e.stopPropagation()} className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm z-10">
+                      Gọi
+                    </a>
                   </div>
                 )}
               </div>

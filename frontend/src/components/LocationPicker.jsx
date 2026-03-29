@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, X, Target, Loader2 } from 'lucide-react';
+import { MapPin, X, Target, Loader2, Search } from 'lucide-react';
 
 const MapController = ({ setMapCenter, setIsDragging }) => {
   const map = useMap();
@@ -38,6 +38,41 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [flyPos, setFlyPos] = useState(initialPosition);
+
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // Xử lý Gợi ý Địa chỉ (Autocomplete)
+  useEffect(() => {
+    if (searchQuery.trim().length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const delayDebounce = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=vn`);
+        const data = await res.json();
+        setSuggestions(data);
+      } catch (err) {
+        console.error('Lỗi tìm kiếm:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 600);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
+  const handleSelectSuggestion = (place) => {
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
+    setFlyPos([lat, lon]);
+    setMapCenter([lat, lon]);
+    setSearchQuery(''); // Ẩn suggestions menu đi
+    setSuggestions([]);
+  };
 
   // Xử lý Reverse Geocoding khi map dừng di chuyển
   useEffect(() => {
@@ -100,7 +135,54 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition }) => {
         <button onClick={onClose} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">
           <X size={24} />
         </button>
-        <span className="font-bold text-gray-800 flex-1 text-center pr-6">Chọn Vị Trí Lấy / Giao</span>
+        <span className="font-bold text-gray-800 flex-1 text-center pr-6">Chọn Vị Trí Bản Đồ</span>
+      </div>
+
+      {/* THANH TÌM KIẾM TỰ ĐỘNG BỒI ĐẮP (AUTOCOMPETE) MẶT TIỀN */}
+      <div className="bg-white px-4 pb-3 shadow-sm relative z-[1001]">
+        <div className="relative">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <Search size={18} />
+          </div>
+          <input 
+            type="text"
+            placeholder="Tìm kiếm địa chỉ/đường/tòa nhà..."
+            className="w-full pl-10 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-800 outline-none focus:border-blue-500 focus:bg-white transition-colors"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button 
+              onClick={() => { setSearchQuery(''); setSuggestions([]); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 p-1 bg-gray-200 rounded-full"
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+        
+        {/* DROPDOWN DANH SÁCH GỢI Ý ĐỊA CHỈ */}
+        {suggestions.length > 0 && (
+          <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 max-h-60 overflow-y-auto z-[2000] divide-y divide-gray-50">
+            {suggestions.map((p, index) => (
+              <div 
+                key={index} 
+                className="flex items-start gap-3 p-3 active:bg-blue-50 hover:bg-gray-50 cursor-pointer"
+                onClick={() => handleSelectSuggestion(p)}
+              >
+                <MapPin size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-gray-700 font-medium line-clamp-2 leading-relaxed">{p.display_name}</p>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {isSearching && suggestions.length === 0 && searchQuery.trim().length >= 2 && (
+          <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-xl shadow-lg border border-gray-100 p-4 text-center z-[2000]">
+            <Loader2 size={24} className="animate-spin text-blue-500 mx-auto mb-2" />
+            <span className="text-xs text-gray-500">Đang tìm địa điểm qua hệ thống Vệ tinh...</span>
+          </div>
+        )}
       </div>
 
       {/* BẢN ĐỒ CHIẾM HẾT MÀN HÌNH CÒN LẠI */}

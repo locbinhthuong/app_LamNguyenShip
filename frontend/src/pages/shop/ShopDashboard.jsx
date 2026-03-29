@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight } from 'lucide-react';
-import { api, connectSocket, disconnectSocket } from '../../services/api';
+import { api } from '../../services/api';
 import ShopCreateOrderModal from '../../components/ShopCreateOrderModal';
 import LocationPicker from '../../components/LocationPicker';
 
@@ -25,20 +25,10 @@ const ShopDashboard = () => {
   useEffect(() => {
     fetchOrders();
 
-    const token = localStorage.getItem('shopToken');
-    if (token) {
-      const socket = connectSocket(token, 'shop');
-      const events = [
-        'new_order', 'order_accepted', 'order_picked_up', 
-        'order_delivering', 'order_completed', 'order_cancelled', 'order_updated'
-      ];
-      events.forEach(event => socket.on(event, fetchOrders));
-
-      return () => {
-        events.forEach(event => socket.off(event, fetchOrders));
-        disconnectSocket();
-      };
-    }
+    window.addEventListener('refresh_orders_data', fetchOrders);
+    return () => {
+      window.removeEventListener('refresh_orders_data', fetchOrders);
+    };
   }, []);
 
   useEffect(() => {

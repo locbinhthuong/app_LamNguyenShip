@@ -1,37 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { io } from 'socket.io-client';
-import { API_BASE_URL } from '../services/api';
+import { useAdminSocket } from '../hooks/useAdminSocket';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notification, setNotification] = useState(null);
-
-  // Xử lý Global Notification Socket
-  useEffect(() => {
-    const token = localStorage.getItem('admin_token');
-    if (!token) return;
-
-    const socket = io(API_BASE_URL || window.location.origin, {
-      auth: { token },
-      transports: ['websocket', 'polling']
-    });
-
-    socket.on('order_updated', (order) => {
-      if (order.status === 'PENDING' && order.cancelReason) {
-        setNotification({
-          message: `🚫 Tài xế vừa từ chối đơn hàng #${order.orderCode || order._id.slice(-8).toUpperCase()}`,
-          reason: order.cancelReason
-        });
-        setTimeout(() => setNotification(null), 10000);
-      }
-    });
-
-    return () => socket.disconnect();
-  }, []);
+  useAdminSocket();
 
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? 'hidden' : '';
@@ -65,21 +41,7 @@ export default function Layout() {
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-slate-50">
 
-      {/* GLOBAL TOAST POPUP */}
-      {notification && (
-        <div className="fixed top-4 right-4 z-[9999] max-w-[90vw] sm:max-w-sm rounded-xl border border-red-500/30 bg-white p-4 shadow-2xl animate-bounce">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div className="flex-1">
-              <p className="font-bold text-slate-800 text-sm mb-1">{notification.message}</p>
-              <p className="text-red-400 text-xs font-medium bg-red-500/10 px-2 py-1 rounded inline-block whitespace-normal break-words break-all">
-                Lý do: {notification.reason}
-              </p>
-            </div>
-            <button onClick={() => setNotification(null)} className="text-slate-500 hover:text-slate-800 shrink-0">✖</button>
-          </div>
-        </div>
-      )}
+      {/* GLOBAL TOAST POPUP - Xoá do đã chuyển sang Context chung */}
 
       {sidebarOpen && (
         <button

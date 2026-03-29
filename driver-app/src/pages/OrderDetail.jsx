@@ -44,6 +44,7 @@ export default function OrderDetail() {
   }, [id]);
 
   const handleAction = async (action) => {
+    if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(true);
     try {
       const actions = {
@@ -67,8 +68,16 @@ export default function OrderDetail() {
       return <button onClick={() => handleAction('accept')} disabled={actionLoading} className="btn-success">Nhận đơn này</button>;
     }
     if (order.assignedTo?._id === driver?._id || order.assignedTo === driver?._id) {
-      if (order.status === 'ACCEPTED') return <button onClick={() => handleAction('pickup')} disabled={actionLoading} className="btn-warning">📦 Đã lấy hàng</button>;
-      if (order.status === 'PICKED_UP') return <button onClick={() => handleAction('complete')} disabled={actionLoading} className="btn-success">✅ Hoàn thành giao hàng</button>;
+      if (order.status === 'ACCEPTED') {
+         // Nếu là chở khách thì text là "Đã Đón Khách", giao hàng là "Đã lấy hàng"
+         const btnText = order.serviceType === 'DAT_XE' ? '🚙 Đã Đón Khách' : '📦 Đã lấy hàng';
+         return <button onClick={() => handleAction('pickup')} disabled={actionLoading} className="btn-warning">{btnText}</button>;
+      }
+      if (order.status === 'PICKED_UP') {
+         // Nếu là chở khách thì text là "Trả Khách & Hoàn Thành"
+         const btnText = order.serviceType === 'DAT_XE' ? '✅ Trả Khách & Hoàn Thành' : '✅ Hoàn thành giao hàng';
+         return <button onClick={() => handleAction('complete')} disabled={actionLoading} className="btn-success">{btnText}</button>;
+      }
     }
     return null;
   };
@@ -122,62 +131,103 @@ export default function OrderDetail() {
         {/* Addresses */}
         <div className="card">
           <div className="flex items-start gap-3 mb-4">
-            <span className="w-8 h-8 shrink-0 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 font-bold">📦</span>
+            <span className="w-8 h-8 shrink-0 bg-green-500/20 rounded-full flex items-center justify-center text-green-400 font-bold">
+              {order.serviceType === 'DAT_XE' ? '📍' : '📦'}
+            </span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">
-                <p className="text-xs text-slate-500 font-bold uppercase">Lấy Hàng Tại</p>
+                <p className="text-xs text-slate-500 font-bold uppercase">
+                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : 'Lấy Hàng Tại'}
+                </p>
                 <a 
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.pickupAddress)}`} 
+                  href={`https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates?.lat ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
                 >
-                  🗺️ MỞ BẢN ĐỒ
+                  🗺️ DẪN ĐƯỜNG
                 </a>
               </div>
-              <p className="text-slate-800 font-bold text-sm leading-snug">{order.pickupAddress}</p>
+              <p className="text-slate-800 font-bold text-sm leading-snug">{order.pickupAddress || 'Chưa xác định'}</p>
             </div>
           </div>
           <div className="border-l-2 border-dashed border-slate-600 ml-4 h-4 mb-4" />
           <div className="flex items-start gap-3">
             <span className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 font-bold">🏁</span>
-            <div className="flex-1">
-              <p className="text-xs text-slate-500 mb-1">GIAO HÀNG</p>
-              <p className="text-slate-800 font-medium">{order.deliveryAddress}</p>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-xs text-slate-500 font-bold uppercase">
+                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'Giao Hàng (Đến)'}
+                </p>
+                <a 
+                  href={`https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates?.lat ? `${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}` : encodeURIComponent(order.deliveryAddress)}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
+                >
+                  🗺️ DẪN ĐƯỜNG
+                </a>
+              </div>
+              <p className="text-slate-800 font-medium text-sm leading-snug">{order.deliveryAddress || 'Chưa xác định'}</p>
             </div>
           </div>
         </div>
 
         {/* Liên Hệ */}
         <div className="card">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">LIÊN HỆ</p>
-          <div className="flex flex-col gap-4">
-            {order.pickupPhone && (
-              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
+            <span className="text-sm">☎️</span> {order.serviceType === 'DAT_XE' ? 'LIÊN HỆ KHÁCH ĐẶT CHUYẾN' : 'LIÊN HỆ GIAO NHẬN'}
+          </p>
+          <div className="flex flex-col gap-5">
+            
+            {order.serviceType === 'DAT_XE' ? (
+              <div className="flex items-center justify-between mx-[-12px] px-3">
                 <div className="min-w-0 pr-2 flex-1">
-                  <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">SĐT Nơi Lấy (Shop)</p>
-                  <p className="text-orange-600 font-black text-xl tracking-wider">{order.pickupPhone}</p>
+                  <p className="text-slate-800 font-bold text-sm mb-1">{order.customerName}</p>
+                  <p className="text-blue-600 font-black text-xl tracking-wider">{order.customerPhone}</p>
                 </div>
-                <a href={`tel:${order.pickupPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-orange-400 to-orange-500 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center gap-2 border border-orange-400">
-                  <span className="text-lg">📞</span> GỌI
+                <a href={`tel:${order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center gap-2 border border-blue-500">
+                  <span className="text-lg">📞</span> GỌI LÊN XE
                 </a>
               </div>
+            ) : (
+              <>
+                {/* 1. NƠI LẤY HÀNG (SENDER / SHOP) */}
+                {(order.pickupPhone || order.senderPhone) && (
+                  <div className="flex items-center justify-between border-b mx-[-12px] px-3 border-slate-100 pb-5">
+                    <div className="min-w-0 pr-2 flex-1">
+                      <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5" flex items-center gap-1>
+                         NGƯỜI GỬI (NƠI LẤY)
+                      </p>
+                      <p className="text-slate-800 font-bold text-sm mb-1">{order.senderName || 'Người Bán'}</p>
+                      <p className="text-orange-600 font-black text-xl tracking-wider">{order.senderPhone || order.pickupPhone}</p>
+                    </div>
+                    <a href={`tel:${order.senderPhone || order.pickupPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-orange-400 to-orange-500 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center gap-2 border border-orange-400">
+                      <span className="text-lg">📞</span> GỌI LẤY
+                    </a>
+                  </div>
+                )}
+
+                {/* 2. NƠI GIAO ĐẾN (RECEIVER / CUSTOMER) */}
+                <div className="flex items-center justify-between pt-1">
+                  <div className="min-w-0 pr-2 flex-1">
+                    <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">NGƯỜI NHẬN (GIAO ĐẾN)</p>
+                    <p className="text-slate-800 font-bold text-sm mb-1">{order.receiverName || order.customerName || 'Khách Hàng'}</p>
+                    <p className="text-blue-600 font-black text-xl tracking-wider">{order.receiverPhone || order.customerPhone}</p>
+                  </div>
+                  <a href={`tel:${order.receiverPhone || order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center gap-2 border border-blue-500">
+                    <span className="text-lg">📞</span> GỌI GIAO
+                  </a>
+                </div>
+              </>
             )}
-            <div className="flex items-center justify-between pt-1">
-              <div className="min-w-0 pr-2 flex-1">
-                <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">{order.customerName || 'Khách Nhận'}</p>
-                <p className="text-blue-600 font-black text-xl tracking-wider">{order.customerPhone}</p>
-              </div>
-              <a href={`tel:${order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center gap-2 border border-blue-500">
-                <span className="text-lg">📞</span> GỌI
-              </a>
-            </div>
+
           </div>
         </div>
 
         {/* Order Info */}
         <div className="card">
-          <p className="text-xs text-slate-500 mb-2">THÔNG TIN ĐƠN HÀNG</p>
+          <p className="text-xs text-slate-500 mb-2">THÔNG TIN CHUYẾN</p>
           {order.items?.length > 0 && (
             <div className="mb-3">
               <p className="text-slate-500 text-xs mb-1">Hàng hóa:</p>
@@ -186,6 +236,18 @@ export default function OrderDetail() {
               ))}
             </div>
           )}
+          
+          {/* XE ÔM / LÁI HỘ INFO */}
+          {order.serviceType === 'DAT_XE' && order.rideDetails && (
+            <div className="mb-3 bg-indigo-50/50 p-3 rounded-lg border border-indigo-100/50">
+              <p className="text-indigo-800 text-sm font-bold flex flex-col">
+                <span className="text-xs text-indigo-400 font-semibold mb-1">PHƯƠNG TIỆN YÊU CẦU:</span>
+                {order.subServiceType === 'XE_OM' ? '🛵 Xe Máy (Chở khách)' : order.subServiceType === 'LAI_HO_OTO' ? '🚗 Lái hộ Ô Tô' : '🔑 Lái hộ Xe Máy'}
+                {order.rideDetails.vehicleClass && ` - Phân khúc: ${order.rideDetails.vehicleClass === 'TAY_GA' ? 'Xe Tay Ga' : order.rideDetails.vehicleClass === 'XE_SO' ? 'Xe Số' : 'Côn Tay'}`}
+              </p>
+            </div>
+          )}
+
           {order.note && (
             <div className="bg-yellow-500/20 rounded-lg p-3 mb-3">
               <p className="text-yellow-300 text-sm">📝 {order.note}</p>
@@ -193,13 +255,15 @@ export default function OrderDetail() {
           )}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="bg-slate-700 rounded-xl p-3">
-              <p className="text-slate-500 text-xs">Phí giao hàng</p>
+              <p className="text-slate-500 text-xs">{order.serviceType === 'DAT_XE' ? 'Cước xe' : 'Phí giao hàng'}</p>
               <p className="text-green-400 font-bold text-lg">{order.deliveryFee?.toLocaleString()}đ</p>
             </div>
-            <div className="bg-slate-700 rounded-xl p-3">
-              <p className="text-slate-500 text-xs">Thu hộ (COD)</p>
-              <p className="text-blue-600 font-bold text-lg">{order.codAmount?.toLocaleString()}đ</p>
-            </div>
+            {order.serviceType !== 'DAT_XE' && (
+              <div className="bg-slate-700 rounded-xl p-3">
+                <p className="text-slate-500 text-xs">Thu hộ (COD)</p>
+                <p className="text-blue-600 font-bold text-lg">{order.codAmount?.toLocaleString()}đ</p>
+              </div>
+            )}
           </div>
         </div>
 

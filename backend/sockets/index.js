@@ -116,6 +116,12 @@ const broadcastToCreator = (io, order, eventName) => {
     const creatorId = order.customerId._id || order.customerId;
     io.to(`customer_${creatorId.toString()}`).emit(eventName, order);
     io.to(`shop_${creatorId.toString()}`).emit(eventName, order);
+
+    // Luôn bắn kèm order_updated để Frontend chỉ cần lắng nghe 1 cục duy nhất cho mọi thay đổi
+    if (eventName !== 'order_updated') {
+      io.to(`customer_${creatorId.toString()}`).emit('order_updated', order);
+      io.to(`shop_${creatorId.toString()}`).emit('order_updated', order);
+    }
   }
 };
 

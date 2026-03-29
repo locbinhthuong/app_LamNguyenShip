@@ -8,6 +8,11 @@ const orderSchema = new mongoose.Schema({
     default: 'GIAO_HANG',
     index: true
   },
+  // Tiểu phân loại (Ví dụ: XE_OM, LAI_HO_XE_MAY, NAP_TIEN, RUT_TIEN, GAP_TRUC_TIEP)
+  subServiceType: {
+    type: String,
+    default: null
+  },
 
   // Liên kết người dùng (Customer App)
   customerId: {
@@ -17,33 +22,33 @@ const orderSchema = new mongoose.Schema({
     index: true
   },
 
-  // Thông tin khách hàng
+  // Thông tin khách hàng (Người đặt chung)
   customerName: {
     type: String,
-    required: [true, 'Tên khách hàng là bắt buộc'],
+    required: [true, 'Tên người đặt là bắt buộc'],
     trim: true,
-    maxlength: [100, 'Tên khách hàng không được quá 100 ký tự']
+    maxlength: [100, 'Tên người đặt không quá 100 ký tự']
   },
   customerPhone: {
     type: String,
-    required: [true, 'Số điện thoại khách (giao hàng) là bắt buộc'],
+    required: [true, 'Số điện thoại người đặt là bắt buộc'],
     trim: true
   },
-  pickupPhone: {
-    type: String,
-    default: '',
-    trim: true
-  },
+  // THÔNG TIN GIAO HÀNG (Người gửi / Người nhận)
+  senderName: { type: String, trim: true },
+  senderPhone: { type: String, trim: true },
+  receiverName: { type: String, trim: true },
+  receiverPhone: { type: String, trim: true },
 
   // Địa chỉ
   pickupAddress: {
     type: String,
-    required: [true, 'Địa chỉ lấy hàng là bắt buộc'],
+    required: [true, 'Điểm xuất phát/Giao dịch là bắt buộc'],
     trim: true
   },
   deliveryAddress: {
     type: String,
-    required: [true, 'Địa chỉ giao hàng là bắt buộc'],
+    default: '',
     trim: true
   },
 
@@ -67,13 +72,25 @@ const orderSchema = new mongoose.Schema({
   packageDetails: {
     weight: { type: String, default: '' },
     itemsToBuy: { type: [String], default: [] }, // Cho mua hộ (ví dụ: ["Cơm sườn", "Trà đá"])
-    isFragile: { type: Boolean, default: false }
+    isFragile: { type: Boolean, default: false },
+    bulkyFee: { type: Number, default: 0 }, // Phí cồng kềnh
+    description: { type: String, default: '' }
   },
 
   // Chi tiết dịch vụ: DAT_XE
   rideDetails: {
     vehicleType: { type: String, enum: ['XE_MAY', 'OTO'], default: 'XE_MAY' },
-    passengerCount: { type: Number, default: 1 }
+    vehicleClass: { type: String, default: '' }, // Có thể là 'TAY_GA', 'XE_SO' hoặc tên dòng xe Ô tô (VD: 'Mazda 3')
+    passengerCount: { type: Number, default: 1 },
+    surcharge: { type: Number, default: 0 } // Phụ phí lái hộ
+  },
+
+  // Chi tiết dịch vụ: DIEU_PHOI (Nạp/Rút Tài khoản)
+  financialDetails: {
+    bankAccount: { type: String, default: '' },
+    bankAccountName: { type: String, default: '' }, // Tên chủ tài khoản
+    bankName: { type: String, default: '' },
+    transactionAmount: { type: Number, default: 0 }
   },
 
   // Trạng thái đơn hàng

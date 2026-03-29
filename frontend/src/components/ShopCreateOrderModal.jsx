@@ -4,6 +4,7 @@ import { api } from '../services/api';
 
 const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
+  const isSubmittingRef = React.useRef(false);
   
   // Dữ liệu Shop mặc định (Từ LocalStorage)
   const savedShopAddress = localStorage.getItem('shopAddress') || '';
@@ -39,6 +40,7 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmittingRef.current) return;
     
     if (!form.pickupAddress.trim() || !form.pickupPhone.trim()) {
       return alert('Vui lòng nhập Địa chỉ và SĐT cửa hàng (Nơi lấy hàng)');
@@ -54,6 +56,8 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
       return alert('Vui lòng nhập đầy đủ Tên, SĐT Khách và Địa chỉ giao hàng!');
     }
 
+    let isSuccess = false;
+    isSubmittingRef.current = true;
     setLoading(true);
     try {
       const payload = {
@@ -73,6 +77,7 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
       const res = await api.post('/orders/customer', payload);
       
       if (res.data.success) {
+        isSuccess = true;
         // Chỉ lưu lại làm mặc định nếu đây là lần đầu tiên tạo đơn
         if (!localStorage.getItem('shopAddress')) localStorage.setItem('shopAddress', form.pickupAddress.trim());
         if (!localStorage.getItem('shopPhone')) localStorage.setItem('shopPhone', form.pickupPhone.trim());
@@ -97,7 +102,10 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
       console.error(error);
       alert('Lỗi tạo đơn: ' + (error.response?.data?.message || 'Vui lòng thử lại.'));
     } finally {
-      setLoading(false);
+      if (!isSuccess) {
+        isSubmittingRef.current = false;
+        setLoading(false);
+      }
     }
   };
 

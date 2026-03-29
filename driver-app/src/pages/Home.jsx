@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl } from '../services/api';
-import { Capacitor } from '@capacitor/core';
-import { BackgroundGeolocation } from '@capacitor-community/background-geolocation';
+import { Capacitor, registerPlugin } from '@capacitor/core';
+const BackgroundGeolocation = registerPlugin("BackgroundGeolocation");
 
 const STATUS_CONFIG = {
   ACCEPTED: { label: 'Đã nhận', color: 'bg-blue-500', textColor: 'text-blue-400' },
@@ -15,14 +15,22 @@ const STATUS_CONFIG = {
   CANCELLED: { label: 'Đã hủy', color: 'bg-red-500', textColor: 'text-red-400' }
 };
 
-const getServiceBadge = (type) => {
-  switch(type) {
-    case 'DAT_XE': return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 CHỞ KHÁCH</span>;
-    case 'MUA_HO': return <span className="bg-lime-100 text-lime-700 px-2 py-0.5 rounded text-[10px] font-bold border border-lime-200">🛒 MUA HỘ</span>;
-    case 'DIEU_PHOI': return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">🛠️ KÈM THỢ</span>;
-    case 'GIAO_HANG':
-    default: return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">📦 GIAO HÀNG</span>;
+const getServiceBadge = (order) => {
+  if (order.serviceType === 'DAT_XE') {
+    if (order.subServiceType === 'XE_OM') return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 CHỞ KHÁCH</span>;
+    if (order.subServiceType === 'LAI_HO_XE_MAY') return <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-[10px] font-bold border border-teal-200">🔑 LÁI HỘ XE MÁY</span>;
+    if (order.subServiceType === 'LAI_HO_OTO') return <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200">🚗 LÁI HỘ ÔTÔ</span>;
+    return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 ĐẶT XE</span>;
   }
+  if (order.serviceType === 'DIEU_PHOI') {
+    if (order.subServiceType === 'NAP_TIEN') return <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-200">🏦 NẠP TIỀN</span>;
+    if (order.subServiceType === 'RUT_TIEN') return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">💵 RÚT TIỀN</span>;
+    return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">🛠️ ĐIỀU PHỐI</span>;
+  }
+  if (order.serviceType === 'MUA_HO') {
+    return <span className="bg-lime-100 text-lime-700 px-2 py-0.5 rounded text-[10px] font-bold border border-lime-200">🛒 MUA HỘ</span>;
+  }
+  return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">📦 GIAO HÀNG</span>;
 };
 
 function OrderCard({ order, onAccept, loading }) {
@@ -37,7 +45,7 @@ function OrderCard({ order, onAccept, loading }) {
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-col gap-1">
           <span className="text-xs text-slate-500 line-clamp-1">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-          <div>{getServiceBadge(order.serviceType)}</div>
+          <div>{getServiceBadge(order)}</div>
         </div>
         <span className="text-sm font-bold text-blue-600">
           {order.codAmount?.toLocaleString()}đ COD
@@ -112,7 +120,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
       <div className="flex justify-between items-start mb-2">
         <div className="flex flex-col gap-1">
           <span className="font-bold text-slate-800 bg-white/50 px-2 py-0.5 rounded inline-block text-xs">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-          <div className="mt-0.5">{getServiceBadge(order.serviceType)}</div>
+          <div className="mt-0.5">{getServiceBadge(order)}</div>
         </div>
         <span className={`status-badge ${config.color} text-slate-800`}>{config.label}</span>
       </div>
@@ -157,6 +165,77 @@ export default function Home() {
   const [showToast, setShowToast] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
+
+  // Audio Alarm
+  const audioCtxRef = useRef(null);
+  const intervalRef = useRef(null);
+  const [isRinging, setIsRinging] = useState(false);
+
+  // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay)
+  useEffect(() => {
+    const unlockAudio = () => {
+      try {
+        if (!audioCtxRef.current) {
+          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+      } catch (e) {
+        console.error("Lỗi cấp quyền âm thanh:", e);
+      }
+    };
+    
+    // Nhả quyền ngay khi thợ chạm vào màn hình bất kỳ đâu
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('touchstart', unlockAudio, { once: true });
+    
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+  }, []);
+
+  const stopAlarm = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsRinging(false);
+  }, []);
+
+  const startAlarm = useCallback(() => {
+    stopAlarm();
+    setIsRinging(true);
+    const playBeep = () => {
+       try {
+           if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+           const osc = audioCtxRef.current.createOscillator();
+           const gainNode = audioCtxRef.current.createGain();
+           osc.connect(gainNode);
+           gainNode.connect(audioCtxRef.current.destination);
+           osc.type = 'square';
+           osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
+           gainNode.gain.setValueAtTime(0.3, audioCtxRef.current.currentTime);
+           osc.start(audioCtxRef.current.currentTime);
+           osc.stop(audioCtxRef.current.currentTime + 0.15);
+           
+           setTimeout(() => {
+               const osc2 = audioCtxRef.current.createOscillator();
+               const gainNode2 = audioCtxRef.current.createGain();
+               osc2.connect(gainNode2);
+               gainNode2.connect(audioCtxRef.current.destination);
+               osc2.type = 'square';
+               osc2.frequency.setValueAtTime(1000, audioCtxRef.current.currentTime);
+               gainNode2.gain.setValueAtTime(0.3, audioCtxRef.current.currentTime);
+               osc2.start(audioCtxRef.current.currentTime);
+               osc2.stop(audioCtxRef.current.currentTime + 0.2);
+           }, 200);
+       } catch(e) {}
+    };
+    playBeep();
+    intervalRef.current = setInterval(playBeep, 2000);
+  }, [stopAlarm]);
 
   // GPS Tracking States
   const [gpsStatus, setGpsStatus] = useState('OFF'); // OFF | FINDING | TRACKING | ERROR
@@ -343,6 +422,13 @@ export default function Home() {
   }, [driver?.isOnline]);
 
   useEffect(() => {
+    // Xin quyền Push Notification mồi (Dùng cho Notification Native lúc Màn hình chạy ngầm)
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
+        LocalNotifications.requestPermissions();
+      }).catch(console.error);
+    }
+    
     return () => {
       releaseWakeLock();
       stopGpsTracking();
@@ -378,7 +464,28 @@ export default function Home() {
     // Lắng nghe Socket để cập nhật TỨC THỜI
     const socket = window.driverSocket;
     if (socket) {
-      socket.on('new_order', loadData);
+      socket.on('new_order', () => {
+         loadData();
+         startAlarm();
+         
+         // Nếu thợ đang lướt Zalo/Facebook và Background Sync chạy, phát ngay Thông báo Popup điện thoại Native!
+         if (Capacitor.isNativePlatform()) {
+            import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
+              LocalNotifications.schedule({
+                notifications: [
+                  {
+                    title: "HỆ THỐNG ĐIỀU PHỐI",
+                    body: "🔔 CÓ ĐƠN HÀNG MỚI! Bấm vào đây để xem và giật đơn ngay!",
+                    id: Math.floor(Math.random() * 1000000), // ID duy nhất
+                    schedule: { at: new Date(Date.now() + 100) },
+                    sound: null, // Dùng tiếng chuông mặc định của hệ thống OS
+                    smallIcon: "ic_stat_icon_config_sample", // Sẽ fallback về icon app nếu chưa cấu hình icon
+                  }
+                ]
+              });
+            }).catch(console.error);
+         }
+      });
       socket.on('order_accepted', loadData);
       socket.on('order_cancelled', loadData);
       socket.on('order_picked_up', loadData);
@@ -396,10 +503,12 @@ export default function Home() {
         socket.off('order_delivering', loadData);
         socket.off('order_completed', loadData);
       }
+      stopAlarm();
     };
-  }, [loadData]);
+  }, [loadData, startAlarm, stopAlarm]);
 
   const handleAccept = async (orderId) => {
+    if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(orderId);
     try {
       await acceptOrder(orderId);
@@ -413,6 +522,7 @@ export default function Home() {
   };
 
   const handleAction = async (orderId, action) => {
+    if (actionLoading) return; // Chặn bấm đúp nhiều lần Giao Xong
     setActionLoading(orderId);
     try {
       const actions = {
@@ -545,6 +655,18 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Báo động vang trời khi có Đơn Mới */}
+      {isRinging && (
+        <div className="bg-red-500 animate-pulse text-white p-3 mx-4 mt-4 rounded-xl shadow-lg border-2 border-red-700 flex justify-between items-center z-50 sticky top-[72px] hover:bg-red-600 transition-colors cursor-pointer" onClick={stopAlarm}>
+          <div className="flex items-center gap-2 font-black pl-1">
+             <span className="text-xl">🔔</span> CÓ ĐƠN MỚI!
+          </div>
+          <button className="bg-white text-red-600 font-bold px-4 py-2 text-xs rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition-transform">
+             TẮT CHUÔNG
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="sticky top-0 z-10 flex bg-white border-b border-slate-200">
