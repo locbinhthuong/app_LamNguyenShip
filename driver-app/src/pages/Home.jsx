@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl } from '../services/api';
+import { Capacitor } from '@capacitor/core';
+import { BackgroundGeolocation } from '@capacitor-community/background-geolocation';
 
 const STATUS_CONFIG = {
   ACCEPTED: { label: 'Đã nhận', color: 'bg-blue-500', textColor: 'text-blue-400' },
@@ -199,6 +201,54 @@ export default function Home() {
     };
   }, [driver?.isOnline]);
 
+  // VŨ KHÍ HẠNG NẶNG: Định vị Background Ngầm (Chỉ kích hoạt nếu là App Native Android/iOS, Web thì xài GPS thường)
+  const startGpsTracking = (onSuccess, onError) => {
+    if (Capacitor.isNativePlatform()) {
+      BackgroundGeolocation.addWatcher(
+        {
+          backgroundMessage: "Ứng dụng đang lấy vị trí ngầm...",
+          backgroundTitle: "LamNguyenShip Định Vị Xe",
+          requestPermissions: true,
+          stale: false,
+          distanceFilter: 3 // Chỉ quét khi xe di chuyển xấp xỉ 3 mét
+        },
+        (location, error) => {
+          if (error) {
+            if (error.code === "NOT_AUTHORIZED") {
+              console.error("KHÔNG ĐƯỢC CẤP QUYỀN CHẠY NGẦM", error);
+            }
+            onError(error);
+            return;
+          }
+          if (location) {
+            onSuccess({ coords: { latitude: location.latitude, longitude: location.longitude } });
+          }
+        }
+      ).then((watcherId) => {
+        // watcherId ở đây là một String
+        watchIdRef.current = watcherId;
+      }).catch(onError);
+    } else {
+      // Bản Web - Đã bị ép sáng màn hình bởi WakeLock
+      watchIdRef.current = navigator.geolocation.watchPosition(
+        onSuccess,
+        onError,
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+      );
+    }
+  };
+
+  const stopGpsTracking = () => {
+    if (watchIdRef.current !== null) {
+      if (Capacitor.isNativePlatform()) {
+        BackgroundGeolocation.removeWatcher({ id: watchIdRef.current });
+      } else {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+      watchIdRef.current = null;
+    }
+  };
+
   const toggleGPS = () => {
     if (isToggling) return;
     setIsToggling(true);
@@ -207,10 +257,7 @@ export default function Home() {
     if (gpsStatus !== 'OFF' || !driver?.isOnline) {
       // Tắt GPS
       releaseWakeLock(); // Trả màn hình về bình thường
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
+      stopGpsTracking();
       if (gpsStatus !== 'OFF') {
         if (window.driverSocket && window.driverSocket.connected) {
           window.driverSocket.emit('stop_location');
@@ -221,14 +268,14 @@ export default function Home() {
       return;
     }
 
-    if (!navigator.geolocation) {
+    if (!Capacitor.isNativePlatform() && !navigator.geolocation) {
       showNotification('Thiết bị không hỗ trợ định vị GPS', 'error');
       setGpsStatus('ERROR');
       return;
     }
 
     setGpsStatus('FINDING');
-    watchIdRef.current = navigator.geolocation.watchPosition(
+    startGpsTracking(
       (pos) => {
         setGpsStatus('TRACKING');
         requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
@@ -241,9 +288,8 @@ export default function Home() {
       },
       (err) => {
         setGpsStatus('ERROR');
-        showNotification('Cần cấp quyền Vị Trí (Location) trong Cài đặt', 'error');
-      },
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
+        showNotification('Lỗi cấp quyền: Cần bật Vị Trí (Location/Luôn Luôn)!', 'error');
+      }
     );
   };
 
@@ -251,7 +297,7 @@ export default function Home() {
   useEffect(() => {
     // 1. Tự động bật GPS nếu Tài xế đang Online (Ví dụ: Lúc mới Load/Refresh trang)
     if (driver?.isOnline && gpsStatus === 'OFF' && watchIdRef.current === null) {
-      if (!navigator.geolocation) {
+      if (!Capacitor.isNativePlatform() && !navigator.geolocation) {
         setGpsStatus('ERROR');
         return;
       }
@@ -273,25 +319,20 @@ export default function Home() {
         setGpsStatus('ERROR');
       };
 
-      // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên (khắc phục lỗi xoay hoài lúc mới load)
-      navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
-        enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
-      });
+      // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên (khắc phục lỗi xoay hoài lúc mới load trên web)
+      if (!Capacitor.isNativePlatform()) {
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
+          enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
+        });
+      }
 
-      // Sau đó khởi động máy quét liên tục
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        handleSuccess,
-        handleError,
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-      );
+      // Sau đó khởi động máy quét liên tục Chạy Ngầm (Native) hoặc Web
+      startGpsTracking(handleSuccess, handleError);
     } 
     // 2. Tự động tắt GPS, huỷ vệ tinh nếu chuyển sang trạng thái Offline
     else if (!driver?.isOnline && gpsStatus !== 'OFF') {
       releaseWakeLock(); // Nhả màn hình
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-        watchIdRef.current = null;
-      }
+      stopGpsTracking(); // Chặn background Service nếu là AppNative
       setGpsStatus('OFF');
       // Đảm bảo Máy chủ nhận được lệnh xóa cục GPS cuối cùng trên Bản đồ
       if (window.driverSocket && window.driverSocket.connected) {
@@ -304,7 +345,7 @@ export default function Home() {
   useEffect(() => {
     return () => {
       releaseWakeLock();
-      if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current);
+      stopGpsTracking();
     };
   }, []);
 
