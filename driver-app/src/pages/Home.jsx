@@ -159,6 +159,7 @@ export default function Home() {
   // GPS Tracking States
   const [gpsStatus, setGpsStatus] = useState('OFF'); // OFF | FINDING | TRACKING | ERROR
   const watchIdRef = useRef(null);
+  const [isToggling, setIsToggling] = useState(false); // Ngăn chống spam nút
 
   // WAKELOCK (Chống tắt màn hình)
   const wakeLockRef = useRef(null);
@@ -199,6 +200,10 @@ export default function Home() {
   }, [driver?.isOnline]);
 
   const toggleGPS = () => {
+    if (isToggling) return;
+    setIsToggling(true);
+    setTimeout(() => setIsToggling(false), 800); // Khóa nút 800ms chống spam
+
     if (gpsStatus !== 'OFF' || !driver?.isOnline) {
       // Tắt GPS
       releaseWakeLock(); // Trả màn hình về bình thường
@@ -384,9 +389,15 @@ export default function Home() {
   };
 
   const toggleOnline = async () => {
-    const newStatus = !driver?.isOnline;
-    await setOnline(newStatus);
-    showNotification(newStatus ? 'Bạn đang ONLINE - Nhận đơn ngay!' : 'Bạn đã OFFLINE');
+    if (isToggling) return;
+    setIsToggling(true);
+    try {
+      const newStatus = !driver?.isOnline;
+      await setOnline(newStatus);
+      showNotification(newStatus ? 'Bạn đang ONLINE - Nhận đơn ngay!' : 'Bạn đã OFFLINE');
+    } finally {
+      setTimeout(() => setIsToggling(false), 800);
+    }
   };
 
   const handleUpdateProfile = async (data) => {
@@ -444,18 +455,19 @@ export default function Home() {
             <button
               type="button"
               onClick={toggleOnline}
+              disabled={isToggling}
               className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all w-full sm:text-sm shadow-sm ${
                 driver?.isOnline ? 'bg-green-500 text-white' : 'bg-slate-600 text-slate-300'
-              }`}
+              } ${isToggling ? 'opacity-70 cursor-wait' : ''}`}
             >
               {driver?.isOnline ? '🟢 Online' : '⚫ Offline'}
             </button>
             <button
               type="button"
               onClick={toggleGPS}
-              disabled={!driver?.isOnline}
+              disabled={!driver?.isOnline || isToggling}
               className={`rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-bold transition-all w-full flex items-center justify-center gap-1 shadow-sm ${
-                !driver?.isOnline ? 'bg-white/10 text-white/40 cursor-not-allowed' :
+                !driver?.isOnline || isToggling ? 'bg-white/10 text-white/40 cursor-not-allowed' :
                 gpsStatus === 'OFF' ? 'bg-white/20 text-white hover:bg-white/30' :
                 gpsStatus === 'FINDING' ? 'bg-yellow-500 text-white animate-pulse' :
                 gpsStatus === 'TRACKING' ? 'bg-green-400 text-slate-900 border-2 border-green-200' :
