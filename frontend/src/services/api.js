@@ -63,7 +63,7 @@ export const connectSocket = (token, role, options = {}) => {
   
   socket = io(SOCKET_URL, {
     auth: { token, role },
-    transports: ['websocket', 'polling']
+    transports: ['polling', 'websocket']
   });
 
   socket.on('connect', () => {

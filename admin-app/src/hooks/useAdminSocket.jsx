@@ -14,7 +14,7 @@ export const useAdminSocket = () => {
     
     const socket = io(SOCKET_URL, {
       auth: { token, role: 'admin' },
-      transports: ['websocket', 'polling']
+      transports: ['polling', 'websocket']
     });
 
     socketRef.current = socket;

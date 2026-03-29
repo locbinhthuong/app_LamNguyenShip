@@ -40,7 +40,7 @@ function AppContent() {
   useEffect(() => {
     if (driver) {
       socketRef.current = io(SOCKET_URL, { 
-        transports: ['websocket'],
+        transports: ['polling', 'websocket'],
         auth: { token: localStorage.getItem('driver_token') }
       });
       window.driverSocket = socketRef.current;
