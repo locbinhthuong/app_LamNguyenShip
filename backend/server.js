@@ -16,6 +16,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const { setupSocket } = require('./sockets/index');
 
 const app = express();
+app.set('trust proxy', 1); // Bắt buộc khi chạy sau Nginx Reverse Proxy
 const server = http.createServer(app);
 
 // ==================== CORS ====================
