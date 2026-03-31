@@ -6,7 +6,7 @@ const CustomerNotifications = () => {
   const notifications = [
     {
       id: 1,
-      title: 'Chào mừng bạn đến với LamNguyenShip',
+      title: 'Chào mừng bạn đến với AloShipp',
       message: 'Cảm ơn bạn đã sử dụng dịch vụ. Hãy trải nghiệm siêu ứng dụng giao hàng và đặt xe ngay hôm nay!',
       time: 'Vừa xong',
       read: false,

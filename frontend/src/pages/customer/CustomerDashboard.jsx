@@ -108,7 +108,7 @@ const CustomerDashboard = () => {
             <Package size={120} />
           </div>
           <h2 className="text-xl font-extrabold mb-1 relative z-10 w-2/3">Giao Hỏa Tốc<br/>Mọi Nẻo Đường</h2>
-          <p className="text-xs opacity-90 relative z-10">LamNguyenShip - Nhanh chóng & An toàn</p>
+          <p className="text-xs opacity-90 relative z-10">AloShipp - Nhanh chóng & An toàn</p>
           <button className="mt-3 bg-white text-blue-600 text-xs font-bold px-4 py-1.5 rounded-full w-max shadow-sm relative z-10">
             Xem ngay
           </button>

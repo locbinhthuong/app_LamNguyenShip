@@ -22,6 +22,10 @@ const driverSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  fcmToken: {
+    type: String,
+    default: ''
+  },
   avatar: {
     type: String,
     default: null

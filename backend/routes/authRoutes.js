@@ -60,4 +60,7 @@ router.post('/customer/login', [
 // GET /api/auth/customer/me
 router.get('/customer/me', verifyToken, onlyCustomer, authController.getCustomerProfile);
 
+// POST /api/auth/fcm-token
+router.post('/fcm-token', verifyToken, authController.updateFcmToken);
+
 module.exports = router;

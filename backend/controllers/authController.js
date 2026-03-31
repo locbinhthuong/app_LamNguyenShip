@@ -608,6 +608,30 @@ const authController = {
         message: 'Lỗi server'
       });
     }
+  },
+
+  // POST /api/auth/fcm-token
+  updateFcmToken: async (req, res) => {
+    try {
+      const { token } = req.body;
+      const { role, id } = req.user;
+
+      if (!token) {
+        return res.status(400).json({ success: false, message: 'Thiếu FCM Token' });
+      }
+
+      let userModel;
+      if (role === 'driver') userModel = Driver;
+      else if (role === 'admin') userModel = Admin;
+      else userModel = User;
+
+      await userModel.findByIdAndUpdate(id, { fcmToken: token });
+
+      res.json({ success: true, message: 'Cập nhật FCM Token thành công' });
+    } catch (error) {
+      console.error('Lỗi cập nhật FCM:', error);
+      res.status(500).json({ success: false, message: 'Lỗi máy chủ khi cập nhật FCM' });
+    }
   }
 };
 

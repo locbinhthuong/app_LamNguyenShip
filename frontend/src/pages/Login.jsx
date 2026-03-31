@@ -49,11 +49,11 @@ const Login = () => {
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-orange-50">
       <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl transition-all">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-orange-100 text-orange-500 mb-4 text-3xl">
-            🚀
+          <div className="inline-flex items-center justify-center mb-4">
+            <img src="/aloshipp.png" alt="AloShipp Logo" className="h-24 w-auto drop-shadow-sm" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">LamNguyenShip</h1>
-          <p className="text-sm text-gray-500 mt-1">Giao hỏa tốc, Đi bình an</p>
+          <h1 className="hidden">AloShipp</h1>
+          <p className="text-sm text-gray-500 mt-1">Nhanh chóng & An toàn</p>
         </div>
 
         {error && (

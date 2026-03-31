@@ -61,7 +61,9 @@ export default function Layout() {
         }}
       >
         <div className="border-b border-slate-200 p-5">
-          <h1 className="text-lg font-bold text-blue-600">🚚 LamNguyenShip</h1>
+          <h1 className="text-lg font-bold text-blue-600 flex items-center gap-2">
+            <img src="/aloshipp.png" alt="AloShipp" className="h-8 w-auto object-contain" />
+          </h1>
           <p className="mt-0.5 text-xs text-slate-500">Quản trị hệ thống</p>
         </div>
 
@@ -112,7 +114,9 @@ export default function Layout() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <span className="truncate text-sm font-bold text-blue-600">🚚 LamNguyenShip</span>
+          <div className="flex items-center gap-2">
+            <img src="/aloshipp.png" alt="AloShipp" className="h-6 w-auto object-contain" />
+          </div>
         </header>
 
         <main className="min-w-0 flex-1 overflow-auto">

@@ -42,6 +42,10 @@ const userSchema = new mongoose.Schema({
     lng: { type: Number, default: null },
     address: { type: String, default: null }
   },
+  fcmToken: {
+    type: String,
+    default: ''
+  },
   isActive: {
     type: Boolean,
     default: true

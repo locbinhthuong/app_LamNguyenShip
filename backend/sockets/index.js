@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { sendMultipleNotifications, sendNotification } = require('../utils/notification');
 
 const setupSocket = (io) => {
   // Middleware: Authenticate socket connections
@@ -125,9 +126,22 @@ const broadcastToCreator = (io, order, eventName) => {
   }
 };
 
-const emitNewOrder = (io, order) => {
+const emitNewOrder = async (io, order) => {
   if (order.status !== 'DRAFT') {
     io.to('drivers').emit('new_order', order);
+    
+    // Bắn Push Firebase
+    try {
+      const Driver = require('../models/Driver');
+      const drivers = await Driver.find({ isOnline: true, status: 'approved', fcmToken: { $ne: '' } });
+      const tokens = drivers.map(d => d.fcmToken);
+      if (tokens.length > 0) {
+        let msgBody = `Phí ship: ${order.shippingFee.toLocaleString('vi-VN')}đ\nTừ: ${order.pickupAddress.street}\nĐến: ${order.deliveryAddress.street}`;
+        await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: '/driver/orders' });
+      }
+    } catch (e) {
+      console.log('[FCM] Lỗi push emitNewOrder:', e.message);
+    }
   }
   io.to('admins').emit('new_order', order);
   broadcastToCreator(io, order, 'new_order');

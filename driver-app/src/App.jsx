@@ -8,6 +8,8 @@ import OrderDetail from './pages/OrderDetail';
 import MyOrders from './pages/MyOrders';
 import Earnings from './pages/Earnings';
 import AlertModal from './components/AlertModal';
+import api from './services/api';
+import { requestFirebaseToken, setupForegroundListener } from './utils/firebase';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -26,6 +28,7 @@ function AppContent() {
   const socketRef = useRef(null);
   const navigate = useNavigate();
   const [logoutAlert, setLogoutAlert] = useState(null);
+  const [pushMessage, setPushMessage] = useState(null);
 
   useEffect(() => {
     // 1) Lắng nghe sự kiện từ axios interceptor
@@ -34,11 +37,42 @@ function AppContent() {
     };
     window.addEventListener('api_unauthorized', handleUnauthorized);
 
-    return () => window.removeEventListener('api_unauthorized', handleUnauthorized);
+    const handlePush = (e) => {
+      setPushMessage({ title: e.detail.title, message: e.detail.body });
+    };
+    window.addEventListener('fcm_foreground_alert', handlePush);
+
+    return () => {
+      window.removeEventListener('api_unauthorized', handleUnauthorized);
+      window.removeEventListener('fcm_foreground_alert', handlePush);
+    };
   }, []);
 
   useEffect(() => {
     if (driver) {
+      // Bật Màng Lọc Cảnh Báo Khẩn (Firebase Push)
+      const setupPush = async () => {
+        try {
+          const token = await requestFirebaseToken();
+          if (token) {
+            await api.post('/auth/fcm-token', { token });
+            console.log('Firebase Token được Đồng bộ lên Lõi!');
+          }
+        } catch (e) {
+          console.error('Không lưu được Thiết Bị!', e);
+        }
+      };
+      setupPush();
+
+      // Loa kêu khi Lái xe đang Mở Màn Hình
+      setupForegroundListener((payload) => {
+        console.log('[FCM] FOREGROUND ALERT:', payload);
+        const title = payload.notification?.title || 'Thông báo';
+        const body = payload.notification?.body || '';
+        // Phát tín hiệu ra toàn App thay vì che màn hình ngay
+        window.dispatchEvent(new CustomEvent('fcm_foreground_alert', { detail: { title, body } }));
+      });
+
       socketRef.current = io(SOCKET_URL, { 
         transports: ['polling', 'websocket'],
         auth: { token: localStorage.getItem('driver_token') }
@@ -89,6 +123,13 @@ function AppContent() {
         message={logoutAlert}
         onConfirm={handleForceLogoutClose}
         isError={true}
+      />
+      <AlertModal 
+        isOpen={!!pushMessage}
+        title={pushMessage?.title || "Thông Báo Nhiệm Vụ"}
+        message={pushMessage?.message || ""}
+        onConfirm={() => setPushMessage(null)}
+        isError={false}
       />
     </>
   );

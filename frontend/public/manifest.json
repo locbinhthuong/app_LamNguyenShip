@@ -1,0 +1,22 @@
+{
+  "name": "AloShipp - Giao Hàng Siêu Tốc",
+  "short_name": "AloShipp",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/aloshipp.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/aloshipp.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

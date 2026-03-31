@@ -106,7 +106,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
             ? "Tài xế/Điều phối sẽ chạy trực tiếp đến gặp bạn. Vui lòng ghi chú rõ lý do nếu có."
             : subType === 'NAP_TIEN' 
             ? "Đưa tiền mặt cho tài xế, tài xế sẽ bắn khoản tiền đó vào Số Tài Khoản bạn cung cấp. Chi phí thực hiện sẽ báo trước."
-            : "Chuyển tiền vào tài khoản LamNguyenShip, tài xế sẽ mang Tiền Mặt đến tận tay cho bạn."}
+            : "Chuyển tiền vào tài khoản AloShipp, tài xế sẽ mang Tiền Mặt đến tận tay cho bạn."}
         </p>
       </div>
 

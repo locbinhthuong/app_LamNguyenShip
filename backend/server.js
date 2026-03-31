@@ -97,7 +97,7 @@ app.use((req, res, next) => {
 // Root
 app.get('/', (req, res) => {
   res.json({
-    message: 'LamNguyenShip API Server',
+    message: 'AloShipp API Server',
     version: '1.0.0',
     docs: '/api/health'
   });
@@ -108,7 +108,7 @@ app.get('/api/health', async (req, res) => {
   const mongoStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
   res.json({
     success: true,
-    message: 'LamNguyenShip API đang hoạt động',
+    message: 'AloShipp API đang hoạt động',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
     mongodb: mongoStatus
@@ -177,7 +177,7 @@ mongoose.connect(MONGO_URI)
       console.log(`
 ╔══════════════════════════════════════════════════════╗
 ║                                                      ║
-║   🚀 LamNguyenShip Backend - PRODUCTION             ║
+║   🚀 AloShipp Backend - PRODUCTION             ║
 ║                                                      ║
 ║   ✅ Server:        http://0.0.0.0:${PORT}             ║
 ║   ✅ API Health:    http://localhost:${PORT}/api/health ║

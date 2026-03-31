@@ -24,6 +24,10 @@ const adminSchema = new mongoose.Schema({
     unique: true,
     sparse: true
   },
+  fcmToken: {
+    type: String,
+    default: ''
+  },
   role: {
     type: String,
     enum: ['admin', 'manager', 'staff'],

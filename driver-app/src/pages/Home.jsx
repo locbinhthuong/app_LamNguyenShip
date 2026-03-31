@@ -286,7 +286,7 @@ export default function Home() {
       BackgroundGeolocation.addWatcher(
         {
           backgroundMessage: "Ứng dụng đang lấy vị trí ngầm...",
-          backgroundTitle: "LamNguyenShip Định Vị Xe",
+          backgroundTitle: "AloShipp Định Vị Xe",
           requestPermissions: true,
           stale: false,
           distanceFilter: 3 // Chỉ quét khi xe di chuyển xấp xỉ 3 mét
@@ -573,7 +573,7 @@ export default function Home() {
       <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="mb-3 flex items-center gap-2">
           <span className="text-xl">🚚</span>
-          <h1 className="text-lg font-bold text-white tracking-wide">LamNguyenShip</h1>
+          <h1 className="text-lg font-bold text-white tracking-wide">AloShipp</h1>
         </div>
         <div className="flex items-center justify-between gap-3">
           <div 

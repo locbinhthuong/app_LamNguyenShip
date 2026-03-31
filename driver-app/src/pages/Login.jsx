@@ -124,10 +124,10 @@ export default function Login() {
     <div className="flex min-h-screen flex-col bg-slate-50">
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 pt-[max(4rem,env(safe-area-inset-top))] text-center">
-        <div className="w-20 h-20 bg-white rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-xl">
-          <span className="text-4xl">🚚</span>
+        <div className="w-24 h-24 bg-white rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-xl p-2">
+          <img src="/aloshipp.png" alt="AloShipp Logo" className="w-full h-full object-contain" />
         </div>
-        <h1 className="text-3xl font-bold text-slate-800">LamNguyenShip</h1>
+        <h1 className="text-3xl font-bold text-slate-800">AloShipp</h1>
         <p className="text-blue-200 mt-2">Ứng dụng dành cho Tài Xế</p>
       </div>
 
