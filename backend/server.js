@@ -41,7 +41,7 @@ const corsOptions = {
     }
     try {
       const host = new URL(origin).hostname;
-      if (host.endsWith('.vercel.app')) {
+      if (host.endsWith('.vercel.app') || host.endsWith('.aloshipp.com') || host === 'aloshipp.com') {
         return callback(null, true);
       }
     } catch (_) {
