@@ -1,0 +1,44 @@
+● mongod.service - MongoDB Database Server
+     Loaded: loaded (/usr/lib/systemd/system/mongod.service; disabled; preset: enabled)
+     Active: active (running) since Tue 2026-03-31 02:05:46 +07; 12ms ago
+       Docs: https://docs.mongodb.org/manual
+   Main PID: 22172 (mongod)
+     Memory: 1.2M (peak: 1.2M)
+        CPU: 6ms
+     CGroup: /system.slice/mongod.service
+             └─22172 /usr/bin/mongod --config /etc/mongod.conf
+
+Mar 31 02:05:46 aloshipp-fmet systemd[1]: Started mongod.service - MongoDB Database Server.
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [lns-backend](ids: [ 0 ])
+[PM2] [lns-backend](0) ✓
+┌────┬────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name           │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ lns-backend    │ default     │ 1.0.0   │ fork    │ 22229    │ 0s     │ 237  │ online    │ 0%       │ 12.8mb   │ root     │ disabled │
+└────┴────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[TAILING] Tailing last 10 lines for [lns-backend] process (change the value with --lines option)
+/root/.pm2/logs/lns-backend-error.log last 10 lines:
+0|lns-back | MongooseError: Connection.prototype.close() no longer accepts a callback
+0|lns-back |     at NativeConnection.close (/opt/app_LamNguyenShip/backend/node_modules/mongoose/lib/connection.js:1209:11)
+0|lns-back |     at Server.<anonymous> (/opt/app_LamNguyenShip/backend/server.js:203:25)
+0|lns-back |     at Object.onceWrapper (node:events:631:28)
+0|lns-back |     at Server.emit (node:events:529:35)
+0|lns-back |     at Server.<anonymous> (/usr/local/lib/node_modules/pm2/node_modules/@pm2/io/build/main/metrics/httpMetrics.js:153:37)
+0|lns-back |     at emitCloseNT (node:net:2215:8)
+0|lns-back |     at process.processTicksAndRejections (node:internal/process/task_queues:81:21)
+0|lns-back | (node:22229) [MONGOOSE] Warning: Duplicate schema index on {"phone":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+0|lns-back | (Use `node --trace-warnings ...` to show where the warning was created)
+
+/root/.pm2/logs/lns-backend-out.log last 10 lines:
+0|lns-back | ║   ✅ API Health:    http://localhost:5000/api/health ║
+0|lns-back | ║   ✅ WebSocket:     Enabled                          ║
+0|lns-back | ║   ✅ MongoDB:       Connected                        ║
+0|lns-back | ║   ✅ Environment:   production             ║
+0|lns-back | ║                                                      ║
+0|lns-back | ║   📱 Driver App:    http://localhost:5173           ║
+0|lns-back | ║   ⚙️  Admin App:    http://localhost:5174           ║
+0|lns-back | ║                                                      ║
+0|lns-back | ╚══════════════════════════════════════════════════════╝
+0|lns-back |       
+

@@ -1,0 +1,24 @@
+Hit:1 https://mirror.vietnix.vn/ubuntu noble InRelease
+Hit:2 https://mirror.vietnix.vn/ubuntu noble-updates InRelease
+Hit:3 https://mirror.vietnix.vn/ubuntu noble-backports InRelease
+Hit:4 https://mirror.vietnix.vn/ubuntu noble-security InRelease
+Hit:5 https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 InRelease
+Reading package lists...
+Building dependency tree...
+Reading state information...
+All packages are up to date.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/LICENSE.md
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/README.md
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/THIRD-PARTY-NOTICES
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/mongodb-database-tools-ubuntu2204-x86_64-100.11.0.tgz.cdx.json
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/bsondump
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/mongodump
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/mongoexport
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/mongofiles
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/mongoimport
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/mongorestore
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/mongostat
+mongodb-database-tools-ubuntu2204-x86_64-100.11.0/bin/mongotop

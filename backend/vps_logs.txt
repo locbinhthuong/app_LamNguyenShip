@@ -1,0 +1,59 @@
++--- lns-backend
+namespace : default
+version : 1.0.0
+pid : 22077
+pm2 id : 0
+status : online
+mode : fork
+restarted : 235
+uptime : 2s
+memory usage : 105.9mb 
+error log : /root/.pm2/logs/lns-backend-error.log
+watching : no
+PID file : /root/.pm2/pids/lns-backend-0.pid
+
+[TAILING] Tailing last 20 lines for [lns-backend] process (change the value with --lines option)
+/root/.pm2/logs/lns-backend-out.log last 20 lines:
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+0|lns-back | Vui lòng cập nhật MONGO_URI trong backend/.env
+0|lns-back | Hướng dẫn: https://www.mongodb.com/atlas
+
+/root/.pm2/logs/lns-backend-error.log last 20 lines:
+0|lns-back |     commonWireVersion: 0,
+0|lns-back |     logicalSessionTimeoutMinutes: null
+0|lns-back |   },
+0|lns-back |   code: undefined,
+0|lns-back |   cause: TopologyDescription {
+0|lns-back |     type: 'Unknown',
+0|lns-back |     servers: Map(1) { '127.0.0.1:27017' => [ServerDescription] },
+0|lns-back |     stale: false,
+0|lns-back |     compatible: true,
+0|lns-back |     heartbeatFrequencyMS: 10000,
+0|lns-back |     localThresholdMS: 15,
+0|lns-back |     setName: null,
+0|lns-back |     maxElectionId: null,
+0|lns-back |     maxSetVersion: null,
+0|lns-back |     commonWireVersion: 0,
+0|lns-back |     logicalSessionTimeoutMinutes: null
+0|lns-back |   }
+0|lns-back | }
+0|lns-back | (node:22077) [MONGOOSE] Warning: Duplicate schema index on {"phone":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+0|lns-back | (Use `node --trace-warnings ...` to show where the warning was created)
+

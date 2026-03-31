@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl } from '../services/api';
+import api from '../services/api';
+import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 const BackgroundGeolocation = registerPlugin("BackgroundGeolocation");
 
@@ -542,6 +544,17 @@ export default function Home() {
       const newStatus = !driver?.isOnline;
       await setOnline(newStatus);
       showNotification(newStatus ? 'Bạn đang ONLINE - Nhận đơn ngay!' : 'Bạn đã OFFLINE');
+      // Request push when going online
+      if (newStatus) {
+        try {
+          const token = await requestFirebaseToken();
+          if (token) {
+            await api.post('/auth/fcm-token', { token });
+          }
+        } catch (e) {
+          console.error("Push Token Error:", e);
+        }
+      }
     } finally {
       setTimeout(() => setIsToggling(false), 800);
     }

@@ -1,0 +1,65 @@
+[TAILING] Tailing last 30 lines for [lns-backend] process (change the value with --lines option)
+/root/.pm2/logs/lns-backend-error.log last 30 lines:
+0|lns-back |     heartbeatFrequencyMS: 10000,
+0|lns-back |     localThresholdMS: 15,
+0|lns-back |     setName: null,
+0|lns-back |     maxElectionId: null,
+0|lns-back |     maxSetVersion: null,
+0|lns-back |     commonWireVersion: 0,
+0|lns-back |     logicalSessionTimeoutMinutes: null
+0|lns-back |   }
+0|lns-back | }
+0|lns-back | (node:22134) [MONGOOSE] Warning: Duplicate schema index on {"phone":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+0|lns-back | (Use `node --trace-warnings ...` to show where the warning was created)
+0|lns-back | MongooseError: Connection.prototype.close() no longer accepts a callback
+0|lns-back |     at NativeConnection.close (/opt/app_LamNguyenShip/backend/node_modules/mongoose/lib/connection.js:1209:11)
+0|lns-back |     at Server.<anonymous> (/opt/app_LamNguyenShip/backend/server.js:203:25)
+0|lns-back |     at Object.onceWrapper (node:events:631:28)
+0|lns-back |     at Server.emit (node:events:529:35)
+0|lns-back |     at Server.<anonymous> (/usr/local/lib/node_modules/pm2/node_modules/@pm2/io/build/main/metrics/httpMetrics.js:153:37)
+0|lns-back |     at emitCloseNT (node:net:2215:8)
+0|lns-back |     at process.processTicksAndRejections (node:internal/process/task_queues:81:21)
+0|lns-back | (node:22229) [MONGOOSE] Warning: Duplicate schema index on {"phone":1} found. This is often due to declaring an index using both "index: true" and "schema.index()". Please remove the duplicate index definition.
+0|lns-back | (Use `node --trace-warnings ...` to show where the warning was created)
+0|lns-back | ValidationError: The 'X-Forwarded-For' header is set but the Express 'trust proxy' setting is false (default). This could indicate a misconfiguration which would prevent express-rate-limit from accurately identifying users. See https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/ for more information.
+0|lns-back |     at Object.xForwardedForHeader (/opt/app_LamNguyenShip/backend/node_modules/express-rate-limit/dist/index.cjs:185:13)
+0|lns-back |     at wrappedValidations.<computed> [as xForwardedForHeader] (/opt/app_LamNguyenShip/backend/node_modules/express-rate-limit/dist/index.cjs:397:22)
+0|lns-back |     at Object.keyGenerator (/opt/app_LamNguyenShip/backend/node_modules/express-rate-limit/dist/index.cjs:658:20)
+0|lns-back |     at /opt/app_LamNguyenShip/backend/node_modules/express-rate-limit/dist/index.cjs:710:32
+0|lns-back |     at async /opt/app_LamNguyenShip/backend/node_modules/express-rate-limit/dist/index.cjs:691:5 {
+0|lns-back |   code: 'ERR_ERL_UNEXPECTED_X_FORWARDED_FOR',
+0|lns-back |   help: 'https://express-rate-limit.github.io/ERR_ERL_UNEXPECTED_X_FORWARDED_FOR/'
+0|lns-back | }
+
+/root/.pm2/logs/lns-backend-out.log last 30 lines:
+0|lns-back | [2026-03-30T19:07:01.348Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:05.020Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:08.986Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:09.932Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:12.023Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:16.319Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:17.116Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:19.001Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:23.895Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:24.817Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:27.313Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:28.941Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:29.875Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:30.612Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:34.726Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:36.227Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:38.453Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:39.709Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:48.625Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:07:57.587Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:08:14.046Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:08:15.228Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:08:25.035Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:08:27.022Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:08:32.588Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:09:11.913Z] GET /
+0|lns-back | [2026-03-30T19:09:12.450Z] GET /favicon.ico
+0|lns-back | [2026-03-30T19:09:13.251Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:09:53.778Z] POST /api/auth/driver/login
+0|lns-back | [2026-03-30T19:09:54.870Z] POST /api/auth/driver/login
+
