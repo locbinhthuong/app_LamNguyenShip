@@ -22,22 +22,25 @@ if (typeof window !== 'undefined' && 'Notification' in window) {
 }
 
 export const requestFirebaseToken = async () => {
-  if (!messaging) return null;
+  if (!messaging) return "LỖI_HỀ_THỐNG: Trình duyệt hoặc iOS chặn không cho khởi tạo Firebase Messaging. Hãy chắc chắn bạn đang dùng App từ Màn Hình Chính.";
   
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      const currentToken = await getToken(messaging, {
-        vapidKey: "BJFyR5tb1wUHs92OcM9Kj-AXcN1jnXJ8QaGC4wcboezCYW9pWbUytVMUum7r9VloTOeoMl_evcFhdIM-iOwMu-4"
-      });
-      return currentToken;
+      try {
+        const currentToken = await getToken(messaging, {
+          vapidKey: "BJFyR5tb1wUHs92OcM9Kj-AXcN1jnXJ8QaGC4wcboezCYW9pWbUytVMUum7r9VloTOeoMl_evcFhdIM-iOwMu-4"
+        });
+        if (currentToken) return currentToken;
+        else return "LỖI_TOKEN: Firebase trả về rỗng không có cớ.";
+      } catch (err) {
+        return "LỖI_GET_TOKEN: " + err.message + " | Callstack: " + err.stack;
+      }
     } else {
-      console.log('Người dùng từ chối cấp quyền thông báo Push');
-      return null;
+      return "LỖI_QUYỀN: Người dùng hoặc Máy từ chối quyền, trạng thái hiện tại là: " + permission;
     }
   } catch (error) {
-    console.error('Lỗi khi lấy mã FCM Token:', error);
-    return null;
+    return 'LỖI_NGOẠI_LỆ: Mẻ catch request: ' + error.message;
   }
 };
 

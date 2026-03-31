@@ -655,11 +655,13 @@ export default function Home() {
           try {
             alert('Hệ thống đang chạy lệnh Cướp Quyền Thông Báo của Điện thoại...');
             const token = await requestFirebaseToken();
-            if (token) {
+            if (token && token.startsWith('LỖI_')) {
+              alert('❌ THẤT BẠI: PUSH HỎNG TỪ RỄ!\n\nChi tiết mã lỗi: ' + token);
+            } else if (token) {
               await api.post('/auth/fcm-token', { token });
               alert('✅ ĐÃ ÉP CẤP QUYỀN THÀNH CÔNG! Token: ' + token.substring(0, 15) + '...\n\nTừ giờ cứ có đơn là máy sẽ Rung và Boong Boong!');
             } else {
-              alert('❌ THẤT BẠI: Cấp quyền không thành công! 1. Nếu xài iPhone, hãy XÓA app ngoài Màn hình rồi Thêm lại. 2. Vào Cài đặt máy > Tìm ứng dụng/Safari > Cho phép thông báo.');
+              alert('❌ LỖI VÔ HÌNH: Hàm cấp quyền trả về rỗng không rõ lý do!');
             }
           } catch (e) {
             alert('🆘 LỖI NẶNG TÓM ĐƯỢC: ' + e.toString());
