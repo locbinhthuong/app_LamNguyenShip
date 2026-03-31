@@ -549,7 +549,7 @@ export default function Home() {
         try {
           const token = await requestFirebaseToken();
           if (token) {
-            await api.post('/auth/fcm-token', { token });
+            await api.post('/api/auth/fcm-token', { token });
           }
         } catch (e) {
           console.error("Push Token Error:", e);
@@ -658,7 +658,7 @@ export default function Home() {
             if (token && token.startsWith('LỖI_')) {
               alert('❌ THẤT BẠI: PUSH HỎNG TỪ RỄ!\n\nChi tiết mã lỗi: ' + token);
             } else if (token) {
-              await api.post('/auth/fcm-token', { token });
+              await api.post('/api/auth/fcm-token', { token });
               alert('✅ ĐÃ ÉP CẤP QUYỀN THÀNH CÔNG! Token: ' + token.substring(0, 15) + '...\n\nTừ giờ cứ có đơn là máy sẽ Rung và Boong Boong!');
             } else {
               alert('❌ LỖI VÔ HÌNH: Hàm cấp quyền trả về rỗng không rõ lý do!');

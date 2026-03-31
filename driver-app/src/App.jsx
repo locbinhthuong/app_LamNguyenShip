@@ -55,8 +55,8 @@ function AppContent() {
         try {
           const token = await requestFirebaseToken();
           if (token) {
-            await api.post('/auth/fcm-token', { token });
-            console.log('Firebase Token được Đồng bộ lên Lõi!');
+            await api.post('/api/auth/fcm-token', { token });
+            console.log('[PUSH] Setup thành công, chạy nền...');
           }
         } catch (e) {
           console.error('Không lưu được Thiết Bị!', e);
