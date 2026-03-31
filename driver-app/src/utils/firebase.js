@@ -29,7 +29,7 @@ export const requestFirebaseToken = async () => {
     if (permission === 'granted') {
       try {
         const currentToken = await getToken(messaging, {
-          vapidKey: "BJFyR5tb1wUHs92OcM9Kj-AXcN1jnXJ8QaGC4wcboezCYW9pWbUytVMUum7r9VloTOeoMl_evcFhdIM-iOwMu-4"
+          vapidKey: "BJFyR5tb1wUHs920cM9Kj-AXcN1jnXJ8QaGC4wcboezCYW9pWbUytVMUum7r9VloT0eoMl_evcFhdIM-iOwMu-4"
         });
         if (currentToken) return currentToken;
         else return "LỖI_TOKEN: Firebase trả về rỗng không có cớ.";
