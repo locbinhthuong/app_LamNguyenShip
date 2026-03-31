@@ -647,6 +647,26 @@ export default function Home() {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="w-full bg-red-50 p-3 pb-4 text-center border-b border-red-200 shadow-sm relative z-10 flex flex-col items-center">
+        <p className="text-[11px] text-red-700 italic mb-2 font-medium">Bạn chưa báo Tiếng chuông khi có đơn?</p>
+        <button onClick={async () => {
+          try {
+            alert('Hệ thống đang chạy lệnh Cướp Quyền Thông Báo của Điện thoại...');
+            const token = await requestFirebaseToken();
+            if (token) {
+              await api.post('/auth/fcm-token', { token });
+              alert('✅ ĐÃ ÉP CẤP QUYỀN THÀNH CÔNG! Token: ' + token.substring(0, 15) + '...\n\nTừ giờ cứ có đơn là máy sẽ Rung và Boong Boong!');
+            } else {
+              alert('❌ THẤT BẠI: Cấp quyền không thành công! 1. Nếu xài iPhone, hãy XÓA app ngoài Màn hình rồi Thêm lại. 2. Vào Cài đặt máy > Tìm ứng dụng/Safari > Cho phép thông báo.');
+            }
+          } catch (e) {
+            alert('🆘 LỖI NẶNG TÓM ĐƯỢC: ' + e.toString());
+          }
+        }} className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2.5 rounded-full w-[95%] max-w-sm uppercase font-black animate-pulse shadow-lg tracking-wider text-xs border-2 border-white">
+          🔔 ÉP BẬT LOA BÁO ĐƠN MỚI 🔔
+        </button>
 
         {/* Stats */}
         <div className="mt-4 grid grid-cols-3 gap-2">
