@@ -2,12 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDktfeiJHhYNJAbuw0G8sLQzRh83GDijMg",
+  apiKey: "AIzaSyDKtfeIjHhYNJAbuw0G8sLQzRh83GDijMg",
   authDomain: "aloshipp.firebaseapp.com",
   projectId: "aloshipp",
   storageBucket: "aloshipp.firebasestorage.app",
   messagingSenderId: "479618310997",
-  appId: "1:479618310997:web:f4a52cf8e55e0eb6ab05dc"
+  appId: "1:479618310997:web:f4a52cf8e55e0eb6ab05dc",
+  measurementId: "G-6BWXCXWGPD"
 };
 
 // Khởi tạo app Firebase gốc

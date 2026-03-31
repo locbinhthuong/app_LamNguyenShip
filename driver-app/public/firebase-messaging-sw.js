@@ -2,12 +2,13 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDktfeiJHhYNJAbuw0G8sLQzRh83GDijMg",
+  apiKey: "AIzaSyDKtfeIjHhYNJAbuw0G8sLQzRh83GDijMg",
   authDomain: "aloshipp.firebaseapp.com",
   projectId: "aloshipp",
   storageBucket: "aloshipp.firebasestorage.app",
   messagingSenderId: "479618310997",
-  appId: "1:479618310997:web:f4a52cf8e55e0eb6ab05dc"
+  appId: "1:479618310997:web:f4a52cf8e55e0eb6ab05dc",
+  measurementId: "G-6BWXCXWGPD"
 };
 
 // Cài đặt app bóng ma dưới nền
