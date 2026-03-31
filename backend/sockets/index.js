@@ -139,7 +139,8 @@ const emitNewOrder = async (io, order) => {
       console.log(`[FCM-DEBUG] Phát nổ Đơn mới: TÌM THẤY ${tokens.length} TÀI XẾ hợp lệ để Gửi Push.`);
       
       if (tokens.length > 0) {
-        let msgBody = `Phí ship: ${order.shippingFee.toLocaleString('vi-VN')}đ\nTừ: ${order.pickupAddress.street}\nĐến: ${order.deliveryAddress.street}`;
+        const feeResponse = order.deliveryFee ? `${order.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+        let msgBody = `Phí ship: ${feeResponse}\nTừ: ${order.pickupAddress}\nĐến: ${order.deliveryAddress || 'Chưa cập nhật'}`;
         await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}` });
       }
     } catch (e) {
