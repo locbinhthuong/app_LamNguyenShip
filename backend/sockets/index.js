@@ -135,12 +135,15 @@ const emitNewOrder = async (io, order) => {
       const Driver = require('../models/Driver');
       const drivers = await Driver.find({ isOnline: true, status: 'approved', fcmToken: { $ne: '' } });
       const tokens = drivers.map(d => d.fcmToken);
+      
+      console.log(`[FCM-DEBUG] Phát nổ Đơn mới: TÌM THẤY ${tokens.length} TÀI XẾ hợp lệ để Gửi Push.`);
+      
       if (tokens.length > 0) {
         let msgBody = `Phí ship: ${order.shippingFee.toLocaleString('vi-VN')}đ\nTừ: ${order.pickupAddress.street}\nĐến: ${order.deliveryAddress.street}`;
-        await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: '/driver/orders' });
+        await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}` });
       }
     } catch (e) {
-      console.log('[FCM] Lỗi push emitNewOrder:', e.message);
+      console.log('[FCM-DEBUG] Lời nổ Push emitNewOrder bị lỗi thảm hại:', e.message);
     }
   }
   io.to('admins').emit('new_order', order);

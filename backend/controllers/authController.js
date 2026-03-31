@@ -626,6 +626,7 @@ const authController = {
       else userModel = User;
 
       await userModel.findByIdAndUpdate(id, { fcmToken: token });
+      console.log(`[FCM-DEBUG] Token PUSH lưu thành công cho ${role} ${id}. Độ dài Token: ${token?.length}`);
 
       res.json({ success: true, message: 'Cập nhật FCM Token thành công' });
     } catch (error) {

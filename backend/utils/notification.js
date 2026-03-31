@@ -24,6 +24,23 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         click_action: "FLUTTER_NOTIFICATION_CLICK",
         ...data
       },
+      webpush: {
+        headers: { Urgency: "high" },
+        notification: {
+          title,
+          body,
+          icon: "/aloshipp.png",
+          vibrate: [200, 100, 200, 100, 200, 100, 200],
+          requireInteraction: true,
+          click_action: data.url || "/"
+        },
+        fcmOptions: { link: data.url || "/" }
+      },
+      apns: {
+        payload: {
+          aps: { sound: "default", contentAvailable: true }
+        }
+      },
       token: fcmToken
     };
     
@@ -49,6 +66,23 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
       data: {
         click_action: "FLUTTER_NOTIFICATION_CLICK",
         ...data
+      },
+      webpush: {
+        headers: { Urgency: "high" },
+        notification: {
+          title,
+          body,
+          icon: "/aloshipp.png",
+          vibrate: [200, 100, 200, 100, 200, 100, 200],
+          requireInteraction: true,
+          click_action: data.url || "/"
+        },
+        fcmOptions: { link: data.url || "/" }
+      },
+      apns: {
+        payload: {
+          aps: { sound: "default", contentAvailable: true }
+        }
       },
       tokens: validTokens
     };
