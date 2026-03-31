@@ -133,7 +133,7 @@ const emitNewOrder = async (io, order) => {
     // Bắn Push Firebase
     try {
       const Driver = require('../models/Driver');
-      const drivers = await Driver.find({ isOnline: true, status: 'approved', fcmToken: { $ne: '' } });
+      const drivers = await Driver.find({ isOnline: true, status: 'active', fcmToken: { $ne: '' } });
       const tokens = drivers.map(d => d.fcmToken);
       
       console.log(`[FCM-DEBUG] Phát nổ Đơn mới: TÌM THẤY ${tokens.length} TÀI XẾ hợp lệ để Gửi Push.`);
