@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { io } from 'socket.io-client';
 
-let API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+let API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
 if (API_URL && !API_URL.endsWith('/api')) {
   API_URL = `${API_URL}/api`;
 }
@@ -59,7 +59,7 @@ export const connectSocket = (token, role, options = {}) => {
     socket.disconnect();
   }
 
-  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+  const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'https://api.aloshipp.com';
   
   socket = io(SOCKET_URL, {
     auth: { token, role },

@@ -11,7 +11,7 @@ import AlertModal from './components/AlertModal';
 import api from './services/api';
 import { requestFirebaseToken, setupForegroundListener } from './utils/firebase';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
 
 const PrivateRoute = ({ children }) => {
   const { driver, loading } = useAuth();
