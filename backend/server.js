@@ -49,12 +49,15 @@ const corsOptions = {
     } catch (_) {
       /* ignore */
     }
-    return callback(new Error('Not allowed by CORS'));
+    // Chấp nhận tất cả để tránh lỗi CORS Preflight
+    return callback(null, true);
   },
   credentials: true
 };
 
 app.use(cors(corsOptions));
+// Thêm Options explicitly cho Preflight (Sửa lỗi CORS triệt để)
+app.options('*', cors(corsOptions));
 
 // ==================== SECURITY & RATE LIMITING ====================
 // Thiết lập trust proxy để lấy chuẩn IP đằng sau Nginx
