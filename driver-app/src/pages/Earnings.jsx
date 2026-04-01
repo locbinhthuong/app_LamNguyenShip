@@ -18,6 +18,7 @@ export default function Earnings() {
     recentOrders: []
   });
   const [loading, setLoading] = useState(true);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   const fetchEarnings = useCallback(async () => {
     try {
@@ -100,15 +101,27 @@ export default function Earnings() {
           </div>
         )}
 
-        {/* Nợ 15% Platform */}
-        <div className="rounded-2xl bg-sky-50/80 border border-sky-100 p-4 mb-4 flex items-center justify-between shadow-sm">
-          <div>
-            <p className="text-xs text-sky-700 mb-1 font-semibold">Cần Nộp Hôm Nay (15%)</p>
-            <p className="text-xl font-bold text-sky-800 drop-shadow-sm">{formatCurrency(stats.dailyFee * 0.15)}</p>
+        {/* Nợ 15% Platform & Vùng Thanh Toán */}
+        <div className="rounded-2xl bg-sky-50/80 border border-sky-100 p-4 mb-4 shadow-sm flex flex-col">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-sky-700 mb-1 font-semibold flex items-center gap-1">
+                <span>Cần Nộp Hôm Nay (15%)</span>
+              </p>
+              <p className="text-xl font-black text-sky-800 drop-shadow-sm">{formatCurrency(stats.dailyFee * 0.15)}</p>
+            </div>
+            <div className="h-10 w-10 bg-gradient-to-br from-sky-400 to-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
+              🧾
+            </div>
           </div>
-          <div className="h-10 w-10 bg-sky-100 rounded-full flex items-center justify-center text-sky-600 shadow-inner">
-            🧾
-          </div>
+          
+          <button 
+            onClick={() => setShowQRModal(true)}
+            disabled={stats.dailyFee === 0}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
+          >
+            <span>📱</span> Quét Chuyển Khoản Ngay
+          </button>
         </div>
 
         {/* Thống kê 2 cột */}
@@ -178,6 +191,51 @@ export default function Earnings() {
           </Link>
         </div>
       </div>
+
+      {/* Modal QR Code Thanh Toán Động VietQR */}
+      {showQRModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
+            <div className="bg-gradient-to-r from-blue-600 to-sky-500 p-4 flex justify-between items-center text-white">
+              <div>
+                 <h3 className="font-bold text-lg">Mã QR Thanh Toán Nợ</h3>
+                 <p className="text-xs opacity-90">Bank: MB • NGUYEN LAM NGUYEN</p>
+              </div>
+              <button onClick={() => setShowQRModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/30 transition-colors">
+                ✕
+              </button>
+            </div>
+            
+            <div className="p-6 flex flex-col items-center justify-center bg-slate-50 relative">
+              <div className="mb-4 text-center">
+                <p className="text-sm font-semibold text-slate-500 mb-1">CÔNG NỢ CẦN THANH TOÁN</p>
+                <div className="text-3xl font-black text-blue-600 tabular-nums tracking-tight bg-blue-100 px-4 py-2 rounded-2xl border-2 border-blue-200 border-dashed inline-block">
+                  {formatCurrency(stats.dailyFee * 0.15)}
+                </div>
+              </div>
+
+              <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 relative mb-4">
+                <img 
+                  src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(stats.dailyFee * 0.15)}&addInfo=Thanh toan cong no ngay ${new Date().toLocaleDateString('vi-VN')} lai xe ${driver?.driverCode || ''}&accountName=NGUYEN LAM NGUYEN`} 
+                  alt="QR Code Công Nợ" 
+                  className="w-56 h-56 object-contain mix-blend-multiply"
+                />
+              </div>
+
+              <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2">
+                 <div className="flex justify-between text-xs font-semibold">
+                    <span className="text-slate-500">Mã giao dịch:</span>
+                    <span className="text-sky-700 bg-sky-100 px-2 py-0.5 rounded uppercase">{driver?.driverCode || 'N/A'}</span>
+                 </div>
+                 <div className="flex justify-between text-[11px] font-medium text-slate-500">
+                    <p className="text-center w-full">Vui lòng quét bằng app ngân hàng hoặc Momo, ZaloPay để thanh toán chính xác.</p>
+                 </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

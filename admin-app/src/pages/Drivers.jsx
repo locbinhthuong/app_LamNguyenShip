@@ -54,9 +54,17 @@ export default function Drivers() {
     });
 
     socket.on('driver_status_change', (data) => {
-      setDrivers(prev => prev.map(d => 
-        d._id === data.driverId ? { ...d, isOnline: data.isOnline } : d
-      ));
+      setDrivers(prev => prev.map(d => {
+        const targetId = data.driverId || data._id;
+        if (d._id === targetId) {
+          return { 
+            ...d, 
+            ...data, 
+            isOnline: data.isOnline !== undefined ? data.isOnline : d.isOnline 
+          };
+        }
+        return d;
+      }));
     });
 
     return () => socket.disconnect();

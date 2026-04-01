@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
-import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl } from '../services/api';
+import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue } from '../services/api';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor, registerPlugin } from '@capacitor/core';
@@ -168,6 +168,7 @@ export default function Home() {
   const [logoutModal, setLogoutModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [confirmAcceptOrder, setConfirmAcceptOrder] = useState(null); // ID đơn hàng đang được hỏi Xác Nhận
+  const [dailyStats, setDailyStats] = useState({ fee: 0, orders: 0 });
 
   // Audio Alarm
   const audioCtxRef = useRef(null);
@@ -432,6 +433,47 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver?.isOnline]);
 
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [available, active] = await Promise.all([
+        getAvailableOrders(),
+        getMyOrders('PICKED_UP,DELIVERING,ACCEPTED') // Các trạng thái active order
+      ]);
+      setAvailableOrders(Array.isArray(available.data) ? available.data : []);
+      // Gộp và sắp xếp: ưu tiên đơn ĐANG GIAO lên trên, sau đó giảm dần theo tgian
+      let activeArr = Array.isArray(active.data) ? active.data : [];
+      
+      const statusWeight = { 'DELIVERING': 3, 'PICKED_UP': 2, 'ACCEPTED': 1 };
+      
+      activeArr.sort((a, b) => {
+         const w1 = statusWeight[a.status] || 0;
+         const w2 = statusWeight[b.status] || 0;
+         if (w1 !== w2) return w2 - w1;
+         return new Date(b.updatedAt) - new Date(a.updatedAt);
+      });
+      setMyActiveOrders(activeArr);
+
+      // Nạp Doanh thu nóng trong ngày
+      const revenueRes = await getDriverRevenue();
+      if (revenueRes.success && revenueRes.data) {
+        // Tìm biểu đồ của đúng hôm nay
+        const todayLabel = new Date().toLocaleDateString('vi-VN', { weekday: 'short' }).replace(/^T/, 'T');
+        const todayStats = revenueRes.data.chartData?.find(c => c.label === todayLabel) || { fee: 0, orders: 0 };
+        // Hoặc tính từ recentOrders nếu an toàn hơn, nhưng DailyFee đã có sẵn từ backend
+        setDailyStats({
+          fee: revenueRes.data.dailyFee || 0,
+          orders: todayStats.orders || 0
+        });
+      }
+
+    } catch (error) {
+      console.error('Lỗi lấy dữ liệu trang chủ:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     // Xin quyền Push Notification mồi (Dùng cho Notification Native lúc Màn hình chạy ngầm)
     if (Capacitor.isNativePlatform()) {
@@ -451,21 +493,7 @@ export default function Home() {
     setTimeout(() => setShowToast(null), 3000);
   };
 
-  const loadData = useCallback(async () => {
-    try {
-      const [availableRes, myRes] = await Promise.all([
-        getAvailableOrders(),
-        getMyOrders()
-      ]);
-      setAvailableOrders(availableRes.data || []);
-      const active = (myRes.data || []).filter(o => ['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(o.status));
-      setMyActiveOrders(active);
-    } catch (err) {
-      console.error('Load data error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+
 
   useEffect(() => {
     loadData();
@@ -657,21 +685,21 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="w-full bg-gradient-to-b from-blue-700 to-blue-600 p-2 pb-3 shadow-inner relative z-10 flex flex-col items-center">
+      <div className="w-full bg-gradient-to-b from-blue-700 to-blue-600 p-2 pb-3 shadow-inner relative z-10 flex justify-center">
 
-        {/* Stats */}
-        <div className="mt-4 grid grid-cols-3 gap-2">
-          <div className="rounded-xl bg-white/20 p-2 text-center sm:p-3 text-white">
-            <p className="text-xl font-bold sm:text-2xl">{driver?.stats?.completedOrders || 0}</p>
-            <p className="text-[10px] opacity-80 sm:text-xs">Hoàn thành</p>
+        {/* Cặp Thống kê Doanh Số Ngày Thay Vì Đơn Cũ */}
+        <div className="mt-2 grid grid-cols-2 gap-3 w-full max-w-sm px-2">
+          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 shadow-sm backdrop-blur-sm">
+            <p className="text-[11px] opacity-80 uppercase font-semibold tracking-wider mb-1 text-blue-100">Đã Hoàn Thành</p>
+            <p className="text-xl sm:text-2xl font-black drop-shadow-sm">{dailyStats.orders}</p>
+            <p className="text-[9px] mt-0.5 opacity-60">hôm nay</p>
           </div>
-          <div className="rounded-xl bg-white/20 p-2 text-center sm:p-3 text-white">
-            <p className="text-xl font-bold sm:text-2xl">{availableOrders.length}</p>
-            <p className="text-[10px] opacity-80 sm:text-xs">Chờ nhận</p>
-          </div>
-          <div className="rounded-xl bg-white/20 p-2 text-center sm:p-3 text-white">
-            <p className="text-xl font-bold sm:text-2xl">{myActiveOrders.length}</p>
-            <p className="text-[10px] opacity-80 sm:text-xs">Đang giao</p>
+          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 shadow-sm backdrop-blur-sm">
+            <p className="text-[11px] opacity-80 uppercase font-semibold tracking-wider mb-1 text-blue-100">Thu Nhập Tạm Tính</p>
+            <p className="text-xl sm:text-2xl font-black text-green-300 drop-shadow-md">
+               {dailyStats.fee.toLocaleString()}<span className="text-xs ml-0.5 opacity-80">đ</span>
+            </p>
+            <p className="text-[9px] mt-0.5 opacity-60">chưa trừ 15%</p>
           </div>
         </div>
       </div>
@@ -731,6 +759,15 @@ export default function Home() {
               <p className="text-sm mt-1">Nhận đơn mới ở tab "Chờ nhận"</p>
             </div>
           )
+        ) : !driver?.isOnline ? (
+          <div className="text-center py-12 bg-slate-100 rounded-2xl mt-4 border border-slate-200">
+            <p className="text-5xl mb-3 grayscale opacity-80">😴</p>
+            <p className="font-black text-slate-700 text-lg uppercase tracking-wide">Bạn đang Nghỉ / Offline</p>
+            <p className="text-sm mt-2 text-slate-500 max-w-[250px] mx-auto">
+              Không thể nhìn thấy đơn hàng khi đang Offline.<br/><br/>
+              Hãy bật nút <b className="text-slate-800 bg-slate-200 px-2 py-1 rounded">⚫ Mở Nhận Đơn</b> phía trên để tiếp tục Cày cuốc!
+            </p>
+          </div>
         ) : availableOrders.length > 0 ? (
           <>
             <p className="text-slate-500 text-sm mb-3 font-medium">Có {availableOrders.length} đơn hàng chờ bạn</p>
