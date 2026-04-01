@@ -109,8 +109,13 @@ export default function OrderDetail() {
             ←
           </button>
           <div className="min-w-0 flex-1">
-            <h1 className="text-base font-bold text-slate-800 sm:text-lg">Chi tiết đơn hàng</h1>
-            <p className="truncate text-sm text-slate-500">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
+            <h1 className="text-base font-bold text-slate-800 sm:text-lg">
+              {order.serviceType === 'GIAO_HANG' ? 'Đơn Giao Hàng' :
+               order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách Xe Máy' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
+               order.serviceType === 'MUA_HO' ? 'Mua Hàng Hộ' :
+               order.serviceType === 'DIEU_PHOI' ? 'Dịch Vụ Điều Phối' : 'Chi tiết đơn hàng'}
+            </h1>
+            <p className="truncate text-[11px] font-bold text-blue-600 bg-blue-50 max-w-max px-2 py-0.5 rounded uppercase mt-0.5 border border-blue-100">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
           </div>
           <span className="shrink-0 rounded-full bg-blue-500 px-2 py-1 text-xs font-bold text-white sm:px-3 sm:text-sm">
             {STATUS_LABELS[order.status] || order.status}
@@ -193,20 +198,18 @@ export default function OrderDetail() {
             ) : (
               <>
                 {/* 1. NƠI LẤY HÀNG (SENDER / SHOP) */}
-                {(order.pickupPhone || order.senderPhone) && (
-                  <div className="flex items-center justify-between border-b mx-[-12px] px-3 border-slate-100 pb-5">
-                    <div className="min-w-0 pr-2 flex-1">
-                      <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5" flex items-center gap-1>
-                         NGƯỜI GỬI (NƠI LẤY)
-                      </p>
-                      <p className="text-slate-800 font-bold text-sm mb-1">{order.senderName || 'Người Bán'}</p>
-                      <p className="text-orange-600 font-black text-xl tracking-wider">{order.senderPhone || order.pickupPhone}</p>
-                    </div>
-                    <a href={`tel:${order.senderPhone || order.pickupPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-orange-400 to-orange-500 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center gap-2 border border-orange-400">
-                      <span className="text-lg">📞</span> GỌI LẤY
-                    </a>
+                <div className="flex items-center justify-between border-b mx-[-12px] px-3 border-slate-100 pb-5">
+                  <div className="min-w-0 pr-2 flex-1">
+                    <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5 flex items-center gap-1">
+                       NGƯỜI GỬI (NƠI LẤY)
+                    </p>
+                    <p className="text-slate-800 font-bold text-sm mb-1">{order.senderName || order.customerName || 'Người Đặt App'}</p>
+                    <p className="text-orange-600 font-black text-xl tracking-wider">{order.senderPhone || order.customerPhone}</p>
                   </div>
-                )}
+                  <a href={`tel:${order.senderPhone || order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-orange-400 to-orange-500 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center gap-2 border border-orange-400">
+                    <span className="text-lg">📞</span> GỌI LẤY
+                  </a>
+                </div>
 
                 {/* 2. NƠI GIAO ĐẾN (RECEIVER / CUSTOMER) */}
                 <div className="flex items-center justify-between pt-1">

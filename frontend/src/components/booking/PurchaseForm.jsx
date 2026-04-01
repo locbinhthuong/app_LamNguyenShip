@@ -23,8 +23,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.pickupAddress.trim()) return alert('Vui lòng nhập tên/địa chỉ hoặc chọn Tiệm/Quán cần mua!');
-    if (!form.deliveryAddress.trim()) return alert('Vui lòng nhập địa chỉ giao tới cho bạn!');
+    // Không cần bắt buộc điểm lấy hoặc điểm giao, để trống cũng được
     if (!form.itemsToBuy.trim()) return alert('Vui lòng liệt kê món bạn muốn tài xế mua dùm!');
     // Không cần validate tên/SĐT nữa vì Backend/App đã tự móc ra từ phiên Đăng nhập
     // if (!form.customerName.trim() || !form.customerPhone.trim()) { ... }
@@ -69,12 +68,12 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
           </div>
           <div className="flex-1 border-b border-gray-100 pb-3">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-              MUA Ở ĐÂU (TÊN TIỆM / ĐỊA CHỈ)
+              MUA Ở ĐÂU (ĐỂ TRỐNG NẾU MUA NHIỀU NƠI)
             </label>
             <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-orange-300">
               <input 
                 type="text"
-                placeholder="VD: Cơm sườn 68 Lý Thường Kiệt..."
+                placeholder="VD: Để trống nếu mua nhiều nơi..."
                 className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
                 value={form.pickupAddress}
                 onChange={e => setForm({...form, pickupAddress: e.target.value})}
@@ -98,12 +97,12 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
           </div>
           <div className="flex-1">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-              GIAO ĐẾN ĐÂU CHO BẠN
+              GIAO ĐẾN ĐÂU (CÓ THỂ ĐỂ TRỐNG)
             </label>
             <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300">
               <input 
                 type="text"
-                placeholder="Nhập địa chỉ nhận của bạn..."
+                placeholder="Nhập địa chỉ nhận hoặc để trống..."
                 className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
                 value={form.deliveryAddress}
                 onChange={e => setForm({...form, deliveryAddress: e.target.value})}

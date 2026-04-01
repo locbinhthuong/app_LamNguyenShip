@@ -43,7 +43,7 @@ const orderSchema = new mongoose.Schema({
   // Địa chỉ
   pickupAddress: {
     type: String,
-    required: [true, 'Điểm xuất phát/Giao dịch là bắt buộc'],
+    default: '',
     trim: true
   },
   deliveryAddress: {

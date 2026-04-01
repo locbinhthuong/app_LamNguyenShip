@@ -110,37 +110,39 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
         </p>
       </div>
 
-      {/* THÔNG TIN HÀNH TRÌNH */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
-        {/* ĐỊA ĐIỂM */}
-        <div className="flex items-start gap-4">
-          <div className="flex flex-col items-center mt-1">
-            <div className="w-4 h-4 rounded-full bg-indigo-100 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+      {/* THÔNG TIN HÀNH TRÌNH CHỈ HIỂN THỊ KHI NẠP/RÚT */}
+      {subType !== 'GAP_TRUC_TIEP' && (
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+          {/* ĐỊA ĐIỂM */}
+          <div className="flex items-start gap-4">
+            <div className="flex flex-col items-center mt-1">
+              <div className="w-4 h-4 rounded-full bg-indigo-100 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 rounded-full bg-indigo-600"></div>
+              </div>
             </div>
-          </div>
-          <div className="flex-1">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-              BẠN ĐANG Ở ĐÂU VÀ MUỐN GẶP Ở ĐÂU?
-            </label>
-            <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300">
-              <input 
-                type="text"
-                placeholder="Nhập địa chỉ giao dịch..."
-                className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
-                value={form.pickupAddress}
-                onChange={e => setForm({...form, pickupAddress: e.target.value})}
-              />
-              <div 
-                className="bg-indigo-50 p-3 text-indigo-600 cursor-pointer active:bg-indigo-100 flex items-center justify-center border-l border-indigo-100"
-                onClick={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
-              >
-                <MapPin size={20} />
+            <div className="flex-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                BẠN ĐANG Ở ĐÂU VÀ MUỐN GẶP Ở ĐÂU?
+              </label>
+              <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300">
+                <input 
+                  type="text"
+                  placeholder="Nhập địa chỉ giao dịch..."
+                  className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+                  value={form.pickupAddress}
+                  onChange={e => setForm({...form, pickupAddress: e.target.value})}
+                />
+                <div 
+                  className="bg-indigo-50 p-3 text-indigo-600 cursor-pointer active:bg-indigo-100 flex items-center justify-center border-l border-indigo-100"
+                  onClick={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
+                >
+                  <MapPin size={20} />
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* DATA NẠP / RÚT */}
       {(subType === 'NAP_TIEN' || subType === 'RUT_TIEN') && (
@@ -179,20 +181,39 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
       )}
 
       {/* THÔNG TIN KHÁCH HÀNG ĐÃ ĐƯỢC ẨN VÌ TỰ LẤY TỪ ACCOUNT DỮ LIỆU CHÍNH */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-        <div>
-          <textarea 
-            rows="2"
-            placeholder="Ghi chú thêm cho bộ phận Điều Phối"
-            className="w-full text-sm text-gray-800 bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:border-blue-200 focus:bg-white transition-colors resize-none"
-            value={form.note}
-            onChange={e => setForm({...form, note: e.target.value})}
-          ></textarea>
+      {subType !== 'GAP_TRUC_TIEP' && (
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+          <div>
+            <textarea 
+              rows="2"
+              placeholder="Ghi chú thêm cho bộ phận Điều Phối"
+              className="w-full text-sm text-gray-800 bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:border-blue-200 focus:bg-white transition-colors resize-none"
+              value={form.note}
+              onChange={e => setForm({...form, note: e.target.value})}
+            ></textarea>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* FLOAT BUTTON */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      {/* FLOAT BUTTON / UI TỔNG ĐÀI THEO LOẠI */}
+      {subType === 'GAP_TRUC_TIEP' ? (
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center text-center space-y-4 mb-4 mt-6 animate-fadeIn">
+          <div className="w-32 h-32 mb-2 bg-indigo-50 rounded-2xl p-2 border border-indigo-100 flex items-center justify-center shadow-inner">
+             <img src="https://img.vietqr.io/image/970422-0827758062-compact.jpg?amount=0&addInfo=AloShipp%20Lien%20He&accountName=LAM%20NGUYEN" alt="QR" className="w-full h-full object-contain rounded-xl" />
+          </div>
+          <p className="text-indigo-900 font-bold text-lg mb-1 tracking-tight">Tổng đài Điều Phối AloShipp</p>
+          <p className="text-slate-500 text-sm mb-4 leading-relaxed px-2 font-medium">Quét mã QR qua Zalo hoặc bấm gọi trực tiếp để kết nối nhanh nhất với bộ phận điều phối.</p>
+          <div className="flex gap-3 w-full">
+            <a href="tel:0827758062" className="flex-1 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold rounded-xl py-3.5 shadow-lg shadow-indigo-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
+              <span className="text-xl">📞</span> Trực Tiếp
+            </a>
+            <a href="https://zalo.me/0827758062" target="_blank" rel="noopener noreferrer" className="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold rounded-xl py-3.5 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
+              <span className="text-xl">💬</span> Zalo
+            </a>
+          </div>
+        </div>
+      ) : (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50 pb-[max(1rem,env(safe-area-inset-bottom))]">
         <button 
           disabled={loading}
           type="submit"
@@ -211,6 +232,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
           )}
         </button>
       </div>
+      )}
 
       <LocationPicker 
         isOpen={mapConfig !== null}

@@ -28,8 +28,9 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.pickupAddress.trim()) return alert('Vui lòng chọn hoặc nhập Điểm Lấy Hàng!');
-    if (!form.deliveryAddress.trim()) return alert('Vui lòng chọn hoặc nhập Điểm Giao Hàng!');
+    if (!form.pickupAddress.trim() && !form.deliveryAddress.trim()) {
+      return alert('Vui lòng chọn hoặc nhập ít nhất Điểm Lấy Hàng hoặc Điểm Giao Hàng!');
+    }
     if (!form.receiverName.trim() || !form.receiverPhone.trim()) return alert('Vui lòng nhập đầy đủ Tên và SĐT Người Nhận!');
 
     // Gửi payload lên Component Cha (BookingFlow)
@@ -112,12 +113,12 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           </div>
           <div className="flex-1">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
-              ĐIỂM GIAO HÀNG (NGƯỜI NHẬN)
+              ĐIỂM GIAO HÀNG (CÓ THỂ ĐỂ TRỐNG NẾU CHƯA CÓ)
             </label>
             <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300">
               <input 
                 type="text"
-                placeholder="Nhập địa chỉ giao đến..."
+                placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
                 className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
                 value={form.deliveryAddress}
                 onChange={e => setForm({...form, deliveryAddress: e.target.value})}
