@@ -169,7 +169,7 @@ export default function Home() {
   const [editModal, setEditModal] = useState(false);
 
   // Audio Alarm
-  const audioCtxRef = useRef(null);
+  const audioRef = useRef(null);
   const intervalRef = useRef(null);
   const [isRinging, setIsRinging] = useState(false);
 
@@ -177,14 +177,12 @@ export default function Home() {
   useEffect(() => {
     const unlockAudio = () => {
       try {
-        if (!audioCtxRef.current) {
-          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtxRef.current.state === 'suspended') {
-          audioCtxRef.current.resume();
+        if (!audioRef.current) {
+          audioRef.current = new Audio('/chuong.mp3');
+          audioRef.current.load(); // Khởi động load sẵn cục Mp3 vào Bộ nhớ RAM chặn AutoPlay
         }
       } catch (e) {
-        console.error("Lỗi cấp quyền âm thanh:", e);
+        console.error("Lỗi cấp quyền âm thanh MP3:", e);
       }
     };
     
@@ -200,8 +198,12 @@ export default function Home() {
 
   const stopAlarm = useCallback(() => {
     if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+      clearTimeout(intervalRef.current);
       intervalRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
     setIsRinging(false);
   }, []);
@@ -209,57 +211,26 @@ export default function Home() {
   const startAlarm = useCallback(() => {
     stopAlarm();
     setIsRinging(true);
-    let count = 0;
     
-    const playTelephoneRing = () => {
-       try {
-           if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-           if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+    // Nếu chưa bấm màn hình bao giờ mà lỡ có Push luôn thì ép tạo Audio ở đây
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/chuong.mp3');
+    }
 
-           // Còi điện thoại bàn Dual-Tone 440 + 480 Hz
-           const osc1 = audioCtxRef.current.createOscillator();
-           const osc2 = audioCtxRef.current.createOscillator();
-           const masterGain = audioCtxRef.current.createGain();
-           const lfo = audioCtxRef.current.createOscillator();
-           const lfoGain = audioCtxRef.current.createGain();
-
-           osc1.frequency.value = 440;
-           osc2.frequency.value = 480;
-           osc1.type = 'sine';
-           osc2.type = 'sine';
-
-           lfo.frequency.value = 20; // 20 nhịp rung / giây
-           lfo.type = 'square';
-           
-           lfo.connect(lfoGain);
-           lfoGain.connect(masterGain.gain);
-           osc1.connect(masterGain);
-           osc2.connect(masterGain);
-           masterGain.connect(audioCtxRef.current.destination);
-
-           masterGain.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
-           lfoGain.gain.value = 0.5;
-
-           masterGain.gain.setTargetAtTime(0.5, audioCtxRef.current.currentTime, 0.01);
-           
-           osc1.start(); osc2.start(); lfo.start();
-           
-           masterGain.gain.setTargetAtTime(0, audioCtxRef.current.currentTime + 1.5, 0.01);
-           
-           osc1.stop(audioCtxRef.current.currentTime + 2);
-           osc2.stop(audioCtxRef.current.currentTime + 2);
-           lfo.stop(audioCtxRef.current.currentTime + 2);
-           
-           count++;
-           // Đổ chuông 30 giây (khoảng 8-9 hồi) là tự ngắt nếu không có ai nhận đơn
-           if (count >= 9) {
-               stopAlarm();
-           }
-       } catch (e) {}
-    };
-    
-    playTelephoneRing();
-    intervalRef.current = setInterval(playTelephoneRing, 3500);
+    if (audioRef.current) {
+        audioRef.current.loop = true; // Cho lặp lại nếu file mp3 Sếp thu quá ngắn
+        audioRef.current.currentTime = 0;
+        
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(e => console.error("Apple chặn phát âm thanh:", e));
+        }
+        
+        // Cài đồng hồ đếm ngược tự ngắt chuông sau 30 giây
+        intervalRef.current = setTimeout(() => {
+            stopAlarm();
+        }, 30000);
+    }
   }, [stopAlarm]);
 
   // GPS Tracking States

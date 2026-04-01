@@ -7,69 +7,44 @@ export const useToast = () => useContext(ToastContext);
 
 export const ToastProvider = ({ children }) => {
   const [toast, setToast] = useState(null);
-  const audioCtxRef = React.useRef(null);
-  const intervalRef = React.useRef(null);
+  const audioRef = React.useRef(null);
+  const timerRef = React.useRef(null);
+
+  // Tạo sẵn đối tượng Audio để giảm thiểu delay khi reo chuông cực mượt
+  useEffect(() => {
+    if (!audioRef.current) {
+        audioRef.current = new Audio('/chuong.mp3');
+        audioRef.current.load();
+    }
+  }, []);
 
   const stopAlarm = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
   };
 
   const startAlarm = () => {
     stopAlarm();
-    const playTelephoneRing = () => {
-       try {
-           if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-           if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+    if (audioRef.current) {
+      audioRef.current.loop = true;
+      audioRef.current.currentTime = 0;
+      
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+         playPromise.catch(e => console.error("AutoPlay Blocked by Browser:", e));
+      }
 
-           // Tạo âm thanh Dual-Tone (440Hz + 480Hz) đặc trưng của Điện Thoại Quay Số
-           const osc1 = audioCtxRef.current.createOscillator();
-           const osc2 = audioCtxRef.current.createOscillator();
-           const masterGain = audioCtxRef.current.createGain();
-           const lfo = audioCtxRef.current.createOscillator();
-           const lfoGain = audioCtxRef.current.createGain();
-
-           // Set Tần số
-           osc1.frequency.value = 440;
-           osc2.frequency.value = 480;
-           osc1.type = 'sine';
-           osc2.type = 'sine';
-
-           // Set LFO băm sóng rung chóp chép (Reng Reng Reng) ở tốc độ 20 rung/giây
-           lfo.frequency.value = 20;
-           lfo.type = 'square';
-           
-           lfo.connect(lfoGain);
-           lfoGain.connect(masterGain.gain);
-           
-           osc1.connect(masterGain);
-           osc2.connect(masterGain);
-           masterGain.connect(audioCtxRef.current.destination);
-
-           // Nén âm lượng
-           masterGain.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
-           lfoGain.gain.value = 0.5;
-
-           // Phát âm trong 2 giây rồi ngắt (Đổ 1 hồi chuông dài)
-           masterGain.gain.setTargetAtTime(0.5, audioCtxRef.current.currentTime, 0.01);
-           
-           osc1.start();
-           osc2.start();
-           lfo.start();
-           
-           masterGain.gain.setTargetAtTime(0, audioCtxRef.current.currentTime + 1.5, 0.01);
-           
-           osc1.stop(audioCtxRef.current.currentTime + 2);
-           osc2.stop(audioCtxRef.current.currentTime + 2);
-           lfo.stop(audioCtxRef.current.currentTime + 2);
-       } catch (e) {}
-    };
-    
-    // Đổ 1 hồi ngay rồi lặp lại mỗi 3.5 giây
-    playTelephoneRing();
-    intervalRef.current = setInterval(playTelephoneRing, 3500);
+      // Giới hạn thời gian kêu 30 giây (Sếp yêu cầu)
+      timerRef.current = setTimeout(() => {
+          stopAlarm();
+      }, 30000);
+    }
   };
 
   const showToast = (message, type = 'info', duration = 4000) => {

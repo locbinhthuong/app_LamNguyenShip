@@ -292,6 +292,7 @@ const orderController = {
         orderToUpdate.assignedTo = null;
         orderToUpdate.acceptedAt = undefined;
         orderToUpdate.pickedUpAt = undefined;
+        orderToUpdate.cancelReason = undefined; // Bắt buộc xóa Lý do hủy lỗi cũ để khi Treo lại không bị Rống Chuông Admin
         
         // Tước đơn khỏi map của Admin và xóa trên App của tài xế (như hủy nhưng thực ra là thu hồi ẩn)
         if (req.io) {
