@@ -17,6 +17,13 @@ function resolveApiBaseUrl() {
 /** Base URL API (dev có thể '' để dùng proxy Vite → /api) */
 export const API_BASE_URL = resolveApiBaseUrl();
 
+export const getFullImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  if (path.startsWith('blob:')) return path;
+  return `${API_BASE_URL}${path}`;
+};
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },

@@ -227,43 +227,116 @@ export default function OrderDetail() {
 
         {/* Order Info */}
         <div className="card">
-          <p className="text-xs text-slate-500 mb-2">THÔNG TIN CHUYẾN</p>
-          {order.items?.length > 0 && (
-            <div className="mb-3">
-              <p className="text-slate-500 text-xs mb-1">Hàng hóa:</p>
-              {order.items.map((item, i) => (
-                <p key={i} className="text-slate-800 text-sm">• {item}</p>
-              ))}
-            </div>
-          )}
+          <p className="text-xs text-slate-500 mb-2 font-bold uppercase">THÔNG TIN CHUYẾN</p>
           
-          {/* XE ÔM / LÁI HỘ INFO */}
+          {/* GIAO_HANG INFO */}
+          {order.serviceType === 'GIAO_HANG' && (
+             <div className="mb-4">
+               <p className="text-slate-500 text-xs mb-1">Chi tiết hàng hóa:</p>
+               {order.items?.length > 0 ? (
+                 <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 mb-2 shadow-inner">
+                   {order.items.map((item, i) => (
+                     <p key={i} className="text-slate-800 text-sm font-medium">• {item.name || item} {item.quantity ? `(SL: ${item.quantity})` : ''}</p>
+                   ))}
+                 </div>
+               ) : <p className="text-slate-800 text-sm mb-2 italic">Không có danh sách hàng cụ thể.</p>}
+               {order.packageDetails?.weight && <p className="text-sm font-medium text-slate-700 mt-2">⚖️ Trọng lượng ước tính: <b>{order.packageDetails.weight}kg</b></p>}
+               {order.packageDetails?.isFragile && <p className="text-sm font-bold text-red-500 mt-1">⚠️ Cẩn thận: Hàng dễ vỡ</p>}
+             </div>
+          )}
+
+          {/* MUA_HO INFO */}
+          {order.serviceType === 'MUA_HO' && (
+             <div className="mb-4">
+               <p className="text-slate-500 text-xs mb-1">Danh sách cần mua hộ:</p>
+               {order.items?.length > 0 ? (
+                 <div className="bg-blue-50/50 rounded-lg p-3 border border-blue-100 mb-2 shadow-inner">
+                   {order.items.map((item, i) => (
+                     <div key={i} className="flex justify-between items-center py-1 border-b border-blue-100/50 last:border-0">
+                        <span className="text-slate-800 text-sm font-bold">• {item.name || item} {item.quantity ? `(x${item.quantity})` : ''}</span>
+                        {item.estimatedPrice && <span className="text-blue-600 font-medium text-sm">{item.estimatedPrice.toLocaleString()}đ</span>}
+                     </div>
+                   ))}
+                 </div>
+               ) : <p className="text-slate-800 text-sm mb-2 italic">Không có danh sách hàng (Xem ghi chú của khách).</p>}
+             </div>
+          )}
+
+          {/* DIEU_PHOI INFO (KÈM THỢ) */}
+          {order.serviceType === 'DIEU_PHOI' && (
+             <div className="mb-4 bg-purple-50 p-4 rounded-xl border border-purple-100 shadow-sm relative overflow-hidden">
+               <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🛠️</div>
+               <p className="text-purple-800 text-sm flex flex-col relative z-10">
+                 <span className="text-[10px] text-purple-400 font-bold uppercase mb-1 tracking-wider">MÔ TẢ NHIỆM VỤ THỢ:</span>
+                 <span className="font-black text-lg">
+                   {order.subServiceType === 'KEM_THO_DIEN' ? '⚡ Thợ Điện' : order.subServiceType === 'KEM_THO_NUOC' ? '💧 Thợ Nước' : '🛠️ Sửa Chữa Khác'}
+                 </span>
+               </p>
+             </div>
+          )}
+
+          {/* XE ÔM / LÁI HỘ INFO (DAT_XE) */}
           {order.serviceType === 'DAT_XE' && order.rideDetails && (
-            <div className="mb-3 bg-indigo-50/50 p-3 rounded-lg border border-indigo-100/50">
-              <p className="text-indigo-800 text-sm font-bold flex flex-col">
-                <span className="text-xs text-indigo-400 font-semibold mb-1">PHƯƠNG TIỆN YÊU CẦU:</span>
-                {order.subServiceType === 'XE_OM' ? '🛵 Xe Máy (Chở khách)' : order.subServiceType === 'LAI_HO_OTO' ? '🚗 Lái hộ Ô Tô' : '🔑 Lái hộ Xe Máy'}
-                {order.rideDetails.vehicleClass && ` - Phân khúc: ${order.rideDetails.vehicleClass === 'TAY_GA' ? 'Xe Tay Ga' : order.rideDetails.vehicleClass === 'XE_SO' ? 'Xe Số' : 'Côn Tay'}`}
+            <div className="mb-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 shadow-sm relative overflow-hidden">
+              <div className="absolute -right-4 -top-4 text-7xl opacity-[0.03]">🛵</div>
+              <p className="text-indigo-800 text-sm flex flex-col relative z-10">
+                <span className="text-[10px] text-indigo-400 font-bold uppercase mb-1 tracking-wider">PHƯƠNG TIỆN YÊU CẦU:</span>
+                <span className="font-black text-lg">
+                  {order.subServiceType === 'XE_OM' ? '🛵 Xe Máy (Chở khách)' : order.subServiceType === 'LAI_HO_OTO' ? '🚗 Lái hộ Ô Tô' : '🔑 Lái hộ Xe Máy'}
+                </span>
+                {order.rideDetails?.vehicleClass && (
+                  <span className="text-xs text-indigo-600 font-semibold bg-white px-2 py-0.5 rounded border border-indigo-100 mt-2 max-w-max">
+                     Hạng: {order.rideDetails.vehicleClass === 'TAY_GA' ? 'Xe Tay Ga' : order.rideDetails.vehicleClass === 'XE_SO' ? 'Xe Số' : 'Côn Tay / Mô Tô'}
+                  </span>
+                )}
               </p>
             </div>
           )}
 
+          {/* GHI CHÚ CHUNG */}
           {order.note && (
-            <div className="bg-yellow-500/20 rounded-lg p-3 mb-3">
-              <p className="text-yellow-300 text-sm">📝 {order.note}</p>
+            <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-200 mb-4 shadow-sm">
+              <p className="text-yellow-600 text-xs font-bold uppercase mb-0.5">📝 Ghi chú từ khách hàng</p>
+              <p className="text-slate-800 text-sm font-medium">{order.note}</p>
             </div>
           )}
+
+          {/* BLOCK THANH TOÁN */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="bg-slate-700 rounded-xl p-3">
-              <p className="text-slate-500 text-xs">{order.serviceType === 'DAT_XE' ? 'Cước xe' : 'Phí giao hàng'}</p>
-              <p className="text-green-400 font-bold text-lg">{order.deliveryFee?.toLocaleString()}đ</p>
+            
+            {/* Cột 1: Tiền Phí/Cước */}
+            <div className="bg-slate-700 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
+               <div className="absolute -right-3 -bottom-3 text-5xl opacity-10 group-hover:scale-110 transition-transform">💰</div>
+               <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider relative z-10">
+                 {order.serviceType === 'DAT_XE' ? 'Cước chuyến đi' : order.serviceType === 'DIEU_PHOI' ? 'Phí gọi thợ' : 'Phí dịch vụ / Ship'}
+               </p>
+               {order.deliveryFee > 0 ? (
+                  <p className="text-green-400 font-black text-2xl drop-shadow-sm relative z-10">{order.deliveryFee?.toLocaleString()}đ</p>
+               ) : (
+                  <p className="text-green-400 font-black text-xl drop-shadow-sm relative z-10">Thỏa Thuận</p>
+               )}
             </div>
-            {order.serviceType !== 'DAT_XE' && (
-              <div className="bg-slate-700 rounded-xl p-3">
-                <p className="text-slate-500 text-xs">Thu hộ (COD)</p>
-                <p className="text-blue-600 font-bold text-lg">{order.codAmount?.toLocaleString()}đ</p>
+            
+            {/* Cột 2: Thu Hộ (Giao Hàng) */}
+            {order.serviceType === 'GIAO_HANG' && (order.codAmount > 0 || order.codAmount === 0) && (
+              <div className="bg-slate-700 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
+                <div className="absolute -right-3 -bottom-3 text-5xl opacity-10 group-hover:scale-110 transition-transform">💎</div>
+                <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider relative z-10">Cần Thu hộ (COD)</p>
+                <p className="text-blue-400 font-black text-2xl drop-shadow-sm relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
               </div>
             )}
+
+            {/* Cột 2: Tiền Hàng Dự Kiến (Mua Hộ) */}
+            {order.serviceType === 'MUA_HO' && (
+              <div className="bg-slate-700 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
+                <div className="absolute -right-3 -bottom-3 text-5xl opacity-10 group-hover:scale-110 transition-transform">🛒</div>
+                <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider relative z-10">Tiền hàng dự kiến</p>
+                <p className="text-orange-400 font-black text-2xl drop-shadow-sm relative z-10">
+                  {order.purchaseDetails?.estimatedTotal ? `${order.purchaseDetails.estimatedTotal.toLocaleString()}đ` : 'Thỏa thuận'}
+                </p>
+              </div>
+            )}
+
           </div>
         </div>
 

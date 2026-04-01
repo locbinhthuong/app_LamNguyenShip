@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getDriverById, updateDriver, getDriverStatsAdmin, uploadDriverAvatar } from '../services/api';
+import { getDriverById, updateDriver, getDriverStatsAdmin, uploadDriverAvatar, getFullImageUrl } from '../services/api';
 
 const STATUS_COLORS = {
   active: 'bg-green-500 text-slate-800',
@@ -143,7 +143,7 @@ export default function DriverDetail() {
                </div>
             )}
             <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-blue-600/20 text-4xl shadow-inner border border-blue-600/30">
-              {driver.avatar ? <img src={driver.avatar} alt="Avatar" className="rounded-full w-full h-full object-cover" /> : '👤'}
+              {driver.avatar ? <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="rounded-full w-full h-full object-cover" /> : '👤'}
             </div>
             <h2 className="text-xl font-bold text-slate-800 mb-1">{driver.name}</h2>
             <p className="text-blue-600 font-mono text-sm mb-3">{driver.phone}</p>
@@ -267,7 +267,7 @@ export default function DriverDetail() {
                   className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center mb-2 shadow-sm cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors relative group"
                 >
                   {avatarPreview ? (
-                    <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                    <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
                   ) : (
                     <span className="text-2xl text-slate-400">📷</span>
                   )}
