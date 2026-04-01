@@ -24,7 +24,10 @@ export const useAdminSocket = () => {
     });
 
     socket.on('new_order', (order) => {
-      showToast(`Có đơn hàng mới: Mã ${order.orderCode || order._id?.slice(-8).toUpperCase() || ''}. Click vào Quản Lý Đơn để xem chi tiết!`, 'warning', 0);
+      // Chỉ khi Đơn này do Khách Đặt (createdBy = null), thì ADMIN mới Kêu Chuông. Admin tự tạo đơn thì im lìm.
+      if (!order.createdBy) {
+        showToast(`📲 KHÁCH ĐẶT MỚI: ${order.orderCode || order._id?.slice(-8).toUpperCase() || ''}. Click Quản Lý Đơn để mở!`, 'warning', 30000);
+      }
       window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
     });
 

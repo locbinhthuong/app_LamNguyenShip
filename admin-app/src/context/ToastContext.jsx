@@ -19,34 +19,57 @@ export const ToastProvider = ({ children }) => {
 
   const startAlarm = () => {
     stopAlarm();
-    const playBeep = () => {
+    const playTelephoneRing = () => {
        try {
            if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-           const osc = audioCtxRef.current.createOscillator();
-           const gainNode = audioCtxRef.current.createGain();
-           osc.connect(gainNode);
-           gainNode.connect(audioCtxRef.current.destination);
-           osc.type = 'triangle';
-           osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime); 
-           gainNode.gain.setValueAtTime(0.2, audioCtxRef.current.currentTime);
-           osc.start(audioCtxRef.current.currentTime);
-           osc.stop(audioCtxRef.current.currentTime + 0.15);
+           if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+
+           // Tạo âm thanh Dual-Tone (440Hz + 480Hz) đặc trưng của Điện Thoại Quay Số
+           const osc1 = audioCtxRef.current.createOscillator();
+           const osc2 = audioCtxRef.current.createOscillator();
+           const masterGain = audioCtxRef.current.createGain();
+           const lfo = audioCtxRef.current.createOscillator();
+           const lfoGain = audioCtxRef.current.createGain();
+
+           // Set Tần số
+           osc1.frequency.value = 440;
+           osc2.frequency.value = 480;
+           osc1.type = 'sine';
+           osc2.type = 'sine';
+
+           // Set LFO băm sóng rung chóp chép (Reng Reng Reng) ở tốc độ 20 rung/giây
+           lfo.frequency.value = 20;
+           lfo.type = 'square';
            
-           setTimeout(() => {
-               const osc2 = audioCtxRef.current.createOscillator();
-               const gainNode2 = audioCtxRef.current.createGain();
-               osc2.connect(gainNode2);
-               gainNode2.connect(audioCtxRef.current.destination);
-               osc2.type = 'triangle';
-               osc2.frequency.setValueAtTime(1000, audioCtxRef.current.currentTime); 
-               gainNode2.gain.setValueAtTime(0.2, audioCtxRef.current.currentTime);
-               osc2.start(audioCtxRef.current.currentTime);
-               osc2.stop(audioCtxRef.current.currentTime + 0.2);
-           }, 200);
+           lfo.connect(lfoGain);
+           lfoGain.connect(masterGain.gain);
+           
+           osc1.connect(masterGain);
+           osc2.connect(masterGain);
+           masterGain.connect(audioCtxRef.current.destination);
+
+           // Nén âm lượng
+           masterGain.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
+           lfoGain.gain.value = 0.5;
+
+           // Phát âm trong 2 giây rồi ngắt (Đổ 1 hồi chuông dài)
+           masterGain.gain.setTargetAtTime(0.5, audioCtxRef.current.currentTime, 0.01);
+           
+           osc1.start();
+           osc2.start();
+           lfo.start();
+           
+           masterGain.gain.setTargetAtTime(0, audioCtxRef.current.currentTime + 1.5, 0.01);
+           
+           osc1.stop(audioCtxRef.current.currentTime + 2);
+           osc2.stop(audioCtxRef.current.currentTime + 2);
+           lfo.stop(audioCtxRef.current.currentTime + 2);
        } catch (e) {}
     };
-    playBeep();
-    intervalRef.current = setInterval(playBeep, 1500);
+    
+    // Đổ 1 hồi ngay rồi lặp lại mỗi 3.5 giây
+    playTelephoneRing();
+    intervalRef.current = setInterval(playTelephoneRing, 3500);
   };
 
   const showToast = (message, type = 'info', duration = 4000) => {
@@ -55,7 +78,7 @@ export const ToastProvider = ({ children }) => {
 
   useEffect(() => {
     // Sound & Persistent Logic
-    if (toast && toast.duration === 0) {
+    if (toast && toast.duration === 30000 && toast.type === 'warning') {
       startAlarm();
     } else {
       stopAlarm();
@@ -109,9 +132,9 @@ export const ToastProvider = ({ children }) => {
               <p className="text-sm font-bold text-gray-800 leading-snug break-words">
                 {toast.message}
               </p>
-              {toast.duration === 0 && (
+              {toast.duration === 30000 && (
                 <p className="text-[10px] text-red-500 font-extrabold mt-1 uppercase animate-pulse">
-                  Nhấn vào đây để tắt chuông!
+                  Nhấn vào đây để xác nhận!
                 </p>
               )}
             </div>

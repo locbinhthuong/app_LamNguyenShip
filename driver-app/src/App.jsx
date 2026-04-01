@@ -124,13 +124,27 @@ function AppContent() {
         onConfirm={handleForceLogoutClose}
         isError={true}
       />
-      <AlertModal 
-        isOpen={!!pushMessage}
-        title={pushMessage?.title || "Thông Báo Nhiệm Vụ"}
-        message={pushMessage?.message || ""}
-        onConfirm={() => setPushMessage(null)}
-        isError={false}
-      />
+      {pushMessage && (
+        <div className="fixed top-4 left-4 right-4 z-[9999] animate-[slideDown_0.3s_ease-out]">
+          <div 
+            className="bg-slate-900 border-2 border-slate-700 shadow-2xl rounded-2xl p-4 flex gap-3 cursor-pointer ring-4 ring-blue-500/30"
+            onClick={() => setPushMessage(null)}
+          >
+            <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
+              <span className="text-xl">🔔</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-bold text-blue-400 truncate">{pushMessage.title || "Thông Báo Nhiệm Vụ"}</h3>
+              <p className="text-sm text-slate-300 font-medium whitespace-pre-wrap leading-tight mt-1">
+                {pushMessage.message}
+              </p>
+              <p className="text-[10px] uppercase text-blue-400 font-black mt-2 opacity-80">
+                Chạm vào đây để đóng
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
