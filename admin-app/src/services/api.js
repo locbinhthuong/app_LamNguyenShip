@@ -1,10 +1,9 @@
 import axios from 'axios';
 
 /**
- * Khi build production mà CI không có VITE_API_URL, không được fallback về localhost
- * (trình duyệt sẽ gọi máy người dùng → Axios báo "Network Error").
+ * Mặc định trỏ về VPS API
  */
-const DEFAULT_PRODUCTION_API = 'https://app-lamnguyenship.onrender.com';
+const DEFAULT_PRODUCTION_API = 'https://api.aloshipp.com';
 
 function resolveApiBaseUrl() {
   const raw = import.meta.env.VITE_API_URL;
