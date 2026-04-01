@@ -130,6 +130,10 @@ function AppContent() {
 
     const handlePush = (e) => {
       setPushMessage({ title: e.detail.title, message: e.detail.body });
+      // PHÁT CHUÔNG NGAY LẬP TỨC (Dự phòng rớt Mạng Socket Web)
+      if (e.detail.title && e.detail.title.toUpperCase().includes('MỚI')) {
+         window.dispatchEvent(new CustomEvent('driver_new_order')); 
+      }
     };
     window.addEventListener('fcm_foreground_alert', handlePush);
 

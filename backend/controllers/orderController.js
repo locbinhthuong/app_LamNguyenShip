@@ -309,8 +309,7 @@ const orderController = {
         // Phát socket đăng đơn lại lên chợ cho tài xế
         if (req.io) {
           const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-          req.io.to('drivers').emit('new_order', payload); // Báo có đơn PENDING mới CHO TÀI XẾ (Kêu chuông bên lái xe)
-          emitNewOrder(req.io, payload); // Bắn PUSH NOTIFICATION ra ngoài màn hình cho các Tài Xế đang ẩn App
+          emitNewOrder(req.io, payload); // Bắn PUSH NOTIFICATION và SOCKET cho các Tài Xế
           req.io.to('admins').emit('order_updated', payload); // Cập nhật danh sách bên Admin
         }
       }
