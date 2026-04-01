@@ -15,6 +15,7 @@ export default function Earnings() {
     weeklyFee: 0,
     monthlyFee: 0,
     totalDebt: 0,
+    totalWalletBonus: 0,
     recentOrders: []
   });
   const [loading, setLoading] = useState(true);
@@ -121,6 +122,28 @@ export default function Earnings() {
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
           >
             <span>📱</span> Quét Chuyển Khoản Ngay
+          </button>
+        </div>
+
+        {/* Ví Tài Xế */}
+        <div className="rounded-2xl bg-emerald-50/80 border border-emerald-100 p-4 mb-4 shadow-sm flex flex-col">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-emerald-700 mb-1 font-semibold flex items-center gap-1">
+                <span>Ví Tài Xế (Tiền Thưởng / Chờ Rút)</span>
+              </p>
+              <p className="text-xl font-black text-emerald-800 drop-shadow-sm">{formatCurrency(stats.totalWalletBonus)}</p>
+            </div>
+            <div className="h-10 w-10 bg-gradient-to-br from-emerald-400 to-green-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[5deg]">
+              🏦
+            </div>
+          </div>
+          
+          <button 
+            onClick={() => window.open('https://zalo.me/0827758062', '_blank')}
+            className={`w-full font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] ${stats.totalWalletBonus > 0 ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-slate-200 text-slate-500 pointer-events-none'}`}
+          >
+            <span>💳</span> Yêu Cầu Rút Tiền Ví
           </button>
         </div>
 

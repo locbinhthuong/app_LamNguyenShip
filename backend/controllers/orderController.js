@@ -276,7 +276,7 @@ const orderController = {
       const { id } = req.params;
       const { 
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, receiverPhone,
-        items, note, codAmount, deliveryFee, status,
+        items, note, codAmount, deliveryFee, status, adminBonus,
         bulkyFee, surcharge, // Các phí mới
         vehicleClass, // Cập nhật loại xe nếu cần
         bankName, bankAccount, bankAccountName, transactionAmount // Nạp Rút
@@ -326,6 +326,7 @@ const orderController = {
       if (note !== undefined) orderToUpdate.note = note;
       if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
       if (deliveryFee !== undefined) orderToUpdate.deliveryFee = deliveryFee;
+      if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
       if (bulkyFee !== undefined) {

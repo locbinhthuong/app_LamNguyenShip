@@ -126,6 +126,7 @@ const revenueController = {
       let dailyFee = 0;
       let weeklyFee = 0;
       let monthlyFee = 0;
+      let totalWalletBonus = 0;
 
       // Danh sách lịch sử hiển thị
       const recentOrders = [];
@@ -147,10 +148,12 @@ const revenueController = {
 
       completedOrders.forEach(order => {
         const fee = order.deliveryFee || 0;
+        const bonus = order.adminBonus || 0;
         const dateStrFromDB = order.deliveredAt || order.updatedAt;
         const date = new Date(dateStrFromDB);
         
         totalFee += fee;
+        totalWalletBonus += bonus;
         if (date >= today) dailyFee += fee;
         if (date >= startOfWeek) weeklyFee += fee;
         if (date >= startOfMonth) monthlyFee += fee;
@@ -189,6 +192,7 @@ const revenueController = {
           weeklyFee, // Trả lại...
           monthlyFee, 
           totalDebt,
+          totalWalletBonus,
           chartData: chartDataArray,
           recentOrders 
         }

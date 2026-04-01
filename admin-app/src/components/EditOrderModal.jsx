@@ -13,7 +13,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     bankAccount: '',
     bankAccountName: '',
     transactionAmount: 0,
-    note: ''
+    note: '',
+    adminBonus: 0
   });
 
   useEffect(() => {
@@ -33,7 +34,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         bankAccount: order.financialDetails?.bankAccount || '',
         bankAccountName: order.financialDetails?.bankAccountName || '',
         transactionAmount: order.financialDetails?.transactionAmount || 0,
-        note: order.note || ''
+        note: order.note || '',
+        adminBonus: order.adminBonus || 0
       });
     }
   }, [order]);
@@ -44,7 +46,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: ['codAmount', 'deliveryFee', 'bulkyFee', 'surcharge', 'transactionAmount'].includes(name) ? Number(value) : value
+      [name]: ['codAmount', 'deliveryFee', 'adminBonus', 'bulkyFee', 'surcharge', 'transactionAmount'].includes(name) ? Number(value) : value
     }));
   };
 
@@ -150,6 +152,14 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                  {order.serviceType === 'DAT_XE' ? 'Cước xe' : 'Phí giao hàng (Ship)'}
               </label>
               <input type="number" name="deliveryFee" value={formData.deliveryFee} onChange={handleChange} min="0" required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+            </div>
+          </div>
+
+          {/* Dòng Bonus riêng biệt */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-emerald-600 mb-1">Ví Tài Xế (Admin Bonus)</label>
+              <input type="number" name="adminBonus" value={formData.adminBonus} onChange={handleChange} min="0" className="w-full rounded-lg border border-emerald-300 p-2 text-sm bg-emerald-50 font-bold text-emerald-700 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Thưởng thêm cho tài xế gốc..." />
             </div>
           </div>
 
