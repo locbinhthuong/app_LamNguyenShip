@@ -634,18 +634,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Báo động vang trời khi có Đơn Mới */}
-      {isRinging && (
-        <div className="bg-red-500 animate-pulse text-white p-3 mx-4 mt-4 rounded-xl shadow-lg border-2 border-red-700 flex justify-between items-center z-50 sticky top-[72px] hover:bg-red-600 transition-colors cursor-pointer" onClick={stopAlarm}>
-          <div className="flex items-center gap-2 font-black pl-1">
-             <span className="text-xl">🔔</span> CÓ ĐƠN MỚI!
-          </div>
-          <button className="bg-white text-red-600 font-bold px-4 py-2 text-xs rounded-full shadow-sm hover:bg-gray-50 active:scale-95 transition-transform">
-             TẮT CHUÔNG
-          </button>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="sticky top-0 z-10 flex bg-white border-b border-slate-200">
         <button
