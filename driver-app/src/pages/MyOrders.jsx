@@ -49,25 +49,23 @@ export default function MyOrders() {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
-    let dFee = 0, wFee = 0, mFee = 0, yFee = 0;
+    let dCount = 0, wCount = 0, mCount = 0, yCount = 0;
 
     orders.forEach(o => {
       if (o.status !== 'COMPLETED') return;
-      // Dùng thời gian hoàn thành (hoặc t.gian tạo mngười làm lười cập nhật updatedAt)
       const oDate = new Date(o.updatedAt || o.createdAt);
-      const fee = o.deliveryFee || 0;
       
-      if (oDate.toDateString() === todayStr) dFee += fee;
-      if (oDate >= weekStart) wFee += fee;
-      if (oDate.getMonth() === currentMonth && oDate.getFullYear() === currentYear) mFee += fee;
-      if (oDate.getFullYear() === currentYear) yFee += fee;
+      if (oDate.toDateString() === todayStr) dCount += 1;
+      if (oDate >= weekStart) wCount += 1;
+      if (oDate.getMonth() === currentMonth && oDate.getFullYear() === currentYear) mCount += 1;
+      if (oDate.getFullYear() === currentYear) yCount += 1;
     });
 
     return { 
-      day: dFee.toLocaleString(), 
-      week: wFee.toLocaleString(), 
-      month: mFee.toLocaleString(), 
-      year: yFee.toLocaleString() 
+      day: dCount, 
+      week: wCount, 
+      month: mCount, 
+      year: yCount 
     };
   }, [orders]);
 
@@ -106,30 +104,30 @@ export default function MyOrders() {
       <div className="bg-white p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
         <div className="flex items-center gap-3 mb-3">
           <Link to="/" className="text-slate-800 text-xl font-bold p-1 rounded-full bg-slate-100 hover:bg-slate-200 w-8 h-8 flex items-center justify-center transition-colors">←</Link>
-          <h1 className="text-xl font-black text-slate-800 tracking-tight">Cài Kê Doanh Số</h1>
+          <h1 className="text-xl font-black text-slate-800 tracking-tight">Thống Kê Đơn Hàng</h1>
         </div>
 
         {/* Dashboard 4 Lớp */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4 bg-slate-50 p-2 rounded-2xl border border-slate-100 shadow-inner">
           <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Hôm Nay</span>
-             <span className="text-lg font-black text-blue-600 z-10">{stats.day}đ</span>
+             <span className="text-lg font-black text-blue-600 z-10">{stats.day} Đơn</span>
              <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">⚡</div>
           </div>
           <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Tuần Này</span>
-             <span className="text-lg font-black text-blue-700 z-10">{stats.week}đ</span>
+             <span className="text-lg font-black text-blue-700 z-10">{stats.week} Đơn</span>
              <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">📅</div>
           </div>
           <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Tháng Này</span>
-             <span className="text-lg font-black text-blue-800 z-10">{stats.month}đ</span>
+             <span className="text-lg font-black text-blue-800 z-10">{stats.month} Đơn</span>
              <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">🏆</div>
           </div>
           <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Năm Nay</span>
-             <span className="text-lg font-black text-blue-900 z-10">{stats.year}đ</span>
-             <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">💰</div>
+             <span className="text-lg font-black text-blue-900 z-10">{stats.year} Đơn</span>
+             <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">📦</div>
           </div>
         </div>
 

@@ -436,13 +436,14 @@ export default function Home() {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const [available, active] = await Promise.all([
+      const [available, myAllRes] = await Promise.all([
         getAvailableOrders(),
-        getMyOrders('PICKED_UP,DELIVERING,ACCEPTED') // Các trạng thái active order
+        getMyOrders() // Lấy toàn bộ, filter trên Client vì backend không hỗ trợ list param
       ]);
       setAvailableOrders(Array.isArray(available.data) ? available.data : []);
-      // Gộp và sắp xếp: ưu tiên đơn ĐANG GIAO lên trên, sau đó giảm dần theo tgian
-      let activeArr = Array.isArray(active.data) ? active.data : [];
+      
+      const allMyOrders = Array.isArray(myAllRes.data) ? myAllRes.data : [];
+      let activeArr = allMyOrders.filter(o => ['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(o.status));
       
       const statusWeight = { 'DELIVERING': 3, 'PICKED_UP': 2, 'ACCEPTED': 1 };
       
