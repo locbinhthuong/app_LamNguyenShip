@@ -3,6 +3,7 @@ const Driver = require('../models/Driver');
 const { validationResult } = require('express-validator');
 const { emitNewOrder, emitOrderAccepted, emitOrderPickedUp, emitOrderDelivering, emitOrderCompleted, emitOrderCancelled } = require('../sockets/index');
 const { startOfTodayVietnam } = require('../utils/todayVietnam');
+const DebtTransaction = require('../models/DebtTransaction');
 
 const orderController = {
   // GET /api/orders - Lấy danh sách đơn hàng
@@ -172,7 +173,7 @@ const orderController = {
         const payload = typeof order.toObject === 'function'
           ? order.toObject({ virtuals: true })
           : order;
-        emitNewOrder(req.io, payload);
+        emitNewOrder(req.io, payload, true); // true = isSilentAdmin
       }
 
       console.log(`[Order] Created: ${order._id} by ${req.admin.name}`);
@@ -309,7 +310,7 @@ const orderController = {
         // Phát socket đăng đơn lại lên chợ cho tài xế
         if (req.io) {
           const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-          emitNewOrder(req.io, payload); // Bắn PUSH NOTIFICATION và SOCKET cho các Tài Xế
+          emitNewOrder(req.io, payload, true); // true = isSilentAdmin (Treo lại đơn không báo hú Admin)
           req.io.to('admins').emit('order_updated', payload); // Cập nhật danh sách bên Admin
         }
       }
@@ -533,9 +534,30 @@ const orderController = {
       }
 
       // Update driver stats
+      const driver = await Driver.findById(req.driver._id);
+      
+      // LOGIC CỘNG CÔNG NỢ TỰ ĐỘNG KHI HOÀN THÀNH ĐƠN
+      // Tiền nợ = Tổng Phí Giao Hàng * Phần Trăm Chiết Khấu Hiện Tại Của Tài Xế
+      const deliveryFee = order.deliveryFee || 0;
+      const commissionRate = driver.commissionRate || 15;
+      const debtAmount = Math.round(deliveryFee * (commissionRate / 100));
+
+      if (debtAmount > 0) {
+        // Lưu Lịch sử Giao Dịch
+        const debtTx = new DebtTransaction({
+          driverId: driver._id,
+          orderId: order._id,
+          type: 'FEE_DEDUCTION',
+          amount: debtAmount,
+          description: `Thu chiết khấu ${commissionRate}% đơn hàng ${order.orderCode} (Phí ship: ${deliveryFee}đ)`
+        });
+        await debtTx.save();
+      }
+
       await Driver.findByIdAndUpdate(req.driver._id, {
         $inc: {
-          'stats.completedOrders': 1
+          'stats.completedOrders': 1,
+          walletDebt: debtAmount // Tăng tiền nợ của Pilot
         }
       });
 

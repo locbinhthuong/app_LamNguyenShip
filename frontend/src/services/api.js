@@ -53,6 +53,12 @@ export const getOrderDetails = async (orderId) => {
   return response.data;
 };
 
+// ==================== BẢNG TIN (ANNOUNCEMENTS) ====================
+export const getActiveAnnouncements = async () => {
+  const response = await api.get('/announcements');
+  return response.data;
+};
+
 // ==================== SOCKET.IO ====================
 export const connectSocket = (token, role, options = {}) => {
   if (socket) {

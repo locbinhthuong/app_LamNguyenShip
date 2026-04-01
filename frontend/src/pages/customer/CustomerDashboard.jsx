@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent } from 'lucide-react';
+import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX } from 'lucide-react';
 import LocationPicker from '../../components/LocationPicker';
+import { getActiveAnnouncements } from '../../services/api';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [address, setAddress] = useState('Đang tìm vị trí...');
   const [locationDetails, setLocationDetails] = useState(null); // {lat, lng, address}
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [announcements, setAnnouncements] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isMuted, setIsMuted] = useState(true);
   const isAuthenticated = !!localStorage.getItem('customerToken');
 
   useEffect(() => {
@@ -53,7 +57,29 @@ const CustomerDashboard = () => {
     } else {
       setAddress('Trình duyệt không hỗ trợ GPS');
     }
+
+    // Lấy Bảng Tin
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await getActiveAnnouncements();
+        if (res.success) {
+          setAnnouncements(res.data);
+        }
+      } catch (err) {
+        console.error('Lỗi lấy bảng tin', err);
+      }
+    };
+    fetchAnnouncements();
   }, []);
+
+  // Tự động trượt Bảng Tin mỗi 5 giây
+  useEffect(() => {
+    if (announcements.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % announcements.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [announcements]);
 
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
@@ -101,18 +127,73 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* BANNER KHUYẾN MÃI / QUẢNG CÁO */}
+      {/* BANNER KHUYẾN MÃI / BẢNG TIN */}
       <div className="px-4 py-4">
-        <div className="w-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden h-36 flex flex-col justify-center">
-          <div className="absolute -right-4 -bottom-4 opacity-20 transform rotate-12">
-            <Package size={120} />
+        {announcements.length > 0 ? (
+          <div className="relative w-full h-40 rounded-2xl overflow-hidden shadow-lg group">
+             {announcements.map((ann, idx) => (
+                <div 
+                  key={ann._id}
+                  className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                >
+                  {ann.videoUrl ? (
+                    <video 
+                      src={`https://api.aloshipp.com${ann.videoUrl}`} 
+                      className="w-full h-full object-cover" 
+                      autoPlay 
+                      loop 
+                      muted={isMuted}
+                      playsInline
+                    />
+                  ) : ann.imageUrl ? (
+                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} alt={ann.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-indigo-600 p-4 text-white flex flex-col justify-center">
+                      <h2 className="text-xl font-extrabold mb-1 line-clamp-2">{ann.title}</h2>
+                      <p className="text-xs opacity-90 line-clamp-2">{ann.content}</p>
+                    </div>
+                  )}
+
+                  {/* Nút bật/tắt tiếng Video */}
+                  {ann.videoUrl && (
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
+                      className="absolute bottom-2 right-2 bg-black/50 text-white p-1.5 rounded-full backdrop-blur-sm z-20"
+                    >
+                      {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                    </button>
+                  )}
+                  
+                  {/* Tiêu đề chìm nếu có hình/video để dễ đọc */}
+                  {(ann.imageUrl || ann.videoUrl) && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-6 z-10 pointer-events-none">
+                      <h3 className="text-white font-bold text-sm line-clamp-1">{ann.title}</h3>
+                    </div>
+                  )}
+                </div>
+             ))}
+
+             {/* Slide indicators */}
+             {announcements.length > 1 && (
+               <div className="absolute top-2 right-2 flex gap-1 z-20">
+                 {announcements.map((_, i) => (
+                   <div 
+                     key={i} 
+                     className={`h-1.5 rounded-full transition-all ${i === currentSlide ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} 
+                   />
+                 ))}
+               </div>
+             )}
           </div>
-          <h2 className="text-xl font-extrabold mb-1 relative z-10 w-2/3">Giao Hỏa Tốc<br/>Mọi Nẻo Đường</h2>
-          <p className="text-xs opacity-90 relative z-10">AloShipp - Nhanh chóng & An toàn</p>
-          <button className="mt-3 bg-white text-blue-600 text-xs font-bold px-4 py-1.5 rounded-full w-max shadow-sm relative z-10">
-            Xem ngay
-          </button>
-        </div>
+        ) : (
+          <div className="w-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden h-36 flex flex-col justify-center">
+            <div className="absolute -right-4 -bottom-4 opacity-20 transform rotate-12">
+              <Package size={120} />
+            </div>
+            <h2 className="text-xl font-extrabold mb-1 relative z-10 w-2/3">Giao Hỏa Tốc<br/>Mọi Nẻo Đường</h2>
+            <p className="text-xs opacity-90 relative z-10">AloShipp - Nhanh chóng & An toàn</p>
+          </div>
+        )}
       </div>
 
       {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}

@@ -153,4 +153,55 @@ export const getDriverStatsAdmin = async (id) => {
   return response.data;
 };
 
+// ==================== ANNOUNCEMENTS ====================
+export const getAnnouncements = async () => {
+  const response = await api.get('/api/announcements/all');
+  return response.data;
+};
+
+export const createAnnouncement = async (data) => {
+  const response = await api.post('/api/announcements', data);
+  return response.data;
+};
+
+export const updateAnnouncement = async (id, data) => {
+  const response = await api.put(`/api/announcements/${id}`, data);
+  return response.data;
+};
+
+export const deleteAnnouncement = async (id) => {
+  const response = await api.delete(`/api/announcements/${id}`);
+  return response.data;
+};
+
+export const uploadMedia = async (file) => {
+  const formData = new FormData();
+  formData.append('media', file);
+  const response = await api.post('/api/upload/media', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return response.data;
+};
+
+// ==================== DEBTS ====================
+export const getDriverDebtDetail = async (driverId) => {
+  const response = await api.get(`/api/debts/driver/${driverId}`);
+  return response.data;
+};
+
+export const addDriverPenalty = async (driverId, amount, description) => {
+  const response = await api.post(`/api/debts/driver/${driverId}/penalty`, { amount, description });
+  return response.data;
+};
+
+export const addDriverPayment = async (driverId, amount, description) => {
+  const response = await api.post(`/api/debts/driver/${driverId}/payment`, { amount, description });
+  return response.data;
+};
+
+export const resetDriverDebt = async (driverId) => {
+  const response = await api.post(`/api/debts/driver/${driverId}/reset`);
+  return response.data;
+};
+
 export default api;

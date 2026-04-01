@@ -1,0 +1,330 @@
+import { useState, useEffect, useRef } from 'react';
+import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement, uploadMedia, getFullImageUrl } from '../services/api';
+
+export default function Announcements() {
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  // States cho Form Thêm/Sửa
+  const [showModal, setShowModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentId, setCurrentId] = useState(null);
+  const [form, setForm] = useState({ title: '', content: '', imageUrl: '', videoUrl: '', isActive: true });
+  
+  const [isUploading, setIsUploading] = useState(false);
+  const [mediaFile, setMediaFile] = useState(null);
+  const [mediaPreviewUrl, setMediaPreviewUrl] = useState(null);
+  const [mediaType, setMediaType] = useState('image'); // 'image' hoặc 'video'
+  const fileInputRef = useRef(null);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const res = await getAnnouncements();
+      if (res.success) setAnnouncements(res.data);
+    } catch (err) {
+      alert('Không thể tải danh sách Tin Tức');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  const openAddModal = () => {
+    setForm({ title: '', content: '', imageUrl: '', videoUrl: '', isActive: true });
+    setMediaFile(null);
+    setMediaPreviewUrl(null);
+    setIsEditing(false);
+    setCurrentId(null);
+    setShowModal(true);
+  };
+
+  const openEditModal = (item) => {
+    setForm({ 
+      title: item.title, 
+      content: item.content, 
+      imageUrl: item.imageUrl || '', 
+      videoUrl: item.videoUrl || '', 
+      isActive: item.isActive 
+    });
+    setMediaFile(null);
+    
+    // Ưu tiên hiển thị video nếu có, ngược lại hiển thị ảnh
+    if (item.videoUrl) {
+      setMediaType('video');
+      setMediaPreviewUrl(item.videoUrl);
+    } else if (item.imageUrl) {
+      setMediaType('image');
+      setMediaPreviewUrl(item.imageUrl);
+    } else {
+      setMediaPreviewUrl(null);
+    }
+    
+    setIsEditing(true);
+    setCurrentId(item._id);
+    setShowModal(true);
+  };
+
+  const handleDelete = async (id, title) => {
+    if (!window.confirm(`XÓA TẬN GỐC TIN "${title}"?\nTính năng này sẽ tự động xóa sạch Hình/Video đính kèm trong Máy Chủ vĩnh viễn!`)) return;
+    try {
+      const res = await deleteAnnouncement(id);
+      if (res.success) {
+        alert('Đã Xóa Thành Công!');
+        loadData();
+      }
+    } catch (err) {
+      alert('Lỗi khi xóa Tin tức!');
+    }
+  };
+
+  const handleToggleActive = async (item) => {
+    try {
+      await updateAnnouncement(item._id, { isActive: !item.isActive });
+      loadData();
+    } catch (err) {
+      alert('Lỗi cập nhật trạng thái');
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.mimetype && !file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+         return alert('Chỉ hỗ trợ file Hình ảnh hoặc Video!');
+      }
+      if (file.size > 50 * 1024 * 1024) return alert('Dung lượng tối đa 50MB!');
+      
+      setMediaFile(file);
+      setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
+      setMediaPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title || !form.content) return alert('Vui lòng nhập Tiêu đề và Nội dung!');
+    
+    setIsUploading(true);
+    try {
+      let finalImageUrl = form.imageUrl;
+      let finalVideoUrl = form.videoUrl;
+
+      // Nếu có file mới, tải lên trước
+      if (mediaFile) {
+        const upRes = await uploadMedia(mediaFile);
+        if (upRes.success) {
+          if (upRes.data.type === 'video') {
+            finalVideoUrl = upRes.data.url;
+            finalImageUrl = ''; // Thay thế hình bằng video
+          } else {
+            finalImageUrl = upRes.data.url;
+            finalVideoUrl = ''; // Thay thế video bằng hình
+          }
+        }
+      }
+
+      const submitData = { ...form, imageUrl: finalImageUrl, videoUrl: finalVideoUrl };
+
+      if (isEditing) {
+        await updateAnnouncement(currentId, submitData);
+        alert('Đã cập nhật Bảng Tin!');
+      } else {
+        await createAnnouncement(submitData);
+        alert('Đã đăng Bảng Tin mới!');
+      }
+      
+      setShowModal(false);
+      loadData();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Có lỗi xảy ra khi lưu Bảng tin!');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  return (
+    <div className="mx-auto max-w-6xl p-4 sm:p-6 pb-20">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Cáo Thị / Bảng Tin Tức</h1>
+          <p className="text-sm text-slate-500 mt-1">Tin tức đăng tại đây sẽ chạy lên Trang Chủ App Khách Hàng</p>
+        </div>
+        <button 
+          onClick={openAddModal}
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl shadow-lg shadow-blue-600/30 transition-all hover:scale-105"
+        >
+          + Đăng Tin Mới
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center h-40 items-center">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : announcements.length === 0 ? (
+        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+          <div className="text-6xl mb-4">📰</div>
+          <h3 className="text-lg font-bold text-slate-700">Chưa có bản tin nào</h3>
+          <p className="text-slate-500">Hãy thêm bài đăng quảng cáo đầu tiên đi Sếp!</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {announcements.map(ann => (
+            <div key={ann._id} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-xl hover:shadow-2xl transition-all flex flex-col">
+              {/* Vùng Render Media (Ảnh/Video) */}
+              <div className="h-48 w-full bg-slate-100 flex items-center justify-center relative overflow-hidden group">
+                 {!ann.isActive && (
+                   <div className="absolute inset-0 bg-black/60 z-10 flex items-center justify-center">
+                     <span className="text-white font-bold border-2 border-white px-4 py-1.5 rounded-lg rotate-[-15deg]">Đã Ẩn</span>
+                   </div>
+                 )}
+                 
+                 {ann.videoUrl ? (
+                   <video src={getFullImageUrl(ann.videoUrl)} className="w-full h-full object-cover" controls muted />
+                 ) : ann.imageUrl ? (
+                   <img src={getFullImageUrl(ann.imageUrl)} alt="News" className="w-full h-full object-cover" />
+                 ) : (
+                   <span className="text-4xl">📰</span>
+                 )}
+                 
+                 <div className="absolute top-2 right-2 flex gap-2 z-20">
+                   <button 
+                     onClick={() => handleToggleActive(ann)}
+                     className={`p-2 rounded-full shadow-lg text-sm ${ann.isActive ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-500 hover:bg-gray-600'} text-white transition-transform hover:scale-110`}
+                     title={ann.isActive ? 'Bấm để Ẩn' : 'Bấm để Hiện'}
+                   >
+                     {ann.isActive ? '👁️' : '🙈'}
+                   </button>
+                 </div>
+              </div>
+              
+              <div className="p-5 flex-1 flex flex-col">
+                 <h3 className="font-bold text-slate-800 text-lg leading-snug line-clamp-2 mb-2">{ann.title}</h3>
+                 <p className="text-slate-500 text-sm line-clamp-3 mb-4 flex-1 whitespace-pre-wrap">{ann.content}</p>
+                 <div className="text-xs text-slate-400 mb-4">{new Date(ann.createdAt).toLocaleString('vi-VN')}</div>
+                 
+                 <div className="flex gap-3 pt-4 border-t border-slate-100">
+                    <button 
+                      onClick={() => openEditModal(ann)}
+                      className="flex-1 bg-sky-50 hover:bg-sky-100 text-sky-700 font-bold py-2 rounded-xl transition-colors"
+                    >
+                      Sửa
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(ann._id, ann.title)}
+                      className="flex-1 bg-red-50 hover:bg-red-100 text-red-600 font-bold py-2 rounded-xl transition-colors"
+                    >
+                      Xóa Sạch
+                    </button>
+                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Thêm/Sửa */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl relative my-8">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
+              <h2 className="text-xl font-bold text-slate-800">{isEditing ? 'Sửa Bảng Tin' : 'Đăng Bảng Tin Mới'}</h2>
+              <button disabled={isUploading} onClick={() => setShowModal(false)} className="text-slate-400 hover:text-red-500 text-2xl leading-none">&times;</button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+               {/* Tiêu đề & Nội dung */}
+               <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Tiêu Đề (Title) <span className="text-red-500">*</span></label>
+                  <input 
+                    required autoFocus
+                    type="text" 
+                    value={form.title} 
+                    onChange={e => setForm({...form, title: e.target.value})}
+                    placeholder="Mừng đại lễ freeship 100%..." 
+                    className="w-full border border-slate-300 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all font-medium"
+                  />
+               </div>
+               
+               <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Nội Dung Chi Tiết <span className="text-red-500">*</span></label>
+                  <textarea 
+                    required rows="4"
+                    value={form.content} 
+                    onChange={e => setForm({...form, content: e.target.value})}
+                    placeholder="Khách iu nhanh tay đặt hàng..." 
+                    className="w-full border border-slate-300 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                  ></textarea>
+               </div>
+
+               {/* Chèn Media */}
+               <div className="border border-dashed border-blue-300 bg-blue-50 rounded-2xl p-6 text-center">
+                  <input 
+                    type="file" 
+                    accept="image/*,video/*"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden" 
+                  />
+                  
+                  {mediaPreviewUrl ? (
+                    <div className="relative inline-block max-w-full rounded-xl overflow-hidden shadow-md">
+                      {mediaType === 'video' ? (
+                        <video src={mediaFile ? mediaPreviewUrl : getFullImageUrl(mediaPreviewUrl)} className="max-h-64 mx-auto" controls />
+                      ) : (
+                        <img src={mediaFile ? mediaPreviewUrl : getFullImageUrl(mediaPreviewUrl)} className="max-h-64 mx-auto object-contain" alt="Preview" />
+                      )}
+                      
+                      <button 
+                        type="button" 
+                        onClick={() => {
+                          setMediaFile(null);
+                          setMediaPreviewUrl(null);
+                          if(fileInputRef.current) fileInputRef.current.value = "";
+                        }}
+                        className="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 flex flex-col justify-center items-center rounded-full shadow-lg hover:bg-red-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className="cursor-pointer space-y-2 py-4"
+                    >
+                      <div className="text-4xl">📸</div>
+                      <h4 className="font-bold text-blue-600">Bấm vào đây để đính kèm Ảnh / Video</h4>
+                      <p className="text-xs text-blue-400">Hỗ trợ JPG, PNG, MP4. Tối đa 50MB.</p>
+                    </div>
+                  )}
+               </div>
+
+               {/* Nút Action */}
+               <div className="border-t border-slate-100 pt-6 flex gap-3 flex-col sm:flex-row">
+                  <button 
+                    type="button" 
+                    disabled={isUploading}
+                    onClick={() => setShowModal(false)}
+                    className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    Hủy Bỏ
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={isUploading}
+                    className="flex-1 px-4 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2"
+                  >
+                    {isUploading ? (
+                      <><span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span> Đang đẩy File lên...</>
+                    ) : isEditing ? '💾 Lưu Chỉnh Sửa' : '🚀 Đăng Bản Tin Ngay'}
+                  </button>
+               </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

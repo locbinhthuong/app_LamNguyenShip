@@ -54,6 +54,15 @@ const driverSchema = new mongoose.Schema({
     lng: { type: Number, default: null },
     updatedAt: { type: Date, default: null }
   },
+  commissionRate: {
+    type: Number,
+    enum: [15, 20],
+    default: 15
+  },
+  walletDebt: {
+    type: Number,
+    default: 0
+  },
   // Thống kê
   stats: {
     totalOrders: { type: Number, default: 0 },

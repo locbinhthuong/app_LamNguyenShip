@@ -28,7 +28,7 @@ export default function DriverDetail() {
   
   // Popup Sửa thông tin
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '' });
+  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 15 });
   const [isUploading, setIsUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -47,6 +47,7 @@ export default function DriverDetail() {
         name: drRes.data.name || '',
         vehicleType: drRes.data.vehicleType || 'motorcycle',
         licensePlate: drRes.data.licensePlate || '',
+        commissionRate: drRes.data.commissionRate || 15,
         avatar: drRes.data.avatar || ''
       });
       setAvatarPreview(drRes.data.avatar || null);
@@ -156,6 +157,10 @@ export default function DriverDetail() {
               <div className="flex justify-between">
                 <span className="text-slate-500">Biển số:</span>
                 <span className="text-slate-800 font-medium">{driver.licensePlate || '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Mức chiết khấu:</span>
+                <span className="text-slate-800 font-bold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">{driver.commissionRate || 15}%</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Loại xe:</span>
@@ -323,6 +328,17 @@ export default function DriverDetail() {
                   <option value="motorcycle">Xe Máy (Motorcycle)</option>
                   <option value="car">Ô Tô (Car)</option>
                   <option value="bike">Xe Đạp (Bike)</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">Mức chiết khấu (%)</label>
+                <select 
+                  value={editForm.commissionRate} 
+                  onChange={e => setEditForm({...editForm, commissionRate: Number(e.target.value)})}
+                  className="mt-1 w-full rounded-xl border border-sky-300 bg-sky-50 hover:bg-sky-100 p-3 text-sky-800 font-bold focus:border-sky-600 focus:outline-none focus:ring-1 focus:ring-sky-600"
+                >
+                  <option value={15}>15% (Tiêu chuẩn)</option>
+                  <option value={20}>20% (Cao cấp)</option>
                 </select>
               </div>
               <div className="mt-6 flex gap-3 pt-2">

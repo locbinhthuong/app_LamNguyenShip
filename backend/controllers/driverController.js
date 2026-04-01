@@ -79,7 +79,7 @@ const driverController = {
   // POST /api/drivers - Tạo tài xế mới (Admin)
   createDriver: async (req, res) => {
     try {
-      const { name, phone, password, vehicleType, licensePlate } = req.body;
+      const { name, phone, password, vehicleType, licensePlate, commissionRate } = req.body;
 
       // Check phone exists
       const existing = await Driver.findOne({ phone });
@@ -97,7 +97,8 @@ const driverController = {
         phone,
         password: hashedPassword,
         vehicleType: vehicleType || 'motorcycle',
-        licensePlate
+        licensePlate,
+        commissionRate: commissionRate || 15
       });
 
       await driver.save();
@@ -123,7 +124,7 @@ const driverController = {
   updateDriver: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, vehicleType, licensePlate, status, avatar } = req.body;
+      const { name, vehicleType, licensePlate, status, avatar, commissionRate } = req.body;
 
       const updateData = {};
       if (name) updateData.name = name;
@@ -131,6 +132,7 @@ const driverController = {
       if (licensePlate !== undefined) updateData.licensePlate = licensePlate;
       if (status) updateData.status = status;
       if (avatar !== undefined) updateData.avatar = avatar;
+      if (commissionRate !== undefined) updateData.commissionRate = commissionRate;
 
       const driver = await Driver.findByIdAndUpdate(
         id,

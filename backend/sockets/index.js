@@ -126,7 +126,7 @@ const broadcastToCreator = (io, order, eventName) => {
   }
 };
 
-const emitNewOrder = async (io, order) => {
+const emitNewOrder = async (io, order, isSilentAdmin = false) => {
   if (order.status !== 'DRAFT') {
     io.to('drivers').emit('new_order', order);
     
@@ -147,7 +147,13 @@ const emitNewOrder = async (io, order) => {
       console.log('[FCM-DEBUG] Lời nổ Push emitNewOrder bị lỗi thảm hại:', e.message);
     }
   }
-  io.to('admins').emit('new_order', order);
+  
+  if (!isSilentAdmin) {
+    io.to('admins').emit('new_order', order);
+  } else {
+    io.to('admins').emit('order_updated', order);
+  }
+  
   broadcastToCreator(io, order, 'new_order');
 };
 

@@ -9,7 +9,8 @@ export default function CreateDriver() {
     phone: '',
     password: '',
     vehicleType: 'motorcycle',
-    licensePlate: ''
+    licensePlate: '',
+    commissionRate: 15
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -107,6 +108,14 @@ export default function CreateDriver() {
               placeholder="59P1-12345"
               className="input-field"
             />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Mức chiết khấu (% Lợi nhuận Công ty thu)</label>
+            <select name="commissionRate" value={form.commissionRate} onChange={handleChange} className="input-field font-bold text-slate-700 bg-sky-50 border-sky-200">
+              <option value={15}>15% (Tiêu chuẩn)</option>
+              <option value={20}>20% (Cao cấp)</option>
+            </select>
           </div>
 
           <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">

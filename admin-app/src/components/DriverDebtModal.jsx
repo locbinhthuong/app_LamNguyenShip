@@ -1,0 +1,185 @@
+import { useState, useEffect } from 'react';
+import { getDriverDebtDetail, addDriverPenalty, addDriverPayment, resetDriverDebt } from '../services/api';
+
+export default function DriverDebtModal({ driverId, isOpen, onClose }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  
+  const [actionType, setActionType] = useState('payment'); // 'payment', 'penalty', 'reset'
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (isOpen && driverId) {
+      loadData();
+    }
+  }, [isOpen, driverId]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const res = await getDriverDebtDetail(driverId);
+      if (res.success) {
+        setData(res.data);
+      }
+    } catch (err) {
+      alert('Không thể tải dữ liệu Công nợ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      if (actionType === 'reset') {
+        if (!window.confirm('CẢNH BÁO: Xóa toàn bộ nợ của người này về 0 ?')) {
+          setSubmitting(false);
+          return;
+        }
+        await resetDriverDebt(driverId);
+        alert('Đã xóa nợ thành công!');
+      } else if (actionType === 'payment') {
+        await addDriverPayment(driverId, amount, description);
+        alert('Đã thu tiền nợ thành công!');
+      } else if (actionType === 'penalty') {
+        await addDriverPenalty(driverId, amount, description);
+        alert('Đã thêm hình phạt/nợ thành công!');
+      }
+      
+      setAmount('');
+      setDescription('');
+      loadData(); // Tải lại lịch sử
+    } catch (err) {
+      alert(err.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex justify-end bg-black/50 backdrop-blur-sm">
+      <div className="w-full max-w-lg bg-slate-50 h-full flex flex-col shadow-2xl animate-fade-in-right">
+        
+        {/* Header */}
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
+          <div>
+            <h2 className="text-xl font-bold text-slate-800">Sổ Đen Công Nợ</h2>
+            <p className="text-xs text-slate-500 font-medium">Quản lý thu chi vi phạm / chiết khấu</p>
+          </div>
+          <button onClick={onClose} className="p-2 bg-slate-100 hover:bg-red-100 hover:text-red-500 rounded-full text-slate-500 transition-colors">
+            ✕
+          </button>
+        </div>
+
+        {loading || !data ? (
+          <div className="flex-1 flex justify-center items-center">
+             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            
+            {/* THÔNG TIN CHUNG */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col items-center">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl mb-3">
+                 {data.driver.name.charAt(0)}
+              </div>
+              <h3 className="font-bold text-slate-800">{data.driver.name}</h3>
+              <p className="text-slate-500 text-xs">{data.driver.phone}</p>
+              
+              <div className="mt-4 w-full bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col items-center">
+                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">Tổng Nợ Phải Thu</p>
+                 <p className={`text-3xl font-black ${data.driver.walletDebt > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                    {data.driver.walletDebt.toLocaleString()} đ
+                 </p>
+                 <span className="mt-2 inline-block bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded-full font-bold">
+                    Chiết Khấu Đơn: {data.driver.commissionRate}%
+                 </span>
+              </div>
+            </div>
+
+            {/* FORM GIAO DỊCH */}
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+               <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2">Tạo Giao Dịch Nợ / Phạt</h4>
+               
+               <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                 <button type="button" onClick={() => setActionType('payment')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'payment' ? 'bg-white shadow text-green-600' : 'text-slate-500'}`}>Nập Tiền/Trừ Nợ</button>
+                 <button type="button" onClick={() => setActionType('penalty')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'penalty' ? 'bg-white shadow text-red-600' : 'text-slate-500'}`}>Ghi Phạt</button>
+                 <button type="button" onClick={() => setActionType('reset')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'reset' ? 'bg-blue-600 text-white shadow' : 'text-slate-500'}`}>Hủy Trắng Nợ</button>
+               </div>
+
+               {actionType !== 'reset' && (
+                 <>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Số Tiền (đ)</label>
+                    <input 
+                      type="number" min="1000" step="1000" required 
+                      className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={amount} onChange={e => setAmount(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-slate-600">Lý do/Ghi chú</label>
+                    <input 
+                      type="text" required 
+                      placeholder="VD: Thu tiền ship tuần 1..."
+                      className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={description} onChange={e => setDescription(e.target.value)}
+                    />
+                  </div>
+                 </>
+               )}
+
+               <button 
+                 disabled={submitting}
+                 className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${actionType === 'payment' ? 'bg-green-600 shadow-green-600/30' : actionType === 'penalty' ? 'bg-red-600 shadow-red-600/30' : 'bg-blue-600 shadow-blue-600/30'}`}
+               >
+                 {submitting ? 'Đang Xử Lý...' : actionType === 'reset' ? 'XÓA SẠCH VỀ NỢ 0 ĐỒNG' : 'THỰC HIỆN'}
+               </button>
+            </form>
+
+            {/* LỊCH SỬ GIAO DỊCH */}
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+              <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
+                 🕒 Lịch sử Sổ Đen
+              </h4>
+              
+              {data.transactions.length === 0 ? (
+                <div className="text-center py-6 text-slate-400 text-sm italic">
+                  Chưa có giao dịch / phí chiết khấu nào
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {data.transactions.map(tx => (
+                    <div key={tx._id} className="flex justify-between items-start pb-4 border-b border-slate-100 last:border-0 last:pb-0">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${tx.type === 'PAYMENT' ? 'bg-green-100 text-green-700' : tx.type === 'PENALTY' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
+                            {tx.type === 'PAYMENT' ? 'THU NỢ' : tx.type === 'PENALTY' ? 'PHẠT' : 'PHÍ ĐƠN'}
+                          </span>
+                          <span className="text-xs text-slate-400">{new Date(tx.createdAt).toLocaleString('vi-VN')}</span>
+                        </div>
+                        <p className="text-sm font-medium text-slate-700">{tx.description}</p>
+                        {tx.createdByAdminId && (
+                          <p className="text-[10px] text-slate-500 mt-1">Người duyệt: {tx.createdByAdminId.name}</p>
+                        )}
+                      </div>
+                      <div className={`font-black tracking-tight ${tx.amount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                        {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}đ
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
