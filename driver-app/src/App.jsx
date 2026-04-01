@@ -125,23 +125,26 @@ function AppContent() {
         isError={true}
       />
       {pushMessage && (
-        <div className="fixed top-4 left-4 right-4 z-[9999] animate-[slideDown_0.3s_ease-out]">
-          <div 
-            className="bg-slate-900 border-2 border-slate-700 shadow-2xl rounded-2xl p-4 flex gap-3 cursor-pointer ring-4 ring-blue-500/30"
-            onClick={() => setPushMessage(null)}
-          >
-            <div className="shrink-0 w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center animate-pulse">
-              <span className="text-xl">🔔</span>
+        <div className="fixed top-2 left-2 right-2 z-[9999] animate-[slideDown_0.3s_ease-out] flex justify-center pointer-events-none">
+          <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-2.5 flex items-center gap-3 ring-2 ring-blue-500/50 w-full max-w-md pointer-events-auto">
+            <span className="text-xl animate-pulse shrink-0">🔔</span>
+            <div 
+              className="flex-1 min-w-0 cursor-pointer"
+              onClick={() => setPushMessage(null)}
+            >
+              <h3 className="text-[13px] font-bold text-blue-400 truncate">{pushMessage.title || "Có đơn hàng mới"}</h3>
+              <p className="text-[11px] text-slate-300 truncate mt-0.5">{pushMessage.message?.replace(/\n/g, ' 🔜 ')}</p>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-blue-400 truncate">{pushMessage.title || "Thông Báo Nhiệm Vụ"}</h3>
-              <p className="text-sm text-slate-300 font-medium whitespace-pre-wrap leading-tight mt-1">
-                {pushMessage.message}
-              </p>
-              <p className="text-[10px] uppercase text-blue-400 font-black mt-2 opacity-80">
-                Chạm vào đây để đóng
-              </p>
-            </div>
+            <button 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  window.dispatchEvent(new CustomEvent('stop_alarm_event')); 
+                  setPushMessage(null); 
+                }}
+                className="shrink-0 bg-red-600 active:bg-red-700 text-white text-[10px] font-black px-3 py-2 rounded-lg ml-1 shadow-md uppercase tracking-wider"
+            >
+              🔕 Tắt
+            </button>
           </div>
         </div>
       )}

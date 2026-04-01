@@ -37,10 +37,7 @@ export const useAdminSocket = () => {
     });
 
     socket.on('order_updated', (order) => {
-      // Logic cũ: Báo đỏ khi tài xế huỷ/từ chối (cũng kêu chuông)
-      if (order.status === 'PENDING' && order.cancelReason) {
-        showToast(`🚫 Tài xế từ chối đơn #${order.orderCode || order._id.slice(-8).toUpperCase()} - Lý do: ${order.cancelReason}`, 'error', 0);
-      }
+      // Đã Tắt Báo Động khi Tài xế từ chối Đơn hoặc Admin Treo Đơn. Giữ im lặng tuyệt đối.
       window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
     });
 

@@ -140,7 +140,7 @@ const emitNewOrder = async (io, order) => {
       
       if (tokens.length > 0) {
         const feeResponse = order.deliveryFee ? `${order.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
-        let msgBody = `📍 Đi: ${order.pickupAddress} ⏭️ Đến: ${order.deliveryAddress || 'Chưa cập nhật'} 💵 Phí: ${feeResponse}`;
+        let msgBody = `📍 Từ: ${order.pickupAddress}\n🎯 Đến: ${order.deliveryAddress || 'Chưa cập nhật'}\n💵 Phí: ${feeResponse}`;
         await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}` });
       }
     } catch (e) {

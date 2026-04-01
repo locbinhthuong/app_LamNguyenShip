@@ -169,30 +169,39 @@ export default function Home() {
   const [editModal, setEditModal] = useState(false);
 
   // Audio Alarm
-  const audioRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const audioBufferRef = useRef(null);
+  const sourceNodeRef = useRef(null);
   const intervalRef = useRef(null);
   const [isRinging, setIsRinging] = useState(false);
 
-  // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay)
+  // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay) và Tải Nhạc Ẩn
   useEffect(() => {
-    const unlockAudio = () => {
+    const initAudio = async () => {
       try {
-        if (!audioRef.current) {
-          audioRef.current = new Audio('/chuong.mp3');
-          audioRef.current.load(); // Khởi động load sẵn cục Mp3 vào Bộ nhớ RAM chặn AutoPlay
+        if (!audioCtxRef.current) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          audioCtxRef.current = new AudioContext();
+          
+          const response = await fetch('/chuong.mp3');
+          const arrayBuffer = await response.arrayBuffer();
+          const decoded = await audioCtxRef.current.decodeAudioData(arrayBuffer);
+          audioBufferRef.current = decoded;
+        }
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
         }
       } catch (e) {
-        console.error("Lỗi cấp quyền âm thanh MP3:", e);
+        console.error("Lỗi buffer mp3:", e);
       }
     };
     
-    // Nhả quyền ngay khi thợ chạm vào màn hình bất kỳ đâu
-    document.addEventListener('click', unlockAudio, { once: true });
-    document.addEventListener('touchstart', unlockAudio, { once: true });
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
     
     return () => {
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', initAudio);
+      document.removeEventListener('touchstart', initAudio);
     };
   }, []);
 
@@ -201,30 +210,35 @@ export default function Home() {
       clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch(e){}
+      try { sourceNodeRef.current.disconnect(); } catch(e){}
+      sourceNodeRef.current = null;
     }
     setIsRinging(false);
   }, []);
+
+  useEffect(() => {
+    const handleStopEvent = () => stopAlarm();
+    window.addEventListener('stop_alarm_event', handleStopEvent);
+    return () => window.removeEventListener('stop_alarm_event', handleStopEvent);
+  }, [stopAlarm]);
 
   const startAlarm = useCallback(() => {
     stopAlarm();
     setIsRinging(true);
     
-    // Nếu chưa bấm màn hình bao giờ mà lỡ có Push luôn thì ép tạo Audio ở đây
-    if (!audioRef.current) {
-      audioRef.current = new Audio('/chuong.mp3');
-    }
-
-    if (audioRef.current) {
-        audioRef.current.loop = true; // Cho lặp lại nếu file mp3 Sếp thu quá ngắn
-        audioRef.current.currentTime = 0;
-        
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-            playPromise.catch(e => console.error("Apple chặn phát âm thanh:", e));
+    if (audioCtxRef.current && audioBufferRef.current) {
+        if (audioCtxRef.current.state === 'suspended') {
+            audioCtxRef.current.resume();
         }
+        
+        const source = audioCtxRef.current.createBufferSource();
+        source.buffer = audioBufferRef.current;
+        source.connect(audioCtxRef.current.destination);
+        source.loop = true;
+        source.start(0);
+        sourceNodeRef.current = source;
         
         // Cài đồng hồ đếm ngược tự ngắt chuông sau 30 giây
         intervalRef.current = setTimeout(() => {

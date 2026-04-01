@@ -7,15 +7,27 @@ export const useToast = () => useContext(ToastContext);
 
 export const ToastProvider = ({ children }) => {
   const [toast, setToast] = useState(null);
-  const audioRef = React.useRef(null);
+  const audioCtxRef = React.useRef(null);
+  const audioBufferRef = React.useRef(null);
+  const sourceNodeRef = React.useRef(null);
   const timerRef = React.useRef(null);
 
-  // Tạo sẵn đối tượng Audio để giảm thiểu delay khi reo chuông cực mượt
+  // Tạo sẵn đối tượng Audio để giảm thiểu delay và giấu khỏi Màn Hình Khóa bằng WebAudio API
   useEffect(() => {
-    if (!audioRef.current) {
-        audioRef.current = new Audio('/chuong.mp3');
-        audioRef.current.load();
-    }
+    const initSilentAudio = async () => {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        audioCtxRef.current = new AudioContext();
+        
+        const response = await fetch('/chuong.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        const decodedBuffer = await audioCtxRef.current.decodeAudioData(arrayBuffer);
+        audioBufferRef.current = decodedBuffer;
+      } catch (e) {
+        console.error("Lỗi buffer mp3:", e);
+      }
+    };
+    initSilentAudio();
   }, []);
 
   const stopAlarm = () => {
@@ -23,22 +35,27 @@ export const ToastProvider = ({ children }) => {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch(e) {}
+      sourceNodeRef.current.disconnect();
+      sourceNodeRef.current = null;
     }
   };
 
   const startAlarm = () => {
     stopAlarm();
-    if (audioRef.current) {
-      audioRef.current.loop = true;
-      audioRef.current.currentTime = 0;
-      
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-         playPromise.catch(e => console.error("AutoPlay Blocked by Browser:", e));
+    
+    if (audioCtxRef.current && audioBufferRef.current) {
+      if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
       }
+      
+      const source = audioCtxRef.current.createBufferSource();
+      source.buffer = audioBufferRef.current;
+      source.connect(audioCtxRef.current.destination);
+      source.loop = true;
+      source.start(0);
+      sourceNodeRef.current = source;
 
       // Giới hạn thời gian kêu 30 giây (Sếp yêu cầu)
       timerRef.current = setTimeout(() => {
