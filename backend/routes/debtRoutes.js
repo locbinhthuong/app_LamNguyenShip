@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const debtController = require('../controllers/debtController');
-const authMiddleware = require('../middleware/authMiddleware'); // { adminAuth, onlyAdmin }
+const { verifyToken, onlyAdmin } = require('../middleware/auth');
 
 // Bật bảo mật Admin cho toàn bộ route
-router.use(authMiddleware.adminAuth);
-router.use(authMiddleware.onlyAdmin);
+router.use(verifyToken);
+router.use(onlyAdmin);
 
 // Các thao tác của Admin
 router.get('/driver/:driverId', debtController.getDriverDebtDetail);
