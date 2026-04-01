@@ -82,16 +82,16 @@ function OrderCard({ order, onAccept, loading }) {
         </div>
       )}
 
-      <div className="flex justify-between items-center">
-        <span className="text-green-400 font-bold">
-          +{order.deliveryFee?.toLocaleString()}đ
+      <div className="flex flex-col items-center gap-1.5 mt-2 border-t border-slate-100 pt-3">
+        <span className="text-green-600 font-black text-sm w-full text-center tracking-wide">
+          💵 GIÁ CƯỚC: +{order.deliveryFee?.toLocaleString()}đ
         </span>
         <button
-          onClick={(e) => { e.stopPropagation(); handleAccept(); }}
+          onClick={(e) => { e.stopPropagation(); onAccept(); }}
           disabled={loading}
-          className="btn-success py-2 px-6 text-sm"
+          className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 w-full text-[15px] rounded-xl shadow-md transition-all uppercase tracking-wider disabled:opacity-50"
         >
-          {loading ? '...' : 'Nhận đơn'}
+          {loading ? 'Đang xử lý...' : 'NHẬN ĐƠN NGAY'}
         </button>
       </div>
     </div>
@@ -167,6 +167,7 @@ export default function Home() {
   const [showToast, setShowToast] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
+  const [confirmAcceptOrder, setConfirmAcceptOrder] = useState(null); // ID đơn hàng đang được hỏi Xác Nhận
 
   // Audio Alarm
   const audioCtxRef = useRef(null);
@@ -518,7 +519,11 @@ export default function Home() {
     };
   }, [loadData, startAlarm, stopAlarm]);
 
-  const handleAccept = async (orderId) => {
+  const handleAccept = async () => {
+    if (!confirmAcceptOrder) return;
+    const orderId = confirmAcceptOrder;
+    setConfirmAcceptOrder(null);
+
     if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(orderId);
     try {
@@ -596,66 +601,55 @@ export default function Home() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
-        <div className="mb-3 flex items-center gap-2">
-          <span className="text-xl">🚚</span>
-          <h1 className="text-lg font-bold text-white tracking-wide">AloShipp</h1>
-        </div>
-        <div className="flex items-center justify-between gap-3">
-          <div 
-            onClick={() => setEditModal(true)}
-            className="flex items-center gap-3 bg-white/10 p-1.5 pr-4 rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-95 group"
-          >
-            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border-2 border-white/50 shadow-sm relative">
-              {driver?.avatar ? (
-                <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-xl font-bold text-blue-500">
-                  {driver?.name?.charAt(0).toUpperCase() || '👤'}
-                </span>
-              )}
-              {/* Overlay edit icon */}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-[10px] pb-1">✏️</span>
+      {/* Header Siêu Gọn */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-2 sm:p-3 pt-[max(1rem,env(safe-area-inset-top))] shadow-md relative z-20">
+        <div className="flex items-center justify-between gap-2">
+          {/* Cụm trái: Logo rút gọn + Tên Tài xế */}
+          <div className="flex items-center gap-2">
+            <span className="text-xl sm:text-2xl">🚚</span>
+            <div 
+              onClick={() => setEditModal(true)}
+              className="flex items-center gap-2 bg-white/10 p-1 pr-3 rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-95 group"
+            >
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white/50 shadow-sm relative">
+                {driver?.avatar ? (
+                  <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-bold text-blue-500">
+                    {driver?.name?.charAt(0).toUpperCase() || '👤'}
+                  </span>
+                )}
+              </div>
+              <div>
+                <p className="text-xs font-bold text-white leading-tight truncate max-w-[100px] sm:max-w-[150px]">{driver?.name || 'Tài xế'}</p>
+                <p className="text-[9px] text-blue-200 mt-0.5">{driver?.driverCode || 'Xem'}</p>
               </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-white leading-tight">{driver?.name || 'Tài xế'}</p>
-              <p className="text-[10px] text-blue-200 mt-0.5">{driver?.driverCode || 'Xem hồ sơ ➔'}</p>
-            </div>
           </div>
-          <div className="flex shrink-0 gap-2 items-center flex-wrap justify-end max-w-[140px]">
+
+          {/* Cụm phải: Nút Gộp Online + GPS + Đăng Xuất */}
+          <div className="flex shrink-0 gap-1.5 items-center">
             <button
               type="button"
               onClick={toggleOnline}
               disabled={isToggling}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold transition-all w-full sm:text-sm shadow-sm ${
-                driver?.isOnline ? 'bg-green-500 text-white' : 'bg-slate-600 text-slate-300'
+              className={`rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 min-w-[110px] justify-center ${
+                driver?.isOnline 
+                  ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-400' 
+                     : gpsStatus === 'FINDING' ? 'bg-yellow-500 text-slate-900 border border-yellow-400 animate-pulse'
+                     : 'bg-red-500 text-white') 
+                  : 'bg-slate-600 text-slate-300'
               } ${isToggling ? 'opacity-70 cursor-wait' : ''}`}
             >
-              {driver?.isOnline ? '🟢 Online' : '⚫ Offline'}
-            </button>
-            <button
-              type="button"
-              onClick={toggleGPS}
-              disabled={!driver?.isOnline || isToggling}
-              className={`rounded-full px-3 py-1.5 text-[10px] sm:text-xs font-bold transition-all w-full flex items-center justify-center gap-1 shadow-sm ${
-                !driver?.isOnline || isToggling ? 'bg-white/10 text-white/40 cursor-not-allowed' :
-                gpsStatus === 'OFF' ? 'bg-white/20 text-white hover:bg-white/30' :
-                gpsStatus === 'FINDING' ? 'bg-yellow-500 text-white animate-pulse' :
-                gpsStatus === 'TRACKING' ? 'bg-green-400 text-slate-900 border-2 border-green-200' :
-                'bg-red-500 text-white'
-              }`}
-            >
-              {gpsStatus === 'OFF' ? '📍 Bật Vị Trí' :
-               gpsStatus === 'FINDING' ? '⏳ Đang dò Vệ Tinh...' :
-               gpsStatus === 'TRACKING' ? '📡 Đang Phát GPS' :
-               '⚠️ Lỗi GPS (Thử lại)'}
+              {driver?.isOnline ? (
+                <>
+                  {gpsStatus === 'TRACKING' ? '🟢 Online (GPS Tốt)' : gpsStatus === 'FINDING' ? '⏳ Đang dò GPS...' : '🔴 Lỗi Vị trí'}
+                </>
+              ) : '⚫ Mở Nhận Đơn'}
             </button>
             <button
               onClick={() => setLogoutModal(true)}
-              className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30"
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 text-xs"
             >
               🚪
             </button>
@@ -663,26 +657,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="w-full bg-red-50 p-3 pb-4 text-center border-b border-red-200 shadow-sm relative z-10 flex flex-col items-center">
-        <p className="text-[11px] text-red-700 italic mb-2 font-medium">Bạn chưa báo Tiếng chuông khi có đơn?</p>
-        <button onClick={async () => {
-          try {
-            alert('Hệ thống đang chạy lệnh Cướp Quyền Thông Báo của Điện thoại...');
-            const token = await requestFirebaseToken();
-            if (token && token.startsWith('LỖI_')) {
-              alert('❌ THẤT BẠI: PUSH HỎNG TỪ RỄ!\n\nChi tiết mã lỗi: ' + token);
-            } else if (token) {
-              await api.post('/api/auth/fcm-token', { token });
-              alert('✅ ĐÃ ÉP CẤP QUYỀN THÀNH CÔNG! Token: ' + token.substring(0, 15) + '...\n\nTừ giờ cứ có đơn là máy sẽ Rung và Boong Boong!');
-            } else {
-              alert('❌ LỖI VÔ HÌNH: Hàm cấp quyền trả về rỗng không rõ lý do!');
-            }
-          } catch (e) {
-            alert('🆘 LỖI NẶNG TÓM ĐƯỢC: ' + e.toString());
-          }
-        }} className="bg-gradient-to-r from-red-600 to-pink-600 text-white px-4 py-2.5 rounded-full w-[95%] max-w-sm uppercase font-black animate-pulse shadow-lg tracking-wider text-xs border-2 border-white">
-          🔔 ÉP BẬT LOA BÁO ĐƠN MỚI 🔔
-        </button>
+      <div className="w-full bg-gradient-to-b from-blue-700 to-blue-600 p-2 pb-3 shadow-inner relative z-10 flex flex-col items-center">
 
         {/* Stats */}
         <div className="mt-4 grid grid-cols-3 gap-2">
@@ -760,7 +735,7 @@ export default function Home() {
           <>
             <p className="text-slate-500 text-sm mb-3 font-medium">Có {availableOrders.length} đơn hàng chờ bạn</p>
             {availableOrders.map(order => (
-              <OrderCard key={order._id} order={order} onAccept={handleAccept} loading={actionLoading === order._id} />
+              <OrderCard key={order._id} order={order} onAccept={() => setConfirmAcceptOrder(order._id)} loading={actionLoading === order._id || confirmAcceptOrder === order._id} />
             ))}
           </>
         ) : (
@@ -795,6 +770,16 @@ export default function Home() {
         onClose={() => setEditModal(false)}
         driver={driver}
         onSave={handleUpdateProfile}
+      />
+
+      <ConfirmModal 
+        isOpen={!!confirmAcceptOrder}
+        title="Xác Nhận Nhận Đơn"
+        message="Bạn có chắc chắn muốn lấy đơn này không?"
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        onConfirm={() => { handleAccept(); }}
+        onCancel={() => setConfirmAcceptOrder(null)}
       />
 
       <ConfirmModal 
