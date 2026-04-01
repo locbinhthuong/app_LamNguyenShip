@@ -16,17 +16,9 @@ firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  console.log('[Firebase ServiceWorker] Nhận lệnh kích hoạt từ vũ trụ:', payload);
-  
-  const notificationTitle = payload.notification.title || 'AloShipp - Thông báo mới';
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/aloshipp.png',
-    badge: '/aloshipp.png',
-    data: payload.data
-  };
-
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  // Trình duyệt tự động hiển thị Notification khi payload chứa webpush.notification
+  // Ta không gọi showNotification() ở đây nữa để tránh bị dội bom (duplicate)
+  console.log('[Firebase ServiceWorker] Nhận lệnh kích hoạt từ vũ trụ (Background):', payload);
 });
 
 // Chạm vào thông báo sẽ mở App

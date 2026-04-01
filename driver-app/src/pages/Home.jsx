@@ -209,34 +209,37 @@ export default function Home() {
   const startAlarm = useCallback(() => {
     stopAlarm();
     setIsRinging(true);
+    let count = 0;
     const playBeep = () => {
        try {
            if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+           if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
+           
+           // Một tiếng Tinh mượt mà (Sine wave)
            const osc = audioCtxRef.current.createOscillator();
            const gainNode = audioCtxRef.current.createGain();
            osc.connect(gainNode);
            gainNode.connect(audioCtxRef.current.destination);
-           osc.type = 'square';
-           osc.frequency.setValueAtTime(800, audioCtxRef.current.currentTime);
-           gainNode.gain.setValueAtTime(0.3, audioCtxRef.current.currentTime);
-           osc.start(audioCtxRef.current.currentTime);
-           osc.stop(audioCtxRef.current.currentTime + 0.15);
+           osc.type = 'sine';
+           osc.frequency.setValueAtTime(880, audioCtxRef.current.currentTime); // Note A5
+           osc.frequency.exponentialRampToValueAtTime(110, audioCtxRef.current.currentTime + 1.2);
            
-           setTimeout(() => {
-               const osc2 = audioCtxRef.current.createOscillator();
-               const gainNode2 = audioCtxRef.current.createGain();
-               osc2.connect(gainNode2);
-               gainNode2.connect(audioCtxRef.current.destination);
-               osc2.type = 'square';
-               osc2.frequency.setValueAtTime(1000, audioCtxRef.current.currentTime);
-               gainNode2.gain.setValueAtTime(0.3, audioCtxRef.current.currentTime);
-               osc2.start(audioCtxRef.current.currentTime);
-               osc2.stop(audioCtxRef.current.currentTime + 0.2);
-           }, 200);
+           gainNode.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
+           gainNode.gain.linearRampToValueAtTime(1, audioCtxRef.current.currentTime + 0.05);
+           gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 1.2);
+           
+           osc.start(audioCtxRef.current.currentTime);
+           osc.stop(audioCtxRef.current.currentTime + 1.2);
+           
+           // Giới hạn chỉ đổ chuông 5 lần (10 giây) rồi tự nín để đỡ phiền nếu Tài Xế đang lái xe
+           count++;
+           if (count >= 5) {
+               stopAlarm();
+           }
        } catch(e) {}
     };
     playBeep();
-    intervalRef.current = setInterval(playBeep, 2000);
+    intervalRef.current = setInterval(playBeep, 2500);
   }, [stopAlarm]);
 
   // GPS Tracking States
@@ -486,9 +489,14 @@ export default function Home() {
        }
     };
 
+    const handleOrderLost = () => {
+      loadData();
+      stopAlarm();
+    };
+
     window.addEventListener('driver_new_order', handleNewOrder);
-    window.addEventListener('driver_order_accepted', loadData);
-    window.addEventListener('driver_order_cancelled', loadData);
+    window.addEventListener('driver_order_accepted', handleOrderLost);
+    window.addEventListener('driver_order_cancelled', handleOrderLost);
     window.addEventListener('driver_order_picked_up', loadData);
     window.addEventListener('driver_order_delivering', loadData);
     window.addEventListener('driver_order_completed', loadData);
@@ -496,8 +504,8 @@ export default function Home() {
     return () => {
       clearInterval(interval);
       window.removeEventListener('driver_new_order', handleNewOrder);
-      window.removeEventListener('driver_order_accepted', loadData);
-      window.removeEventListener('driver_order_cancelled', loadData);
+      window.removeEventListener('driver_order_accepted', handleOrderLost);
+      window.removeEventListener('driver_order_cancelled', handleOrderLost);
       window.removeEventListener('driver_order_picked_up', loadData);
       window.removeEventListener('driver_order_delivering', loadData);
       window.removeEventListener('driver_order_completed', loadData);
@@ -509,6 +517,7 @@ export default function Home() {
     if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(orderId);
     try {
+      stopAlarm();
       await acceptOrder(orderId);
       showNotification('Nhận đơn thành công!');
       await loadData();

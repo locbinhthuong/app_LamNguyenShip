@@ -25,7 +25,7 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         ...data
       },
       webpush: {
-        headers: { Urgency: "high" },
+        headers: { Urgency: "high", TTL: "60" },
         notification: {
           title,
           body,
@@ -68,7 +68,7 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
         ...data
       },
       webpush: {
-        headers: { Urgency: "high" },
+        headers: { Urgency: "high", TTL: "60" },
         notification: {
           title,
           body,
