@@ -37,7 +37,6 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.pickupAddress.trim()) return alert('Vui lòng chọn hoặc nhập Điểm Đón (Bạn đang ở đâu)!');
-    if (!form.deliveryAddress.trim()) return alert('Vui lòng chọn hoặc nhập Điểm Đến (Bạn muốn đi đâu)!');
     if (!form.customerName.trim() || !form.customerPhone.trim()) {
       return alert('Vui lòng nhập Tên và SĐT để tài xế liên hệ!');
     }
