@@ -169,7 +169,7 @@ export default function Home() {
   const [editModal, setEditModal] = useState(false);
 
   // Audio Alarm
-  const audioCtxRef = useRef(null);
+  const audioRef = useRef(null);
   const intervalRef = useRef(null);
   const [isRinging, setIsRinging] = useState(false);
 
@@ -177,14 +177,12 @@ export default function Home() {
   useEffect(() => {
     const unlockAudio = () => {
       try {
-        if (!audioCtxRef.current) {
-          audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (audioCtxRef.current.state === 'suspended') {
-          audioCtxRef.current.resume();
+        if (!audioRef.current) {
+          audioRef.current = new Audio('/chuong.mp3');
+          audioRef.current.load(); // Khởi động load sẵn cục Mp3 vào Bộ nhớ RAM chặn AutoPlay
         }
       } catch (e) {
-        console.error("Lỗi cấp quyền âm thanh:", e);
+        console.error("Lỗi cấp quyền âm thanh MP3:", e);
       }
     };
     
@@ -200,8 +198,12 @@ export default function Home() {
 
   const stopAlarm = useCallback(() => {
     if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+      clearTimeout(intervalRef.current);
       intervalRef.current = null;
+    }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
     }
     setIsRinging(false);
   }, []);
@@ -209,37 +211,26 @@ export default function Home() {
   const startAlarm = useCallback(() => {
     stopAlarm();
     setIsRinging(true);
-    let count = 0;
-    const playBeep = () => {
-       try {
-           if (!audioCtxRef.current) audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-           if (audioCtxRef.current.state === 'suspended') audioCtxRef.current.resume();
-           
-           // Một tiếng Tinh mượt mà (Sine wave)
-           const osc = audioCtxRef.current.createOscillator();
-           const gainNode = audioCtxRef.current.createGain();
-           osc.connect(gainNode);
-           gainNode.connect(audioCtxRef.current.destination);
-           osc.type = 'sine';
-           osc.frequency.setValueAtTime(880, audioCtxRef.current.currentTime); // Note A5
-           osc.frequency.exponentialRampToValueAtTime(110, audioCtxRef.current.currentTime + 1.2);
-           
-           gainNode.gain.setValueAtTime(0, audioCtxRef.current.currentTime);
-           gainNode.gain.linearRampToValueAtTime(1, audioCtxRef.current.currentTime + 0.05);
-           gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtxRef.current.currentTime + 1.2);
-           
-           osc.start(audioCtxRef.current.currentTime);
-           osc.stop(audioCtxRef.current.currentTime + 1.2);
-           
-           // Giới hạn chỉ đổ chuông 5 lần (10 giây) rồi tự nín để đỡ phiền nếu Tài Xế đang lái xe
-           count++;
-           if (count >= 5) {
-               stopAlarm();
-           }
-       } catch(e) {}
-    };
-    playBeep();
-    intervalRef.current = setInterval(playBeep, 2500);
+    
+    // Nếu chưa bấm màn hình bao giờ mà lỡ có Push luôn thì ép tạo Audio ở đây
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/chuong.mp3');
+    }
+
+    if (audioRef.current) {
+        audioRef.current.loop = true; // Cho lặp lại nếu file mp3 Sếp thu quá ngắn
+        audioRef.current.currentTime = 0;
+        
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(e => console.error("Apple chặn phát âm thanh:", e));
+        }
+        
+        // Cài đồng hồ đếm ngược tự ngắt chuông sau 15 giây (Sợ file Sếp thu lôi thôi ko tắt)
+        intervalRef.current = setTimeout(() => {
+            stopAlarm();
+        }, 15000);
+    }
   }, [stopAlarm]);
 
   // GPS Tracking States
