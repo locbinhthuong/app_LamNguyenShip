@@ -341,6 +341,20 @@ export default function OrderDetail() {
             )}
 
           </div>
+          
+          {/* BLOCK THƯỞNG VÍ */}
+          {order.adminBonus > 0 && (
+             <div className="mt-3 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl p-3 flex items-center justify-between border border-emerald-400 shadow-lg shadow-emerald-500/20 relative overflow-hidden">
+               <div className="absolute -right-2 text-6xl opacity-[0.15]">🎁</div>
+               <div className="relative z-10">
+                  <p className="text-emerald-100 text-[11px] font-bold uppercase tracking-wider">Thưởng thêm vào Ví</p>
+                  <p className="text-white font-black text-2xl drop-shadow-md">+{order.adminBonus?.toLocaleString()}đ</p>
+               </div>
+               <div className="relative z-10 bg-white/20 px-3 py-1.5 rounded-lg border border-white/30 backdrop-blur-sm">
+                 <span className="text-white text-xs font-bold uppercase tracking-widest">ĐỘC QUYỀN</span>
+               </div>
+             </div>
+          )}
         </div>
 
         {/* Timeline */}

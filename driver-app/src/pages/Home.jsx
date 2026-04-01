@@ -86,6 +86,11 @@ function OrderCard({ order, onAccept, loading }) {
         <span className="text-green-600 font-black text-sm w-full text-center tracking-wide">
           💵 GIÁ CƯỚC: +{order.deliveryFee?.toLocaleString()}đ
         </span>
+        {order.adminBonus > 0 && (
+          <span className="text-emerald-600 font-black text-xs w-full text-center tracking-wide bg-emerald-50 py-1 rounded-md">
+            🎁 THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ
+          </span>
+        )}
         <button
           onClick={(e) => { e.stopPropagation(); onAccept(); }}
           disabled={loading}
@@ -136,12 +141,18 @@ function ActiveOrderCard({ order, onAction, loading }) {
         </p>
       </div>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-2">
         <span className="text-green-200 text-sm">👤 {order.customerName}</span>
         <a href={`tel:${order.customerPhone}`} onClick={(e) => e.stopPropagation()} className="bg-white/20 px-3 py-1 rounded-full text-sm">
           📞 Gọi
         </a>
       </div>
+      
+      {order.adminBonus > 0 && (
+        <div className="mb-2 bg-emerald-500/30 rounded-lg p-2 text-center border border-emerald-400/50">
+           <span className="text-white font-bold text-xs tracking-wide">🎁 ĐƯỢC THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ</span>
+        </div>
+      )}
 
       {nextAction && (
         <button
@@ -169,85 +180,6 @@ export default function Home() {
   const [editModal, setEditModal] = useState(false);
   const [confirmAcceptOrder, setConfirmAcceptOrder] = useState(null); // ID đơn hàng đang được hỏi Xác Nhận
   const [dailyStats, setDailyStats] = useState({ fee: 0, orders: 0 });
-
-  // Audio Alarm
-  const audioCtxRef = useRef(null);
-  const audioBufferRef = useRef(null);
-  const sourceNodeRef = useRef(null);
-  const intervalRef = useRef(null);
-  const [isRinging, setIsRinging] = useState(false);
-
-  // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay) và Tải Nhạc Ẩn
-  useEffect(() => {
-    const initAudio = async () => {
-      try {
-        if (!audioCtxRef.current) {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          audioCtxRef.current = new AudioContext();
-          
-          const response = await fetch('/chuong.mp3');
-          const arrayBuffer = await response.arrayBuffer();
-          const decoded = await audioCtxRef.current.decodeAudioData(arrayBuffer);
-          audioBufferRef.current = decoded;
-        }
-        if (audioCtxRef.current.state === 'suspended') {
-          audioCtxRef.current.resume();
-        }
-      } catch (e) {
-        console.error("Lỗi buffer mp3:", e);
-      }
-    };
-    
-    document.addEventListener('click', initAudio, { once: true });
-    document.addEventListener('touchstart', initAudio, { once: true });
-    
-    return () => {
-      document.removeEventListener('click', initAudio);
-      document.removeEventListener('touchstart', initAudio);
-    };
-  }, []);
-
-  const stopAlarm = useCallback(() => {
-    if (intervalRef.current) {
-      clearTimeout(intervalRef.current);
-      intervalRef.current = null;
-    }
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop(); } catch(e){}
-      try { sourceNodeRef.current.disconnect(); } catch(e){}
-      sourceNodeRef.current = null;
-    }
-    setIsRinging(false);
-  }, []);
-
-  useEffect(() => {
-    const handleStopEvent = () => stopAlarm();
-    window.addEventListener('stop_alarm_event', handleStopEvent);
-    return () => window.removeEventListener('stop_alarm_event', handleStopEvent);
-  }, [stopAlarm]);
-
-  const startAlarm = useCallback(() => {
-    stopAlarm();
-    setIsRinging(true);
-    
-    if (audioCtxRef.current && audioBufferRef.current) {
-        if (audioCtxRef.current.state === 'suspended') {
-            audioCtxRef.current.resume();
-        }
-        
-        const source = audioCtxRef.current.createBufferSource();
-        source.buffer = audioBufferRef.current;
-        source.connect(audioCtxRef.current.destination);
-        source.loop = true;
-        source.start(0);
-        sourceNodeRef.current = source;
-        
-        // Cài đồng hồ đếm ngược tự ngắt chuông sau 30 giây
-        intervalRef.current = setTimeout(() => {
-            stopAlarm();
-        }, 30000);
-    }
-  }, [stopAlarm]);
 
   // GPS Tracking States
   const [gpsStatus, setGpsStatus] = useState('OFF'); // OFF | FINDING | TRACKING | ERROR
@@ -501,10 +433,9 @@ export default function Home() {
     // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
     const interval = setInterval(loadData, 30000);
 
-    // Lắng nghe tín hiệu Window do App.jsx phát (Đảm bảo 100% không trượt Socket Delay)
     const handleNewOrder = () => {
        loadData();
-       startAlarm();
+       // Global Alarm in App.jsx tự động lo khoản chuông
        
        if (Capacitor.isNativePlatform()) {
           import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
@@ -526,7 +457,6 @@ export default function Home() {
 
     const handleOrderLost = () => {
       loadData();
-      stopAlarm();
     };
 
     window.addEventListener('driver_new_order', handleNewOrder);
@@ -544,9 +474,8 @@ export default function Home() {
       window.removeEventListener('driver_order_picked_up', loadData);
       window.removeEventListener('driver_order_delivering', loadData);
       window.removeEventListener('driver_order_completed', loadData);
-      stopAlarm();
     };
-  }, [loadData, startAlarm, stopAlarm]);
+  }, [loadData]);
 
   const handleAccept = async () => {
     if (!confirmAcceptOrder) return;
@@ -556,7 +485,7 @@ export default function Home() {
     if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(orderId);
     try {
-      stopAlarm();
+      window.dispatchEvent(new CustomEvent('stop_alarm_event'));
       await acceptOrder(orderId);
       showNotification('Nhận đơn thành công!');
       await loadData();

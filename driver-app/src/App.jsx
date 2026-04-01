@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
@@ -29,6 +29,97 @@ function AppContent() {
   const navigate = useNavigate();
   const [logoutAlert, setLogoutAlert] = useState(null);
   const [pushMessage, setPushMessage] = useState(null);
+
+  // Audio Alarm Global Array
+  const audioCtxRef = useRef(null);
+  const audioBufferRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const intervalRef = useRef(null);
+
+  // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay)
+  useEffect(() => {
+    const initAudio = async () => {
+      try {
+        if (!audioCtxRef.current) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) return;
+          audioCtxRef.current = new AudioContext();
+          
+          const response = await fetch('/chuong.mp3');
+          const arrayBuffer = await response.arrayBuffer();
+          const decoded = await audioCtxRef.current.decodeAudioData(arrayBuffer);
+          audioBufferRef.current = decoded;
+        }
+        if (audioCtxRef.current.state === 'suspended') {
+          audioCtxRef.current.resume();
+        }
+      } catch (e) {
+        console.error("Lỗi buffer mp3:", e);
+      }
+    };
+    
+    document.addEventListener('click', initAudio, { once: true });
+    document.addEventListener('touchstart', initAudio, { once: true });
+    
+    return () => {
+      document.removeEventListener('click', initAudio);
+      document.removeEventListener('touchstart', initAudio);
+    };
+  }, []);
+
+  const stopAlarm = useCallback(() => {
+    if (intervalRef.current) {
+      clearTimeout(intervalRef.current);
+      intervalRef.current = null;
+    }
+    if (sourceNodeRef.current) {
+      try { sourceNodeRef.current.stop(); } catch(e){}
+      try { sourceNodeRef.current.disconnect(); } catch(e){}
+      sourceNodeRef.current = null;
+    }
+  }, []);
+
+  const startAlarm = useCallback(() => {
+    stopAlarm();
+    
+    if (audioCtxRef.current && audioBufferRef.current) {
+        if (audioCtxRef.current.state === 'suspended') {
+            audioCtxRef.current.resume();
+        }
+        
+        const source = audioCtxRef.current.createBufferSource();
+        source.buffer = audioBufferRef.current;
+        source.connect(audioCtxRef.current.destination);
+        source.loop = true;
+        source.start(0);
+        sourceNodeRef.current = source;
+        
+        // Tự ngắt chuông sau 30 giây
+        intervalRef.current = setTimeout(() => {
+            stopAlarm();
+        }, 30000);
+    } else {
+        // Fallback nhẹ nếu chưa tương tác (hên xui)
+        try { new Audio('/chuong.mp3').play(); } catch(e) {}
+    }
+  }, [stopAlarm]);
+
+  useEffect(() => {
+    const handleStopEvent = () => stopAlarm();
+    window.addEventListener('stop_alarm_event', handleStopEvent);
+    
+    const handleNewOrderEvent = () => startAlarm();
+    window.addEventListener('driver_new_order', handleNewOrderEvent);
+    window.addEventListener('driver_order_accepted', handleStopEvent);
+    window.addEventListener('driver_order_cancelled', handleStopEvent);
+
+    return () => {
+      window.removeEventListener('stop_alarm_event', handleStopEvent);
+      window.removeEventListener('driver_new_order', handleNewOrderEvent);
+      window.removeEventListener('driver_order_accepted', handleStopEvent);
+      window.removeEventListener('driver_order_cancelled', handleStopEvent);
+    };
+  }, [startAlarm, stopAlarm]);
 
   useEffect(() => {
     // 1) Lắng nghe sự kiện từ axios interceptor
