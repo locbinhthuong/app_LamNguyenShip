@@ -60,13 +60,15 @@ const CustomerDashboard = () => {
     } else {
       setAddress('Trình duyệt không hỗ trợ GPS');
     }
+  }, []);
 
-    // Lấy Bảng Tin
+  // Lấy Bảng Tin (Tin Tức & Khuyến Mãi) độc lập
+  useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
         const res = await getActiveAnnouncements();
         if (res.success) {
-          setAnnouncements(res.data);
+          setAnnouncements(res.data || []);
         }
       } catch (err) {
         console.error('Lỗi lấy bảng tin', err);
