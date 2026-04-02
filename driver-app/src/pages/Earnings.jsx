@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getDriverRevenue } from '../services/api';
+import { getDriverRevenue, requestDebtPayment } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 const formatCurrency = (amount) => {
@@ -20,6 +20,22 @@ export default function Earnings() {
   });
   const [loading, setLoading] = useState(true);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+
+  const handleRequestPayment = async () => {
+    try {
+      setIsRequesting(true);
+      const res = await requestDebtPayment(driver._id, stats.totalDebt);
+      if (res.success) {
+        alert('✅ Đã gửi yêu cầu xác nhận thanh toán nợ đến Tổng đài. Vui lòng chờ Sếp kiểm tra.');
+        setShowQRModal(false);
+      }
+    } catch (error) {
+      alert('Lỗi khi gửi yêu cầu. Vui lòng thử lại sau.');
+    } finally {
+      setIsRequesting(false);
+    }
+  };
 
   const fetchEarnings = useCallback(async () => {
     try {
@@ -107,9 +123,9 @@ export default function Earnings() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <p className="text-xs text-sky-700 mb-1 font-semibold flex items-center gap-1">
-                <span>Cần Nộp Hôm Nay (15%)</span>
+                <span>Tổng Nợ Phải Nộp</span>
               </p>
-              <p className="text-xl font-black text-sky-800 drop-shadow-sm">{formatCurrency(stats.dailyFee * 0.15)}</p>
+              <p className="text-xl font-black text-sky-800 drop-shadow-sm">{formatCurrency(stats.totalDebt)}</p>
             </div>
             <div className="h-10 w-10 bg-gradient-to-br from-sky-400 to-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
               🧾
@@ -118,7 +134,7 @@ export default function Earnings() {
           
           <button 
             onClick={() => setShowQRModal(true)}
-            disabled={stats.dailyFee === 0}
+            disabled={!stats.totalDebt || stats.totalDebt <= 0}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
           >
             <span>📱</span> Quét Chuyển Khoản Ngay
@@ -231,29 +247,44 @@ export default function Earnings() {
             
             <div className="p-6 flex flex-col items-center justify-center bg-slate-50 relative">
               <div className="mb-4 text-center">
-                <p className="text-sm font-semibold text-slate-500 mb-1">CÔNG NỢ CẦN THANH TOÁN</p>
+                <p className="text-sm font-semibold text-slate-500 mb-1">CƠ CẤU THANH TOÁN (1 ✕ VND)</p>
                 <div className="text-3xl font-black text-blue-600 tabular-nums tracking-tight bg-blue-100 px-4 py-2 rounded-2xl border-2 border-blue-200 border-dashed inline-block">
-                  {formatCurrency(stats.dailyFee * 0.15)}
+                  {formatCurrency(stats.totalDebt)}
                 </div>
               </div>
 
               <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 relative mb-4">
                 <img 
-                  src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(stats.dailyFee * 0.15)}&addInfo=Thanh toan cong no ngay ${new Date().toLocaleDateString('vi-VN')} lai xe ${driver?.driverCode || ''}&accountName=NGUYEN LAM NGUYEN`} 
+                  src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(stats.totalDebt)}&addInfo=THANHTOANNO ${driver?.driverCode || ''}&accountName=NGUYEN LAM NGUYEN`} 
                   alt="QR Code Công Nợ" 
                   className="w-56 h-56 object-contain mix-blend-multiply"
                 />
               </div>
 
-              <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2">
+              <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2 mb-4">
                  <div className="flex justify-between text-xs font-semibold">
                     <span className="text-slate-500">Mã giao dịch:</span>
                     <span className="text-sky-700 bg-sky-100 px-2 py-0.5 rounded uppercase">{driver?.driverCode || 'N/A'}</span>
                  </div>
                  <div className="flex justify-between text-[11px] font-medium text-slate-500">
-                    <p className="text-center w-full">Vui lòng quét bằng app ngân hàng hoặc Momo, ZaloPay để thanh toán chính xác.</p>
+                    <p className="text-center w-full">Thanh toán bằng App ngân hàng bất kỳ để gạch nợ.</p>
                  </div>
               </div>
+
+              {/* MỚI: Nút Báo Cáo Đã Chuyển Khoản */}
+              <button
+                onClick={handleRequestPayment}
+                disabled={isRequesting}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/30 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
+              >
+                {isRequesting ? (
+                  <span className="animate-spin text-xl">⏳</span>
+                ) : (
+                  <>
+                    <span className="text-lg">💸</span> TÔI ĐÃ CHUYỂN KHOẢN
+                  </>
+                )}
+              </button>
 
             </div>
           </div>

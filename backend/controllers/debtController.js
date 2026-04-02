@@ -1,5 +1,6 @@
 const Driver = require('../models/Driver');
 const DebtTransaction = require('../models/DebtTransaction');
+const { emitDebtPaymentRequest } = require('../sockets/index');
 
 const debtController = {
   // Lấy chi tiết ví công nợ và lịch sử giao dịch của 1 tài xế (Admin)
@@ -113,6 +114,42 @@ const debtController = {
       res.status(200).json({ success: true, message: 'Đã đưa nợ về MỐC 0 (XÓA SẠCH NỢ)!', data: dr.walletDebt });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
+  // (DRIVER) Gửi yêu cầu kiểm duyệt thanh toán QR cho Admin
+  requestPayment: async (req, res) => {
+    try {
+      const { driverId } = req.params;
+      const { amount } = req.body;
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({ success: false, message: 'Số tiền nạp không hợp lệ' });
+      }
+
+      const driver = await Driver.findById(driverId).select('name phone driverCode');
+      if (!driver) return res.status(404).json({ success: false, message: 'Tài xế không tồn tại' });
+
+      // Phát lệnh hú còi lên tất cả socket Admin
+      const payload = {
+        driverId: driver._id,
+        name: driver.name,
+        phone: driver.phone,
+        driverCode: driver.driverCode,
+        amount: Number(amount),
+        timestamp: new Date()
+      };
+      
+      if (req.io) {
+        emitDebtPaymentRequest(req.io, payload);
+      } else {
+        // Fallback in case io is not strictly attached, wait, io is usually inside req.io if bound via middleware, but typically we require the exported emit func which needs the io instance. Wait, we export setupSocket and functions, maybe require req.io? Yes, our orderController uses req.io. Let's use that.
+        emitDebtPaymentRequest(req.io, payload);
+      }
+
+      res.status(200).json({ success: true, message: 'Đã gửi thông báo cho Tổng đài thành công!', data: payload });
+    } catch (error) {
+      res.status(500).json({ success: false, message: 'Lỗi server khi gửi yêu cầu' });
     }
   }
 };

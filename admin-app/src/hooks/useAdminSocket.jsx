@@ -46,6 +46,15 @@ export const useAdminSocket = () => {
       window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
     });
 
+    socket.on('debt_payment_request', (payload) => {
+      // payload: { driverId, name, phone, driverCode, amount, timestamp }
+      // Play a ringing sound if possible, then show a persistent full-screen capable alert
+      showToast(`💸 BÁO CÁO NẠP TIỀN QUÉT MÃ QR CỦA TÀI XẾ ${payload.name.toUpperCase()} (Mã: ${payload.driverCode}). Chờ Sếp duyệt!`, 'error', 60000); // 60s
+      
+      // Kích hoạt một sự kiện để hiển thị Pop-up thao tác nhanh ở Dashboard
+      window.dispatchEvent(new CustomEvent('show_debt_approval_modal', { detail: payload }));
+    });
+
     return () => {
       socket.disconnect();
     };

@@ -124,4 +124,10 @@ export const getDriverRevenue = async () => {
   return response.data;
 };
 
+// ==================== DEBT ====================
+export const requestDebtPayment = async (driverId, amount) => {
+  const response = await api.post(`/api/debts/driver/${driverId}/request-payment`, { amount });
+  return response.data;
+};
+
 export default api;

@@ -195,6 +195,10 @@ const emitToDriver = (io, driverId, event, data) => {
   io.to(`driver_${driverId}`).emit(event, data);
 };
 
+const emitDebtPaymentRequest = (io, payload) => {
+  io.to('admins').emit('debt_payment_request', payload);
+};
+
 module.exports = {
   setupSocket,
   emitNewOrder,
@@ -204,5 +208,6 @@ module.exports = {
   emitOrderCompleted,
   emitOrderCancelled,
   emitDriverStatusChange,
-  emitToDriver
+  emitToDriver,
+  emitDebtPaymentRequest
 };

@@ -287,7 +287,9 @@ const revenueController = {
         }
       });
 
-      const totalDebt = dailyFee * 0.15; // Nợ trong ngày
+      const driver = await require('../models/Driver').findById(req.driver._id).select('walletDebt bonusWallet');
+      const totalDebt = driver ? driver.walletDebt : 0;
+      const totalWalletBonus = driver ? driver.bonusWallet : 0;
 
       res.status(200).json({
         success: true,
@@ -298,7 +300,8 @@ const revenueController = {
           monthlyRevenue: monthlyFee,
           totalRevenue: totalFee,
           totalOrders: totalOrdersCount,
-          totalDebt,
+          totalDebt: totalDebt > 0 ? totalDebt : 0,
+          totalWalletBonus,
           chartData: chartDataArray,
           recentOrders
         }

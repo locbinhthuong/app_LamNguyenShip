@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminSocket } from '../hooks/useAdminSocket';
+import DebtApprovalModal from './DebtApprovalModal';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
@@ -41,6 +42,9 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-slate-50">
+
+      {/* GLOBAL MODAL PHÊ DUYỆT CÔNG NỢ TỰ ĐỘNG */}
+      <DebtApprovalModal />
 
       {/* GLOBAL TOAST POPUP - Xoá do đã chuyển sang Context chung */}
 
