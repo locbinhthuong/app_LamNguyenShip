@@ -132,14 +132,7 @@ app.get('/api/ping', (req, res) => {
   res.json({ success: true, timestamp: Date.now() });
 });
 
-const authRoutes = require('./routes/authRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const driverRoutes = require('./routes/driverRoutes');
-const revenueRoutes = require('./routes/revenueRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
-const announcementRoutes = require('./routes/announcementRoutes');
-const debtRoutes = require('./routes/debtRoutes');
-const walletRoutes = require('./routes/walletRoutes');
+
 const financeRoutes = require('./routes/financeRoutes');
 
 // ==================== ROUTES ====================
