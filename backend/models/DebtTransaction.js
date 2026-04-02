@@ -15,6 +15,11 @@ const debtTransactionSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  status: {
+    type: String,
+    enum: ['PENDING', 'SUCCESS', 'REJECTED'],
+    default: 'SUCCESS' // Default is SUCCESS for fee_deductions and pre-existing payments
+  },
   description: {
     type: String,
     required: true

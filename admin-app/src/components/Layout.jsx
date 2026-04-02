@@ -36,6 +36,7 @@ export default function Layout() {
     { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
     { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
     ...(admin?.role === 'admin' ? [{ to: '/revenue', icon: '💰', label: 'Doanh thu' }] : []),
+    { to: '/finance',              icon: '🏦', label: 'Tài chính' },
     { to: '/announcements',        icon: '📰', label: 'Bảng Tin' },
     { to: '/drivers',              icon: '🚗', label: 'Tài xế' },
   ];

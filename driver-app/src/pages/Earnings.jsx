@@ -23,6 +23,7 @@ export default function Earnings() {
   // States cho Công Nợ Chi Tiết
   const [debtTransactions, setDebtTransactions] = useState([]);
   const [unpaidDays, setUnpaidDays] = useState([]);
+  const [pendingDays, setPendingDays] = useState([]);
   const [selectedDebt, setSelectedDebt] = useState(null);
   
   // States cho Ví Rút / Nạp
@@ -42,6 +43,7 @@ export default function Earnings() {
       if (res.success) {
         alert('✅ Đã gửi yêu cầu xác nhận thanh toán nợ đến Tổng đài. Vui lòng chờ Sếp kiểm tra.');
         setShowQRModal(false);
+        fetchEarnings(); // Refresh UI to change to PENDING status
       }
     } catch (error) {
       alert('Lỗi khi gửi yêu cầu. Vui lòng thử lại sau.');
@@ -66,6 +68,7 @@ export default function Earnings() {
       if (resDebt.success && resDebt.data) {
         setDebtTransactions(resDebt.data.transactions || []);
         setUnpaidDays(resDebt.data.unpaidDays || []);
+        setPendingDays(resDebt.data.pendingDays || []);
       }
       if (resWallet.success && resWallet.data) {
         setWalletDetail(resWallet.data);
@@ -153,7 +156,9 @@ export default function Earnings() {
                   Bạn không có công nợ cũ nào cần thanh toán! 🎉
                </div>
             ) : (
-               unpaidDays.map((debt, i) => (
+               unpaidDays.map((debt, i) => {
+                 const isPending = pendingDays.includes(debt.date);
+                 return (
                  <div key={i} className="rounded-2xl bg-sky-50/80 border border-sky-200 p-4 mb-4 shadow-sm flex flex-col">
                    <div className="flex items-center justify-between mb-3">
                      <div>
@@ -167,17 +172,23 @@ export default function Earnings() {
                      </div>
                    </div>
                    
-                   <button 
-                     onClick={() => {
-                        setSelectedDebt(debt);
-                        setShowQRModal(true);
-                     }}
-                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
-                   >
-                     <span>📱</span> Chọn Thanh Toán Khung Này
-                   </button>
+                   {isPending ? (
+                      <div className="w-full bg-amber-100 text-amber-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm border border-amber-200">
+                        <span>⏳</span> Đang chờ Kế toán duyệt...
+                      </div>
+                   ) : (
+                      <button 
+                        onClick={() => {
+                           setSelectedDebt(debt);
+                           setShowQRModal(true);
+                        }}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
+                      >
+                        <span>📱</span> Chọn Thanh Toán Khung Này
+                      </button>
+                   )}
                  </div>
-               ))
+               )})
             )}
 
             {/* Chi tiết từng ngày - Lịch sử cấn nợ (Công nợ theo dòng thời gian) */}

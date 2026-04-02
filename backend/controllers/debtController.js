@@ -22,12 +22,18 @@ const debtController = {
         .filter(t => t.type === 'PAYMENT')
         .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
 
-      // Nhóm nợ theo ngày
+      // Nhóm nợ theo ngày & tìm các ngày đang PENDING
       const debtByDate = {};
+      const pendingDays = new Set();
       transactions.forEach(tx => {
         const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
-        if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-        debtByDate[dateStr] += tx.amount;
+        
+        if (tx.status === 'PENDING') {
+           pendingDays.add(dateStr);
+        } else if (tx.status !== 'REJECTED') { // Chỉ cộng dồn các khoản SUCCESS hoặc cũ không có status
+           if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+           debtByDate[dateStr] += tx.amount;
+        }
       });
 
       const todayStr = new Date().toLocaleDateString('en-CA');
@@ -46,6 +52,7 @@ const debtController = {
           totalPaid,
           totalUnpaid: driver.walletDebt > 0 ? driver.walletDebt : 0,
           unpaidDays,
+          pendingDays: Array.from(pendingDays),
           transactions
         }
       });
@@ -219,8 +226,19 @@ const debtController = {
       const driver = await Driver.findById(driverId).select('name phone driverCode');
       if (!driver) return res.status(404).json({ success: false, message: 'Tài xế không tồn tại' });
 
+      const tx = new DebtTransaction({
+        driverId,
+        type: 'PAYMENT',
+        amount: -Number(amount), // Âm là khoản nạp/thanh toán nợ. Khi pending chưa trừ ví.
+        status: 'PENDING',
+        targetDate: targetDate || new Date().toLocaleDateString('en-CA'),
+        description: `Yêu cầu xác nhận chuyển khoản cho nợ ngày ${targetDate || 'cũ'}`
+      });
+      await tx.save();
+
       // Phát lệnh hú còi lên tất cả socket Admin
       const payload = {
+        txId: tx._id,
         driverId: driver._id,
         name: driver.name,
         phone: driver.phone,
@@ -234,7 +252,7 @@ const debtController = {
         emitDebtPaymentRequest(req.io, payload);
       }
 
-      res.status(200).json({ success: true, message: 'Đã gửi thông báo cho Tổng đài thành công!', data: payload });
+      res.status(200).json({ success: true, message: 'Đã gửi thông báo cho Ban quản trị! Vui lòng chờ kiểm duyệt.', data: payload });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Lỗi server khi gửi yêu cầu' });
     }
@@ -255,10 +273,16 @@ const debtController = {
 
       // Nhóm nợ theo ngày
       const debtByDate = {};
+      const pendingDays = new Set();
       transactions.forEach(tx => {
         const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
-        if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-        debtByDate[dateStr] += tx.amount;
+        
+        if (tx.status === 'PENDING') {
+           pendingDays.add(dateStr);
+        } else if (tx.status !== 'REJECTED') {
+           if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+           debtByDate[dateStr] += tx.amount;
+        }
       });
 
       const todayStr = new Date().toLocaleDateString('en-CA');
@@ -275,6 +299,7 @@ const debtController = {
         data: {
           walletDebt: driver.walletDebt > 0 ? driver.walletDebt : 0,
           unpaidDays,
+          pendingDays: Array.from(pendingDays),
           transactions
         }
       });

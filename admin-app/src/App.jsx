@@ -10,6 +10,7 @@ import DriverMap from './pages/DriverMap';
 import Revenue from './pages/Revenue';
 import DriverDetail from './pages/DriverDetail';
 import Announcements from './pages/Announcements';
+import Finance from './pages/Finance';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }) => {
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="drivers" element={<Drivers />} />
         <Route path="drivers/create" element={<CreateDriver />} />
         <Route path="drivers/:id" element={<DriverDetail />} />
+        <Route path="finance" element={<Finance />} />
         <Route path="revenue" element={<Revenue />} />
         <Route path="announcements" element={<Announcements />} />
       </Route>

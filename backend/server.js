@@ -132,6 +132,16 @@ app.get('/api/ping', (req, res) => {
   res.json({ success: true, timestamp: Date.now() });
 });
 
+const authRoutes = require('./routes/authRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const driverRoutes = require('./routes/driverRoutes');
+const revenueRoutes = require('./routes/revenueRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
+const debtRoutes = require('./routes/debtRoutes');
+const walletRoutes = require('./routes/walletRoutes');
+const financeRoutes = require('./routes/financeRoutes');
+
 // ==================== ROUTES ====================
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
@@ -141,6 +151,7 @@ app.use('/api/upload', uploadRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/debts', debtRoutes);
 app.use('/api/wallets', walletRoutes);
+app.use('/api/finance', financeRoutes);
 
 // Phục vụ các File tĩnh từ thư mục /uploads
 const path = require('path');
