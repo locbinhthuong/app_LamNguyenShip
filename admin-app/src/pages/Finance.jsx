@@ -76,6 +76,17 @@ export default function Finance() {
     }
   };
 
+  const handleDeleteWalletTx = async (txId) => {
+    if (!window.confirm('Xóa giao dịch này có thể làm lệch tổng tiền ví / bị sai đối soát.\nBạn có chắc chắn muốn xóa?')) return;
+    try {
+      await api.delete(`/api/wallets/admin/tx/${txId}`);
+      alert('Xóa thành công!');
+      fetchData();
+    } catch (e) {
+      alert('Lỗi khi xoá lịch sử ví.');
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
       <div className="flex justify-between items-end mb-8">
@@ -262,6 +273,7 @@ export default function Finance() {
                       <th className="px-4 py-3 font-semibold text-right w-32">Số tiền</th>
                       <th className="px-4 py-3 font-semibold min-w-48">Mô tả</th>
                       <th className="px-4 py-3 font-semibold w-40">Thời gian</th>
+                      <th className="px-4 py-3 font-semibold w-24 text-center">Hành động</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -278,6 +290,11 @@ export default function Finance() {
                          </td>
                          <td className="px-4 py-3 text-slate-600 overflow-hidden text-ellipsis max-w-xs" title={tx.description}>{tx.description}</td>
                          <td className="px-4 py-3 text-slate-400 text-xs">{new Date(tx.createdAt).toLocaleString('vi-VN')}</td>
+                         <td className="px-4 py-3 text-center">
+                            <button onClick={() => handleDeleteWalletTx(tx._id)} className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors text-xs font-bold" title="Xóa lệnh này">
+                               XÓA
+                            </button>
+                         </td>
                       </tr>
                     ))}
                   </tbody>

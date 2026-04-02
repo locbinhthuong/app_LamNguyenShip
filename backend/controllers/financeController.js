@@ -110,12 +110,13 @@ const financeController = {
       }
 
       tx.status = 'SUCCESS';
+      tx.type = 'WITHDRAW_SUCCESS'; // Doi thanh SUCCESS giong luan cu
+      tx.description = '✅ Lệnh Rút Đã Thành Công. Đã chuyển tiền.';
       tx.createdByAdminId = adminId;
       await tx.save();
 
-      // Khi tài xế tạo Yêu cầu Rút, tiền đã bị giam (padding). 
-      // Giờ Duyệt thì GIẢM paddingAmount đi tương ứng (hoàn tất chuyển khoản thực tế)
-      const dr = await Driver.findByIdAndUpdate(tx.driverId, { $inc: { paddingAmount: -Math.abs(tx.amount) } }, { new: true });
+      // Mới thực sự trừ tiền khỏi ví
+      const dr = await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletBalance: tx.amount } }, { new: true });
 
       if (req.io) {
         emitToDriver(req.io, tx.driverId, 'wallet_updated', { walletBalance: dr.walletBalance });
@@ -139,18 +140,14 @@ const financeController = {
       }
 
       tx.status = 'REJECTED';
-      tx.description = (tx.description || '') + ` [Từ chối: ${reason || 'Sai STK / Bị hủy'}]`;
+      tx.type = 'WITHDRAW_REJECT'; // Giong hoat dong cu
+      tx.description = `❌ Bị từ chối: ${reason || 'Sai STK / Bị hủy'}`;
       tx.createdByAdminId = adminId;
       await tx.save();
 
-      // Hủy lệnh -> Trả lại tiền từ padding về khả dụng
-      const amountAbs = Math.abs(tx.amount);
-      const dr = await Driver.findByIdAndUpdate(tx.driverId, { 
-         $inc: { 
-            walletBalance: amountAbs, // Cộng lại ví
-            paddingAmount: -amountAbs // Trừ tiền giam
-         } 
-      }, { new: true });
+      // Hủy lệnh -> KHÔNG CẦN CỘNG TIỀN VÀO LẠI VÍ GỐC
+      // Vì lúc PENDING nó tự tách ra tính paddingAmount qua lệnh filter
+      const dr = await Driver.findById(tx.driverId);
 
       if (req.io) {
         emitToDriver(req.io, tx.driverId, 'wallet_updated', { walletBalance: dr.walletBalance });
