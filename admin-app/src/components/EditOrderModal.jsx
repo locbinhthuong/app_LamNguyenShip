@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import CurrencyInput from './CurrencyInput';
 
 export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
   const [formData, setFormData] = useState({
@@ -109,7 +110,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                <label className="block text-xs font-semibold text-slate-600 mb-1">
                  {order.serviceType === 'DAT_XE' ? 'Điểm Đến / Trả Khách' : 'Địa chỉ giao hàng'}
                </label>
-               <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+               <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
             </div>
           )}
 
@@ -134,7 +135,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                 </div>
                 <div>
                    <label className="block text-xs font-semibold text-orange-600 mb-1">Số Tiền Nạp / Rút</label>
-                   <input type="number" name="transactionAmount" value={formData.transactionAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-orange-50 font-bold focus:border-orange-500 focus:outline-none" />
+                   <CurrencyInput name="transactionAmount" value={formData.transactionAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-orange-50 font-bold focus:border-orange-500 focus:outline-none" />
                 </div>
               </div>
             </div>
@@ -144,14 +145,14 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
             {order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
                <div>
                   <label className="block text-xs font-semibold text-slate-600 mb-1">Tiền thu hộ (COD)</label>
-                  <input type="number" name="codAmount" value={formData.codAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                  <CurrencyInput name="codAmount" value={formData.codAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
                </div>
             )}
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1">
                  {order.serviceType === 'DAT_XE' ? 'Cước xe' : 'Phí giao hàng (Ship)'}
               </label>
-              <input type="number" name="deliveryFee" value={formData.deliveryFee} onChange={handleChange} min="0" required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+              <CurrencyInput name="deliveryFee" value={formData.deliveryFee} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
             </div>
           </div>
 
@@ -159,18 +160,18 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-emerald-600 mb-1">Ví Tài Xế (Admin Bonus)</label>
-              <input type="number" name="adminBonus" value={formData.adminBonus} onChange={handleChange} min="0" className="w-full rounded-lg border border-emerald-300 p-2 text-sm bg-emerald-50 font-bold text-emerald-700 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Thưởng thêm cho tài xế gốc..." />
+              <CurrencyInput name="adminBonus" value={formData.adminBonus} onChange={handleChange} min="0" className="w-full rounded-lg border border-emerald-300 p-2 text-sm bg-emerald-50 font-bold text-emerald-700 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Thưởng thêm cho tài xế gốc..." />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className={(order.serviceType !== 'GIAO_HANG') ? 'hidden' : ''}>
               <label className="block text-xs font-semibold text-orange-500 mb-1">Phí Cồng Kềnh</label>
-              <input type="number" name="bulkyFee" value={formData.bulkyFee} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-100" />
+              <CurrencyInput name="bulkyFee" value={formData.bulkyFee} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-100" />
             </div>
             <div className={(order.serviceType !== 'DAT_XE') ? 'hidden' : ''}>
               <label className="block text-xs font-semibold text-teal-600 mb-1">Phụ Phí Lái Hộ / Gọi Xe</label>
-              <input type="number" name="surcharge" value={formData.surcharge} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-100" />
+              <CurrencyInput name="surcharge" value={formData.surcharge} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-100" />
             </div>
           </div>
 

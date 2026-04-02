@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrder } from '../services/api';
+import CurrencyInput from '../components/CurrencyInput';
 
 export default function CreateOrder() {
   const navigate = useNavigate();
@@ -13,7 +14,8 @@ export default function CreateOrder() {
     items: '',
     note: '',
     codAmount: '',
-    deliveryFee: ''
+    deliveryFee: '',
+    adminBonus: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,8 +26,8 @@ export default function CreateOrder() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.customerName || !form.customerPhone || !form.pickupAddress || !form.deliveryAddress) {
-      setError('Vui lòng điền đầy đủ thông tin bắt buộc');
+    if (!form.customerName || !form.customerPhone || !form.pickupAddress) {
+      setError('Vui lòng điền những thông tin bắt buộc (*)');
       return;
     }
 
@@ -43,7 +45,8 @@ export default function CreateOrder() {
         items,
         note: form.note,
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
-        deliveryFee: form.deliveryFee ? parseInt(form.deliveryFee) : 0
+        deliveryFee: form.deliveryFee ? parseInt(form.deliveryFee) : 0,
+        adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0
       });
       alert('Tạo đơn hàng thành công!');
       navigate('/orders');
@@ -113,7 +116,7 @@ export default function CreateOrder() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ giao hàng <span className="text-red-400">*</span></label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ giao hàng (Tùy chọn)</label>
             <input
               name="deliveryAddress"
               value={form.deliveryAddress}
@@ -149,24 +152,35 @@ export default function CreateOrder() {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">Thu hộ (COD)</label>
-              <input
+              <CurrencyInput
                 name="codAmount"
                 value={form.codAmount}
                 onChange={handleChange}
-                type="number"
                 placeholder="75000"
                 className="input-field"
               />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">Phí giao hàng</label>
-              <input
+              <CurrencyInput
                 name="deliveryFee"
                 value={form.deliveryFee}
                 onChange={handleChange}
-                type="number"
-                placeholder="20000"
+                placeholder="20.000"
                 className="input-field"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-emerald-600">Thưởng tài xế (Admin Bonus)</label>
+              <CurrencyInput
+                name="adminBonus"
+                value={form.adminBonus}
+                onChange={handleChange}
+                placeholder="VD: 5.000 (Sẽ trừ vào ví Kế toán)"
+                className="input-field border-emerald-200 bg-emerald-50 focus:border-emerald-500 focus:bg-white text-emerald-700"
               />
             </div>
           </div>

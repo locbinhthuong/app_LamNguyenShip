@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getDriverRevenue, requestDebtPayment, getMyDebtDetail, getMyWalletDetail, requestWithdraw } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import CurrencyInput from '../components/CurrencyInput';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
@@ -452,9 +453,10 @@ export default function Earnings() {
               <div className="p-6 space-y-4">
                   <div>
                     <label className="text-xs font-bold text-slate-500 block mb-1">Số tiền rút (Tối đa {formatCurrency(walletDetail.availableBalance)})</label>
-                    <input 
-                      type="number" max={walletDetail.availableBalance} min={50000} required
-                      placeholder="VD: 100000"
+                    <CurrencyInput 
+                      name="amount"
+                      required
+                      placeholder="VD: 100.000"
                       className="w-full border-2 border-slate-200 focus:border-emerald-500 rounded-xl px-4 py-3 text-lg font-bold outline-none transition-colors"
                       value={withdrawForm.amount} onChange={e => setWithdrawForm({...withdrawForm, amount: e.target.value})}
                     />
@@ -470,9 +472,9 @@ export default function Earnings() {
                   <div>
                     <label className="text-xs font-bold text-slate-500 block mb-1">Số Tài Khoản</label>
                     <input 
-                      type="number" required placeholder="Chỉ nhập số"
+                      type="text" required placeholder="Chỉ nhập số" inputMode="numeric"
                       className="w-full border-2 border-slate-200 focus:border-emerald-500 rounded-xl px-4 py-2.5 outline-none font-medium text-lg"
-                      value={withdrawForm.accountNumber} onChange={e => setWithdrawForm({...withdrawForm, accountNumber: e.target.value})}
+                      value={withdrawForm.accountNumber} onChange={e => setWithdrawForm({...withdrawForm, accountNumber: e.target.value.replace(/\D/g, '')})}
                     />
                   </div>
                   <div>

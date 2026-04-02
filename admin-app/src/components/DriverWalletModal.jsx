@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getDriverWalletAdmin, adjustDriverWalletAdmin, processWithdrawAdmin, deleteWalletTxAdmin } from '../services/api';
+import CurrencyInput from './CurrencyInput';
 
 export default function DriverWalletModal({ driverId, isOpen, onClose }) {
   const [data, setData] = useState(null);
@@ -171,9 +172,9 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
 
                 <div>
                   <label className="text-[10px] uppercase tracking-wide font-bold text-slate-500">Số lượng (đ)</label>
-                  <input 
-                    type="number" min="1000" step="1000" required 
-                    placeholder="VD: 50000"
+                  <CurrencyInput 
+                    min="0" required 
+                    placeholder="VD: 50.000"
                     className={`w-full mt-1 px-3 py-2 border rounded-lg focus:ring-2 outline-none font-bold ${actionType === 'DEPOSIT' ? 'border-emerald-200 focus:ring-emerald-500 text-emerald-700' : 'border-orange-200 focus:ring-orange-500 text-orange-700'}`}
                     value={amount} onChange={e => setAmount(e.target.value)}
                   />

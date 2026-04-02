@@ -36,8 +36,7 @@ router.get('/stats/dashboard', verifyToken, onlyAdmin, orderController.getDashbo
 router.post('/', verifyToken, onlyAdmin, [
   body('customerName').trim().notEmpty().withMessage('Tên khách hàng là bắt buộc'),
   body('customerPhone').trim().notEmpty().withMessage('Số điện thoại là bắt buộc'),
-  body('pickupAddress').trim().notEmpty().withMessage('Địa chỉ lấy hàng là bắt buộc'),
-  body('deliveryAddress').trim().notEmpty().withMessage('Địa chỉ giao hàng là bắt buộc')
+  body('pickupAddress').trim().notEmpty().withMessage('Địa chỉ lấy hàng là bắt buộc')
 ], orderController.createOrder);
 
 // PUT /api/orders/:id - Sửa thông tin đơn hàng / Thu hồi đơn (Admin)

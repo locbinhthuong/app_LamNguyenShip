@@ -248,7 +248,7 @@ export default function Orders() {
               )}
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <p className="text-sm font-bold text-blue-600 mr-auto">Phí giao: {order.deliveryFee?.toLocaleString()}đ</p>
-                {(order.status === 'DRAFT' || order.status === 'COMPLETED') && (
+                {order.status !== 'CANCELLED' && (
                   <button onClick={() => setEditingOrder(order)} className="rounded-lg bg-orange-100 px-2 py-1 text-xs font-bold text-orange-600 hover:bg-orange-200">
                     ✏️ Sửa
                   </button>
@@ -338,7 +338,7 @@ export default function Orders() {
                     <td className="table-td font-bold text-blue-600">{order.deliveryFee?.toLocaleString()}đ</td>
                     <td className="table-td text-right">
                       <div className="flex items-center gap-3">
-                        {(order.status === 'DRAFT' || order.status === 'COMPLETED') && (
+                        {order.status !== 'CANCELLED' && (
                           <button onClick={() => setEditingOrder(order)} className="text-sm font-bold text-orange-500 hover:text-orange-600">✏️ Sửa</button>
                         )}
                         {order.status === 'DRAFT' && (

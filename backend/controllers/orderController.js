@@ -147,7 +147,7 @@ const orderController = {
         });
       }
 
-      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, pickupCoordinates, deliveryCoordinates } = req.body;
+      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates } = req.body;
 
       const order = new Order({
         customerName,
@@ -159,6 +159,7 @@ const orderController = {
         note: note || '',
         codAmount: codAmount || 0,
         deliveryFee: deliveryFee || 0,
+        adminBonus: adminBonus || 0,
         pickupCoordinates,
         deliveryCoordinates,
         status: 'PENDING',

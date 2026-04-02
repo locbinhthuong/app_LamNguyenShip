@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Package, DollarSign } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
+import CurrencyInput from '../CurrencyInput';
 
 export default function DeliveryForm({ onBooking, loading, defaultLocation, defaultPhone }) {
   const [form, setForm] = useState({
@@ -28,10 +29,10 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.pickupAddress.trim() && !form.deliveryAddress.trim()) {
-      return alert('Vui lòng chọn hoặc nhập ít nhất Điểm Lấy Hàng hoặc Điểm Giao Hàng!');
+    if (!form.pickupAddress.trim()) {
+      return alert('Vui lòng chọn hoặc nhập Điểm Lấy Hàng (Nơi gửi)!');
     }
-    if (!form.receiverName.trim() || !form.receiverPhone.trim()) return alert('Vui lòng nhập đầy đủ Tên và SĐT Người Nhận!');
+    if (!form.senderPhone.trim()) return alert('Vui lòng nhập Số điện thoại người gửi!');
 
     // Gửi payload lên Component Cha (BookingFlow)
     onBooking({
@@ -96,8 +97,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             </div>
             <div className="mt-2">
               <input 
-                type="tel" placeholder="SĐT Của Bạn / Người gửi (Tùy chọn)"
-                className="w-full text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-medium"
+                type="tel" placeholder="SĐT Của Bạn (Người gửi) * Bắt buộc" required
+                className="w-full text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-bold text-slate-800"
                 value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
               />
             </div>
@@ -132,12 +133,12 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             </div>
             <div className="grid grid-cols-2 gap-2">
               <input 
-                type="text" placeholder="Tên người nhận (* Bắt buộc)"
+                type="text" placeholder="Tên người nhận (Tùy chọn)"
                 className="text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-medium text-slate-800"
                 value={form.receiverName} onChange={e => setForm({...form, receiverName: e.target.value})}
               />
               <input 
-                type="tel" placeholder="SĐT người nhận (* Bắt buộc)"
+                type="tel" placeholder="SĐT người nhận (Tùy chọn)"
                 className="text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-bold text-blue-600"
                 value={form.receiverPhone} onChange={e => setForm({...form, receiverPhone: e.target.value})}
               />
@@ -153,9 +154,9 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
             <DollarSign size={14} className="text-yellow-500" /> THU HỘ TIỀN HÀNG (COD)
           </label>
-          <input 
-            type="number"
-            placeholder="Ví dụ: 250000"
+          <CurrencyInput 
+            name="codAmount"
+            placeholder="Ví dụ: 250.000"
             className="w-full text-sm font-bold text-gray-800 bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:border-blue-200 focus:bg-white transition-colors"
             value={form.codAmount}
             onChange={e => setForm({...form, codAmount: e.target.value})}

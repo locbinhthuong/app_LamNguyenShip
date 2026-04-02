@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Wallet, Landmark, Handshake, CreditCard, DollarSign } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
+import CurrencyInput from '../CurrencyInput';
 
 export default function CoordinationForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
   const [subType, setSubType] = useState('GAP_TRUC_TIEP'); // NAP_TIEN, RUT_TIEN, GAP_TRUC_TIEP
@@ -171,8 +172,9 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
             />
           </div>
           <div>
-            <input 
-              type="number" placeholder={`Số Tiền Cần ${subType === 'NAP_TIEN' ? 'Nạp' : 'Rút'} (VD: 500000)`}
+            <CurrencyInput 
+              name="transactionAmount"
+              placeholder={`Số Tiền Cần ${subType === 'NAP_TIEN' ? 'Nạp' : 'Rút'} (VD: 50.000)`}
               className={`w-full text-base font-bold text-gray-800 border p-3 rounded-xl outline-none ${subType === 'NAP_TIEN' ? 'bg-blue-50 border-blue-100' : 'bg-orange-50 border-orange-100'}`}
               value={form.transactionAmount} onChange={e => setForm({...form, transactionAmount: e.target.value})}
             />

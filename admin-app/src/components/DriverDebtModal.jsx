@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getDriverDebtDetail, addDriverPenalty, addDriverPayment, resetDriverDebt, deleteDriverDebt, updateDriverDebt } from '../services/api';
+import CurrencyInput from './CurrencyInput';
 
 export default function DriverDebtModal({ driverId, isOpen, onClose }) {
   const [data, setData] = useState(null);
@@ -165,8 +166,8 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
 
                  <div>
                    <label className="text-xs font-bold text-slate-600">Số Tiền (đ)</label>
-                   <input 
-                     type="number" required 
+                   <CurrencyInput 
+                     required 
                      className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                      value={amount} onChange={e => setAmount(e.target.value)}
                    />
