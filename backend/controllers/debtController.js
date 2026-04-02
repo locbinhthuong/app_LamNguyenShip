@@ -190,7 +190,7 @@ const debtController = {
   // (DRIVER) Gửi yêu cầu kiểm duyệt thanh toán QR cho Admin
   requestPayment: async (req, res) => {
     try {
-      const { driverId } = req.params;
+      const driverId = req.driver._id; // Bảo mật: Không dùng req.params.driverId
       const { amount } = req.body;
 
       if (!amount || amount <= 0) {
@@ -211,8 +211,6 @@ const debtController = {
       };
       
       if (req.io) {
-        emitDebtPaymentRequest(req.io, payload);
-      } else {
         emitDebtPaymentRequest(req.io, payload);
       }
 

@@ -181,7 +181,9 @@ const revenueController = {
         }
       });
 
-      const totalDebt = dailyFee * 0.15; // Chỉ tính nợ 15% nền tảng TRONG NGÀY HÔM NAY
+      const driver = await require('../models/Driver').findById(driverId).select('walletDebt walletBalance');
+      const totalDebt = driver ? driver.walletDebt : 0;
+      totalWalletBonus = driver ? driver.walletBalance : 0;
 
       res.status(200).json({
         success: true,
@@ -287,9 +289,9 @@ const revenueController = {
         }
       });
 
-      const driver = await require('../models/Driver').findById(req.driver._id).select('walletDebt bonusWallet');
+      const driver = await require('../models/Driver').findById(id).select('walletDebt walletBalance');
       const totalDebt = driver ? driver.walletDebt : 0;
-      const totalWalletBonus = driver ? driver.bonusWallet : 0;
+      const totalWalletBonus = driver ? driver.walletBalance : 0;
 
       res.status(200).json({
         success: true,
