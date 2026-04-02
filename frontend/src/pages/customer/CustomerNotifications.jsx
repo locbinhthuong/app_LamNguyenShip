@@ -1,5 +1,6 @@
-import React from 'react';
-import { Bell, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Bell, CheckCircle, Speaker } from 'lucide-react';
+import { getActiveAnnouncements } from '../../services/api';
 
 const CustomerNotifications = () => {
   // Hardcode vài thông báo giả lập cho đẹp
@@ -24,6 +25,35 @@ const CustomerNotifications = () => {
     }
   ];
 
+  const [announcements, setAnnouncements] = useState([]);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const res = await getActiveAnnouncements();
+        if (res.success && res.data) {
+          const annNotis = res.data.map(ann => ({
+            id: ann._id,
+            title: '📣 ' + ann.title,
+            message: ann.content,
+            time: new Date(ann.createdAt).toLocaleString('vi-VN'),
+            read: false,
+            icon: <Speaker className="text-orange-500" size={20} />,
+            bg: 'bg-orange-100',
+            imageUrl: ann.imageUrl,
+            videoUrl: ann.videoUrl
+          }));
+          setAnnouncements(annNotis);
+        }
+      } catch (err) {
+        console.error('Lỗi lấy bảng tin thông báo', err);
+      }
+    };
+    fetchAnnouncements();
+  }, []);
+
+  const allNotifications = [...announcements, ...notifications];
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 pb-20 font-sans relative">
       <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-center">
@@ -31,7 +61,7 @@ const CustomerNotifications = () => {
       </div>
 
       <div className="p-4 space-y-3">
-        {notifications.map(noti => (
+        {allNotifications.map(noti => (
           <div key={noti.id} className={`bg-white rounded-2xl p-4 shadow-sm border ${noti.read ? 'border-gray-100 opacity-70' : 'border-blue-100'}`}>
             <div className="flex gap-3">
                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${noti.bg}`}>
@@ -41,7 +71,16 @@ const CustomerNotifications = () => {
                  <div className="flex justify-between items-start mb-1">
                    <h3 className={`text-sm ${noti.read ? 'font-semibold text-gray-600' : 'font-bold text-gray-800'}`}>{noti.title}</h3>
                  </div>
-                 <p className="text-xs text-gray-500 leading-relaxed mb-2">{noti.message}</p>
+                 <p className="text-xs text-gray-500 leading-relaxed mb-2 whitespace-pre-wrap">{noti.message}</p>
+                 
+                 {/* Nếu có đính kèm ảnh thì hiển thị thu nhỏ */}
+                 {noti.imageUrl && !noti.videoUrl && (
+                   <img src={`https://api.aloshipp.com${noti.imageUrl}`} alt="đính kèm" className="w-full h-32 object-cover rounded-lg mb-2 border border-orange-100" />
+                 )}
+                 {noti.videoUrl && (
+                   <video src={`https://api.aloshipp.com${noti.videoUrl}`} className="w-full h-32 object-cover rounded-lg mb-2 border border-orange-100" muted autoPlay playsInline loop></video>
+                 )}
+
                  <span className="text-[10px] text-gray-400 font-medium">{noti.time}</span>
                </div>
             </div>

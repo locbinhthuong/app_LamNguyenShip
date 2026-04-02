@@ -55,7 +55,7 @@ export const getOrderDetails = async (orderId) => {
 
 // ==================== BẢNG TIN (ANNOUNCEMENTS) ====================
 export const getActiveAnnouncements = async () => {
-  const response = await api.get('/announcements');
+  const response = await api.get(`/announcements?t=${new Date().getTime()}`);
   return response.data;
 };
 
