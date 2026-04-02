@@ -9,7 +9,7 @@ export default function Announcements() {
   const [showModal, setShowModal] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [currentId, setCurrentId] = useState(null);
-  const [form, setForm] = useState({ title: '', content: '', imageUrl: '', videoUrl: '', isActive: true });
+  const [form, setForm] = useState({ type: 'NEWS', title: '', content: '', imageUrl: '', videoUrl: '', isActive: true });
   
   const [isUploading, setIsUploading] = useState(false);
   const [mediaFile, setMediaFile] = useState(null);
@@ -32,7 +32,7 @@ export default function Announcements() {
   useEffect(() => { loadData(); }, []);
 
   const openAddModal = () => {
-    setForm({ title: '', content: '', imageUrl: '', videoUrl: '', isActive: true });
+    setForm({ type: 'NEWS', title: '', content: '', imageUrl: '', videoUrl: '', isActive: true });
     setMediaFile(null);
     setMediaPreviewUrl(null);
     setIsEditing(false);
@@ -42,6 +42,7 @@ export default function Announcements() {
 
   const openEditModal = (item) => {
     setForm({ 
+      type: item.type || 'NEWS',
       title: item.title, 
       content: item.content, 
       imageUrl: item.imageUrl || '', 
@@ -148,8 +149,8 @@ export default function Announcements() {
     <div className="mx-auto max-w-6xl p-4 sm:p-6 pb-20">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">Cáo Thị / Bảng Tin Tức</h1>
-          <p className="text-sm text-slate-500 mt-1">Tin tức đăng tại đây sẽ chạy lên Trang Chủ App Khách Hàng</p>
+          <h1 className="text-2xl font-bold text-slate-800">Quản Lý Marketing</h1>
+          <p className="text-sm text-slate-500 mt-1">Nơi bạn đăng Khuyến Mãi và Bảng Tin Tức cho App Khách Hàng</p>
         </div>
         <button 
           onClick={openAddModal}
@@ -187,6 +188,17 @@ export default function Announcements() {
                    <img src={getFullImageUrl(ann.imageUrl)} alt="News" className="w-full h-full object-cover" />
                  ) : (
                    <span className="text-4xl">📰</span>
+                 )}
+                 
+                 {ann.type === 'PROMO' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">🔥 KHUYẾN MÃI</span>
+                   </div>
+                 )}
+                 {ann.type === 'NEWS' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📰 TIN TỨC</span>
+                   </div>
                  )}
                  
                  <div className="absolute top-2 right-2 flex gap-2 z-20">
@@ -235,6 +247,21 @@ export default function Announcements() {
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-5">
+               {/* Kiểu bài đăng */}
+               <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Loại Bài Đăng</label>
+                  <div className="flex gap-4">
+                     <label className={`flex-1 py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'PROMO' ? 'bg-red-50 border-red-500 text-red-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="PROMO" checked={form.type === 'PROMO'} onChange={(e) => setForm({...form, type: 'PROMO'})} className="hidden" />
+                        🎁 Khuyến Mãi
+                     </label>
+                     <label className={`flex-1 py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'NEWS' ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="NEWS" checked={form.type === 'NEWS'} onChange={(e) => setForm({...form, type: 'NEWS'})} className="hidden" />
+                        📰 Tin Tức
+                     </label>
+                  </div>
+               </div>
+
                {/* Tiêu đề & Nội dung */}
                <div>
                   <label className="block text-sm font-bold text-slate-700 mb-1">Tiêu Đề (Title) <span className="text-red-500">*</span></label>

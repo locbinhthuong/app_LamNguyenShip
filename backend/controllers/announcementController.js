@@ -48,12 +48,13 @@ const announcementController = {
 
   createAnnouncement: async (req, res) => {
     try {
-      const { title, content, imageUrl, videoUrl, isActive } = req.body;
+      const { title, content, type, imageUrl, videoUrl, isActive } = req.body;
       const adminId = req.admin?._id || req.user?.id;
 
       const ann = new Announcement({
         title,
         content,
+        type: type || 'NEWS',
         imageUrl,
         videoUrl,
         isActive: isActive !== undefined ? isActive : true,
@@ -70,7 +71,7 @@ const announcementController = {
   updateAnnouncement: async (req, res) => {
     try {
       const { id } = req.params;
-      const { title, content, imageUrl, videoUrl, isActive } = req.body;
+      const { title, content, type, imageUrl, videoUrl, isActive } = req.body;
 
       const oldAnn = await Announcement.findById(id);
       if (!oldAnn) return res.status(404).json({ success: false, message: 'Không tìm thấy tin' });
@@ -86,6 +87,7 @@ const announcementController = {
       const updateData = {};
       if (title) updateData.title = title;
       if (content) updateData.content = content;
+      if (type) updateData.type = type;
       if (imageUrl !== undefined) updateData.imageUrl = imageUrl;
       if (videoUrl !== undefined) updateData.videoUrl = videoUrl;
       if (isActive !== undefined) updateData.isActive = isActive;

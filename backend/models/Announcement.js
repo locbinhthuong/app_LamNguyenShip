@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const announcementSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['PROMO', 'NEWS'],
+    default: 'NEWS'
+  },
   title: {
     type: String,
     required: true,
