@@ -106,9 +106,13 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
           </button>
         </div>
 
-        {loading || !data ? (
+        {loading ? (
           <div className="flex-1 flex justify-center items-center">
              <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        ) : !data ? (
+          <div className="flex-1 flex justify-center items-center p-6 text-center text-slate-500">
+             <p>⚠️ Chưa thể kết nối (404).<br/><span className="text-xs">Tính năng này cần Server Backend chạy bản Cập Nhật Mới Nhất. Vui lòng Pull code lên VPS.</span></p>
           </div>
         ) : (
           <div className="flex-1 overflow-y-auto p-6 space-y-6">

@@ -121,14 +121,14 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
               <div className="mt-4 w-full grid grid-cols-2 gap-3">
                  <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex flex-col items-center">
                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">CÒN PHẢI THU</p>
-                   <p className={`text-xl font-black ${data.totalUnpaid > 0 ? 'text-red-600' : 'text-slate-600'}`}>
-                      {data.totalUnpaid.toLocaleString()} đ
+                   <p className={`text-xl font-black ${(data.totalUnpaid || 0) > 0 ? 'text-red-600' : 'text-slate-600'}`}>
+                      {(data.totalUnpaid || 0).toLocaleString()} đ
                    </p>
                  </div>
                  <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100 flex flex-col items-center">
                    <p className="text-[10px] font-bold text-emerald-600/70 uppercase tracking-widest mb-1">ĐÃ THU ĐƯỢC</p>
                    <p className={`text-xl font-black text-emerald-600`}>
-                      {data.totalPaid ? data.totalPaid.toLocaleString() : 0} đ
+                      {(data.totalPaid || 0).toLocaleString()} đ
                    </p>
                  </div>
               </div>
