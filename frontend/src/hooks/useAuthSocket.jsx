@@ -20,21 +20,28 @@ export const useAuthSocket = () => {
           if (order.status === 'PENDING') {
             message = `Đơn hàng ${order.orderCode} đã được Tổng đài lên phí ship. Khách hàng/Cửa hàng có thể xem lại!`;
             type = 'info';
+            
+            // Phát âm thanh Ting Ting cho khách
+            try {
+              const audio = new Audio('/chuong.mp3');
+              audio.play().catch(e => console.log('Autoplay bị chặn, cần tương tác:', e));
+            } catch(err) {}
+
           } else if (order.status === 'ACCEPTED') {
-            message = `Tài xế ${order.assignedTo?.name || ''} đã nhận đơn và đang đến điểm đón!`;
+            message = `Tài xế ${order.assignedTo?.name || ''} đã nhận đơn và đang di chuyển!`;
             type = 'success';
           } else if (order.status === 'PICKED_UP') {
-            message = `Tài xế đã lấy hàng và bắt đầu di chuyển!`;
+            message = `Tài xế đã lấy hàng và bắt đầu giao!`;
             type = 'warning';
           } else if (order.status === 'COMPLETED') {
             message = `Đơn hàng ${order.orderCode} đã hoàn thành. Cảm ơn quý khách!`;
             type = 'success';
           } else if (order.status === 'DRAFT') {
-             message = `Thông tin đơn hàng ${order.orderCode} vừa được Admin cập nhật hoặc đang chờ xác nhận báo giá.`;
+             message = `Thông tin đơn hàng ${order.orderCode} vừa được Admin cập nhật.`;
              type = 'info';
           }
 
-          showToast(message, type, 5000);
+          showToast(message, type, 6000);
           
           // Phát một custom event truyền kèm cục data order mới nhất
           window.dispatchEvent(new CustomEvent('refresh_orders_data', { detail: order }));

@@ -67,11 +67,11 @@ const CustomerNotifications = () => {
                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${noti.bg}`}>
                   {noti.icon}
                </div>
-               <div>
+               <div className="flex-1 min-w-0">
                  <div className="flex justify-between items-start mb-1">
-                   <h3 className={`text-sm ${noti.read ? 'font-semibold text-gray-600' : 'font-bold text-gray-800'}`}>{noti.title}</h3>
+                   <h3 className={`text-sm line-clamp-2 ${noti.read ? 'font-semibold text-gray-600' : 'font-bold text-gray-800'}`}>{noti.title}</h3>
                  </div>
-                 <p className="text-xs text-gray-500 leading-relaxed mb-2 whitespace-pre-wrap">{noti.message}</p>
+                 <p className="text-xs text-gray-500 leading-relaxed mb-2 whitespace-pre-wrap line-clamp-4">{noti.message}</p>
                  
                  {/* Nếu có đính kèm ảnh thì hiển thị thu nhỏ */}
                  {noti.imageUrl && !noti.videoUrl && (
