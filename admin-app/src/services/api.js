@@ -204,4 +204,35 @@ export const resetDriverDebt = async (driverId) => {
   return response.data;
 };
 
+export const deleteDriverDebt = async (txId) => {
+  const response = await api.delete(`/api/debts/tx/${txId}`);
+  return response.data;
+};
+
+export const updateDriverDebt = async (txId, amount, description) => {
+  const response = await api.put(`/api/debts/tx/${txId}`, { amount, description });
+  return response.data;
+};
+
+// ==================== WALLET (ADMIN) ====================
+export const getDriverWalletAdmin = async (driverId) => {
+  const response = await api.get(`/api/wallets/admin/${driverId}`);
+  return response.data;
+};
+
+export const adjustDriverWalletAdmin = async (driverId, amount, description, type) => {
+  const response = await api.post(`/api/wallets/admin/${driverId}/adjust`, { amount, description, type });
+  return response.data;
+};
+
+export const processWithdrawAdmin = async (txId, action, rejectReason) => {
+  const response = await api.post(`/api/wallets/admin/tx/${txId}/process`, { action, rejectReason });
+  return response.data;
+};
+
+export const deleteWalletTxAdmin = async (txId) => {
+  const response = await api.delete(`/api/wallets/admin/tx/${txId}`);
+  return response.data;
+};
+
 export default api;

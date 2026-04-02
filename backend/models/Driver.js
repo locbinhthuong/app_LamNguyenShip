@@ -63,6 +63,10 @@ const driverSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  walletBalance: { // Ví điện tử chứa tiền dương (có thể Rút)
+    type: Number,
+    default: 0
+  },
   // Thống kê
   stats: {
     totalOrders: { type: Number, default: 0 },

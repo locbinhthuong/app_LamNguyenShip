@@ -17,10 +17,17 @@ const debtController = {
         .sort({ createdAt: -1 })
         .lean();
 
+      // Tính tổng đã nạp (PAYMENT)
+      const totalPaid = transactions
+        .filter(t => t.type === 'PAYMENT')
+        .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
+
       res.status(200).json({
         success: true,
         data: {
           driver,
+          totalPaid,
+          totalUnpaid: driver.walletDebt > 0 ? driver.walletDebt : 0,
           transactions
         }
       });
@@ -117,6 +124,59 @@ const debtController = {
     }
   },
 
+  // Sửa 1 giao dịch nợ bất kỳ
+  updateDebt: async (req, res) => {
+    try {
+      const { txId } = req.params;
+      const { amount, description } = req.body;
+      
+      const tx = await DebtTransaction.findById(txId);
+      if (!tx) return res.status(404).json({ success: false, message: 'Giao dịch không tồn tại' });
+      
+      const oldAmount = tx.amount;
+      let newAmount = Number(amount);
+      if (tx.type === 'PAYMENT') {
+        newAmount = -Math.abs(newAmount); // Thanh toán (đóng tiền) phải luôn mang giá trị âm để trừ nợ
+      } else {
+        newAmount = Math.abs(newAmount); // Phạt/Nợ mới phải mang giá trị dương
+      }
+
+      const diff = newAmount - oldAmount;
+      
+      tx.amount = newAmount;
+      tx.description = description;
+      await tx.save();
+
+      // Cập nhật lại ví
+      await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: diff } });
+
+      res.status(200).json({ success: true, message: 'Đã sửa giao dịch thành công' });
+    } catch (e) {
+      res.status(500).json({ success: false, message: 'Lỗi server sửa nợ' });
+    }
+  },
+
+  // Xoá 1 giao dịch nợ bất kỳ
+  deleteDebt: async (req, res) => {
+    try {
+      const { txId } = req.params;
+      const tx = await DebtTransaction.findById(txId);
+      if (!tx) return res.status(404).json({ success: false, message: 'Giao dịch không tồn tại' });
+
+      // Nếu xoá giao dịch, hoàn lại khoản tiền đó vào ví nợ
+      // Vd xóa phạt 20k (+20k) => trừ đi 20k khỏi nợ
+      // Xóa nạp -20k (-20k) => cộng lại 20k vào nợ
+      const amountToReverse = -tx.amount; 
+      
+      await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: amountToReverse } });
+      await DebtTransaction.findByIdAndDelete(txId);
+
+      res.status(200).json({ success: true, message: 'Đã xóa giao dịch và hoàn tất cộng trừ nợ' });
+    } catch (e) {
+      res.status(500).json({ success: false, message: 'Lỗi server xóa nợ' });
+    }
+  },
+
   // (DRIVER) Gửi yêu cầu kiểm duyệt thanh toán QR cho Admin
   requestPayment: async (req, res) => {
     try {
@@ -143,13 +203,37 @@ const debtController = {
       if (req.io) {
         emitDebtPaymentRequest(req.io, payload);
       } else {
-        // Fallback in case io is not strictly attached, wait, io is usually inside req.io if bound via middleware, but typically we require the exported emit func which needs the io instance. Wait, we export setupSocket and functions, maybe require req.io? Yes, our orderController uses req.io. Let's use that.
         emitDebtPaymentRequest(req.io, payload);
       }
 
       res.status(200).json({ success: true, message: 'Đã gửi thông báo cho Tổng đài thành công!', data: payload });
     } catch (error) {
       res.status(500).json({ success: false, message: 'Lỗi server khi gửi yêu cầu' });
+    }
+  },
+
+  // (DRIVER) Tự xem Sổ nợ của chính mình
+  getMyDebtDetail: async (req, res) => {
+    try {
+      const driverId = req.driver._id;
+      
+      const driver = await Driver.findById(driverId).select('name phone walletDebt');
+      if (!driver) return res.status(404).json({ success: false, message: 'Tài xế không hợp lệ' });
+
+      const transactions = await DebtTransaction.find({ driverId })
+        .populate('orderId', 'orderCode deliveryFee')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.status(200).json({
+        success: true,
+        data: {
+          walletDebt: driver.walletDebt > 0 ? driver.walletDebt : 0,
+          transactions
+        }
+      });
+    } catch (e) {
+      res.status(500).json({ success: false, message: 'Lỗi server truy xuất nợ cá nhân' });
     }
   }
 };

@@ -5,6 +5,7 @@ import { getDrivers, deleteDriver, resetDriverPassword } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import PromptModal from '../components/PromptModal';
 import DriverDebtModal from '../components/DriverDebtModal';
+import DriverWalletModal from '../components/DriverWalletModal';
 import { useAuth } from '../context/AuthContext';
 
 const STATUS_COLORS = {
@@ -29,6 +30,7 @@ export default function Drivers() {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false });
   const [promptModal, setPromptModal] = useState({ isOpen: false });
   const [debtModal, setDebtModal] = useState({ isOpen: false, driverId: null });
+  const [walletModal, setWalletModal] = useState({ isOpen: false, driverId: null });
 
   const load = useCallback(async () => {
     try {
@@ -224,7 +226,13 @@ export default function Drivers() {
                   onClick={() => setDebtModal({ isOpen: true, driverId: driver._id })}
                   className="flex-1 rounded-xl bg-orange-500/10 px-3 py-2 text-xs font-bold text-orange-600 transition-all hover:bg-orange-500/20"
                 >
-                  📓 Sổ Nợ
+                  📓 Nợ
+                </button>
+                <button
+                  onClick={() => setWalletModal({ isOpen: true, driverId: driver._id })}
+                  className="flex-1 rounded-xl bg-emerald-500/10 px-3 py-2 text-xs font-bold text-emerald-600 transition-all hover:bg-emerald-500/20"
+                >
+                  🏦 Ví
                 </button>
                 <button
                   onClick={() => requestResetPassword(driver._id, driver.name)}
@@ -293,7 +301,13 @@ export default function Drivers() {
                             onClick={() => setDebtModal({ isOpen: true, driverId: driver._id })}
                             className="rounded-lg bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-100 transition-colors"
                           >
-                            📓 Sổ Nợ
+                            📓 Nợ
+                          </button>
+                          <button
+                            onClick={() => setWalletModal({ isOpen: true, driverId: driver._id })}
+                            className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-100 transition-colors"
+                          >
+                            🏦 Ví
                           </button>
                           <button
                             onClick={() => requestResetPassword(driver._id, driver.name)}
@@ -344,11 +358,14 @@ export default function Drivers() {
       />
       <DriverDebtModal 
         isOpen={debtModal.isOpen} 
-        driverId={debtModal.driverId}
-        onClose={() => {
-          setDebtModal({ isOpen: false, driverId: null });
-          load();
-        }} 
+        driverId={debtModal.driverId} 
+        onClose={() => setDebtModal({ isOpen: false, driverId: null })} 
+      />
+
+      <DriverWalletModal 
+        isOpen={walletModal.isOpen} 
+        driverId={walletModal.driverId} 
+        onClose={() => setWalletModal({ isOpen: false, driverId: null })} 
       />
     </div>
   );

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getDriverDebtDetail, addDriverPenalty, addDriverPayment, resetDriverDebt } from '../services/api';
+import { getDriverDebtDetail, addDriverPenalty, addDriverPayment, resetDriverDebt, deleteDriverDebt, updateDriverDebt } from '../services/api';
 
 export default function DriverDebtModal({ driverId, isOpen, onClose }) {
   const [data, setData] = useState(null);
@@ -9,6 +9,9 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  
+  // Trạng thái Sửa giao dịch Nợ
+  const [editingTx, setEditingTx] = useState(null);
 
   useEffect(() => {
     if (isOpen && driverId) {
@@ -34,19 +37,25 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
     e.preventDefault();
     setSubmitting(true);
     try {
-      if (actionType === 'reset') {
-        if (!window.confirm('CẢNH BÁO: Xóa toàn bộ nợ của người này về 0 ?')) {
-          setSubmitting(false);
-          return;
-        }
-        await resetDriverDebt(driverId);
-        alert('Đã xóa nợ thành công!');
-      } else if (actionType === 'payment') {
-        await addDriverPayment(driverId, amount, description);
-        alert('Đã thu tiền nợ thành công!');
-      } else if (actionType === 'penalty') {
-        await addDriverPenalty(driverId, amount, description);
-        alert('Đã thêm hình phạt/nợ thành công!');
+      if (editingTx) {
+         await updateDriverDebt(editingTx._id, amount, description);
+         alert('Đã cập nhật giao dịch thành công!');
+         setEditingTx(null);
+      } else {
+         if (actionType === 'reset') {
+           if (!window.confirm('CẢNH BÁO: Xóa toàn bộ nợ của người này về 0 ?')) {
+             setSubmitting(false);
+             return;
+           }
+           await resetDriverDebt(driverId);
+           alert('Đã xóa nợ thành công!');
+         } else if (actionType === 'payment') {
+           await addDriverPayment(driverId, amount, description);
+           alert('Đã thu tiền nợ thành công!');
+         } else if (actionType === 'penalty') {
+           await addDriverPenalty(driverId, amount, description);
+           alert('Đã thêm hình phạt/nợ thành công!');
+         }
       }
       
       setAmount('');
@@ -57,6 +66,24 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleDelete = async (txId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa giao dịch này? Nợ sẽ được hoàn lại!')) return;
+    try {
+       await deleteDriverDebt(txId);
+       alert('Xóa thành công!');
+       loadData();
+    } catch(err) {
+       alert('Lỗi xóa giao dịch');
+    }
+  };
+
+  const handleEditSetup = (tx) => {
+     setEditingTx(tx);
+     setAmount(Math.abs(tx.amount).toString());
+     setDescription(tx.description);
+     window.scrollTo({ top: 0, behavior: 'smooth' }); // Scroll lên form
   };
 
   if (!isOpen) return null;
@@ -91,26 +118,39 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
               <h3 className="font-bold text-slate-800">{data.driver.name}</h3>
               <p className="text-slate-500 text-xs">{data.driver.phone}</p>
               
-              <div className="mt-4 w-full bg-slate-50 rounded-xl p-4 border border-slate-100 flex flex-col items-center">
-                 <p className="text-sm font-semibold text-slate-500 uppercase tracking-widest mb-1">Tổng Nợ Phải Thu</p>
-                 <p className={`text-3xl font-black ${data.driver.walletDebt > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                    {data.driver.walletDebt.toLocaleString()} đ
-                 </p>
-                 <span className="mt-2 inline-block bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded-full font-bold">
-                    Chiết Khấu Đơn: {data.driver.commissionRate}%
-                 </span>
+              <div className="mt-4 w-full grid grid-cols-2 gap-3">
+                 <div className="bg-slate-50 rounded-xl p-3 border border-slate-100 flex flex-col items-center">
+                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">CÒN PHẢI THU</p>
+                   <p className={`text-xl font-black ${data.totalUnpaid > 0 ? 'text-red-600' : 'text-slate-600'}`}>
+                      {data.totalUnpaid.toLocaleString()} đ
+                   </p>
+                 </div>
+                 <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100 flex flex-col items-center">
+                   <p className="text-[10px] font-bold text-emerald-600/70 uppercase tracking-widest mb-1">ĐÃ THU ĐƯỢC</p>
+                   <p className={`text-xl font-black text-emerald-600`}>
+                      {data.totalPaid ? data.totalPaid.toLocaleString() : 0} đ
+                   </p>
+                 </div>
               </div>
+              <span className="mt-3 inline-block bg-blue-100 text-blue-800 text-[10px] px-3 py-1 rounded-full font-bold">
+                 ⚡ Tỷ lệ Chiết Khấu trên 1 Đơn: {data.driver.commissionRate}%
+              </span>
             </div>
 
             {/* FORM GIAO DỊCH */}
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
-               <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2">Tạo Giao Dịch Nợ / Phạt</h4>
+                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2 flex justify-between items-center">
+                   <span>{editingTx ? 'Sửa Giao Dịch Đã Chọn' : 'Tạo Giao Dịch Nợ / Phạt'}</span>
+                   {editingTx && <button type="button" onClick={() => { setEditingTx(null); setAmount(''); setDescription(''); }} className="text-xs text-slate-400 font-normal underline hover:text-slate-700">Hủy sửa</button>}
+                </h4>
                
-               <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
-                 <button type="button" onClick={() => setActionType('payment')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'payment' ? 'bg-white shadow text-green-600' : 'text-slate-500'}`}>Nập Tiền/Trừ Nợ</button>
-                 <button type="button" onClick={() => setActionType('penalty')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'penalty' ? 'bg-white shadow text-red-600' : 'text-slate-500'}`}>Ghi Phạt</button>
-                 <button type="button" onClick={() => setActionType('reset')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'reset' ? 'bg-blue-600 text-white shadow' : 'text-slate-500'}`}>Hủy Trắng Nợ</button>
-               </div>
+               {!editingTx && (
+                 <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                   <button type="button" onClick={() => setActionType('payment')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'payment' ? 'bg-white shadow text-green-600' : 'text-slate-500'}`}>Nập Tiền/Trừ Nợ</button>
+                   <button type="button" onClick={() => setActionType('penalty')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'penalty' ? 'bg-white shadow text-red-600' : 'text-slate-500'}`}>Ghi Phạt</button>
+                   <button type="button" onClick={() => setActionType('reset')} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${actionType === 'reset' ? 'bg-blue-600 text-white shadow' : 'text-slate-500'}`}>Hủy Trắng Nợ</button>
+                 </div>
+               )}
 
                {actionType !== 'reset' && (
                  <>
@@ -136,9 +176,9 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
 
                <button 
                  disabled={submitting}
-                 className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${actionType === 'payment' ? 'bg-green-600 shadow-green-600/30' : actionType === 'penalty' ? 'bg-red-600 shadow-red-600/30' : 'bg-blue-600 shadow-blue-600/30'}`}
+                 className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${editingTx ? 'bg-amber-500 shadow-amber-500/30' : actionType === 'payment' ? 'bg-green-600 shadow-green-600/30' : actionType === 'penalty' ? 'bg-red-600 shadow-red-600/30' : 'bg-blue-600 shadow-blue-600/30'}`}
                >
-                 {submitting ? 'Đang Xử Lý...' : actionType === 'reset' ? 'XÓA SẠCH VỀ NỢ 0 ĐỒNG' : 'THỰC HIỆN'}
+                 {submitting ? 'Đang Xử Lý...' : editingTx ? 'LƯU THAY ĐỔI' : actionType === 'reset' ? 'XÓA SẠCH VỀ NỢ 0 ĐỒNG' : 'THỰC HIỆN'}
                </button>
             </form>
 
@@ -167,6 +207,10 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
                         {tx.createdByAdminId && (
                           <p className="text-[10px] text-slate-500 mt-1">Người duyệt: {tx.createdByAdminId.name}</p>
                         )}
+                        <div className="mt-2 flex gap-3">
+                           <button onClick={() => handleEditSetup(tx)} className="text-[10px] uppercase font-bold text-blue-500 hover:text-blue-700 decoration-blue-500 underline underline-offset-2">Sửa</button>
+                           <button onClick={() => handleDelete(tx._id)} className="text-[10px] uppercase font-bold text-red-500 hover:text-red-700 decoration-red-500 underline underline-offset-2">Xóa</button>
+                        </div>
                       </div>
                       <div className={`font-black tracking-tight ${tx.amount > 0 ? 'text-red-600' : 'text-green-600'}`}>
                         {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}đ

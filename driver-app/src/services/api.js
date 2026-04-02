@@ -130,4 +130,20 @@ export const requestDebtPayment = async (driverId, amount) => {
   return response.data;
 };
 
+export const getMyDebtDetail = async () => {
+  const response = await api.get('/api/debts/driver/me');
+  return response.data;
+};
+
+// ==================== WALLET ====================
+export const getMyWalletDetail = async () => {
+  const response = await api.get('/api/wallets/driver/me');
+  return response.data;
+};
+
+export const requestWithdraw = async (amount, bankName, accountNumber, accountName) => {
+  const response = await api.post('/api/wallets/driver/request-withdraw', { amount, bankName, accountNumber, accountName });
+  return response.data;
+};
+
 export default api;
