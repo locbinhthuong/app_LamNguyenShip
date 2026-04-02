@@ -23,7 +23,7 @@ export const useAuthSocket = () => {
             
             // Phát âm thanh Ting Ting cho khách
             try {
-              const audio = new Audio('/chuong.mp3');
+              const audio = new Audio('/thongbaogiatienkhachhang.mp3');
               audio.play().catch(e => console.log('Autoplay bị chặn, cần tương tác:', e));
             } catch(err) {}
 
@@ -39,6 +39,12 @@ export const useAuthSocket = () => {
           } else if (order.status === 'DRAFT') {
              message = `Thông tin đơn hàng ${order.orderCode} vừa được Admin cập nhật.`;
              type = 'info';
+             
+             // Phát âm thanh Ting Ting cho khách khi update lại giá
+             try {
+               const audio = new Audio('/thongbaogiatienkhachhang.mp3');
+               audio.play().catch(e => console.log('Autoplay bị chặn, cần tương tác:', e));
+             } catch(err) {}
           }
 
           showToast(message, type, 6000);

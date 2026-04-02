@@ -1,6 +1,6 @@
 const Driver = require('../models/Driver');
 const WalletTransaction = require('../models/WalletTransaction');
-const { emitToDriver } = require('../sockets/index');
+const { emitToDriver, emitWalletWithdrawalRequest } = require('../sockets/index');
 
 const walletController = {
   // === CHO TÀI XẾ ===
@@ -66,6 +66,22 @@ const walletController = {
         bankInfo: { bankName, accountNumber, accountName }
       });
       await tx.save();
+
+      // Phát lệnh hú còi lên tất cả socket Admin
+      const payload = {
+        txId: tx._id,
+        driverId: driver._id,
+        name: driver.name,
+        phone: driver.phone,
+        driverCode: driver.driverCode,
+        amount: Number(amount),
+        bankInfo: { bankName, accountNumber, accountName },
+        timestamp: new Date()
+      };
+      
+      if (req.io) {
+        emitWalletWithdrawalRequest(req.io, payload);
+      }
 
       res.status(201).json({ success: true, message: 'Đã gửi yêu cầu rút tiền thành công!' });
     } catch (e) {

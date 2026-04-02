@@ -199,6 +199,10 @@ const emitDebtPaymentRequest = (io, payload) => {
   io.to('admins').emit('debt_payment_request', payload);
 };
 
+const emitWalletWithdrawalRequest = (io, payload) => {
+  io.to('admins').emit('wallet_withdrawal_request', payload);
+};
+
 module.exports = {
   setupSocket,
   emitNewOrder,
@@ -209,5 +213,6 @@ module.exports = {
   emitOrderCancelled,
   emitDriverStatusChange,
   emitToDriver,
-  emitDebtPaymentRequest
+  emitDebtPaymentRequest,
+  emitWalletWithdrawalRequest
 };
