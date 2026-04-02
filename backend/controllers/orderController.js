@@ -556,12 +556,25 @@ const orderController = {
         await debtTx.save();
       }
 
-      await Driver.findByIdAndUpdate(req.driver._id, {
-        $inc: {
-          'stats.completedOrders': 1,
-          walletDebt: debtAmount // Tăng tiền nợ của Pilot
-        }
-      });
+      // Nếu đơn hàng có tiền thưởng, cộng ngay vào Ví
+      const adminBonus = order.adminBonus || 0;
+      let walletInc = { 'stats.completedOrders': 1, walletDebt: debtAmount };
+      
+      if (adminBonus > 0) {
+        walletInc.walletBalance = adminBonus;
+
+        const WalletTransaction = require('../models/WalletTransaction');
+        const walletTx = new WalletTransaction({
+          driverId: driver._id,
+          type: 'DEPOSIT', // 'DEPOSIT' dùng chung cho Nạp Tiền / Thưởng
+          amount: adminBonus,
+          status: 'SUCCESS',
+          description: `Thưởng nóng từ đơn ${order.orderCode} hoàn thành`
+        });
+        await walletTx.save();
+      }
+
+      await Driver.findByIdAndUpdate(req.driver._id, { $inc: walletInc });
 
       // Rating from customer
       if (rating && rating >= 1 && rating <= 5) {

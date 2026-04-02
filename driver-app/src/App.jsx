@@ -108,7 +108,16 @@ function AppContent() {
     const handleStopEvent = () => stopAlarm();
     window.addEventListener('stop_alarm_event', handleStopEvent);
     
-    const handleNewOrderEvent = () => startAlarm();
+    const handleNewOrderEvent = (e) => {
+       startAlarm();
+       const order = e.detail;
+       if (order) {
+           setPushMessage({ 
+               title: '🔥 TING TING', 
+               message: order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Có Đơn Hàng Mới Cho Bạn!'
+           });
+       }
+    };
     window.addEventListener('driver_new_order', handleNewOrderEvent);
     window.addEventListener('driver_order_accepted', handleStopEvent);
     window.addEventListener('driver_order_cancelled', handleStopEvent);
