@@ -32,17 +32,19 @@ const CustomerNotifications = () => {
       try {
         const res = await getActiveAnnouncements();
         if (res.success && res.data) {
-          const annNotis = res.data.map(ann => ({
-            id: ann._id,
-            title: '📣 ' + ann.title,
-            message: ann.content,
-            time: new Date(ann.createdAt).toLocaleString('vi-VN'),
-            read: false,
-            icon: <Speaker className="text-orange-500" size={20} />,
-            bg: 'bg-orange-100',
-            imageUrl: ann.imageUrl,
-            videoUrl: ann.videoUrl
-          }));
+          const annNotis = res.data
+            .filter(ann => ann.type === 'NOTIFICATION' || !ann.type)
+            .map(ann => ({
+              id: ann._id,
+              title: '📣 ' + ann.title,
+              message: ann.content,
+              time: new Date(ann.createdAt).toLocaleString('vi-VN'),
+              read: false,
+              icon: <Speaker className="text-orange-500" size={20} />,
+              bg: 'bg-orange-100',
+              imageUrl: ann.imageUrl,
+              videoUrl: ann.videoUrl
+            }));
           setAnnouncements(annNotis);
         }
       } catch (err) {

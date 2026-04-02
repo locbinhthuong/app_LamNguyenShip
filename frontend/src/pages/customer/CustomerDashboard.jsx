@@ -12,6 +12,7 @@ const CustomerDashboard = () => {
   const [announcements, setAnnouncements] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isMuted, setIsMuted] = useState(true);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const isAuthenticated = !!localStorage.getItem('customerToken');
 
   const promotions = announcements.filter(a => a.type === 'PROMO' || a.imageUrl); // Fallback image if type empty
@@ -243,26 +244,30 @@ const CustomerDashboard = () => {
 
       {/* SECTION KHUYẾN MÃI */}
       {promotions.length > 0 && (
-        <div className="px-4 mb-6 pt-2">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">🎁 Ưu Đãi / Khuyến Mãi</h3>
+        <div className="px-4 mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-800 text-lg">Khuyến mãi</h3>
+            <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
           </div>
-          <div className="flex flex-col gap-5 pb-2">
+          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
             {promotions.map((ann, idx) => (
-              <div key={ann._id} className="w-full bg-white rounded-2xl border border-red-50 shadow-md overflow-hidden flex flex-col">
+              <div 
+                key={ann._id} 
+                onClick={() => setSelectedAnnouncement(ann)}
+                className="w-48 bg-white rounded-2xl border border-red-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer active:scale-95 transition-transform"
+              >
                 {ann.imageUrl ? (
-                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-auto object-contain bg-gray-50 border-b border-red-50" style={{ maxHeight: '250px' }} alt="Khuyến mãi" />
+                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Khuyến mãi" />
                 ) : ann.videoUrl ? (
-                  <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-auto object-contain bg-black" controls muted playsInline style={{ maxHeight: '250px' }} />
+                  <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
                 ) : (
-                  <div className="w-full py-8 bg-gradient-to-br from-red-500 to-orange-500 px-5 flex flex-col justify-center text-white relative">
-                    <TicketPercent size={40} className="opacity-20 absolute right-4 top-4" />
-                    <h4 className="font-black text-xl">{ann.title}</h4>
+                  <div className="w-full h-40 bg-gradient-to-br from-red-500 to-orange-500 p-4 flex flex-col justify-center text-white">
+                    <TicketPercent size={32} className="opacity-50 absolute right-2 top-2" />
+                    <h4 className="font-black text-base line-clamp-2">{ann.title}</h4>
                   </div>
                 )}
-                <div className="p-4">
-                  <h4 className="font-bold text-[15px] text-gray-800 mb-2 leading-snug">{ann.title}</h4>
-                  <p className="text-[13px] text-gray-600 whitespace-pre-wrap leading-relaxed">{ann.content}</p>
+                <div className="p-3">
+                  <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
                 </div>
               </div>
             ))}
@@ -270,24 +275,41 @@ const CustomerDashboard = () => {
         </div>
       )}
 
+      {/* FULL WIDTH BANNER MOCKUP GIỮA TRANG (Nếu muốn giống hình refer) */}
+      <div className="px-4 mb-6">
+        <div className="w-full h-32 rounded-2xl overflow-hidden relative shadow-sm">
+          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800&h=300" className="w-full h-full object-cover" alt="Banner Đi Chợ" />
+          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-4">
+            <h3 className="text-white font-black text-xl w-2/3 leading-tight">Đi chợ thảnh thơi<br/>Không lo đội giá</h3>
+            <span className="bg-white text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full w-max mt-2">Dùng Bếp Trưởng</span>
+          </div>
+        </div>
+      </div>
+
       {/* SECTION TIN TỨC */}
       {news.length > 0 && (
         <div className="px-4 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">📰 Thông Báo Hệ Thống</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-800 text-lg">Tin Tức</h3>
+            <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
           </div>
-          <div className="flex flex-col gap-4 pb-4">
+          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
             {news.map((ann, idx) => (
-              <div key={ann._id} className="w-full bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden flex flex-col">
-                <div className="p-4">
-                  <h4 className="font-bold text-[15px] text-blue-900 mb-2 leading-snug">{ann.title}</h4>
-                  <p className="text-[13px] text-gray-600 whitespace-pre-wrap leading-relaxed">{ann.content}</p>
-                  
-                  {/* Tin tức nếu có ảnh đính kèm bổ trợ */}
-                  {ann.imageUrl && (
-                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-auto mt-3 object-contain rounded-lg border border-slate-100" style={{ maxHeight: '200px' }} alt="Tin tức" />
-                  )}
-                  <div className="text-[10px] text-gray-400 mt-3 font-medium">Cập nhật: {new Date(ann.createdAt).toLocaleDateString('vi-VN')}</div>
+              <div 
+                key={ann._id} 
+                onClick={() => setSelectedAnnouncement(ann)}
+                className="w-40 bg-white rounded-2xl border border-blue-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer active:scale-95 transition-transform"
+              >
+                {ann.imageUrl ? (
+                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-36 object-cover bg-gray-100" alt="Tin tức" />
+                ) : (
+                  <div className="w-full h-36 bg-gradient-to-br from-blue-500 to-indigo-600 p-3 flex flex-col justify-center text-white relative">
+                    <span className="text-4xl absolute right-2 bottom-2 opacity-20">📰</span>
+                    <h4 className="font-black text-sm line-clamp-2">{ann.title}</h4>
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
                 </div>
               </div>
             ))}
@@ -304,6 +326,49 @@ const CustomerDashboard = () => {
           initialPosition={locationDetails ? [locationDetails.lat, locationDetails.lng] : null}
         />
       )}
+
+      {/* MODAL XEM CHI TIẾT BẢNG TIN */}
+      {selectedAnnouncement && (
+        <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedAnnouncement(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-sm max-h-[85vh] overflow-hidden flex flex-col shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="absolute top-3 right-3 z-10 bg-white/50 backdrop-blur rounded-full p-2 cursor-pointer shadow" onClick={() => setSelectedAnnouncement(null)}>
+               ✕
+            </div>
+            {/* Modal Content Scrollable */}
+            <div className="overflow-y-auto w-full flex-1">
+              {selectedAnnouncement.videoUrl ? (
+                 <video src={`https://api.aloshipp.com${selectedAnnouncement.videoUrl}`} className="w-full bg-black max-h-[300px]" controls playsInline autoPlay />
+              ) : selectedAnnouncement.imageUrl ? (
+                 <img src={`https://api.aloshipp.com${selectedAnnouncement.imageUrl}`} className="w-full object-cover max-h-[300px]" alt="Chi tiết" />
+              ) : (
+                 <div className="w-full h-40 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+              )}
+              <div className="p-5 pb-8">
+                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mb-1 block">
+                  {selectedAnnouncement.type === 'PROMO' ? '🎁 Khuyến Mãi' : '📰 Tin Tức'} • {new Date(selectedAnnouncement.createdAt).toLocaleDateString('vi-VN')}
+                </span>
+                <h2 className="text-xl font-bold text-gray-900 leading-snug mb-3">
+                  {selectedAnnouncement.title}
+                </h2>
+                <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                  {selectedAnnouncement.content}
+                </div>
+              </div>
+            </div>
+            {/* Modal Footer / Action */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+              <button 
+                onClick={() => setSelectedAnnouncement(null)}
+                className="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 active:scale-95 transition-transform"
+              >
+                Đã Rõ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       
     </div>
   );

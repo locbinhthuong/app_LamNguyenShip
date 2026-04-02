@@ -200,6 +200,11 @@ export default function Announcements() {
                      <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📰 TIN TỨC</span>
                    </div>
                  )}
+                 {ann.type === 'NOTIFICATION' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">🔔 THÔNG BÁO</span>
+                   </div>
+                 )}
                  
                  <div className="absolute top-2 right-2 flex gap-2 z-20">
                    <button 
@@ -250,14 +255,18 @@ export default function Announcements() {
                {/* Kiểu bài đăng */}
                <div>
                   <label className="block text-sm font-bold text-slate-700 mb-2">Loại Bài Đăng</label>
-                  <div className="flex gap-4">
-                     <label className={`flex-1 py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'PROMO' ? 'bg-red-50 border-red-500 text-red-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                  <div className="flex gap-4 flex-wrap">
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'PROMO' ? 'bg-red-50 border-red-500 text-red-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
                         <input type="radio" name="type" value="PROMO" checked={form.type === 'PROMO'} onChange={(e) => setForm({...form, type: 'PROMO'})} className="hidden" />
                         🎁 Khuyến Mãi
                      </label>
-                     <label className={`flex-1 py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'NEWS' ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'NEWS' ? 'bg-blue-50 border-blue-500 text-blue-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
                         <input type="radio" name="type" value="NEWS" checked={form.type === 'NEWS'} onChange={(e) => setForm({...form, type: 'NEWS'})} className="hidden" />
                         📰 Tin Tức
+                     </label>
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'NOTIFICATION' ? 'bg-orange-50 border-orange-500 text-orange-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="NOTIFICATION" checked={form.type === 'NOTIFICATION'} onChange={(e) => setForm({...form, type: 'NOTIFICATION'})} className="hidden" />
+                        🔔 Thông Báo
                      </label>
                   </div>
                </div>
