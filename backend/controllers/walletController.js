@@ -1,5 +1,6 @@
 const Driver = require('../models/Driver');
 const WalletTransaction = require('../models/WalletTransaction');
+const { emitToDriver } = require('../sockets/index');
 
 const walletController = {
   // === CHO TÀI XẾ ===
@@ -127,6 +128,8 @@ const walletController = {
       // Cộng tiền thẳng vào ví dương
       const dr = await Driver.findByIdAndUpdate(driverId, { $inc: { walletBalance: parsedAmount } }, { new: true });
 
+      if (req.io) emitToDriver(req.io, driverId, 'wallet_updated', { balance: dr.walletBalance });
+
       res.status(200).json({ success: true, data: dr.walletBalance });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server Admin Adjust' });
@@ -155,6 +158,8 @@ const walletController = {
         // Bây giờ mới trừ thẳng vào ví gốc
         await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletBalance: tx.amount } }); // tx.amount đang âm
 
+        if (req.io) emitToDriver(req.io, tx.driverId, 'wallet_updated', {});
+
         return res.status(200).json({ success: true, message: 'Đã duyệt Rút Thành Công!' });
       } else if (action === 'REJECT') {
         tx.status = 'REJECTED';
@@ -163,6 +168,8 @@ const walletController = {
         tx.createdByAdminId = adminId;
         // Không trừ tiền vì REJECTED
         await tx.save();
+
+        if (req.io) emitToDriver(req.io, tx.driverId, 'wallet_updated', {});
 
         return res.status(200).json({ success: true, message: 'Đã Huỷ Rút Thành Công' });
       } else {
@@ -188,6 +195,9 @@ const walletController = {
       }
       
       await WalletTransaction.findByIdAndDelete(txId);
+      
+      if (req.io) emitToDriver(req.io, tx.driverId, 'wallet_updated', {});
+      
       res.status(200).json({ success: true, message: 'Xoá lịch sử ví thành công' });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi báo xoá' });

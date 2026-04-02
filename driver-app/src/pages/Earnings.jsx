@@ -95,6 +95,15 @@ export default function Earnings() {
     fetchEarnings();
   }, [fetchEarnings]);
 
+  useEffect(() => {
+    window.addEventListener('driver_wallet_updated', fetchEarnings);
+    window.addEventListener('driver_debt_updated', fetchEarnings);
+    return () => {
+      window.removeEventListener('driver_wallet_updated', fetchEarnings);
+      window.removeEventListener('driver_debt_updated', fetchEarnings);
+    };
+  }, [fetchEarnings]);
+
   return (
     <div className="min-h-screen bg-white pb-24 sm:pb-28">
       {/* Header */}

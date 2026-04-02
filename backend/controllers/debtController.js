@@ -1,6 +1,6 @@
 const Driver = require('../models/Driver');
 const DebtTransaction = require('../models/DebtTransaction');
-const { emitDebtPaymentRequest } = require('../sockets/index');
+const { emitDebtPaymentRequest, emitToDriver } = require('../sockets/index');
 
 const debtController = {
   // Lấy chi tiết ví công nợ và lịch sử giao dịch của 1 tài xế (Admin)
@@ -58,6 +58,8 @@ const debtController = {
       // Cập nhật ví nợ tài xế
       const dr = await Driver.findByIdAndUpdate(driverId, { $inc: { walletDebt: Number(amount) } }, { new: true });
 
+      if (req.io) emitToDriver(req.io, driverId, 'debt_updated', { debt: dr.walletDebt });
+
       res.status(201).json({ success: true, message: 'Thêm Tiền Phạt Thành Công!', data: dr.walletDebt });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server' });
@@ -85,6 +87,8 @@ const debtController = {
 
       // Cập nhật ví nợ tài xế
       const dr = await Driver.findByIdAndUpdate(driverId, { $inc: { walletDebt: -Number(amount) } }, { new: true });
+
+      if (req.io) emitToDriver(req.io, driverId, 'debt_updated', { debt: dr.walletDebt });
 
       res.status(201).json({ success: true, message: 'Thu tiền Công Nợ Thành Công!', data: dr.walletDebt });
     } catch (e) {
@@ -118,6 +122,8 @@ const debtController = {
 
       const dr = await Driver.findByIdAndUpdate(driverId, { walletDebt: 0 }, { new: true });
 
+      if (req.io) emitToDriver(req.io, driverId, 'debt_updated', { debt: dr.walletDebt });
+
       res.status(200).json({ success: true, message: 'Đã đưa nợ về MỐC 0 (XÓA SẠCH NỢ)!', data: dr.walletDebt });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server' });
@@ -150,6 +156,8 @@ const debtController = {
       // Cập nhật lại ví
       await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: diff } });
 
+      if (req.io) emitToDriver(req.io, tx.driverId, 'debt_updated', {});
+
       res.status(200).json({ success: true, message: 'Đã sửa giao dịch thành công' });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server sửa nợ' });
@@ -170,6 +178,8 @@ const debtController = {
       
       await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: amountToReverse } });
       await DebtTransaction.findByIdAndDelete(txId);
+
+      if (req.io) emitToDriver(req.io, tx.driverId, 'debt_updated', {});
 
       res.status(200).json({ success: true, message: 'Đã xóa giao dịch và hoàn tất cộng trừ nợ' });
     } catch (e) {

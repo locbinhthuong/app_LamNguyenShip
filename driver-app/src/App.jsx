@@ -180,8 +180,7 @@ function AppContent() {
         setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');
       });
 
-      // Phát loa sự kiện Custom để các Trang/Component khác an tâm lắng nghe (Tránh lỗi Socket chưa kịp Load lúc React chạy useEffect)
-      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed'];
+      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated'];
       forwardEvents.forEach(event => {
         socketRef.current.on(event, (data) => {
           window.dispatchEvent(new CustomEvent(`driver_${event}`, { detail: data }));

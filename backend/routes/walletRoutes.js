@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const walletController = require('../controllers/walletController');
-const { verifyToken, onlyAdmin } = require('../middleware/auth');
+const { verifyToken, onlyAdmin, onlyDriver } = require('../middleware/auth');
 
 // Mọi lệnh dùng Ví đều cần token bảo mật
 router.use(verifyToken);
 
 // === CHỨC NĂNG TÀI XẾ ===
-router.get('/driver/me', walletController.getMyWalletDetail); // Xem ví + lịch sử của bản thân (Ghi có, Rút tiền pending...)
-router.post('/driver/request-withdraw', walletController.requestWithdraw);
+router.get('/driver/me', onlyDriver, walletController.getMyWalletDetail); // Xem ví + lịch sử của bản thân (Ghi có, Rút tiền pending...)
+router.post('/driver/request-withdraw', onlyDriver, walletController.requestWithdraw);
 
 // === CHỨC NĂNG ADMIN ===
 router.use(onlyAdmin);
