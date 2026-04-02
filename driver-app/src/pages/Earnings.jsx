@@ -22,6 +22,8 @@ export default function Earnings() {
   
   // States cho Công Nợ Chi Tiết
   const [debtTransactions, setDebtTransactions] = useState([]);
+  const [unpaidDays, setUnpaidDays] = useState([]);
+  const [selectedDebt, setSelectedDebt] = useState(null);
   
   // States cho Ví Rút / Nạp
   const [walletDetail, setWalletDetail] = useState({ availableBalance: 0, paddingAmount: 0, transactions: [] });
@@ -33,9 +35,10 @@ export default function Earnings() {
   const [isRequesting, setIsRequesting] = useState(false);
 
   const handleRequestPayment = async () => {
+    if (!selectedDebt) return;
     try {
       setIsRequesting(true);
-      const res = await requestDebtPayment(driver._id, stats.totalDebt);
+      const res = await requestDebtPayment(driver._id, selectedDebt.amount, selectedDebt.date);
       if (res.success) {
         alert('✅ Đã gửi yêu cầu xác nhận thanh toán nợ đến Tổng đài. Vui lòng chờ Sếp kiểm tra.');
         setShowQRModal(false);
@@ -62,6 +65,7 @@ export default function Earnings() {
       }
       if (resDebt.success && resDebt.data) {
         setDebtTransactions(resDebt.data.transactions || []);
+        setUnpaidDays(resDebt.data.unpaidDays || []);
       }
       if (resWallet.success && resWallet.data) {
         setWalletDetail(resWallet.data);
@@ -143,27 +147,38 @@ export default function Earnings() {
             {/* Lịch Sử Cuốc Xe Mới Nhất chuyển lên Tab ví hoặc giữ ở đây? Giữ ở đây hoặc dưới list Nợ */}
             
             {/* Vùng Thanh Toán Nợ Chi Tiết Nằm Đầu */}
-            <div className="rounded-2xl bg-sky-50/80 border border-sky-100 p-4 mb-4 shadow-sm flex flex-col">
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <p className="text-xs text-sky-700 mb-1 font-semibold flex items-center gap-1">
-                    <span>Tổng Nợ Hệ Thống Của Mì</span>
-                  </p>
-                  <p className="text-2xl font-black text-sky-800 drop-shadow-sm">{formatCurrency(stats.totalDebt)}</p>
-                </div>
-                <div className="h-10 w-10 bg-gradient-to-br from-sky-400 to-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
-                  🧾
-                </div>
-              </div>
-              
-              <button 
-                onClick={() => setShowQRModal(true)}
-                disabled={!stats.totalDebt || stats.totalDebt <= 0}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100"
-              >
-                <span>📱</span> Thanh Toán Gạch Nợ Ngay
-              </button>
-            </div>
+            <h2 className="text-slate-800 font-bold mb-3 px-1 text-sm uppercase tracking-wide">CÔNG NỢ CẦN THANH TOÁN</h2>
+            {unpaidDays.length === 0 ? (
+               <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl text-center text-sky-700 shadow-sm font-semibold mb-6">
+                  Bạn không có công nợ cũ nào cần thanh toán! 🎉
+               </div>
+            ) : (
+               unpaidDays.map((debt, i) => (
+                 <div key={i} className="rounded-2xl bg-sky-50/80 border border-sky-200 p-4 mb-4 shadow-sm flex flex-col">
+                   <div className="flex items-center justify-between mb-3">
+                     <div>
+                       <p className="text-xs text-slate-500 mb-1 font-semibold flex items-center gap-1">
+                         <span>Công Nợ Ngày: {new Date(debt.date).toLocaleDateString('vi-VN')}</span>
+                       </p>
+                       <p className="text-xl font-black text-red-600 drop-shadow-sm">{formatCurrency(debt.amount)}</p>
+                     </div>
+                     <div className="h-10 w-10 bg-gradient-to-br from-red-400 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
+                       🧾
+                     </div>
+                   </div>
+                   
+                   <button 
+                     onClick={() => {
+                        setSelectedDebt(debt);
+                        setShowQRModal(true);
+                     }}
+                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
+                   >
+                     <span>📱</span> Chọn Thanh Toán Khung Này
+                   </button>
+                 </div>
+               ))
+            )}
 
             {/* Chi tiết từng ngày - Lịch sử cấn nợ (Công nợ theo dòng thời gian) */}
             <h2 className="text-slate-800 font-bold mt-6 mb-3 px-1">Lịch Sử Cấn Nợ / Nạp Rút Sổ Đen</h2>
@@ -371,15 +386,15 @@ export default function Earnings() {
             
             <div className="p-6 flex flex-col items-center justify-center bg-slate-50 relative">
               <div className="mb-4 text-center">
-                <p className="text-sm font-semibold text-slate-500 mb-1">CƠ CẤU THANH TOÁN (1 ✕ VND)</p>
+                <p className="text-sm font-semibold text-slate-500 mb-1">Thanh Toán Khung Nợ {new Date(selectedDebt?.date).toLocaleDateString('vi-VN')}</p>
                 <div className="text-3xl font-black text-blue-600 tabular-nums tracking-tight bg-blue-100 px-4 py-2 rounded-2xl border-2 border-blue-200 border-dashed inline-block">
-                  {formatCurrency(stats.totalDebt)}
+                  {formatCurrency(selectedDebt?.amount)}
                 </div>
               </div>
 
               <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 relative mb-4">
                 <img 
-                  src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(stats.totalDebt)}&addInfo=THANHTOANNO ${driver?.driverCode || ''}&accountName=NGUYEN LAM NGUYEN`} 
+                  src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=THANHTOANNO ${driver?.driverCode || ''} ${selectedDebt?.date}&accountName=NGUYEN LAM NGUYEN`} 
                   alt="QR Code Công Nợ" 
                   className="w-56 h-56 object-contain mix-blend-multiply"
                 />

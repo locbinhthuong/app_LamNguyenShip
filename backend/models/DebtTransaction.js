@@ -24,6 +24,10 @@ const debtTransactionSchema = new mongoose.Schema({
     ref: 'Order',
     default: null
   },
+  targetDate: { // Dùng để xác định Khoản Nợ hoặc Thanh Toán thuộc về khung ngày nào (YYYY-MM-DD)
+    type: String,
+    default: null
+  },
   createdByAdminId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Admin',

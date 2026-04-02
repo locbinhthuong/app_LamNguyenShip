@@ -544,12 +544,14 @@ const orderController = {
 
       if (debtAmount > 0) {
         // Lưu Lịch sử Giao Dịch
+        const todayStr = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' local time
         const debtTx = new DebtTransaction({
           driverId: driver._id,
           orderId: order._id,
           type: 'FEE_DEDUCTION',
           amount: debtAmount,
-          description: `Thu chiết khấu ${commissionRate}% đơn hàng ${order.orderCode} (Phí ship: ${deliveryFee}đ)`
+          description: `Thu chiết khấu ${commissionRate}% đơn hàng ${order.orderCode} (Phí ship: ${deliveryFee}đ)`,
+          targetDate: todayStr
         });
         await debtTx.save();
       }

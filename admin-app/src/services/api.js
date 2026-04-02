@@ -194,8 +194,8 @@ export const addDriverPenalty = async (driverId, amount, description) => {
   return response.data;
 };
 
-export const addDriverPayment = async (driverId, amount, description) => {
-  const response = await api.post(`/api/debts/driver/${driverId}/payment`, { amount, description });
+export const addDriverPayment = async (driverId, amount, description, targetDate) => {
+  const response = await api.post(`/api/debts/driver/${driverId}/payment`, { amount, description, targetDate });
   return response.data;
 };
 

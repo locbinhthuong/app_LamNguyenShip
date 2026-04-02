@@ -22,12 +22,30 @@ const debtController = {
         .filter(t => t.type === 'PAYMENT')
         .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
 
+      // Nhóm nợ theo ngày
+      const debtByDate = {};
+      transactions.forEach(tx => {
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+        if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+        debtByDate[dateStr] += tx.amount;
+      });
+
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      const unpaidDays = [];
+      for (const [dateStr, amount] of Object.entries(debtByDate)) {
+        if (amount > 0 && dateStr !== todayStr) {
+          unpaidDays.push({ date: dateStr, amount });
+        }
+      }
+      unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
+
       res.status(200).json({
         success: true,
         data: {
           driver,
           totalPaid,
           totalUnpaid: driver.walletDebt > 0 ? driver.walletDebt : 0,
+          unpaidDays,
           transactions
         }
       });
@@ -66,11 +84,11 @@ const debtController = {
     }
   },
 
-  // Ghi nhận Tài xế nạp tiền trả nợ (giảm nợ)
+  // Ghi nhận Tài xế nạp tiền trả nợ (giảm nợ theo ngày)
   addPayment: async (req, res) => {
     try {
       const { driverId } = req.params;
-      const { amount, description } = req.body;
+      const { amount, description, targetDate } = req.body;
       const adminId = req.admin._id;
 
       if (!amount || amount <= 0) return res.status(400).json({ success: false, message: 'Số tiền nạp không hợp lệ' });
@@ -80,7 +98,8 @@ const debtController = {
         driverId,
         type: 'PAYMENT',
         amount: -Number(amount), // Âm vì đây là khoản trả
-        description: description || 'Nạp tiền thanh toán công nợ',
+        description: description || `Thu tiền nợ ngày ${targetDate || 'cũ'}`,
+        targetDate: targetDate || new Date().toLocaleDateString('en-CA'),
         createdByAdminId: adminId
       });
       await tx.save();
@@ -191,7 +210,7 @@ const debtController = {
   requestPayment: async (req, res) => {
     try {
       const driverId = req.driver._id; // Bảo mật: Không dùng req.params.driverId
-      const { amount } = req.body;
+      const { amount, targetDate } = req.body;
 
       if (!amount || amount <= 0) {
         return res.status(400).json({ success: false, message: 'Số tiền nạp không hợp lệ' });
@@ -207,6 +226,7 @@ const debtController = {
         phone: driver.phone,
         driverCode: driver.driverCode,
         amount: Number(amount),
+        targetDate: targetDate, // Nhận ngày của Hóa đơn Driver muốn thanh toán
         timestamp: new Date()
       };
       
@@ -233,10 +253,28 @@ const debtController = {
         .sort({ createdAt: -1 })
         .lean();
 
+      // Nhóm nợ theo ngày
+      const debtByDate = {};
+      transactions.forEach(tx => {
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+        if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+        debtByDate[dateStr] += tx.amount;
+      });
+
+      const todayStr = new Date().toLocaleDateString('en-CA');
+      const unpaidDays = [];
+      for (const [dateStr, amount] of Object.entries(debtByDate)) {
+        if (amount > 0 && dateStr !== todayStr) {
+          unpaidDays.push({ date: dateStr, amount });
+        }
+      }
+      unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
+
       res.status(200).json({
         success: true,
         data: {
           walletDebt: driver.walletDebt > 0 ? driver.walletDebt : 0,
+          unpaidDays,
           transactions
         }
       });

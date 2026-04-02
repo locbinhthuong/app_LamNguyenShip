@@ -32,8 +32,8 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e, forcedAmount = null, targetDate = null) => {
+    if (e) e.preventDefault();
     setSubmitting(true);
     try {
        if (editingTx) {
@@ -41,7 +41,9 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
          alert('Đã cập nhật giao dịch thành công!');
          setEditingTx(null);
       } else {
-         await addDriverPayment(driverId, amount, description);
+         const payAmount = forcedAmount || amount;
+         const payDesc = forcedAmount ? `Thu tiền công nợ ngày ${new Date(targetDate).toLocaleDateString('vi-VN')}` : description;
+         await addDriverPayment(driverId, payAmount, payDesc, targetDate);
          alert('Đã thu tiền nợ thành công!');
       }
       
@@ -124,44 +126,68 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
               </span>
             </div>
 
-            {/* FORM GIAO DỊCH */}
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
-                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2 flex justify-between items-center">
-                   <span>{editingTx ? 'Sửa Giao Dịch Đã Chọn' : 'Xác Nhận Thu Tiền / Trừ Nợ'}</span>
-                   {editingTx && <button type="button" onClick={() => { setEditingTx(null); setAmount(''); setDescription(''); }} className="text-xs text-slate-400 font-normal underline hover:text-slate-700">Hủy sửa</button>}
+            {/* FORM HOẶC DANH SÁCH THU NỢ THEO NGÀY */}
+            {!editingTx ? (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 uppercase text-sm">
+                   Các Khung Nợ Chờ Thu
                 </h4>
-               
-               {!editingTx && (
-                  <div className="mb-4 p-3 bg-blue-50 text-blue-800 text-sm rounded-lg border border-blue-100">
-                    Chỉ cần nhập số tiền tài xế đã thanh toán và xác nhận.
-                  </div>
-               )}
+                {(!data.unpaidDays || data.unpaidDays.length === 0) ? (
+                   <div className="p-4 bg-emerald-50 text-emerald-700 text-sm rounded-xl text-center font-semibold border border-emerald-100">
+                      Chưa có ngày nào phát sinh công nợ hoặc đã thu hết! 🎉
+                   </div>
+                ) : (
+                   <div className="space-y-3">
+                     {data.unpaidDays.map((day, idx) => (
+                       <div key={idx} className="flex flex-col sm:flex-row justify-between items-center p-4 bg-sky-50 rounded-xl border border-sky-100 gap-3">
+                         <div>
+                            <p className="text-xs font-bold text-slate-500 uppercase">Khung Ngày: {new Date(day.date).toLocaleDateString('vi-VN')}</p>
+                            <p className="text-xl font-black text-red-600">{day.amount.toLocaleString()} đ</p>
+                         </div>
+                         <button 
+                           onClick={() => handleSubmit(null, day.amount, day.date)}
+                           disabled={submitting}
+                           className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-transform active:scale-95 disabled:opacity-50 inline-flex items-center gap-2 whitespace-nowrap"
+                         >
+                           {submitting ? '⏳ Đang Xử Lý...' : '✅ Xác Nhận Thu Ngày Này'}
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 border-l-4 border-l-amber-500">
+                  <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2 flex justify-between items-center">
+                     <span>Sửa Giao Dịch Đã Chọn</span>
+                     <button type="button" onClick={() => { setEditingTx(null); setAmount(''); setDescription(''); }} className="text-xs text-slate-400 font-normal underline hover:text-slate-700">Hủy sửa</button>
+                  </h4>
 
-               <div>
-                 <label className="text-xs font-bold text-slate-600">Số Tiền Tài Xế Đã Thanh Toán (đ)</label>
-                 <input 
-                   type="number" min="1000" step="1000" required 
-                   className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                   value={amount} onChange={e => setAmount(e.target.value)}
-                 />
-               </div>
-               <div>
-                 <label className="text-xs font-bold text-slate-600">Lý do/Ghi chú</label>
-                 <input 
-                   type="text" required 
-                   placeholder="VD: Thu tiền công nợ..."
-                   className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                   value={description} onChange={e => setDescription(e.target.value)}
-                 />
-               </div>
+                 <div>
+                   <label className="text-xs font-bold text-slate-600">Số Tiền (đ)</label>
+                   <input 
+                     type="number" required 
+                     className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                     value={amount} onChange={e => setAmount(e.target.value)}
+                   />
+                 </div>
+                 <div>
+                   <label className="text-xs font-bold text-slate-600">Lý do/Ghi chú</label>
+                   <input 
+                     type="text" required 
+                     className="w-full mt-1 px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                     value={description} onChange={e => setDescription(e.target.value)}
+                   />
+                 </div>
 
-               <button 
-                 disabled={submitting}
-                 className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${editingTx ? 'bg-amber-500 shadow-amber-500/30' : 'bg-green-600 shadow-green-600/30'}`}
-               >
-                 {submitting ? 'Đang Xử Lý...' : editingTx ? 'LƯU THAY ĐỔI' : 'XÁC NHẬN ĐÃ THU'}
-               </button>
-            </form>
+                 <button 
+                   disabled={submitting}
+                   className="w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 bg-amber-500 shadow-amber-500/30"
+                 >
+                   {submitting ? 'Đang Xử Lý...' : 'LƯU THAY ĐỔI'}
+                 </button>
+              </form>
+            )}
 
             {/* LỊCH SỬ GIAO DỊCH */}
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
