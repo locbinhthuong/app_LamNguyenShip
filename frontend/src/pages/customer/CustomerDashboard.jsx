@@ -15,8 +15,8 @@ const CustomerDashboard = () => {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const isAuthenticated = !!localStorage.getItem('customerToken');
 
-  const promotions = announcements.filter(a => a.type === 'PROMO' || a.imageUrl); // Fallback image if type empty
-  const news = announcements.filter(a => a.type === 'NEWS' && !a.imageUrl);
+  const promotions = announcements.filter(a => a.type === 'PROMO');
+  const news = announcements.filter(a => a.type === 'NEWS');
 
   useEffect(() => {
     // Ưu tiên đọc từ LocalStorage
@@ -133,74 +133,7 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* BANNER KHUYẾN MÃI / BẢNG TIN */}
-      <div className="px-4 py-4">
-        {announcements.length > 0 ? (
-          <div className="relative w-full h-40 rounded-2xl overflow-hidden shadow-lg group">
-             {announcements.map((ann, idx) => (
-                <div 
-                  key={ann._id}
-                  className={`absolute inset-0 transition-opacity duration-1000 ${idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-                >
-                  {ann.videoUrl ? (
-                    <video 
-                      src={`https://api.aloshipp.com${ann.videoUrl}`} 
-                      className="w-full h-full object-cover" 
-                      autoPlay 
-                      loop 
-                      muted={isMuted}
-                      playsInline
-                    />
-                  ) : ann.imageUrl ? (
-                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} alt={ann.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-indigo-600 p-4 text-white flex flex-col justify-center">
-                      <h2 className="text-xl font-extrabold mb-1 line-clamp-2">{ann.title}</h2>
-                      <p className="text-xs opacity-90 line-clamp-2">{ann.content}</p>
-                    </div>
-                  )}
 
-                  {/* Nút bật/tắt tiếng Video */}
-                  {ann.videoUrl && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); setIsMuted(!isMuted); }}
-                      className="absolute bottom-2 right-2 bg-black/50 text-white p-1.5 rounded-full backdrop-blur-sm z-20"
-                    >
-                      {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-                    </button>
-                  )}
-                  
-                  {/* Tiêu đề chìm nếu có hình/video để dễ đọc */}
-                  {(ann.imageUrl || ann.videoUrl) && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3 pt-6 z-10 pointer-events-none">
-                      <h3 className="text-white font-bold text-sm line-clamp-1">{ann.title}</h3>
-                    </div>
-                  )}
-                </div>
-             ))}
-
-             {/* Slide indicators */}
-             {announcements.length > 1 && (
-               <div className="absolute top-2 right-2 flex gap-1 z-20">
-                 {announcements.map((_, i) => (
-                   <div 
-                     key={i} 
-                     className={`h-1.5 rounded-full transition-all ${i === currentSlide ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} 
-                   />
-                 ))}
-               </div>
-             )}
-          </div>
-        ) : (
-          <div className="w-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-4 text-white shadow-lg relative overflow-hidden h-36 flex flex-col justify-center">
-            <div className="absolute -right-4 -bottom-4 opacity-20 transform rotate-12">
-              <Package size={120} />
-            </div>
-            <h2 className="text-xl font-extrabold mb-1 relative z-10 w-2/3">Giao Hỏa Tốc<br/>Mọi Nẻo Đường</h2>
-            <p className="text-xs opacity-90 relative z-10">AloShipp - Nhanh chóng & An toàn</p>
-          </div>
-        )}
-      </div>
 
       {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}
       <div className="px-4 pb-4">
@@ -275,16 +208,7 @@ const CustomerDashboard = () => {
         </div>
       )}
 
-      {/* FULL WIDTH BANNER MOCKUP GIỮA TRANG (Nếu muốn giống hình refer) */}
-      <div className="px-4 mb-6">
-        <div className="w-full h-32 rounded-2xl overflow-hidden relative shadow-sm">
-          <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=800&h=300" className="w-full h-full object-cover" alt="Banner Đi Chợ" />
-          <div className="absolute inset-0 bg-black/40 flex flex-col justify-center px-4">
-            <h3 className="text-white font-black text-xl w-2/3 leading-tight">Đi chợ thảnh thơi<br/>Không lo đội giá</h3>
-            <span className="bg-white text-gray-800 text-xs font-bold px-3 py-1.5 rounded-full w-max mt-2">Dùng Bếp Trưởng</span>
-          </div>
-        </div>
-      </div>
+
 
       {/* SECTION TIN TỨC */}
       {news.length > 0 && (
