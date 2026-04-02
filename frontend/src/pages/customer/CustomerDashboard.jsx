@@ -241,26 +241,26 @@ const CustomerDashboard = () => {
 
       {/* SECTION KHUYẾN MÃI */}
       {promotions.length > 0 && (
-        <div className="px-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-gray-800 text-lg">Khuyến mãi</h3>
-            <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
+        <div className="px-4 mb-6 pt-2">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">🎁 Ưu Đãi / Khuyến Mãi</h3>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
+          <div className="flex flex-col gap-5 pb-2">
             {promotions.map((ann, idx) => (
-              <div key={ann._id} className="min-w-[220px] max-w-[250px] bg-white rounded-2xl border border-red-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer active:scale-95 transition-transform">
+              <div key={ann._id} className="w-full bg-white rounded-2xl border border-red-50 shadow-md overflow-hidden flex flex-col">
                 {ann.imageUrl ? (
-                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-32 object-cover bg-gray-100" alt="Khuyến mãi" />
+                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-auto object-contain bg-gray-50 border-b border-red-50" style={{ maxHeight: '250px' }} alt="Khuyến mãi" />
                 ) : ann.videoUrl ? (
-                  <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-32 object-cover bg-black" autoPlay muted loop playsInline />
+                  <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-auto object-contain bg-black" controls muted playsInline style={{ maxHeight: '250px' }} />
                 ) : (
-                  <div className="w-full h-32 bg-gradient-to-br from-red-500 to-orange-500 p-4 flex flex-col justify-center text-white">
-                    <TicketPercent size={32} className="opacity-50 absolute right-2 top-2" />
-                    <h4 className="font-black text-base line-clamp-2">{ann.title}</h4>
+                  <div className="w-full py-8 bg-gradient-to-br from-red-500 to-orange-500 px-5 flex flex-col justify-center text-white relative">
+                    <TicketPercent size={40} className="opacity-20 absolute right-4 top-4" />
+                    <h4 className="font-black text-xl">{ann.title}</h4>
                   </div>
                 )}
-                <div className="p-3">
-                  <p className="font-bold text-sm text-gray-800 line-clamp-2">{ann.title}</p>
+                <div className="p-4">
+                  <h4 className="font-bold text-[15px] text-gray-800 mb-2 leading-snug">{ann.title}</h4>
+                  <p className="text-[13px] text-gray-600 whitespace-pre-wrap leading-relaxed">{ann.content}</p>
                 </div>
               </div>
             ))}
@@ -270,25 +270,22 @@ const CustomerDashboard = () => {
 
       {/* SECTION TIN TỨC */}
       {news.length > 0 && (
-        <div className="px-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-bold text-gray-800 text-lg">Tin Tức</h3>
-            <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
+        <div className="px-4 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">📰 Thông Báo Hệ Thống</h3>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
+          <div className="flex flex-col gap-4 pb-4">
             {news.map((ann, idx) => (
-              <div key={ann._id} className="min-w-[180px] max-w-[200px] bg-white rounded-2xl border border-blue-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer active:scale-95 transition-transform">
-                {ann.imageUrl ? (
-                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-28 object-cover bg-gray-100" alt="Tin tức" />
-                ) : (
-                  <div className="w-full h-28 bg-gradient-to-br from-blue-500 to-indigo-600 p-3 flex flex-col justify-center text-white relative">
-                    <span className="text-4xl absolute right-2 bottom-2 opacity-20">📰</span>
-                    <h4 className="font-black text-sm line-clamp-2">{ann.title}</h4>
-                  </div>
-                )}
-                <div className="p-3 flex-1 flex flex-col">
-                  <p className="font-bold text-sm text-gray-800 line-clamp-1">{ann.title}</p>
-                  <p className="text-[10px] text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
+              <div key={ann._id} className="w-full bg-white rounded-2xl border border-blue-100 shadow-sm overflow-hidden flex flex-col">
+                <div className="p-4">
+                  <h4 className="font-bold text-[15px] text-blue-900 mb-2 leading-snug">{ann.title}</h4>
+                  <p className="text-[13px] text-gray-600 whitespace-pre-wrap leading-relaxed">{ann.content}</p>
+                  
+                  {/* Tin tức nếu có ảnh đính kèm bổ trợ */}
+                  {ann.imageUrl && (
+                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-auto mt-3 object-contain rounded-lg border border-slate-100" style={{ maxHeight: '200px' }} alt="Tin tức" />
+                  )}
+                  <div className="text-[10px] text-gray-400 mt-3 font-medium">Cập nhật: {new Date(ann.createdAt).toLocaleDateString('vi-VN')}</div>
                 </div>
               </div>
             ))}
