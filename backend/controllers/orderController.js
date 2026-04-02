@@ -610,7 +610,7 @@ const orderController = {
     }
   },
 
-  // POST /api/orders/:id/cancel - Hủy đơn hàng (Chỉ dành cho Admin)
+  // POST /api/orders/:id/cancel - Hủy đơn hàng
   cancelOrder: async (req, res) => {
     try {
       const { id } = req.params;
@@ -618,6 +618,28 @@ const orderController = {
 
       if (req.driver) {
         return res.status(403).json({ success: false, message: 'Tài xế không có quyền tự ý hủy đơn. Vui lòng liên hệ tổng đài.' });
+      }
+
+      if (req.customer) {
+        const order = await Order.findOneAndUpdate(
+          { _id: id, customerId: req.customer._id, status: { $in: ['PENDING', 'DRAFT'] } },
+          {
+            status: 'CANCELLED',
+            cancelledAt: new Date(),
+            cancelReason: reason || 'Khách hàng đổi ý'
+          },
+          { new: true }
+        );
+
+        if (!order) {
+           return res.status(400).json({ success: false, message: 'Không thể hủy! Đơn có thể đã được Tài xế nhận.' });
+        }
+
+        if (req.io) {
+          const { emitOrderCancelled } = require('../sockets/index');
+          emitOrderCancelled(req.io, order._id);
+        }
+        return res.status(200).json({ success: true, message: 'Hủy đơn thành công', data: order });
       }
 
       // VỚI ADMIN: HỦY CHẾT TRƠN ĐƠN HÀNG (CANCELLED)

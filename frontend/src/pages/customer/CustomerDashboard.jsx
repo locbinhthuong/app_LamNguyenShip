@@ -14,6 +14,9 @@ const CustomerDashboard = () => {
   const [isMuted, setIsMuted] = useState(true);
   const isAuthenticated = !!localStorage.getItem('customerToken');
 
+  const promotions = announcements.filter(a => a.imageUrl || a.videoUrl); // Giả lập Khuyến mãi là các bảng tin có hình ảnh
+  const news = announcements.filter(a => !a.imageUrl && !a.videoUrl); // Tin tức dạng văn bản thuần
+
   useEffect(() => {
     // Ưu tiên đọc từ LocalStorage
     const saved = localStorage.getItem('savedLocation');
@@ -236,27 +239,35 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* SECTION KHUYẾN MÃI */}
-      <div className="px-4">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-gray-800 text-lg">Khuyến mãi</h3>
-          <span className="text-blue-600 text-sm font-medium">Xem tất cả</span>
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-4 hide-scrollbar">
-          {/* Mockup Card 1 */}
-          <div className="min-w-[140px] bg-red-50 rounded-xl p-3 border border-red-100 flex-shrink-0">
-            <div className="text-red-600 mb-1"><TicketPercent size={24}/></div>
-            <p className="font-bold text-sm text-red-800">Giảm 20K</p>
-            <p className="text-xs text-red-600 mt-1">Cho đơn đầu tiên</p>
+      {/* SECTION KHUYẾN MÃI / BẢNG TIN */}
+      {announcements.length > 0 && (
+        <div className="px-4 mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-bold text-gray-800 text-lg">Khuyến mãi & Tin Tức</h3>
+            <span className="text-blue-600 text-sm font-medium cursor-pointer max-w-[100px] truncate">Xem tất cả</span>
           </div>
-          {/* Mockup Card 2 */}
-          <div className="min-w-[140px] bg-green-50 rounded-xl p-3 border border-green-100 flex-shrink-0">
-            <div className="text-green-600 mb-1"><TicketPercent size={24}/></div>
-            <p className="font-bold text-sm text-green-800">Freeship 5km</p>
-            <p className="text-xs text-green-600 mt-1">Dịch vụ Đi Chợ</p>
+          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
+            {announcements.map((ann, idx) => (
+              <div key={ann._id} className="min-w-[200px] max-w-[250px] bg-white rounded-2xl border border-gray-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer active:scale-95 transition-transform">
+                {ann.imageUrl ? (
+                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-28 object-cover bg-gray-100" alt="Khuyến mãi" />
+                ) : ann.videoUrl ? (
+                  <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-28 object-cover bg-black" autoPlay muted loop playsInline />
+                ) : (
+                  <div className="w-full h-28 bg-gradient-to-br from-indigo-500 to-purple-600 p-3 flex flex-col justify-center text-white">
+                    <TicketPercent size={28} className="opacity-50 absolute right-2 top-2" />
+                    <h4 className="font-black text-sm line-clamp-2">{ann.title}</h4>
+                  </div>
+                )}
+                <div className="p-3 flex-1 flex flex-col">
+                  <p className="font-bold text-sm text-gray-800 line-clamp-1">{ann.title}</p>
+                  <p className="text-[11px] text-gray-500 line-clamp-2 mt-1">{ann.content}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      )}
 
       {/* FULLSCREEN MAP LOCATION PICKER OVERLAY */}
       {showLocationPicker && (

@@ -43,8 +43,8 @@ router.post('/', verifyToken, onlyAdmin, [
 // PUT /api/orders/:id - Sửa thông tin đơn hàng / Thu hồi đơn (Admin)
 router.put('/:id', verifyToken, onlyAdmin, orderController.updateOrder);
 
-// POST /api/orders/:id/cancel - Hủy đơn (Admin)
-router.post('/:id/cancel', verifyToken, driverOrAdmin, orderController.cancelOrder);
+// POST /api/orders/:id/cancel - Hủy đơn
+router.post('/:id/cancel', verifyToken, anyAuthenticatedUser, orderController.cancelOrder);
 
 // DELETE /api/orders/:id - Xóa đơn hàng (Admin)
 router.delete('/:id', verifyToken, onlyAdmin, orderController.deleteOrder);

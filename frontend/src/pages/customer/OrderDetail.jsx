@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {ArrowLeft, MapPin, Navigation, Package, DollarSign, Clock, CheckCircle2, Circle, Truck, Info, PhoneCall, RefreshCcw} from 'lucide-react';
-import { getOrderDetails } from '../../services/api';
+import { getOrderDetails, api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 
 export default function OrderDetail() {
@@ -59,6 +59,22 @@ export default function OrderDetail() {
       window.removeEventListener('order_deleted_event', handleDeleted);
     };
   }, [id]);
+
+  const handleCancelOrder = async () => {
+    const reason = window.prompt('Hủy đơn hàng này? Vui lòng nhập lý do ngắn gọn:');
+    if (reason === null) return;
+    try {
+      setLoading(true);
+      const res = await api.post(`/orders/${id}/cancel`, { reason });
+      if (res.data.success) {
+        showToast('Đã hủy đơn thành công', 'success');
+        fetchDetail();
+      }
+    } catch (e) {
+      showToast(e.response?.data?.message || 'Không thể hủy đơn', 'error');
+      setLoading(false);
+    }
+  };
 
   if (loading && !order) {
     return (
@@ -281,6 +297,20 @@ export default function OrderDetail() {
                <p className="text-xs font-bold text-amber-800 mb-0.5">LƯU Ý CỦA BẠN</p>
                <p className="text-sm text-amber-700">{order.note}</p>
              </div>
+          </div>
+        )}
+
+        {/* Nút Hủy Đơn */}
+        {['PENDING', 'DRAFT'].includes(order.status) && (
+          <div className="mt-6 mb-2">
+            <button 
+              onClick={handleCancelOrder}
+              disabled={loading}
+              className="w-full bg-red-50 text-red-600 font-bold border border-red-200 py-3.5 rounded-2xl active:bg-red-100 transition-colors shadow-sm"
+            >
+              HỦY ĐƠN HÀNG
+            </button>
+            <p className="text-center text-[10px] text-slate-400 mt-2">Bạn chỉ có thể hủy trước khi Tài xế nhận đơn.</p>
           </div>
         )}
 
