@@ -65,7 +65,7 @@ const debtController = {
   addPenalty: async (req, res) => {
     try {
       const { driverId } = req.params;
-      const { amount, description } = req.body;
+      const { amount, description, targetDate } = req.body;
       const adminId = req.admin._id;
 
       if (!amount || amount <= 0) return res.status(400).json({ success: false, message: 'Số tiền phạt không hợp lệ' });
@@ -76,6 +76,7 @@ const debtController = {
         type: 'PENALTY',
         amount: Number(amount),
         description: description || 'Phạt vi phạm nội quy/chậm trễ',
+        targetDate: targetDate || new Date().toLocaleDateString('en-CA'),
         createdByAdminId: adminId
       });
       await tx.save();
@@ -86,6 +87,44 @@ const debtController = {
       if (req.io) emitToDriver(req.io, driverId, 'debt_updated', { debt: dr.walletDebt });
 
       res.status(201).json({ success: true, message: 'Thêm Tiền Phạt Thành Công!', data: dr.walletDebt });
+    } catch (e) {
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
+  // Sửa Xóa Tổng nợ của một Khung Ngày (Adjust Day Debt)
+  adjustDailyDebt: async (req, res) => {
+    try {
+      const { driverId } = req.params;
+      const { targetDate, newAmount } = req.body;
+      const adminId = req.admin._id;
+
+      const transactions = await DebtTransaction.find({ driverId }).lean();
+      let currentAmount = 0;
+      transactions.forEach(tx => {
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+        if (dateStr === targetDate && tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+          currentAmount += tx.amount;
+        }
+      });
+
+      const diff = Number(newAmount) - currentAmount;
+      if (diff === 0) return res.status(200).json({ success: true, message: 'Không có thay đổi' });
+
+      const tx = new DebtTransaction({
+        driverId,
+        type: diff > 0 ? 'PENALTY' : 'PAYMENT',
+        amount: diff,
+        description: `Điều chỉnh Sổ Đen tổng nợ ngày ${targetDate} (${diff > 0 ? '+' : ''}${diff.toLocaleString()}đ)`,
+        targetDate: targetDate,
+        createdByAdminId: adminId
+      });
+      await tx.save();
+
+      const dr = await Driver.findByIdAndUpdate(driverId, { $inc: { walletDebt: diff } }, { new: true });
+      if (req.io) emitToDriver(req.io, driverId, 'debt_updated', { debt: dr.walletDebt });
+
+      res.status(200).json({ success: true, message: 'Cập nhật thành công!' });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server' });
     }

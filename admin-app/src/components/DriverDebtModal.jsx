@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getDriverDebtDetail, addDriverPenalty, addDriverPayment, resetDriverDebt, deleteDriverDebt, updateDriverDebt } from '../services/api';
+import { getDriverDebtDetail, addDriverPenalty, addDriverPayment, resetDriverDebt, deleteDriverDebt, updateDriverDebt, adjustDailyDebt } from '../services/api';
 import CurrencyInput from './CurrencyInput';
 
 export default function DriverDebtModal({ driverId, isOpen, onClose }) {
@@ -69,6 +69,19 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
        loadData();
     } catch(err) {
        alert('Lỗi xóa giao dịch');
+    }
+  };
+
+  const handleAdjustDailyDebt = async (targetDate, newAmount) => {
+    setSubmitting(true);
+    try {
+      await adjustDailyDebt(driverId, targetDate, newAmount);
+      alert('Đã cập nhật/điều chỉnh tổng nợ ngày thành công!');
+      loadData();
+    } catch (err) {
+      alert('Lỗi điều chỉnh ngày nợ');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -154,13 +167,40 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
                             <p className="text-xs font-bold text-slate-500 uppercase">Khung Ngày: {new Date(day.date).toLocaleDateString('vi-VN')}</p>
                             <p className="text-xl font-black text-red-600">{day.amount.toLocaleString()} đ</p>
                          </div>
-                         <button 
-                           onClick={() => handleSubmit(null, day.amount, day.date)}
-                           disabled={submitting}
-                           className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-transform active:scale-95 disabled:opacity-50 inline-flex items-center gap-2 whitespace-nowrap"
-                         >
-                           {submitting ? '⏳ Đang Xử Lý...' : '✅ Xác Nhận Thu Ngày Này'}
-                         </button>
+                         <div className="flex flex-col gap-2 w-full sm:w-auto overflow-hidden">
+                           <button 
+                             onClick={() => handleSubmit(null, day.amount, day.date)}
+                             disabled={submitting}
+                             className="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform active:scale-95 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                           >
+                             {submitting ? '⏳ Đang Xử Lý...' : '✅ Xác Nhận Thu Hết Nợ Ngày Này'}
+                           </button>
+                           <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  let finalAmt = prompt(`Sửa Tổng Công Nợ của ngày ${new Date(day.date).toLocaleDateString('vi-VN')}:\n(Nhập số tiền chính xác VD: 50000)`, day.amount);
+                                  if (finalAmt !== null && finalAmt.trim() !== '' && !isNaN(finalAmt)) {
+                                     handleAdjustDailyDebt(day.date, parseInt(finalAmt));
+                                  }
+                                }}
+                                disabled={submitting}
+                                className="flex-1 bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 font-bold py-1.5 px-3 rounded text-xs"
+                              >
+                                ✏️ Sửa Nợ
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if(window.confirm('Bạn có chắc muốn XÓA SẠCH nợ của ngày này (cho về 0)?')) {
+                                     handleAdjustDailyDebt(day.date, 0);
+                                  }
+                                }}
+                                disabled={submitting}
+                                className="flex-1 bg-white border border-red-200 text-red-600 hover:bg-red-50 font-bold py-1.5 px-3 rounded text-xs"
+                              >
+                                🗑️ Xóa Nợ
+                              </button>
+                           </div>
+                         </div>
                        </div>
                      ))}
                    </div>

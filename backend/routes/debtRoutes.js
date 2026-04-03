@@ -15,6 +15,7 @@ router.use(onlyAdmin); // Khóa các route bên dưới chỉ cho Admin
 router.get('/driver/:driverId', debtController.getDriverDebtDetail);
 router.post('/driver/:driverId/penalty', debtController.addPenalty);
 router.post('/driver/:driverId/payment', debtController.addPayment);
+router.put('/driver/:driverId/daily-debt', debtController.adjustDailyDebt);
 router.post('/driver/:driverId/reset', debtController.resetDebt);
 router.put('/tx/:txId', debtController.updateDebt);
 router.delete('/tx/:txId', debtController.deleteDebt);

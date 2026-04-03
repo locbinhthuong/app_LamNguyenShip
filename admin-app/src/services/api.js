@@ -189,8 +189,13 @@ export const getDriverDebtDetail = async (driverId) => {
   return response.data;
 };
 
-export const addDriverPenalty = async (driverId, amount, description) => {
-  const response = await api.post(`/api/debts/driver/${driverId}/penalty`, { amount, description });
+export const addDriverPenalty = async (driverId, amount, description, targetDate = null) => {
+  const response = await api.post(`/api/debts/driver/${driverId}/penalty`, { amount, description, targetDate });
+  return response.data;
+};
+
+export const adjustDailyDebt = async (driverId, targetDate, newAmount) => {
+  const response = await api.put(`/api/debts/driver/${driverId}/daily-debt`, { targetDate, newAmount });
   return response.data;
 };
 
