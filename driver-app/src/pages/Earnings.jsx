@@ -193,7 +193,15 @@ export default function Earnings() {
             )}
 
             {/* Chi tiết từng ngày - Lịch sử cấn nợ (Công nợ theo dòng thời gian) */}
-            <h2 className="text-slate-800 font-bold mt-6 mb-3 px-1">Lịch Sử Cấn Nợ / Nạp Rút Sổ Đen</h2>
+            <div className="flex justify-between items-center mt-6 mb-3 px-1">
+              <h2 className="text-slate-800 font-bold">Lịch Sử Cấn Nợ / Nạp Rút Sổ Đen</h2>
+              <button 
+                onClick={fetchEarnings} 
+                className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
+              >
+                <span>🔄</span> Tải Lại Mới
+              </button>
+            </div>
             {loading ? (
                 <div className="flex justify-center p-4">
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -202,22 +210,46 @@ export default function Earnings() {
                 <div className="bg-slate-50 p-4 rounded-xl text-center text-slate-500 text-sm">Chưa có lịch sử phát sinh công nợ</div>
             ) : (
                 <div className="space-y-3 mb-6 max-h-80 overflow-y-auto pr-1">
-                  {debtTransactions.map((dtx) => (
-                     <div key={dtx._id} className="bg-white border text-sm border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm">
+                  {debtTransactions.map((dtx) => {
+                     let icon = '🟢';
+                     let title = 'Thanh Toán Vô Ví Nợ';
+                     let colorClass = 'text-emerald-600';
+                     let amountClass = dtx.amount > 0 ? 'text-red-500' : 'text-emerald-500';
+                     let bgClass = 'bg-white';
+
+                     if (dtx.type === 'PENALTY') {
+                        icon = '🔴';
+                        title = 'Trừ tiền Nợ';
+                        colorClass = 'text-red-600';
+                     } else if (dtx.status === 'REJECTED') {
+                        icon = '❌';
+                        title = 'Admin Từ Chối Nhận';
+                        colorClass = 'text-red-600';
+                        amountClass = 'text-slate-400 line-through';
+                        bgClass = 'bg-red-50/70 border-red-200';
+                     } else if (dtx.status === 'PENDING') {
+                        icon = '⏳';
+                        title = 'Đang Chờ Kế Toán Duyệt';
+                        colorClass = 'text-amber-600';
+                        amountClass = 'text-amber-600';
+                     }
+
+                     return (
+                     <div key={dtx._id} className={`${bgClass} border text-sm border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm`}>
                        <div>
-                          <p className={`font-semibold ${dtx.type === 'PENALTY' ? 'text-red-600' : 'text-emerald-600'}`}>
-                             {dtx.type === 'PENALTY' ? '🔴 Trừ tiền Nợ' : '🟢 Thanh Toán Vô Ví Nợ'}
+                          <p className={`font-semibold flex items-center gap-1 ${colorClass}`}>
+                             <span>{icon}</span> {title}
                           </p>
-                          <p className="text-slate-500 text-xs mt-0.5 line-clamp-1 w-48">{dtx.description}</p>
+                          <p className="text-slate-500 text-xs mt-0.5 pr-2" style={{ maxWidth: '200px', wordBreak: 'break-word' }}>{dtx.description}</p>
                           <p className="text-slate-400 text-[10px] mt-0.5">{new Date(dtx.createdAt).toLocaleString('vi-VN')}</p>
                        </div>
                        <div className="text-right">
-                          <p className={`font-black ${dtx.amount > 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                            {dtx.amount > 0 ? '+' : ''}{formatCurrency(dtx.amount)}
+                          <p className={`font-black ${amountClass}`}>
+                            {dtx.amount > 0 && dtx.status !== 'REJECTED' ? '+' : ''}{formatCurrency(dtx.amount)}
                           </p>
                        </div>
                      </div>
-                  ))}
+                  )})}
                 </div>
             )}
 
@@ -322,7 +354,15 @@ export default function Earnings() {
            </div>
 
            {/* Lịch Sử Giao Dịch Ví Điện Tử */}
-           <h2 className="text-slate-800 font-bold mb-3 px-1">Lịch sử Giao Dịch / Rút Tiền</h2>
+           <div className="flex justify-between items-center mb-3 px-1">
+             <h2 className="text-slate-800 font-bold">Lịch sử Giao Dịch / Rút Tiền</h2>
+             <button 
+               onClick={fetchEarnings} 
+               className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
+             >
+               <span>🔄</span> Tải Lại Mới
+             </button>
+           </div>
            {loading ? (
                 <div className="flex justify-center p-4">
                   <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
