@@ -244,7 +244,13 @@ export default function Orders() {
                     <p className="truncate"><span className="text-blue-500 font-bold">🏁</span> {order.deliveryAddress}</p>
                  </div>
               ) : (
-                 <p className="mb-2 truncate text-xs text-slate-500">{order.deliveryAddress}</p>
+                 <div className="mb-2 text-xs text-slate-500 flex flex-col gap-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <p className="truncate"><span className="font-bold text-slate-800">Từ:</span> {order.pickupAddress}</p>
+                    <p className="truncate"><span className="font-bold text-slate-800">Đến:</span> {order.deliveryAddress}</p>
+                    {(order.packageDetails?.description || order.note) && (
+                       <p className="truncate text-[10px] text-blue-600 font-bold bg-blue-100/50 rounded px-1 py-0.5">Mô tả: {order.packageDetails?.description || order.note}</p>
+                    )}
+                 </div>
               )}
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <p className="text-sm font-bold text-blue-600 mr-auto">Phí giao: {order.deliveryFee?.toLocaleString()}đ</p>
@@ -319,7 +325,13 @@ export default function Orders() {
                              <div className="flex items-start gap-1"><span className="text-blue-500 font-bold shrink-0">🏁 Đến:</span> <span className="truncate">{order.deliveryAddress}</span></div>
                           </div>
                        ) : (
-                          <span className="truncate block">{order.deliveryAddress}</span>
+                          <div className="flex flex-col gap-1">
+                             <span className="truncate block"><span className="font-bold text-slate-800">Từ:</span> {order.pickupAddress}</span>
+                             <span className="truncate block"><span className="font-bold text-slate-800">Đến:</span> {order.deliveryAddress}</span>
+                             {(order.packageDetails?.description || order.note) && (
+                                <span className="truncate block text-[10px] text-blue-600 font-bold bg-blue-50 rounded px-1 py-0.5 mt-0.5">Mô tả: {order.packageDetails?.description || order.note}</span>
+                             )}
+                          </div>
                        )}
                     </td>
                     <td className="table-td text-slate-600 text-sm">{order.assignedTo?.name || '—'}</td>

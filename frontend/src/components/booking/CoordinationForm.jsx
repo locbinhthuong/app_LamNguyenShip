@@ -58,10 +58,10 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
       deliveryAddress: '', // Điều phối thường chỉ cần 1 điểm (Nơi khách đứng)
       deliveryCoordinates: null,
       note: form.note.trim(),
+      senderPhone: form.senderPhone.trim(),
+      receiverPhone: '',
       packageDetails: {
-        description: title,
-        senderPhone: form.senderPhone.trim(),
-        receiverPhone: ''
+        description: title
       },
       financialDetails: {
         bankName: (subType === 'NAP_TIEN' || subType === 'RUT_TIEN') ? form.bankName.trim() : '',

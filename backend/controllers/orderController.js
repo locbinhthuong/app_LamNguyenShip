@@ -277,9 +277,10 @@ const orderController = {
     try {
       const { id } = req.params;
       const { 
-        customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, receiverPhone,
+        customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, senderPhone, receiverPhone,
         items, note, codAmount, deliveryFee, status, adminBonus,
         bulkyFee, surcharge, // Các phí mới
+        packageDescription, // Chi tiết Hàng hóa / Mua hộ
         vehicleClass, // Cập nhật loại xe nếu cần
         bankName, bankAccount, bankAccountName, transactionAmount // Nạp Rút
       } = req.body;
@@ -320,6 +321,7 @@ const orderController = {
       if (customerName) orderToUpdate.customerName = customerName;
       if (customerPhone) orderToUpdate.customerPhone = customerPhone;
       if (pickupPhone !== undefined) orderToUpdate.pickupPhone = pickupPhone;
+      if (senderPhone !== undefined) orderToUpdate.senderPhone = senderPhone;
       if (receiverPhone !== undefined) orderToUpdate.receiverPhone = receiverPhone;
       if (pickupAddress) orderToUpdate.pickupAddress = pickupAddress;
       if (deliveryAddress) orderToUpdate.deliveryAddress = deliveryAddress;
@@ -330,9 +332,10 @@ const orderController = {
       if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
-      if (bulkyFee !== undefined) {
+      if (bulkyFee !== undefined || packageDescription !== undefined) {
         if (!orderToUpdate.packageDetails) orderToUpdate.packageDetails = {};
-        orderToUpdate.packageDetails.bulkyFee = bulkyFee;
+        if (bulkyFee !== undefined) orderToUpdate.packageDetails.bulkyFee = bulkyFee;
+        if (packageDescription !== undefined) orderToUpdate.packageDetails.description = packageDescription;
       }
       if (surcharge !== undefined) {
         if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};

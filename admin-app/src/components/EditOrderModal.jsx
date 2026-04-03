@@ -16,6 +16,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     bankAccountName: '',
     transactionAmount: 0,
     note: '',
+    packageDescription: '',
     adminBonus: 0
   });
 
@@ -38,6 +39,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         bankAccountName: order.financialDetails?.bankAccountName || '',
         transactionAmount: order.financialDetails?.transactionAmount || 0,
         note: order.note || '',
+        packageDescription: order.packageDetails?.description || '',
         adminBonus: order.adminBonus || 0
       });
     }
@@ -111,6 +113,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               </div>
             )}
           </div>
+          
+          {(order.serviceType === 'GIAO_HANG' || order.serviceType === 'MUA_HO') && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Mô Tả Hàng Hóa / Tên món mua hộ</label>
+              <textarea name="packageDescription" value={formData.packageDescription} onChange={handleChange} rows="2" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" placeholder="VD: Mua 2 ly trà sữa, giao tài liệu..."></textarea>
+            </div>
+          )}
           </div>
           
           {order.serviceType !== 'DIEU_PHOI' && (

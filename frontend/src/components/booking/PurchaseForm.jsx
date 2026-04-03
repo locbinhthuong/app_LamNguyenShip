@@ -40,11 +40,11 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       deliveryAddress: form.deliveryAddress.trim(),
       deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
       note: '',
+      senderPhone: form.senderPhone.trim(),
+      receiverPhone: form.receiverPhone.trim(),
       packageDetails: {
         description: `NHỜ MUA: ${form.itemsToBuy.trim()}`,
-        itemsToBuy: [form.itemsToBuy.trim()],
-        senderPhone: form.senderPhone.trim(),
-        receiverPhone: form.receiverPhone.trim()
+        itemsToBuy: [form.itemsToBuy.trim()]
       }
     });
   };

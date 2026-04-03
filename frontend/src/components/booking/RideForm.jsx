@@ -54,15 +54,13 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       deliveryAddress: form.deliveryAddress.trim(),
       deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
       note: form.note.trim(),
+      senderPhone: form.senderPhone.trim(),
+      receiverPhone: form.receiverPhone.trim(),
       rideDetails: {
         vehicleType: subType === 'LAI_HO_OTO' ? 'OTO' : 'XE_MAY',
         vehicleClass: (subType === 'LAI_HO_XE_MAY' || subType === 'LAI_HO_OTO') ? vehicleClass : '',
         passengerCount: 1,
         surcharge: 0 // Admin/Tài xế báo phụ phí sau
-      },
-      packageDetails: { // Re-using package details for sender/receiver phone
-        senderPhone: form.senderPhone.trim(),
-        receiverPhone: form.receiverPhone.trim()
       }
     });
   };
