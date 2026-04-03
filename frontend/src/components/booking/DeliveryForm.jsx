@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Package, DollarSign } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
 import CurrencyInput from '../CurrencyInput';
+import AddressAutocompleteInput from '../AddressAutocompleteInput';
 
 export default function DeliveryForm({ onBooking, loading, defaultLocation, defaultPhone }) {
   const [form, setForm] = useState({
@@ -32,7 +33,6 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     if (!form.pickupAddress.trim()) {
       return alert('Vui lòng chọn hoặc nhập Điểm Lấy Hàng (Nơi gửi)!');
     }
-    if (!form.senderPhone.trim()) return alert('Vui lòng nhập Số điện thoại người gửi!');
 
     // Gửi payload lên Component Cha (BookingFlow)
     onBooking({
@@ -80,24 +80,19 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
               ĐIỂM LẤY HÀNG (NGƯỜI GỬI)
             </label>
-            <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300">
-              <input 
-                type="text"
-                placeholder="Nhập địa chỉ lấy hàng..."
-                className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+            <div className="flex flex-col gap-2 relative">
+              <AddressAutocompleteInput 
                 value={form.pickupAddress}
-                onChange={e => setForm({...form, pickupAddress: e.target.value})}
+                onChangeText={txt => setForm({...form, pickupAddress: txt})}
+                onSelectCoordinates={coords => setForm({...form, pickupCoordinates: coords})}
+                placeholder="Nhập địa chỉ lấy hàng..."
+                onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300 shadow-sm"
               />
-              <div 
-                className="bg-blue-50 p-3 text-blue-600 cursor-pointer active:bg-blue-100 flex items-center justify-center border-l border-blue-100"
-                onClick={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
-              >
-                <MapPin size={20} />
-              </div>
             </div>
             <div className="mt-2">
               <input 
-                type="tel" placeholder="SĐT Của Bạn (Người gửi) * Bắt buộc" required
+                type="tel" placeholder="SĐT Của Bạn (Người gửi) - Tùy chọn"
                 className="w-full text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-bold text-slate-800"
                 value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
               />
@@ -116,20 +111,15 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
               ĐIỂM GIAO HÀNG (CÓ THỂ ĐỂ TRỐNG NẾU CHƯA CÓ)
             </label>
-            <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300">
-              <input 
-                type="text"
-                placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
-                className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+            <div className="flex flex-col gap-2 relative mb-2">
+              <AddressAutocompleteInput 
                 value={form.deliveryAddress}
-                onChange={e => setForm({...form, deliveryAddress: e.target.value})}
+                onChangeText={txt => setForm({...form, deliveryAddress: txt})}
+                onSelectCoordinates={coords => setForm({...form, deliveryCoordinates: coords})}
+                placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
+                onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
               />
-              <div 
-                className="bg-sky-50 p-3 text-sky-600 cursor-pointer active:bg-sky-100 flex items-center justify-center border-l border-sky-100"
-                onClick={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
-              >
-                <MapPin size={20} />
-              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <input 

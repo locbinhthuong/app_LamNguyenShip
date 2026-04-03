@@ -610,6 +610,43 @@ const authController = {
     }
   },
 
+  // PUT /api/auth/customer/me
+  updateOwnCustomerProfile: async (req, res) => {
+    try {
+      const { name, phone, password } = req.body;
+      const updateData = {};
+      if (name) updateData.name = name;
+
+      if (phone && phone !== req.customer.phone) {
+         // Check if phone already exists
+         const existingUser = await User.findOne({ phone, _id: { $ne: req.customer._id } });
+         if (existingUser) {
+           return res.status(400).json({ success: false, message: 'Số điện thoại đã được đăng ký bởi tài khoản khác' });
+         }
+         updateData.phone = phone;
+      }
+
+      if (password) {
+         updateData.password = await bcrypt.hash(password, 10);
+      }
+
+      const user = await User.findByIdAndUpdate(
+        req.customer._id,
+        updateData,
+        { new: true, runValidators: true }
+      ).select('-password');
+
+      res.status(200).json({
+        success: true,
+        message: 'Cập nhật thông tin thành công',
+        data: user
+      });
+    } catch (error) {
+       console.error('Error updateOwnCustomerProfile:', error);
+       res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật thông tin' });
+    }
+  },
+
   // POST /api/auth/fcm-token
   updateFcmToken: async (req, res) => {
     try {

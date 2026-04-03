@@ -39,6 +39,7 @@ export default function Layout() {
     { to: '/finance',              icon: '🏦', label: 'Tài chính' },
     { to: '/announcements',        icon: '📰', label: 'Bảng Tin' },
     { to: '/drivers',              icon: '🚗', label: 'Tài xế' },
+    { to: '/customers',            icon: '👥', label: 'Khách hàng' },
   ];
 
   return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Wallet, Landmark, Handshake, CreditCard, DollarSign } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
 import CurrencyInput from '../CurrencyInput';
+import AddressAutocompleteInput from '../AddressAutocompleteInput';
 
 export default function CoordinationForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
   const [subType, setSubType] = useState('GAP_TRUC_TIEP'); // NAP_TIEN, RUT_TIEN, GAP_TRUC_TIEP
@@ -11,6 +12,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
     customerPhone: defaultPhone || '',
     pickupAddress: defaultLocation?.address || '',
     pickupCoordinates: defaultLocation?.coordinates || null,
+    senderPhone: '',
     bankName: '',
     bankAccount: '',
     bankAccountName: '',
@@ -57,7 +59,9 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
       deliveryCoordinates: null,
       note: form.note.trim(),
       packageDetails: {
-        description: title
+        description: title,
+        senderPhone: form.senderPhone.trim(),
+        receiverPhone: ''
       },
       financialDetails: {
         bankName: (subType === 'NAP_TIEN' || subType === 'RUT_TIEN') ? form.bankName.trim() : '',
@@ -125,20 +129,22 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
                 BẠN ĐANG Ở ĐÂU VÀ MUỐN GẶP Ở ĐÂU?
               </label>
-              <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300">
-                <input 
-                  type="text"
-                  placeholder="Nhập địa chỉ giao dịch..."
-                  className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+              <div className="flex flex-col gap-2 relative">
+                <AddressAutocompleteInput 
                   value={form.pickupAddress}
-                  onChange={e => setForm({...form, pickupAddress: e.target.value})}
+                  onChangeText={txt => setForm({...form, pickupAddress: txt})}
+                  onSelectCoordinates={coords => setForm({...form, pickupCoordinates: coords})}
+                  placeholder="Nhập địa chỉ giao dịch..."
+                  onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300 shadow-sm"
                 />
-                <div 
-                  className="bg-indigo-50 p-3 text-indigo-600 cursor-pointer active:bg-indigo-100 flex items-center justify-center border-l border-indigo-100"
-                  onClick={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
-                >
-                  <MapPin size={20} />
-                </div>
+                <input 
+                  type="tel"
+                  placeholder="SĐT người giao dịch (Tùy chọn)"
+                  className="w-full text-sm font-semibold text-gray-800 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-indigo-300"
+                  value={form.senderPhone}
+                  onChange={e => setForm({...form, senderPhone: e.target.value})}
+                />
               </div>
             </div>
           </div>

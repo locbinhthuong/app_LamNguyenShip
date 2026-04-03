@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Bike, Car, Key, Shield } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
+import AddressAutocompleteInput from '../AddressAutocompleteInput';
 
 export default function RideForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
   const [subType, setSubType] = useState('XE_OM'); // XE_OM, LAI_HO_XE_MAY, LAI_HO_OTO
@@ -11,8 +12,10 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
     customerPhone: defaultPhone || '',
     pickupAddress: defaultLocation?.address || '',
     pickupCoordinates: defaultLocation?.coordinates || null,
+    senderPhone: '',
     deliveryAddress: '',
     deliveryCoordinates: null,
+    receiverPhone: '',
     note: ''
   });
 
@@ -56,6 +59,10 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
         vehicleClass: (subType === 'LAI_HO_XE_MAY' || subType === 'LAI_HO_OTO') ? vehicleClass : '',
         passengerCount: 1,
         surcharge: 0 // Admin/Tài xế báo phụ phí sau
+      },
+      packageDetails: { // Re-using package details for sender/receiver phone
+        senderPhone: form.senderPhone.trim(),
+        receiverPhone: form.receiverPhone.trim()
       }
     });
   };
@@ -148,20 +155,22 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
               ĐIỂM ĐÓN (BẠN ĐANG Ở ĐÂU)
             </label>
-            <div className="flex items-center mb-2 bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300">
-              <input 
-                type="text"
-                placeholder="Nhập địa chỉ đón..."
-                className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+            <div className="flex flex-col gap-2 relative">
+              <AddressAutocompleteInput 
                 value={form.pickupAddress}
-                onChange={e => setForm({...form, pickupAddress: e.target.value})}
+                onChangeText={txt => setForm({...form, pickupAddress: txt})}
+                onSelectCoordinates={coords => setForm({...form, pickupCoordinates: coords})}
+                placeholder="Nhập địa chỉ đón..."
+                onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300 shadow-sm"
               />
-              <div 
-                className="bg-blue-50 p-3 text-blue-600 cursor-pointer active:bg-blue-100 flex items-center justify-center border-l border-blue-100"
-                onClick={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
-              >
-                <MapPin size={20} />
-              </div>
+              <input 
+                type="tel"
+                placeholder="SĐT người đi / SĐT tại điểm đón (Tùy chọn)"
+                className="w-full text-sm font-semibold text-gray-800 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300"
+                value={form.senderPhone}
+                onChange={e => setForm({...form, senderPhone: e.target.value})}
+              />
             </div>
           </div>
         </div>
@@ -177,20 +186,22 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
               ĐIỂM ĐẾN (BẠN MUỐN ĐI ĐÂU)
             </label>
-            <div className="flex items-center bg-white border border-gray-100 rounded-xl overflow-hidden focus-within:border-red-300">
-              <input 
-                type="text"
-                placeholder="Nhập địa chỉ đến..."
-                className="flex-1 text-sm font-semibold text-gray-800 outline-none p-3 bg-transparent"
+            <div className="flex flex-col gap-2 relative mt-1">
+              <AddressAutocompleteInput 
                 value={form.deliveryAddress}
-                onChange={e => setForm({...form, deliveryAddress: e.target.value})}
+                onChangeText={txt => setForm({...form, deliveryAddress: txt})}
+                onSelectCoordinates={coords => setForm({...form, deliveryCoordinates: coords})}
+                placeholder="Nhập địa chỉ đến..."
+                onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-red-300 shadow-sm"
               />
-              <div 
-                className="bg-red-50 p-3 text-red-600 cursor-pointer active:bg-red-100 flex items-center justify-center border-l border-red-100"
-                onClick={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
-              >
-                <MapPin size={20} />
-              </div>
+              <input 
+                type="tel"
+                placeholder="SĐT người gọi giùm tại điểm đến (Tùy chọn)"
+                className="w-full text-sm font-semibold text-gray-800 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-red-300"
+                value={form.receiverPhone}
+                onChange={e => setForm({...form, receiverPhone: e.target.value})}
+              />
             </div>
           </div>
         </div>

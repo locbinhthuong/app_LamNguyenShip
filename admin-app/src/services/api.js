@@ -240,4 +240,25 @@ export const deleteWalletTxAdmin = async (txId) => {
   return response.data;
 };
 
+// ==================== USERS (CUSTOMERS) ====================
+export const getCustomers = async () => {
+  const response = await api.get('/api/users');
+  return response.data;
+};
+
+export const createCustomer = async (data) => {
+  const response = await api.post('/api/users', data);
+  return response.data;
+};
+
+export const updateCustomer = async (id, data) => {
+  const response = await api.put(`/api/users/${id}`, data);
+  return response.data;
+};
+
+export const deleteCustomer = async (id) => {
+  const response = await api.delete(`/api/users/${id}`);
+  return response.data;
+};
+
 export default api;
