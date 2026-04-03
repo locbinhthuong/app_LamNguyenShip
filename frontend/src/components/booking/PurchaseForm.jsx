@@ -34,8 +34,8 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
 
     onBooking({
       serviceType: 'MUA_HO',
-      customerName: customerData?.name || form.customerName,
-      customerPhone: defaultPhone || form.customerPhone,
+      customerName: form.customerName.trim() || customerData?.name,
+      customerPhone: form.customerPhone.trim() || defaultPhone,
       pickupAddress: form.pickupAddress.trim(),
       pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
       deliveryAddress: form.deliveryAddress.trim(),
@@ -88,9 +88,10 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
               />
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <input 
-                  type="tel" disabled value={defaultPhone || 'SĐT Của Bạn (Chính)'}
-                  className="w-full text-xs bg-slate-100 border border-slate-200 p-3 rounded-xl outline-none font-medium text-slate-500"
-                  title="Số điện thoại chính của đơn (Không thể sửa)"
+                  type="tel"
+                  placeholder="SĐT Lấy Hàng (Chính)"
+                  className="w-full text-xs font-semibold text-orange-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
+                  value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
                 />
                 <input 
                   type="tel"

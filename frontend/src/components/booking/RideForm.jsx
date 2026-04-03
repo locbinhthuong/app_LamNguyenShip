@@ -165,9 +165,11 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
               />
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <input 
-                  type="tel" disabled value={defaultPhone || 'SĐT Của Bạn (Chính)'}
-                  className="w-full text-xs bg-slate-100 border border-slate-200 p-3 rounded-xl outline-none font-medium text-slate-500"
-                  title="Số điện thoại chính của đơn (Không thể sửa)"
+                  type="tel"
+                  placeholder="SĐT Đón Khách (Chính)"
+                  className="w-full text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300"
+                  value={form.customerPhone}
+                  onChange={e => setForm({...form, customerPhone: e.target.value})}
                 />
                 <input 
                   type="tel"

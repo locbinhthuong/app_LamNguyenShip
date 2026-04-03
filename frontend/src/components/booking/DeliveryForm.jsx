@@ -7,7 +7,8 @@ import AddressAutocompleteInput from '../AddressAutocompleteInput';
 export default function DeliveryForm({ onBooking, loading, defaultLocation, defaultPhone }) {
   const [form, setForm] = useState({
     senderName: '',
-    senderPhone: defaultPhone || '',
+    customerPhone: defaultPhone || '',
+    senderPhone: '',
     pickupAddress: defaultLocation?.address || '',
     pickupCoordinates: defaultLocation?.coordinates || null,
     
@@ -37,7 +38,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     onBooking({
       serviceType: 'GIAO_HANG',
       senderName: form.senderName.trim() || 'Khách đặt qua App',
-      senderPhone: form.senderPhone.trim() || defaultPhone,
+      customerPhone: form.customerPhone.trim() || defaultPhone,
+      senderPhone: form.senderPhone.trim(),
       receiverName: form.receiverName.trim(),
       receiverPhone: form.receiverPhone.trim(),
       receiverPhone2: form.receiverPhone2.trim(),
@@ -92,9 +94,10 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <input 
-                type="tel" disabled value={defaultPhone || 'SĐT Của Bạn'}
-                className="w-full text-xs bg-slate-100 border border-slate-200 p-2.5 rounded-xl outline-none font-medium text-slate-500"
-                title="Số điện thoại chính của đơn (Không thể sửa)"
+                type="tel"
+                placeholder="SĐT Lấy Hàng (Chính)"
+                className="w-full text-xs font-semibold text-orange-600 outline-none p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
+                value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
               />
               <input 
                 type="tel" placeholder="SĐT Phụ Lấy Hàng (Tùy chọn)"

@@ -246,26 +246,37 @@ export default function OrderDetail() {
                <div className="mb-5 relative">
                   <div className="absolute -left-[27px] top-1 w-3 h-3 bg-orange-400 rounded-full ring-4 ring-orange-50"></div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : 'NGƯỜI GỬI / NƠI LẤY'}</p>
-                  <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight mb-1">{order.pickupAddress}</p>
+                  <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight mb-2">{order.pickupAddress || 'Chưa xác định'}</p>
                   
-                  {order.serviceType !== 'DAT_XE' && (order.senderName || order.pickupPhone) && (
-                     <p className="text-xs text-slate-500 font-medium">👤 {order.senderName || 'Người gửi'} - 📞 {order.senderPhone || order.pickupPhone}</p>
-                  )}
-                  {order.serviceType === 'DAT_XE' && order.customerName && (
-                     <p className="text-xs text-slate-500 font-medium">👤 {order.customerName} - 📞 {order.customerPhone}</p>
-                  )}
+                  <div className="space-y-1">
+                    <p className="text-xs text-slate-600 font-medium">👤 {order.senderName || order.customerName || 'Người đặt'}</p>
+                    <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
+                      <span className="font-bold text-orange-600">SĐT Chính:</span> {order.customerPhone || order.pickupPhone}
+                      {order.senderPhone && order.senderPhone !== order.customerPhone && (
+                        <span> | <span className="font-bold text-slate-600">SĐT Phụ:</span> {order.senderPhone}</span>
+                      )}
+                    </p>
+                  </div>
                </div>
 
                {/* ĐIỂM ĐẾN */}
-               <div className="relative">
-                  <div className="absolute -left-[27px] top-1 w-3 h-3 bg-blue-500 rounded-full ring-4 ring-blue-50"></div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN' : 'NGƯỜI NHẬN / NƠI GIAO'}</p>
-                  <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight mb-1">{order.deliveryAddress}</p>
-                  
-                  {order.serviceType !== 'DAT_XE' && (order.receiverName || order.customerName) && (
-                     <p className="text-xs text-slate-500 font-medium">👤 {order.receiverName || order.customerName} - 📞 {order.receiverPhone || order.customerPhone}</p>
-                  )}
-               </div>
+               {order.serviceType !== 'DIEU_PHOI' && (
+                 <div className="relative">
+                    <div className="absolute -left-[27px] top-1 w-3 h-3 bg-blue-500 rounded-full ring-4 ring-blue-50"></div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'NGƯỜI NHẬN / NƠI GIAO'}</p>
+                    <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight mb-2">{order.deliveryAddress || 'Chưa xác định'}</p>
+                    
+                    <div className="space-y-1">
+                      <p className="text-xs text-slate-600 font-medium">👤 {order.receiverName || order.customerName || 'Khách hàng'}</p>
+                      <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
+                        <span className="font-bold text-blue-600">SĐT Chính:</span> {order.receiverPhone || order.customerPhone}
+                        {order.receiverPhone2 && (
+                          <span> | <span className="font-bold text-slate-600">SĐT Phụ:</span> {order.receiverPhone2}</span>
+                        )}
+                      </p>
+                    </div>
+                 </div>
+               )}
             </div>
             
             {/* THÔNG TIN XE CHO LÁI HỘ / XE ÔM */}
