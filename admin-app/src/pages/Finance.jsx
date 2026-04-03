@@ -210,7 +210,7 @@ export default function Finance() {
                 </table>
              </div>
              <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
-                <span className="w-2 h-6 bg-blue-400 rounded-full"></span> Danh Sách Quản Lý Công Nợ / Ví Tài Xế
+                <span className="w-2 h-6 bg-blue-400 rounded-full"></span> Danh Sách Quản Lý Công Nợ Tài Xế
              </h2>
              <div className="border border-slate-200 rounded-xl overflow-x-auto mb-8">
                 <table className="w-full text-left text-sm whitespace-nowrap">
@@ -218,9 +218,7 @@ export default function Finance() {
                     <tr>
                       <th className="px-4 py-3 font-semibold min-w-[200px]">Tài xế</th>
                       <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Nợ Còn Thiếu</th>
-                      <th className="px-4 py-3 font-semibold border-r border-slate-200 text-center">Quản Lý Sổ Đen</th>
-                      <th className="px-4 py-3 font-semibold text-right">Số dư Ví</th>
-                      <th className="px-4 py-3 font-semibold text-center">Quản Lý Ví</th>
+                      <th className="px-4 py-3 font-semibold text-center mt-1">Quản Lý Sổ Đen</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -236,7 +234,7 @@ export default function Finance() {
                                 {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Thanh toán đủ'}
                             </span>
                          </td>
-                         <td className="px-4 py-3 border-r border-slate-100 text-center">
+                         <td className="px-4 py-3 text-center">
                             <button
                               onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
                               className="rounded-lg bg-orange-50 px-4 py-2 text-xs font-bold text-orange-600 hover:bg-orange-100 transition-colors shadow-sm"
@@ -245,19 +243,7 @@ export default function Finance() {
                             </button>
                          </td>
                          
-                         <td className="px-4 py-3 text-right">
-                            <span className={`font-black ${drv.walletBalance > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
-                                {drv.walletBalance > 0 ? drv.walletBalance.toLocaleString() + ' đ' : '0 đ'}
-                            </span>
-                         </td>
-                         <td className="px-4 py-3 text-center">
-                            <button
-                              onClick={() => setWalletModal({ isOpen: true, driverId: drv._id })}
-                              className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm"
-                            >
-                              🏦 Ví
-                            </button>
-                         </td>
+
                       </tr>
                     ))}
                   </tbody>
@@ -356,6 +342,43 @@ export default function Finance() {
                          <td className="px-4 py-3 text-center">
                             <button onClick={() => handleDeleteWalletTx(tx._id)} className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-1.5 rounded transition-colors text-xs font-bold" title="Xóa lệnh này">
                                XÓA
+                            </button>
+                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
+             <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
+                <span className="w-2 h-6 bg-emerald-400 rounded-full"></span> Danh Sách Quản Lý Ví Bóp Tài Xế
+             </h2>
+             <div className="border border-slate-200 rounded-xl overflow-x-auto mb-8">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold min-w-[200px]">Tài xế</th>
+                      <th className="px-4 py-3 font-semibold text-right">Số dư Ví</th>
+                      <th className="px-4 py-3 font-semibold text-center w-32">Quản Lý Ví</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {drivers.map(drv => (
+                      <tr key={drv._id} className="hover:bg-slate-50">
+                         <td className="px-4 py-3">
+                            <div className="font-bold text-slate-800">{drv.name}</div>
+                            <div className="text-xs text-slate-500">{drv.phone}</div>
+                         </td>
+                         <td className="px-4 py-3 text-right">
+                            <span className={`font-black ${drv.walletBalance > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                {drv.walletBalance > 0 ? drv.walletBalance.toLocaleString() + ' đ' : '0 đ'}
+                            </span>
+                         </td>
+                         <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => setWalletModal({ isOpen: true, driverId: drv._id })}
+                              className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm"
+                            >
+                              🏦 Nạp / Rút Ví
                             </button>
                          </td>
                       </tr>
