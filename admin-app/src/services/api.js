@@ -261,4 +261,25 @@ export const deleteCustomer = async (id) => {
   return response.data;
 };
 
+// ==================== STAFF (ADMIN_USERS) ====================
+export const getStaffs = async () => {
+  const response = await api.get('/api/staffs');
+  return response.data;
+};
+
+export const createStaff = async (data) => {
+  const response = await api.post('/api/staffs', data);
+  return response.data;
+};
+
+export const updateStaff = async (id, data) => {
+  const response = await api.put(`/api/staffs/${id}`, data);
+  return response.data;
+};
+
+export const deleteStaff = async (id) => {
+  const response = await api.delete(`/api/staffs/${id}`);
+  return response.data;
+};
+
 export default api;

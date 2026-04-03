@@ -17,6 +17,7 @@ const announcementRoutes = require('./routes/announcementRoutes');
 const debtRoutes = require('./routes/debtRoutes');
 const walletRoutes = require('./routes/walletRoutes');
 const userRoutes = require('./routes/userRoutes');
+const staffRoutes = require('./routes/staffRoutes');
 const { setupSocket } = require('./sockets/index');
 
 const app = express();
@@ -147,6 +148,7 @@ app.use('/api/debts', debtRoutes);
 app.use('/api/wallets', walletRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/staffs', staffRoutes);
 
 // Phục vụ các File tĩnh từ thư mục /uploads
 const path = require('path');

@@ -12,12 +12,14 @@ import DriverDetail from './pages/DriverDetail';
 import Announcements from './pages/Announcements';
 import Finance from './pages/Finance';
 import Customers from './pages/Customers';
+import Dispatchers from './pages/Dispatchers';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }) => {
   const { admin, loading } = useAuth();
   if (loading) return <div className="flex items-center justify-center min-h-screen bg-slate-50"><div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" /></div>;
-  return admin ? children : <Navigate to="/login" />;
+  if (!admin) return <Navigate to="/login" />;
+  return children;
 };
 
 export default function App() {
@@ -36,6 +38,7 @@ export default function App() {
         <Route path="revenue" element={<Revenue />} />
         <Route path="customers" element={<Customers />} />
         <Route path="announcements" element={<Announcements />} />
+        <Route path="dispatchers" element={<Dispatchers />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminSocket } from '../hooks/useAdminSocket';
 import DebtApprovalModal from './DebtApprovalModal';
@@ -7,6 +7,7 @@ import DebtApprovalModal from './DebtApprovalModal';
 export default function Layout() {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   useAdminSocket();
 
@@ -21,6 +22,17 @@ export default function Layout() {
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
+  useEffect(() => {
+    // Chặn tổng đài viên truy cập Dashboard và các trang không được phép
+    if (admin?.role === 'staff') {
+      const allowedPaths = ['/orders', '/driver-map'];
+      const isAllowed = allowedPaths.some(p => location.pathname === p || location.pathname.startsWith('/orders/'));
+      if (!isAllowed) {
+        navigate('/orders', { replace: true });
+      }
+    }
+  }, [admin, location.pathname, navigate]);
+
   const handleLogout = () => {
     if (confirm('Đăng xuất?')) { logout(); navigate('/login'); }
   };
@@ -31,16 +43,23 @@ export default function Layout() {
       : 'text-slate-600 hover:bg-blue-50 hover:bg-blue-100 hover:text-blue-500'
     }`;
 
-  const NAV_ITEMS = [
-    { to: '/',         end: true,  icon: '📊', label: 'Dashboard' },
-    { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
-    { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
-    ...(admin?.role === 'admin' ? [{ to: '/revenue', icon: '💰', label: 'Doanh thu' }] : []),
-    { to: '/finance',              icon: '🏦', label: 'Tài chính' },
-    { to: '/announcements',        icon: '📰', label: 'Bảng Tin' },
-    { to: '/drivers',              icon: '🚗', label: 'Tài xế' },
-    { to: '/customers',            icon: '👥', label: 'Khách hàng' },
-  ];
+  // Phân quyền hiển thị Menu
+  const NAV_ITEMS = admin?.role === 'staff' 
+    ? [
+        { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
+        { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
+      ]
+    : [
+        { to: '/',         end: true,  icon: '📊', label: 'Dashboard' },
+        { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
+        { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
+        ...(admin?.role === 'admin' ? [{ to: '/revenue', icon: '💰', label: 'Doanh thu' }] : []),
+        { to: '/finance',              icon: '🏦', label: 'Tài chính' },
+        { to: '/announcements',        icon: '📰', label: 'Bảng Tin' },
+        { to: '/drivers',              icon: '🚗', label: 'Tài xế' },
+        { to: '/customers',            icon: '👥', label: 'Khách hàng' },
+        ...(admin?.role === 'admin' ? [{ to: '/dispatchers', icon: '🎧', label: 'Tổng đài viên' }] : []),
+      ];
 
   return (
     <div className="flex min-h-screen overflow-x-hidden bg-slate-50">
