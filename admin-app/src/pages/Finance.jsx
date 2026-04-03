@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import DriverDebtModal from '../components/DriverDebtModal';
+import DriverWalletModal from '../components/DriverWalletModal';
 
 export default function Finance() {
   const [loading, setLoading] = useState(true);
@@ -10,13 +12,20 @@ export default function Finance() {
     recentWallets: []
   });
   const [activeTab, setActiveTab] = useState('debts'); // 'debts' | 'wallets'
+  const [drivers, setDrivers] = useState([]);
+  const [debtModal, setDebtModal] = useState({ isOpen: false, driverId: null });
+  const [walletModal, setWalletModal] = useState({ isOpen: false, driverId: null });
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await api.get('/api/finance/all-requests');
+      const drvRes = await api.get('/api/drivers');
       if (res.data.success) {
         setData(res.data.data);
+      }
+      if (drvRes.data.success) {
+        setDrivers(drvRes.data.data);
       }
     } catch (e) {
       console.error(e);
@@ -200,6 +209,60 @@ export default function Finance() {
                   </tbody>
                 </table>
              </div>
+             <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
+                <span className="w-2 h-6 bg-blue-400 rounded-full"></span> Danh Sách Quản Lý Công Nợ / Ví Tài Xế
+             </h2>
+             <div className="border border-slate-200 rounded-xl overflow-x-auto mb-8">
+                <table className="w-full text-left text-sm whitespace-nowrap">
+                  <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold min-w-[200px]">Tài xế</th>
+                      <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Nợ Còn Thiếu</th>
+                      <th className="px-4 py-3 font-semibold border-r border-slate-200 text-center">Quản Lý Sổ Đen</th>
+                      <th className="px-4 py-3 font-semibold text-right">Số dư Ví</th>
+                      <th className="px-4 py-3 font-semibold text-center">Quản Lý Ví</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {drivers.map(drv => (
+                      <tr key={drv._id} className="hover:bg-slate-50">
+                         <td className="px-4 py-3">
+                            <div className="font-bold text-slate-800">{drv.name}</div>
+                            <div className="text-xs text-slate-500">{drv.phone}</div>
+                         </td>
+                         
+                         <td className="px-4 py-3 text-right border-l border-slate-100">
+                            <span className={`font-black ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                                {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Thanh toán đủ'}
+                            </span>
+                         </td>
+                         <td className="px-4 py-3 border-r border-slate-100 text-center">
+                            <button
+                              onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
+                              className="rounded-lg bg-orange-50 px-4 py-2 text-xs font-bold text-orange-600 hover:bg-orange-100 transition-colors shadow-sm"
+                            >
+                              📓 Nợ (Sổ Đen)
+                            </button>
+                         </td>
+                         
+                         <td className="px-4 py-3 text-right">
+                            <span className={`font-black ${drv.walletBalance > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
+                                {drv.walletBalance > 0 ? drv.walletBalance.toLocaleString() + ' đ' : '0 đ'}
+                            </span>
+                         </td>
+                         <td className="px-4 py-3 text-center">
+                            <button
+                              onClick={() => setWalletModal({ isOpen: true, driverId: drv._id })}
+                              className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm"
+                            >
+                              🏦 Ví
+                            </button>
+                         </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+             </div>
           </div>
         )}
 
@@ -303,6 +366,16 @@ export default function Finance() {
           </div>
         )}
       </div>
+      <DriverDebtModal 
+        isOpen={debtModal.isOpen} 
+        driverId={debtModal.driverId} 
+        onClose={() => setDebtModal({ isOpen: false, driverId: null })} 
+      />
+      <DriverWalletModal 
+        isOpen={walletModal.isOpen} 
+        driverId={walletModal.driverId} 
+        onClose={() => setWalletModal({ isOpen: false, driverId: null })} 
+      />
     </div>
   );
 }

@@ -117,9 +117,14 @@ export default function OrderDetail() {
             </h1>
             <p className="truncate text-[11px] font-bold text-blue-600 bg-blue-50 max-w-max px-2 py-0.5 rounded uppercase mt-0.5 border border-blue-100">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
           </div>
-          <span className="shrink-0 rounded-full bg-blue-500 px-2 py-1 text-xs font-bold text-white sm:px-3 sm:text-sm">
-            {STATUS_LABELS[order.status] || order.status}
-          </span>
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-bold text-white sm:px-3 sm:text-sm">
+              {STATUS_LABELS[order.status] || order.status}
+            </span>
+            <button onClick={loadOrder} className="text-[10px] bg-slate-100 px-2 py-1.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 active:scale-95 transition-all shadow-sm flex items-center gap-1 border border-slate-200">
+               🔄 LÀM MỚI ĐƠN
+            </button>
+          </div>
         </div>
 
         {/* Progress */}

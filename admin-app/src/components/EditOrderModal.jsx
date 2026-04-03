@@ -5,6 +5,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
+    senderPhone: '',
     receiverPhone: '',
     pickupAddress: '',
     deliveryAddress: '',
@@ -23,6 +24,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
       setFormData({
         customerName: order.customerName || '',
         customerPhone: order.customerPhone || '',
+        senderPhone: order.senderPhone || '',
         receiverPhone: order.receiverPhone || '',
         pickupAddress: order.pickupAddress || '',
         deliveryAddress: order.deliveryAddress || '',
@@ -97,12 +99,18 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               </label>
               <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
             </div>
+          <div className="grid grid-cols-2 gap-4 mt-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Điểm Đón/Lấy (Phụ)</label>
+              <input type="text" name="senderPhone" value={formData.senderPhone} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" placeholder="Không bắt buộc" />
+            </div>
             {order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Người Nhận</label>
-                <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" />
+                <label className="block text-xs font-semibold text-slate-600 mb-1">SĐT Người Nhận/Giao (Phụ)</label>
+                <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" placeholder="Không bắt buộc" />
               </div>
             )}
+          </div>
           </div>
           
           {order.serviceType !== 'DIEU_PHOI' && (

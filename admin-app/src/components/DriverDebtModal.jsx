@@ -12,6 +12,9 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
   
   // Trạng thái Sửa giao dịch Nợ
   const [editingTx, setEditingTx] = useState(null);
+  
+  // Trạng thái Thêm Nợ / Phạt Mới
+  const [isAddingPenalty, setIsAddingPenalty] = useState(false);
 
   useEffect(() => {
     if (isOpen && driverId) {
@@ -130,8 +133,14 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
             {/* FORM HOẶC DANH SÁCH THU NỢ THEO NGÀY */}
             {!editingTx ? (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 uppercase text-sm">
-                   Các Khung Nợ Chờ Thu
+                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 uppercase text-sm flex justify-between items-center">
+                   <span>Các Khung Nợ Chờ Thu</span>
+                   <button 
+                      onClick={() => setIsAddingPenalty(true)}
+                      className="bg-red-50 text-red-600 border border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100 active:scale-95"
+                   >
+                     + GHI NỢ / PHẠT MỚI
+                   </button>
                 </h4>
                 {(!data.unpaidDays || data.unpaidDays.length === 0) ? (
                    <div className="p-4 bg-emerald-50 text-emerald-700 text-sm rounded-xl text-center font-semibold border border-emerald-100">

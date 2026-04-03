@@ -104,11 +104,17 @@ export default function Earnings() {
   }, [fetchEarnings]);
 
   useEffect(() => {
-    window.addEventListener('driver_wallet_updated', fetchEarnings);
-    window.addEventListener('driver_debt_updated', fetchEarnings);
+    const handleWalletUpdated = () => fetchEarnings();
+    const handleDebtUpdated = () => {
+      alert('⚠️ Sổ Đen Của Bạn Vừa Được Admin Điều Chỉnh!');
+      fetchEarnings();
+    };
+
+    window.addEventListener('driver_wallet_updated', handleWalletUpdated);
+    window.addEventListener('driver_debt_updated', handleDebtUpdated);
     return () => {
-      window.removeEventListener('driver_wallet_updated', fetchEarnings);
-      window.removeEventListener('driver_debt_updated', fetchEarnings);
+      window.removeEventListener('driver_wallet_updated', handleWalletUpdated);
+      window.removeEventListener('driver_debt_updated', handleDebtUpdated);
     };
   }, [fetchEarnings]);
 
