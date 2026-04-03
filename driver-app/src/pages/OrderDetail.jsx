@@ -191,42 +191,120 @@ export default function OrderDetail() {
           <div className="flex flex-col gap-5">
             
             {order.serviceType === 'DAT_XE' ? (
-              <div className="flex items-center justify-between mx-[-12px] px-3">
-                <div className="min-w-0 pr-2 flex-1">
-                  <p className="text-slate-800 font-bold text-sm mb-1">{order.customerName}</p>
-                  <p className="text-blue-600 font-black text-xl tracking-wider">{order.customerPhone}</p>
+              <>
+                {/* ĐIỂM ĐÓN KHÁCH */}
+                <div className="flex items-center justify-between mx-[-12px] px-3 border-b border-slate-100 pb-4">
+                  <div className="min-w-0 pr-2 flex-1">
+                     <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">📍 TRẠM 1: ĐÓN KHÁCH</p>
+                     <p className="text-slate-800 font-bold text-sm mb-1">{order.customerName}</p>
+                     <div className="space-y-2">
+                       <div className="flex items-center gap-2">
+                         <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">SĐT CHÍNH</span>
+                         <a href={`tel:${order.customerPhone}`} className="text-blue-600 font-black text-lg tracking-wider active:text-blue-800">{order.customerPhone}</a>
+                       </div>
+                       {order.senderPhone && order.senderPhone !== order.customerPhone && (
+                         <div className="flex items-center gap-2">
+                           <span className="text-[10px] font-bold bg-violet-100 text-violet-600 px-1.5 py-0.5 rounded">SĐT PHỤ</span>
+                           <a href={`tel:${order.senderPhone}`} className="text-violet-600 font-black text-lg tracking-wider active:text-violet-800">{order.senderPhone}</a>
+                         </div>
+                       )}
+                     </div>
+                  </div>
+                  <div className="shrink-0 flex flex-col gap-2">
+                     <a href={`tel:${order.customerPhone}`} className="rounded-xl bg-blue-500 px-4 py-2 text-center text-[10px] font-black text-white shadow-sm flex items-center justify-center gap-1 active:scale-95">📞 SỐ CHÍNH</a>
+                     {order.senderPhone && order.senderPhone !== order.customerPhone && (
+                        <a href={`tel:${order.senderPhone}`} className="rounded-xl bg-violet-500 px-4 py-2 text-center text-[10px] font-black text-white shadow-sm flex items-center justify-center gap-1 active:scale-95">📞 SỐ PHỤ</a>
+                     )}
+                  </div>
                 </div>
-                <a href={`tel:${order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center gap-2 border border-blue-500">
-                  <span className="text-lg">📞</span> GỌI LÊN XE
-                </a>
-              </div>
+
+                {/* ĐIỂM TỚI */}
+                <div className="flex items-center justify-between pt-4 mx-[-12px] px-3">
+                  <div className="min-w-0 pr-2 flex-1">
+                     <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">🏁 TRẠM 2: CÁC LIÊN HỆ ĐIỂM ĐẾN</p>
+                     <div className="space-y-2 mt-2">
+                       {order.receiverPhone ? (
+                         <div className="flex items-center gap-2">
+                           <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">SĐT CHÍNH</span>
+                           <a href={`tel:${order.receiverPhone}`} className="text-sky-600 font-black text-lg tracking-wider">{order.receiverPhone}</a>
+                         </div>
+                       ) : <p className="text-xs text-slate-400 italic">Không có SĐT tại điểm đến</p>}
+                       
+                       {order.receiverPhone2 && (
+                         <div className="flex items-center gap-2">
+                           <span className="text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded">SĐT PHỤ</span>
+                           <a href={`tel:${order.receiverPhone2}`} className="text-indigo-600 font-black text-lg tracking-wider">{order.receiverPhone2}</a>
+                         </div>
+                       )}
+                     </div>
+                  </div>
+                  <div className="shrink-0 flex flex-col gap-2">
+                     {order.receiverPhone && (
+                        <a href={`tel:${order.receiverPhone}`} className="rounded-xl bg-sky-500 px-4 py-2 text-center text-[10px] font-black text-white shadow-sm flex items-center justify-center gap-1 active:scale-95">📞 SỐ CHÍNH</a>
+                     )}
+                     {order.receiverPhone2 && (
+                        <a href={`tel:${order.receiverPhone2}`} className="rounded-xl bg-indigo-500 px-4 py-2 text-center text-[10px] font-black text-white shadow-sm flex items-center justify-center gap-1 active:scale-95">📞 SỐ PHỤ</a>
+                     )}
+                  </div>
+                </div>
+              </>
             ) : (
               <>
                 {/* 1. NƠI LẤY HÀNG (SENDER / SHOP) */}
                 <div className="flex items-center justify-between border-b mx-[-12px] px-3 border-slate-100 pb-5">
                   <div className="min-w-0 pr-2 flex-1">
-                    <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5 flex items-center gap-1">
-                       NGƯỜI GỬI (NƠI LẤY)
+                    <p className="font-bold text-slate-400 text-[10px] uppercase mb-1 flex items-center gap-1">
+                       📍 TRẠM 1: LẤY HÀNG / GẶP MẶT
                     </p>
-                    <p className="text-slate-800 font-bold text-sm mb-1">{order.senderName || order.customerName || 'Người Đặt App'}</p>
-                    <p className="text-orange-600 font-black text-xl tracking-wider">{order.senderPhone || order.customerPhone}</p>
+                    <p className="text-slate-800 font-bold text-sm mb-2">{order.senderName || order.customerName || 'Khách / Shop'}</p>
+                    <div className="space-y-2">
+                       <div className="flex items-center gap-2">
+                         <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">SĐT CHÍNH</span>
+                         <a href={`tel:${order.customerPhone}`} className="text-orange-600 font-black text-lg tracking-wider">{order.customerPhone}</a>
+                       </div>
+                       {order.senderPhone && order.senderPhone !== order.customerPhone && (
+                         <div className="flex items-center gap-2">
+                           <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded">SĐT PHỤ</span>
+                           <a href={`tel:${order.senderPhone}`} className="text-amber-600 font-black text-lg tracking-wider">{order.senderPhone}</a>
+                         </div>
+                       )}
+                    </div>
                   </div>
-                  <a href={`tel:${order.senderPhone || order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-orange-400 to-orange-500 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-orange-500/30 active:scale-95 transition-all flex items-center gap-2 border border-orange-400">
-                    <span className="text-lg">📞</span> GỌI LẤY
-                  </a>
+                  <div className="shrink-0 flex flex-col gap-2">
+                     <a href={`tel:${order.customerPhone}`} className="rounded-xl bg-orange-500 px-4 py-2 text-center text-[10px] font-black text-white shadow flex items-center justify-center gap-1 active:scale-95">📞 SỐ CHÍNH</a>
+                     {order.senderPhone && order.senderPhone !== order.customerPhone && (
+                        <a href={`tel:${order.senderPhone}`} className="rounded-xl bg-amber-500 px-4 py-2 text-center text-[10px] font-black text-white shadow flex items-center justify-center gap-1 active:scale-95">📞 SỐ PHỤ</a>
+                     )}
+                  </div>
                 </div>
 
                 {/* 2. NƠI GIAO ĐẾN (RECEIVER / CUSTOMER) */}
-                <div className="flex items-center justify-between pt-1">
-                  <div className="min-w-0 pr-2 flex-1">
-                    <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">NGƯỜI NHẬN (GIAO ĐẾN)</p>
-                    <p className="text-slate-800 font-bold text-sm mb-1">{order.receiverName || order.customerName || 'Khách Hàng'}</p>
-                    <p className="text-blue-600 font-black text-xl tracking-wider">{order.receiverPhone || order.customerPhone}</p>
+                {order.serviceType !== 'DIEU_PHOI' && (
+                  <div className="flex items-center justify-between pt-4 mx-[-12px] px-3">
+                    <div className="min-w-0 pr-2 flex-1">
+                      <p className="font-bold text-slate-400 text-[10px] uppercase mb-1">🏁 TRẠM 2: GIAO ĐẾN / NHẬN HÀNG</p>
+                      <p className="text-slate-800 font-bold text-sm mb-2">{order.receiverName || order.customerName || 'Người nhận'}</p>
+                      <div className="space-y-2">
+                         <div className="flex items-center gap-2">
+                           <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">SĐT CHÍNH</span>
+                           <a href={`tel:${order.receiverPhone || order.customerPhone}`} className="text-blue-600 font-black text-lg tracking-wider">{order.receiverPhone || order.customerPhone}</a>
+                         </div>
+                         {order.receiverPhone2 && (
+                           <div className="flex items-center gap-2">
+                             <span className="text-[10px] font-bold bg-sky-100 text-sky-700 px-1.5 py-0.5 rounded">SĐT PHỤ</span>
+                             <a href={`tel:${order.receiverPhone2}`} className="text-sky-600 font-black text-lg tracking-wider">{order.receiverPhone2}</a>
+                           </div>
+                         )}
+                      </div>
+                    </div>
+                    <div className="shrink-0 flex flex-col gap-2">
+                       <a href={`tel:${order.receiverPhone || order.customerPhone}`} className="rounded-xl bg-blue-500 px-4 py-2 text-center text-[10px] font-black text-white shadow flex items-center justify-center gap-1 active:scale-95">📞 SỐ CHÍNH</a>
+                       {order.receiverPhone2 && (
+                          <a href={`tel:${order.receiverPhone2}`} className="rounded-xl bg-sky-500 px-4 py-2 text-center text-[10px] font-black text-white shadow flex items-center justify-center gap-1 active:scale-95">📞 SỐ PHỤ</a>
+                       )}
+                    </div>
                   </div>
-                  <a href={`tel:${order.receiverPhone || order.customerPhone}`} className="shrink-0 rounded-2xl bg-gradient-to-b from-blue-500 to-blue-600 px-6 py-3 text-center text-sm font-black text-white shadow-lg shadow-blue-500/30 active:scale-95 transition-all flex items-center gap-2 border border-blue-500">
-                    <span className="text-lg">📞</span> GỌI GIAO
-                  </a>
-                </div>
+                )}
               </>
             )}
 

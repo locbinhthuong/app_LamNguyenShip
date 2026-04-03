@@ -199,7 +199,7 @@ const orderController = {
       const customerId = req.customer._id;
       const { 
         serviceType, subServiceType, customerName, customerPhone, pickupPhone,
-        senderName, senderPhone, receiverName, receiverPhone,
+        senderName, senderPhone, receiverName, receiverPhone, receiverPhone2,
         pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates, 
         items, note, packageDetails, rideDetails, financialDetails, codAmount
       } = req.body;
@@ -219,6 +219,7 @@ const orderController = {
         senderPhone: senderPhone || '',
         receiverName: receiverName || '',
         receiverPhone: receiverPhone || '',
+        receiverPhone2: receiverPhone2 || '',
         pickupAddress,
         deliveryAddress: deliveryAddress || '',
         pickupCoordinates,
@@ -277,7 +278,7 @@ const orderController = {
     try {
       const { id } = req.params;
       const { 
-        customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, senderPhone, receiverPhone,
+        customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, senderPhone, receiverPhone, receiverPhone2,
         items, note, codAmount, deliveryFee, status, adminBonus,
         bulkyFee, surcharge, // Các phí mới
         packageDescription, // Chi tiết Hàng hóa / Mua hộ
@@ -323,8 +324,9 @@ const orderController = {
       if (pickupPhone !== undefined) orderToUpdate.pickupPhone = pickupPhone;
       if (senderPhone !== undefined) orderToUpdate.senderPhone = senderPhone;
       if (receiverPhone !== undefined) orderToUpdate.receiverPhone = receiverPhone;
-      if (pickupAddress) orderToUpdate.pickupAddress = pickupAddress;
-      if (deliveryAddress) orderToUpdate.deliveryAddress = deliveryAddress;
+      if (receiverPhone2 !== undefined) orderToUpdate.receiverPhone2 = receiverPhone2;
+      if (pickupAddress !== undefined) orderToUpdate.pickupAddress = pickupAddress;
+      if (deliveryAddress !== undefined) orderToUpdate.deliveryAddress = deliveryAddress;
       if (items !== undefined) orderToUpdate.items = items;
       if (note !== undefined) orderToUpdate.note = note;
       if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;

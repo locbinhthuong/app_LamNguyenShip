@@ -39,6 +39,7 @@ const orderSchema = new mongoose.Schema({
   senderPhone: { type: String, trim: true },
   receiverName: { type: String, trim: true },
   receiverPhone: { type: String, trim: true },
+  receiverPhone2: { type: String, trim: true }, // SĐT phụ người nhận (mới thêm)
 
   // Địa chỉ
   pickupAddress: {
