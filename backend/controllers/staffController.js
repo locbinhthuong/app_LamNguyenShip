@@ -33,6 +33,10 @@ module.exports = {
     try {
       const { name, phone, password, role } = req.body;
 
+      if (role === 'admin') {
+        return res.status(400).json({ success: false, message: 'Không thể tạo thêm Super Admin! Hệ thống chỉ có 1 Admin duy nhất.' });
+      }
+
       const existingAdmin = await Admin.findOne({ phone });
       if (existingAdmin) {
         return res.status(400).json({ success: false, message: 'Số điện thoại này đã được sử dụng' });
@@ -93,7 +97,15 @@ module.exports = {
       }
 
       if (name) staff.name = name;
-      if (role) staff.role = role;
+      if (role) {
+        if (role === 'admin' && staff.role !== 'admin') {
+          return res.status(400).json({ success: false, message: 'Không thể cấp quyền Super Admin cho tổng đài viên!' });
+        }
+        if (staff.role === 'admin' && role !== 'admin') {
+          return res.status(400).json({ success: false, message: 'Không thể giáng chức chính Super Admin!' });
+        }
+        staff.role = role;
+      }
       if (status) staff.status = status;
 
       if (password && password.trim().length >= 6) {
@@ -126,14 +138,16 @@ module.exports = {
     try {
       const { id } = req.params;
       
-      if (id === req.admin._id.toString()) {
-        return res.status(400).json({ success: false, message: 'Bạn không thể tự xóa tài khoản của mình!' });
-      }
-
-      const staff = await Admin.findByIdAndDelete(id);
+      const staff = await Admin.findById(id);
       if (!staff) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy nhân viên' });
       }
+
+      if (staff.role === 'admin') {
+        return res.status(400).json({ success: false, message: 'Hệ thống không cho phép xoá tài khoản Admin gốc!' });
+      }
+
+      await Admin.findByIdAndDelete(id);
 
       res.status(200).json({ success: true, message: 'Đã xoá tài khoản nhân viên' });
     } catch (error) {

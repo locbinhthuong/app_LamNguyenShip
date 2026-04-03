@@ -221,7 +221,6 @@ export default function Dispatchers() {
                   <select value={role} onChange={e => setRole(e.target.value)} className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none">
                     <option value="staff">Tổng Đài Viên</option>
                     <option value="manager">Quản Lý</option>
-                    <option value="admin">Quản Trị Tối Cao</option>
                   </select>
                 </div>
                 <div>
