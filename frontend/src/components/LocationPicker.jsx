@@ -32,17 +32,41 @@ const FlyToLocation = ({ targetPos }) => {
   return null;
 };
 
-const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition }) => {
-  const [mapCenter, setMapCenter] = useState(initialPosition || [10.8231, 106.6297]);
+const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSearchQuery }) => {
+  const [mapCenter, setMapCenter] = useState(initialPosition || [10.045162, 105.746854]);
   const [address, setAddress] = useState('Đang lấy vị trí...');
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [flyPos, setFlyPos] = useState(initialPosition);
 
   // Search State
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+
+  // Khởi chạy tìm kiếm 1 lần duy nhất khi vừa mở LocationPicker nếu KHÔNG có initialPosition nhưng CÓ initialSearchQuery
+  useEffect(() => {
+    if (isOpen && !initialPosition && initialSearchQuery && initialSearchQuery.trim().length > 2) {
+      const fetchInitialCoord = async () => {
+        setIsSearching(true);
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(initialSearchQuery)}&limit=1&countrycodes=vn`);
+          const data = await res.json();
+          if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            setMapCenter([lat, lon]);
+            setFlyPos([lat, lon]);
+          }
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsSearching(false);
+        }
+      };
+      fetchInitialCoord();
+    }
+  }, [isOpen, initialPosition, initialSearchQuery]);
 
   // Xử lý Gợi ý Địa chỉ (Autocomplete)
   useEffect(() => {

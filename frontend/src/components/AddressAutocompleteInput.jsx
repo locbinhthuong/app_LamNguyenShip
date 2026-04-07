@@ -97,7 +97,10 @@ export default function AddressAutocompleteInput({
         {onClickMapIcon && (
           <button 
             type="button" 
-            onClick={onClickMapIcon}
+            onClick={(e) => {
+              e.preventDefault();
+              onClickMapIcon(query);
+            }}
             className="flex shrink-0 items-center justify-center bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-blue-200 ml-2 shadow-sm"
           >
             🗺️ BẢN ĐỒ

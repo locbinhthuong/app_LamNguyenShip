@@ -83,7 +83,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                 onChangeText={txt => setForm(prev => ({...prev, pickupAddress: txt}))}
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="VD: Để trống nếu mua nhiều nơi..."
-                onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
+                onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-orange-300 shadow-sm"
               />
             </div>
@@ -107,7 +107,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                   onChangeText={txt => setForm(prev => ({...prev, deliveryAddress: txt}))}
                   onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                   placeholder="Nhập địa chỉ nhận hoặc để trống..."
-                  onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
+                  onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
                   className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
                 />
                 <input 
@@ -167,6 +167,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
         isOpen={mapConfig !== null}
         onClose={() => setMapConfig(null)}
         initialPosition={mapConfig?.pos}
+        initialSearchQuery={mapConfig?.query}
         onSelect={(loc) => {
           if (mapConfig?.type === 'pickup') {
             setForm({ ...form, pickupAddress: loc.address, pickupCoordinates: { lat: loc.lat, lng: loc.lng } });
