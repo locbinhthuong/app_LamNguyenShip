@@ -233,10 +233,38 @@ export default function OrderDetail() {
             </div>
         </div>
 
+        {/* Khối Thông Tin Giao Dịch Tài Chính (Nạp/Rút Tiền) */}
+        {order.serviceType === 'DIEU_PHOI' && (order.subServiceType === 'NAP_TIEN' || order.subServiceType === 'RUT_TIEN') && (
+          <div className="bg-blue-50 p-5 rounded-3xl shadow-sm border border-blue-100 mb-2 space-y-3 relative overflow-hidden">
+             <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🏦</div>
+             <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-1 relative z-10">🏦 THÔNG TIN TÀI CHÍNH</h3>
+             
+             <div className="space-y-3 relative z-10">
+               <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-blue-100/50">
+                  <span className="text-xs text-slate-500 font-medium">Ngân Hàng</span>
+                  <span className="font-bold text-slate-800">{order.financialDetails?.bankName || 'Đang chờ cập nhật'}</span>
+               </div>
+               <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-blue-100/50">
+                  <span className="text-xs text-slate-500 font-medium">Tài Khoản</span>
+                  <span className="font-black text-blue-700 tracking-wider text-[15px]">{order.financialDetails?.bankAccount || 'Rỗng'}</span>
+               </div>
+               <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-blue-100/50">
+                  <span className="text-xs text-slate-500 font-medium">Tên Chủ Tài Khoản</span>
+                  <span className="font-bold text-slate-800 uppercase line-clamp-1 text-right max-w-[60%]">{order.financialDetails?.bankAccountName || 'Chưa cung cấp'}</span>
+               </div>
+               
+               <div className="flex justify-between items-end bg-orange-50 p-3 rounded-2xl border border-orange-200 mt-2">
+                  <span className="text-[11px] text-orange-800 font-bold uppercase tracking-wider">{order.subServiceType === 'NAP_TIEN' ? 'SỐ TIỀN CẦN NẠP VÀO' : 'SỐ TIỀN CẦN RÚT RA'}</span>
+                  <span className="font-black text-xl text-orange-600 drop-shadow-sm">{order.financialDetails?.transactionAmount?.toLocaleString() || 0}đ</span>
+               </div>
+             </div>
+          </div>
+        )}
+
         {/* Khối Thông tin Giao Nhận */}
         <div className="bg-white p-5 rounded-3xl shadow-sm border border-slate-100 mb-2 space-y-4">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
-              <MapPin size={14}/> {order.serviceType === 'DAT_XE' ? 'LỘ TRÌNH CHUYẾN ĐI' : 'LỘ TRÌNH GIAO HÀNG'}
+              <MapPin size={14}/> {order.serviceType === 'DAT_XE' ? 'LỘ TRÌNH CHUYẾN ĐI' : order.serviceType === 'DIEU_PHOI' ? 'ĐỊA ĐIỂM GIAO DỊCH' : 'LỘ TRÌNH GIAO HÀNG'}
             </h3>
             
             <div className="relative pl-6">
@@ -245,7 +273,7 @@ export default function OrderDetail() {
                {/* ĐIỂM XUẤT PHÁT */}
                <div className="mb-5 relative">
                   <div className="absolute -left-[27px] top-1 w-3 h-3 bg-orange-400 rounded-full ring-4 ring-orange-50"></div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : 'NGƯỜI GỬI / NƠI LẤY'}</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / GIAO DỊCH' : 'NGƯỜI GỬI / NƠI LẤY'}</p>
                   <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight mb-2">{order.pickupAddress || 'Chưa xác định'}</p>
                   
                   <div className="space-y-1">

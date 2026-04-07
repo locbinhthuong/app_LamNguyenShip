@@ -147,7 +147,7 @@ export default function OrderDetail() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <p className="text-xs text-slate-500 font-bold uppercase">
-                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : 'Lấy Hàng Tại'}
+                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / LẤY TIỀN' : 'Lấy Hàng Tại'}
                 </p>
                 <a 
                   href={`https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates?.lat ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
@@ -161,26 +161,30 @@ export default function OrderDetail() {
               <p className="text-slate-800 font-bold text-sm leading-snug">{order.pickupAddress || 'Chưa xác định'}</p>
             </div>
           </div>
-          <div className="border-l-2 border-dashed border-slate-600 ml-4 h-4 mb-4" />
-          <div className="flex items-start gap-3">
-            <span className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 font-bold">🏁</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <p className="text-xs text-slate-500 font-bold uppercase">
-                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'Giao Hàng (Đến)'}
-                </p>
-                <a 
-                  href={`https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates?.lat ? `${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}` : encodeURIComponent(order.deliveryAddress)}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
-                >
-                  🗺️ DẪN ĐƯỜNG
-                </a>
+          {order.serviceType !== 'DIEU_PHOI' && (
+            <>
+              <div className="border-l-2 border-dashed border-slate-600 ml-4 h-4 mb-4" />
+              <div className="flex items-start gap-3">
+                <span className="w-8 h-8 bg-red-500/20 rounded-full flex items-center justify-center text-red-400 font-bold">🏁</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1">
+                    <p className="text-xs text-slate-500 font-bold uppercase">
+                      {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'Giao Hàng (Đến)'}
+                    </p>
+                    <a 
+                      href={`https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates?.lat ? `${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}` : encodeURIComponent(order.deliveryAddress)}`} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
+                    >
+                      🗺️ DẪN ĐƯỜNG
+                    </a>
+                  </div>
+                  <p className="text-slate-800 font-medium text-sm leading-snug">{order.deliveryAddress || 'Chưa xác định'}</p>
+                </div>
               </div>
-              <p className="text-slate-800 font-medium text-sm leading-snug">{order.deliveryAddress || 'Chưa xác định'}</p>
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Liên Hệ */}

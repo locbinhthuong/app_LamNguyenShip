@@ -56,19 +56,21 @@ function OrderCard({ order, onAccept, loading }) {
 
       <div className="space-y-2 mb-3">
         <div className="flex items-start gap-2">
-          <span className="text-green-400 mt-1">📦</span>
+          <span className="text-green-400 mt-1">{order.serviceType === 'DAT_XE' ? '📍' : '📦'}</span>
           <div className="flex-1">
-            <p className="text-xs text-slate-500">Lấy hàng</p>
+            <p className="text-xs text-slate-500">{order.serviceType === 'DAT_XE' ? 'Điểm đón' : order.serviceType === 'DIEU_PHOI' ? 'Gặp mặt tại' : 'Lấy hàng'}</p>
             <p className="text-sm text-slate-800 font-medium line-clamp-2">{order.pickupAddress}</p>
           </div>
         </div>
-        <div className="flex items-start gap-2">
-          <span className="text-red-400 mt-1">🏁</span>
-          <div className="flex-1">
-            <p className="text-xs text-slate-500">Giao hàng</p>
-            <p className="text-sm text-slate-800 font-medium line-clamp-2">{order.deliveryAddress}</p>
+        {order.serviceType !== 'DIEU_PHOI' && (
+          <div className="flex items-start gap-2">
+            <span className="text-red-400 mt-1">🏁</span>
+            <div className="flex-1">
+              <p className="text-xs text-slate-500">{order.serviceType === 'DAT_XE' ? 'Điểm đến' : 'Giao hàng'}</p>
+              <p className="text-sm text-slate-800 font-medium line-clamp-2">{order.deliveryAddress}</p>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="mb-3 flex flex-col gap-1 text-sm text-slate-500 sm:flex-row sm:justify-between">
@@ -134,11 +136,13 @@ function ActiveOrderCard({ order, onAction, loading }) {
 
       <div className="space-y-1 mb-3">
         <p className="text-sm text-green-100">
-          <span className="opacity-70">Lấy:</span> {order.pickupAddress?.slice(0, 40)}...
+          <span className="opacity-70">{order.serviceType === 'DAT_XE' ? 'Đón:' : order.serviceType === 'DIEU_PHOI' ? 'Gặp:' : 'Lấy:'}</span> {order.pickupAddress?.slice(0, 40)}...
         </p>
-        <p className="text-sm text-green-100">
-          <span className="opacity-70">Giao:</span> {order.deliveryAddress?.slice(0, 40)}...
-        </p>
+        {order.serviceType !== 'DIEU_PHOI' && (
+          <p className="text-sm text-green-100">
+            <span className="opacity-70">{order.serviceType === 'DAT_XE' ? 'Đến:' : 'Giao:'}</span> {order.deliveryAddress?.slice(0, 40)}...
+          </p>
+        )}
       </div>
 
       <div className="flex justify-between items-center mb-2">
