@@ -42,7 +42,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
       note: form.note.trim(),
       senderPhone: form.senderPhone.trim() || defaultPhone,
-      receiverPhone: '',
+      receiverPhone: form.receiverPhone.trim() || '',
       receiverPhone2: '',
       packageDetails: {
         description: 'MUA HỘ',
@@ -109,6 +109,13 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                   placeholder="Nhập địa chỉ nhận hoặc để trống..."
                   onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
                   className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
+                />
+                <input 
+                  type="tel"
+                  placeholder="SĐT Khách Đặt (Tại Điểm Giao)"
+                  className="w-full text-xs font-semibold text-blue-600 outline-none p-3 mt-2 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
+                  value={form.receiverPhone}
+                  onChange={e => setForm({...form, receiverPhone: e.target.value})}
                 />
             </div>
           </div>

@@ -204,39 +204,28 @@ export default function OrderDetail() {
                   </div>
                 </div>
 
-                {/* ĐIỂM TỚI */}
-                <div className="flex items-center justify-between pt-4 mx-[-12px] px-3">
-                  <div className="min-w-0 pr-2 flex-1">
-                     <p className="font-bold text-slate-400 text-[10px] uppercase mb-0.5">🏁 TRẠM 2: CÁC LIÊN HỆ ĐIỂM ĐẾN</p>
-                       {order.receiverPhone ? (
-                         <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT CHÍNH</span>
-                           <a href={`tel:${order.receiverPhone}`} className="bg-sky-100 text-sky-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-sky-200">📞 {order.receiverPhone}</a>
-                         </div>
-                       ) : <p className="text-xs text-slate-400 italic">Không có SĐT tại điểm đến</p>}
-                  </div>
-                </div>
+                {/* BỎ TRẠM 2 ĐỐI VỚI ĐẶT XE THEO YÊU CẦU CỦA USER */}
               </>
             ) : (
               <>
-                {/* 1. NƠI LẤY HÀNG (SENDER / SHOP) */}
-                <div className="flex items-center justify-between border-b mx-[-12px] px-3 border-slate-100 pb-5">
+                {/* 1. LIÊN HỆ (Cho GIAO_HANG hoặc MUA_HO) */}
+                <div className={`flex items-center justify-between mx-[-12px] px-3 ${order.serviceType === 'GIAO_HANG' ? 'border-b border-slate-100 pb-5' : ''}`}>
                   <div className="min-w-0 pr-2 flex-1">
                     <p className="font-bold text-slate-400 text-[10px] uppercase mb-1 flex items-center gap-1">
-                       📍 TRẠM 1: LẤY HÀNG / GẶP MẶT
+                       {order.serviceType === 'MUA_HO' ? '👤 LIÊN HỆ KHÁCH ĐẶT MUA HỘ' : '📍 TRẠM 1: LẤY HÀNG / GẶP MẶT'}
                     </p>
                     <p className="text-slate-800 font-bold text-sm mb-3">{order.senderName || order.customerName || 'Khách / Shop'}</p>
                      <div className="space-y-3">
                        <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT TƯƠNG TÁC</span>
-                         <a href={`tel:${order.senderPhone || order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200">📞 {order.senderPhone || order.customerPhone}</a>
+                         <a href={`tel:${order.serviceType === 'MUA_HO' && order.receiverPhone ? order.receiverPhone : (order.senderPhone || order.customerPhone)}`} className="bg-orange-100 text-orange-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200">📞 {order.serviceType === 'MUA_HO' && order.receiverPhone ? order.receiverPhone : (order.senderPhone || order.customerPhone)}</a>
                        </div>
                      </div>
                   </div>
                 </div>
 
-                {/* 2. NƠI GIAO ĐẾN (RECEIVER / CUSTOMER) */}
-                {order.serviceType !== 'DIEU_PHOI' && (
+                {/* 2. NƠI GIAO ĐẾN (RECEIVER / CUSTOMER) - CHỈ HIỂN THỊ KHI GIAO_HANG */}
+                {order.serviceType === 'GIAO_HANG' && (
                   <div className="flex items-center justify-between pt-4 mx-[-12px] px-3">
                     <div className="min-w-0 pr-2 flex-1">
                       <p className="font-bold text-slate-400 text-[10px] uppercase mb-1">🏁 TRẠM 2: GIAO ĐẾN / NHẬN HÀNG</p>
