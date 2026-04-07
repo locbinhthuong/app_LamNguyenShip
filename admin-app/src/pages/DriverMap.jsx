@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { io } from 'socket.io-client';
-import { getDrivers, getOrders } from '../services/api';
+import { getDrivers, getOrders, getDriverById } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
@@ -20,7 +20,7 @@ const getMotorbikeIcon = (activeOrderCount, status) => {
         className: 'custom-driver-marker',
         html: `
             <div style="position: relative; width: 40px; height: 40px;">
-                <img src="https://cdn-icons-png.flaticon.com/512/3202/3202926.png" style="width: 100%; height: 100%; drop-shadow(0 4px 6px rgba(0,0,0,0.3))" />
+                <img src="https://cdn-icons-png.flaticon.com/512/1458/1458269.png" style="width: 100%; height: 100%; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3))" />
                 ${badgeHtml}
             </div>
         `,
@@ -190,23 +190,41 @@ export default function DriverMap() {
     socket.on('connect', () => console.log('✅ Admin Map Socket Connected!'));
 
     // Lắng nghe Tọa độ Realme
-    socket.on('driver_location_update', (data) => {
+    socket.on('driver_location_update', async (data) => {
       const _id = data.driverId;
       const existing = dataRef.current.drivers[_id] || {};
       
       dataRef.current.drivers[_id] = {
           ...existing,
           id: _id,
-          name: data.name || existing.name || 'Tài xế',
+          name: data.name || existing.name || 'Đang tải tên...',
           lat: data.lat,
           lng: data.lng,
           updatedAt: data.timestamp
       };
       updateMapMarkers();
+
+      // Nếu tài xế vừa lên mạng mà API chưa kịp lấy Tên, gọi bù thêm
+      if (!existing.name) {
+          try {
+             const apiData = await getDriverById(_id);
+             if (apiData?.success && apiData?.data) {
+                // Kiểm tra xem xe này có đang chạy không để ghi đè (vì await có khi mất vị trí nếu họ ngắt kết nối)
+                if (dataRef.current.drivers[_id]) {
+                  dataRef.current.drivers[_id] = {
+                     ...dataRef.current.drivers[_id],
+                     name: apiData.data.name,
+                     phone: apiData.data.phone
+                  };
+                  updateMapMarkers();
+                }
+             }
+          } catch(e) {}
+      }
     });
 
     // Lắng nghe thay đổi trạng thái Online/Offline để gỡ/thêm marker
-    socket.on('driver_status_change', (data) => {
+    socket.on('driver_status_change', async (data) => {
       const _id = data.driverId;
       if (!data.isOnline || !data.lat || !data.lng) {
         delete dataRef.current.drivers[_id];
@@ -219,8 +237,21 @@ export default function DriverMap() {
             lng: data.lng,
             updatedAt: data.updatedAt
         };
+        updateMapMarkers();
+
+        // Tương tự, nếu socket báo ON mà chưa có tên, tải bù ngay lập tức
+        try {
+           const apiData = await getDriverById(_id);
+           if (apiData?.success && apiData?.data && dataRef.current.drivers[_id]) {
+              dataRef.current.drivers[_id] = {
+                 ...dataRef.current.drivers[_id],
+                 name: apiData.data.name,
+                 phone: apiData.data.phone
+              };
+              updateMapMarkers();
+           }
+        } catch(e) {}
       }
-      updateMapMarkers();
     });
 
     // Lắng nghe thay đổi trạng thái đơn
