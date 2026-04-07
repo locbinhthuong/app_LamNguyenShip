@@ -132,8 +132,8 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
               <div className="flex flex-col gap-2 relative">
                 <AddressAutocompleteInput 
                   value={form.pickupAddress}
-                  onChangeText={txt => setForm({...form, pickupAddress: txt})}
-                  onSelectCoordinates={coords => setForm({...form, pickupCoordinates: coords})}
+                  onChangeText={txt => setForm(prev => ({...prev, pickupAddress: txt}))}
+                  onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                   placeholder="Nhập địa chỉ giao dịch..."
                   onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
                   className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300 shadow-sm"

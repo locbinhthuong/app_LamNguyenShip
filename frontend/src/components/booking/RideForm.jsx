@@ -157,8 +157,8 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
             <div className="flex flex-col gap-2 relative">
               <AddressAutocompleteInput 
                 value={form.pickupAddress}
-                onChangeText={txt => setForm({...form, pickupAddress: txt})}
-                onSelectCoordinates={coords => setForm({...form, pickupCoordinates: coords})}
+                onChangeText={txt => setForm(prev => ({...prev, pickupAddress: txt}))}
+                onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="Nhập địa chỉ đón..."
                 onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300 shadow-sm"
@@ -190,8 +190,8 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
             <div className="flex flex-col gap-2 relative mt-1">
               <AddressAutocompleteInput 
                 value={form.deliveryAddress}
-                onChangeText={txt => setForm({...form, deliveryAddress: txt})}
-                onSelectCoordinates={coords => setForm({...form, deliveryCoordinates: coords})}
+                onChangeText={txt => setForm(prev => ({...prev, deliveryAddress: txt}))}
+                onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                 placeholder="Nhập địa chỉ đến..."
                 onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-red-300 shadow-sm"
