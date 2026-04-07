@@ -30,13 +30,14 @@ const ActivityList = () => {
     };
   }, []);
 
-  const getStatusConfig = (status) => {
+  const getStatusConfig = (order) => {
+    const { status, serviceType } = order;
     switch(status) {
       case 'DRAFT': return { text: 'Đang Tính Phí', color: 'text-purple-500', bg: 'bg-purple-50', icon: <Clock size={16}/> };
       case 'PENDING': return { text: 'Đang chờ xế', color: 'text-orange-500', bg: 'bg-orange-50', icon: <Clock size={16}/> };
       case 'ACCEPTED': return { text: 'Đã có xế nhận', color: 'text-blue-500', bg: 'bg-blue-50', icon: <Truck size={16}/> };
-      case 'PICKED_UP': return { text: 'Xế đã lấy hàng', color: 'text-indigo-500', bg: 'bg-indigo-50', icon: <PackageCheck size={16}/> };
-      case 'DELIVERING': return { text: 'Đang trên đường giao', color: 'text-blue-600', bg: 'bg-blue-100', icon: <Truck size={16}/> };
+      case 'PICKED_UP': return { text: serviceType === 'DAT_XE' ? 'Xế đã đón khách' : serviceType === 'MUA_HO' ? 'Xế đã mua hàng' : 'Xế đã lấy hàng', color: 'text-indigo-500', bg: 'bg-indigo-50', icon: <PackageCheck size={16}/> };
+      case 'DELIVERING': return { text: serviceType === 'DAT_XE' ? 'Đang trên đường' : 'Đang trên đường giao', color: 'text-blue-600', bg: 'bg-blue-100', icon: <Truck size={16}/> };
       case 'COMPLETED': return { text: 'Đã hoàn thành', color: 'text-green-500', bg: 'bg-green-50', icon: <CheckCircle size={16}/> };
       case 'CANCELLED': return { text: 'Đã hủy', color: 'text-red-500', bg: 'bg-red-50', icon: <XCircle size={16}/> };
       default: return { text: 'Không rõ', color: 'text-gray-500', bg: 'bg-gray-100', icon: <Clock size={16}/> };
@@ -60,7 +61,7 @@ const ActivityList = () => {
           </div>
         ) : (
           orders.map((order) => {
-            const statusCfg = getStatusConfig(order.status);
+            const statusCfg = getStatusConfig(order);
             return (
               <div 
                 key={order._id} 
@@ -74,7 +75,7 @@ const ActivityList = () => {
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-gray-800">
                       {order.serviceType === 'GIAO_HANG' ? 'Giao Hàng' :
-                       order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Tài Xế (Xe Ôm)' : 'Lái Hộ') :
+                       order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                        order.serviceType === 'DIEU_PHOI' ? (order.subServiceType === 'NAP_TIEN' ? 'Nạp Tiền' : order.subServiceType === 'RUT_TIEN' ? 'Rút Tiền' : 'Điều Phối') :
                        'Mua Hộ'}
                     </span>

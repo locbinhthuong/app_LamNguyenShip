@@ -112,7 +112,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
     const getNextAction = () => {
     switch (order.status) {
       case 'ACCEPTED':
-        return { label: order.serviceType === 'DAT_XE' ? '🚙 Đã đón khách' : '📦 Đã lấy hàng', action: 'pickup', color: 'btn-warning' };
+        return { label: order.serviceType === 'DAT_XE' ? '🚙 Đã đón khách' : order.serviceType === 'MUA_HO' ? '🛒 Đã mua hàng' : '📦 Đã lấy hàng', action: 'pickup', color: 'btn-warning' };
       case 'PICKED_UP':
         return { label: order.serviceType === 'DAT_XE' ? '✅ Đã trả khách' : '✅ Hoàn thành', action: 'complete', color: 'btn-success' };
       case 'DELIVERING':
@@ -136,7 +136,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
 
       <div className="space-y-1 mb-3">
         <p className="text-sm text-green-100">
-          <span className="opacity-70">{order.serviceType === 'DAT_XE' ? 'Đón:' : order.serviceType === 'DIEU_PHOI' ? 'Gặp:' : 'Lấy:'}</span> {order.pickupAddress?.slice(0, 40)}...
+          <span className="opacity-70">{order.serviceType === 'DAT_XE' ? 'Đón:' : order.serviceType === 'DIEU_PHOI' ? 'Gặp:' : order.serviceType === 'MUA_HO' ? 'Mua tại:' : 'Lấy:'}</span> {order.pickupAddress?.slice(0, 40)}...
         </p>
         {order.serviceType !== 'DIEU_PHOI' && (
           <p className="text-sm text-green-100">

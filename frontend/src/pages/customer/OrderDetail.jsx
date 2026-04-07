@@ -104,7 +104,7 @@ export default function OrderDetail() {
     { key: 'DRAFT', label: 'Chờ Báo Giá' },
     { key: 'PENDING', label: 'Đã Báo Giá (Chờ Xế)' },
     { key: 'ACCEPTED', label: 'Tài Xế Đã Nhận' },
-    { key: 'PICKED_UP', label: 'Xế Đã Lấy Hàng' },
+    { key: 'PICKED_UP', label: order?.serviceType === 'MUA_HO' ? 'Xế Đã Mua Hàng' : 'Xế Đã Lấy Hàng' },
     { key: 'COMPLETED', label: 'Hoàn Tất' }
   ];
 

@@ -69,13 +69,13 @@ export default function OrderDetail() {
     }
     if (order.assignedTo?._id === driver?._id || order.assignedTo === driver?._id) {
       if (order.status === 'ACCEPTED') {
-         // Nếu là chở khách thì text là "Đã Đón Khách", giao hàng là "Đã lấy hàng"
-         const btnText = order.serviceType === 'DAT_XE' ? '🚙 Đã Đón Khách' : '📦 Đã lấy hàng';
+         // Nếu là chở khách thì text là "Đã Đón Khách", mua hộ là "Đã Mua Hàng", giao hàng là "Đã lấy hàng"
+         const btnText = order.serviceType === 'DAT_XE' ? '🚙 Đã Đón Khách' : order.serviceType === 'MUA_HO' ? '🛒 Đã mua hàng' : '📦 Đã lấy hàng';
          return <button onClick={() => handleAction('pickup')} disabled={actionLoading} className="btn-warning">{btnText}</button>;
       }
       if (order.status === 'PICKED_UP') {
          // Nếu là chở khách thì text là "Trả Khách & Hoàn Thành"
-         const btnText = order.serviceType === 'DAT_XE' ? '✅ Trả Khách & Hoàn Thành' : '✅ Hoàn thành giao hàng';
+         const btnText = order.serviceType === 'DAT_XE' ? '✅ Trả Khách & Hoàn Thành' : '✅ Hoàn thành';
          return <button onClick={() => handleAction('complete')} disabled={actionLoading} className="btn-success">{btnText}</button>;
       }
     }
@@ -147,7 +147,7 @@ export default function OrderDetail() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <p className="text-xs text-slate-500 font-bold uppercase">
-                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / LẤY TIỀN' : 'Lấy Hàng Tại'}
+                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / LẤY TIỀN' : order.serviceType === 'MUA_HO' ? 'MUA HÀNG TẠI' : 'Lấy Hàng Tại'}
                 </p>
                 <a 
                   href={`https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates?.lat && order.pickupCoordinates.lat !== 10.045 && order.pickupCoordinates.lat !== 10.050 ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
@@ -329,7 +329,7 @@ export default function OrderDetail() {
                 </span>
                 {order.rideDetails?.vehicleClass && (
                   <span className="text-xs text-indigo-600 font-semibold bg-white px-2 py-0.5 rounded border border-indigo-100 mt-2 max-w-max">
-                     Hạng: {order.rideDetails.vehicleClass === 'TAY_GA' ? 'Xe Tay Ga' : order.rideDetails.vehicleClass === 'XE_SO' ? 'Xe Số' : 'Côn Tay / Mô Tô'}
+                     {order.subServiceType === 'LAI_HO_OTO' ? `Dòng xe: ${order.rideDetails.vehicleClass}` : `Hạng: ${order.rideDetails.vehicleClass === 'TAY_GA' ? 'Xe Tay Ga' : order.rideDetails.vehicleClass === 'XE_SO' ? 'Xe Số' : 'Côn Tay / Mô Tô'}`}
                   </span>
                 )}
               </p>
@@ -414,7 +414,7 @@ export default function OrderDetail() {
                   <span className="text-yellow-400">✓</span>
                   <div>
                     <p className="text-slate-800 text-sm">
-                      {order.serviceType === 'DAT_XE' ? 'Tài xế đã Đón Khách' : 'Lấy hàng'}
+                      {order.serviceType === 'DAT_XE' ? 'Tài xế đã Đón Khách' : order.serviceType === 'MUA_HO' ? 'Tài xế đã Mua Hàng' : 'Lấy hàng'}
                     </p>
                     <p className="text-slate-500 text-xs">{new Date(order.pickedUpAt).toLocaleString('vi-VN')}</p>
                   </div>

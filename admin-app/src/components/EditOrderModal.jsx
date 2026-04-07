@@ -133,10 +133,12 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                 </div>
                 
 
-                {(order.serviceType !== 'DAT_XE' && order.serviceType !== 'MUA_HO') && (
+                {order.serviceType !== 'DAT_XE' && (
                   <div>
-                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận Hàng</label>
-                    <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white font-bold text-sky-700 focus:border-sky-500 focus:outline-none" placeholder="SĐT khách nhận..." />
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                      {order.serviceType === 'MUA_HO' ? 'SĐT Khách Đặt Mua' : 'SĐT Nhận Hàng'}
+                    </label>
+                    <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white font-bold text-sky-700 focus:border-sky-500 focus:outline-none" placeholder={order.serviceType === 'MUA_HO' ? 'SĐT Khách Đặt...' : 'SĐT khách nhận...'} />
                   </div>
                 )}
               </div>
