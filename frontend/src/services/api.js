@@ -97,7 +97,7 @@ export const disconnectSocket = () => {
 // ==================== HỖ TRỢ UPLOAD ====================
 export const uploadCustomerAvatar = async (file) => {
   const formData = new FormData();
-  formData.append('avatar', file);
+  formData.append('image', file); // Mongoose backend multer expect 'image'
   // Sử dụng chung api upload của hệ thống
   const response = await api.post('/upload/avatar', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
@@ -107,7 +107,7 @@ export const uploadCustomerAvatar = async (file) => {
 
 export const getFullImageUrl = (path) => {
   if (!path) return '';
-  if (path.startsWith('http')) return path;
+  if (path.startsWith('http') || path.startsWith('blob:')) return path;
   let API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
   if (API_URL.endsWith('/api')) {
     API_URL = API_URL.replace('/api', '');
