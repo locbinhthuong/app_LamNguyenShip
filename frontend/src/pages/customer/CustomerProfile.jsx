@@ -59,43 +59,52 @@ const CustomerProfile = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 pt-10 text-white rounded-b-[40px] shadow-lg relative overflow-hidden">
-        <h1 className="text-xl font-bold mb-4">Hồ Sơ Cá Nhân</h1>
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center border-2 border-white/50 backdrop-blur-sm">
-            <User size={32} />
+    <div className="flex flex-col h-full bg-gray-50 overflow-hidden relative">
+      {/* ẢNH BÌA & AVATAR */}
+      <div className="relative h-[250px] shrink-0">
+        {/* Ảnh bìa */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-800 border-b border-gray-200">
+           {/* Pattern trang trí cho giống cover xịn */}
+           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 40%)' }}></div>
+        </div>
+
+        {/* Thông tin phía dưới ảnh bìa */}
+        <div className="absolute bottom-4 left-6 right-6 flex items-end gap-4 z-10">
+          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-white shadow-md relative overflow-hidden">
+             {profile?.avatar ? (
+                <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+             ) : (
+                <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-400">
+                    <User size={36} className="text-gray-400" />
+                </div>
+             )}
           </div>
-          <div>
-            <h2 className="text-xl font-bold">{profile ? profile.name : 'Đang tải...'}</h2>
-            <div className="flex items-center gap-1.5 opacity-90 mt-1">
+          <div className="pb-1 text-white text-shadow-sm drop-shadow-md">
+            <h2 className="text-2xl font-bold tracking-tight">{profile ? profile.name : 'Đang tải...'}</h2>
+            <div className="flex items-center gap-1.5 mt-1 font-medium text-blue-50 opacity-90">
               <Phone size={14} />
-              <span className="text-sm font-medium">{profile?.phone}</span>
-            </div>
-            <div className="inline-flex items-center gap-1 bg-white/20 px-2 py-0.5 mt-2 rounded-full shadow-sm">
-               <ShieldCheck size={12}/>
-               <span className="text-[10px] font-bold uppercase tracking-wider">Khách Hàng</span>
+              <span className="text-sm">{profile?.phone}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="p-4 mt-2 space-y-3">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
         <div 
           onClick={openEditModal}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98]"
+          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
         >
            <span className="font-semibold text-gray-800">Cập nhật thông tin</span>
            <ChevronRight size={18} className="text-gray-400" />
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98]">
+        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
            <span className="font-semibold text-gray-800">Các Điều Khoản App</span>
            <ChevronRight size={18} className="text-gray-400" />
         </div>
 
         <button 
           onClick={handleLogout}
-          className="w-full bg-white mt-5 p-4 rounded-2xl text-red-500 font-bold shadow-sm border border-red-50 flex items-center justify-center gap-2 active:bg-gray-50 transition-colors"
+          className="w-full bg-white mt-8 p-4 rounded-2xl text-red-500 font-bold shadow-sm border border-red-50 flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
         >
           <LogOut size={20} />
           ĐĂNG XUẤT TÀI KHOẢN
@@ -103,49 +112,61 @@ const CustomerProfile = () => {
       </div>
 
       {showEdit && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex flex-col justify-end">
-           <div className="w-full bg-white rounded-t-3xl min-h-[50vh] p-4 animate-slideUp">
-              <div className="flex justify-between items-center mb-6">
+        <div className="absolute inset-0 z-50 bg-black/60 flex flex-col justify-end animate-fadeIn">
+           {/* Nhấn ra ngoài để đóng modal */}
+           <div className="flex-1" onClick={() => setShowEdit(false)}></div>
+           
+           <div className="w-full bg-white rounded-t-3xl p-5 shadow-2xl animate-slideUp relative flex flex-col max-h-[85%]">
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 rounded-full"></div>
+              
+              <div className="flex justify-between items-center mb-6 mt-4 shrink-0">
                 <h3 className="text-lg font-bold text-gray-800">Cập nhật thông tin</h3>
-                <button onClick={() => setShowEdit(false)} className="bg-gray-100 p-2 rounded-full text-gray-600"><X size={16} /></button>
+                <button onClick={() => setShowEdit(false)} className="bg-gray-100 p-2 rounded-full text-gray-600 active:scale-90 transition-transform"><X size={16} /></button>
               </div>
-              <form onSubmit={handleUpdateProfile} className="space-y-4">
+              
+              <form onSubmit={handleUpdateProfile} className="space-y-5 overflow-y-auto pb-4">
+                 <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl mb-4">
+                    <p className="text-xs text-blue-700 italic">Tính năng cập nhật ảnh bìa và ảnh đại diện đang được update ở phiên bản sau.</p>
+                 </div>
+                 
                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Họ và Tên</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Họ và Tên</label>
                     <input 
                       type="text"
-                      className="w-full mt-1 bg-gray-50 border p-3 rounded-xl outline-none font-semibold text-gray-800 focus:border-blue-300"
+                      className="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl outline-none font-bold text-gray-800 focus:border-blue-300 focus:bg-white transition-colors"
                       value={editForm.name}
                       onChange={e => setEditForm({...editForm, name: e.target.value})}
                     />
                  </div>
                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Số Điện Thoại</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Số Điện Thoại</label>
                     <input 
                       type="number"
-                      className="w-full mt-1 bg-gray-50 border p-3 rounded-xl outline-none font-bold text-gray-800 focus:border-blue-300"
+                      className="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl outline-none font-bold text-gray-800 focus:border-blue-300 focus:bg-white transition-colors"
                       value={editForm.phone}
                       onChange={e => setEditForm({...editForm, phone: e.target.value})}
                     />
                  </div>
                  <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase">Mật khẩu mới (Tùy chọn)</label>
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Mật khẩu mới (Tùy chọn)</label>
                     <input 
                       type="password"
                       placeholder="Để trống nếu không đổi mật khẩu"
-                      className="w-full mt-1 bg-gray-50 border p-3 rounded-xl outline-none font-medium text-gray-800 focus:border-blue-300"
+                      className="w-full bg-gray-50 border border-gray-100 p-3.5 rounded-xl outline-none font-bold text-gray-800 focus:border-blue-300 focus:bg-white transition-colors placeholder:font-normal"
                       value={editForm.password}
                       onChange={e => setEditForm({...editForm, password: e.target.value})}
                     />
                  </div>
                  
-                 <button 
-                  disabled={loading}
-                  type="submit" 
-                  className="w-full mt-6 bg-blue-600 text-white font-bold py-3.5 rounded-xl flex items-center justify-center gap-2"
-                 >
-                    {loading && <Loader2 size={16} className="animate-spin" />} Cập Nhật
-                 </button>
+                 <div className="pt-2">
+                   <button 
+                    disabled={loading}
+                    type="submit" 
+                    className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 active:bg-blue-700 active:scale-[0.98] transition-all"
+                   >
+                      {loading && <Loader2 size={18} className="animate-spin" />} LƯU LẠI
+                   </button>
+                 </div>
               </form>
            </div>
         </div>
