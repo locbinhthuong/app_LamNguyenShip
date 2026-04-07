@@ -19,8 +19,8 @@ const getMotorbikeIcon = (activeOrderCount, status) => {
     return L.divIcon({
         className: 'custom-driver-marker',
         html: `
-            <div style="position: relative; width: 40px; height: 40px;">
-                <img src="https://cdn-icons-png.flaticon.com/512/1458/1458269.png" style="width: 100%; height: 100%; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3))" />
+            <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: white; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid #3b82f6;">
+                <span style="font-size: 22px;">🛵</span>
                 ${badgeHtml}
             </div>
         `,

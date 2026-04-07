@@ -124,11 +124,7 @@ export const uploadDriverAvatar = async (file) => {
   const formData = new FormData();
   formData.append('image', file);
   
-  const response = await api.post('/api/upload/avatar', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  });
+  const response = await api.post('/api/upload/avatar', formData);
   return response.data;
 };
 
@@ -177,9 +173,7 @@ export const deleteAnnouncement = async (id) => {
 export const uploadMedia = async (file) => {
   const formData = new FormData();
   formData.append('media', file);
-  const response = await api.post('/api/upload/media', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+  const response = await api.post('/api/upload/media', formData);
   return response.data;
 };
 

@@ -97,11 +97,9 @@ export const disconnectSocket = () => {
 // ==================== HỖ TRỢ UPLOAD ====================
 export const uploadCustomerAvatar = async (file) => {
   const formData = new FormData();
-  formData.append('image', file); // Mongoose backend multer expect 'image'
-  // Sử dụng chung api upload của hệ thống
-  const response = await api.post('/upload/avatar', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  formData.append('image', file);
+  // Không truyền headers explicitly để Axios tự sinh Content-Type kèm Boundary chính xác
+  const response = await api.post('/upload/avatar', formData);
   return response;
 };
 

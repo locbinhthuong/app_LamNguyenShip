@@ -68,11 +68,7 @@ export const uploadDriverAvatar = async (file) => {
   const formData = new FormData();
   formData.append('image', file);
   
-  const response = await api.post('/api/upload/avatar', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  });
+  const response = await api.post('/api/upload/avatar', formData);
   return response.data;
 };
 
