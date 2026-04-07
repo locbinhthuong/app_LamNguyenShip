@@ -6,6 +6,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     customerName: '',
     customerPhone: '',
     senderPhone: '',
+    senderName: '',
+    receiverName: '',
     receiverPhone: '',
     receiverPhone2: '',
     pickupAddress: '',
@@ -27,6 +29,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         customerName: order.customerName || '',
         customerPhone: order.customerPhone || '',
         senderPhone: order.senderPhone || '',
+        senderName: order.senderName || '',
+        receiverName: order.receiverName || '',
         receiverPhone: order.receiverPhone || '',
         receiverPhone2: order.receiverPhone2 || '',
         pickupAddress: order.pickupAddress || '',
@@ -101,12 +105,22 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                 </label>
                 <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white focus:border-orange-500 focus:outline-none" />
               </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 mb-1">
-                  {order.serviceType === 'DAT_XE' ? 'SĐT Tương Tác Của Khách' : 'SĐT Nơi Lấy / Điểm Đón'}
-                </label>
-                <input type="text" name="senderPhone" value={formData.senderPhone} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white font-bold text-orange-700 focus:border-orange-500 focus:outline-none" placeholder="Nhập SĐT của người gửi hàng..." />
-              </div>
+              
+              {order.serviceType === 'GIAO_HANG' && (
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-600 mb-1">Tên Người Gửi / Shop</label>
+                  <input type="text" name="senderName" value={formData.senderName} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white font-bold text-slate-700 focus:border-orange-500 focus:outline-none" placeholder="Tên khách gửi..." />
+                </div>
+              )}
+
+              {order.serviceType !== 'MUA_HO' && (
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                    {order.serviceType === 'DAT_XE' ? 'SĐT Khách Lên Xe' : 'SĐT Nơi Lấy / Điểm Đón'}
+                  </label>
+                  <input type="text" name="senderPhone" value={formData.senderPhone} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white font-bold text-orange-700 focus:border-orange-500 focus:outline-none" placeholder="Nhập SĐT nơi lấy..." />
+                </div>
+              )}
             </div>
           </div>
           
@@ -119,15 +133,22 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               <div className="space-y-4">
                 <div>
                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">
-                     {order.serviceType === 'DAT_XE' ? 'Điểm Đến / Trả Khách' : 'Địa chỉ giao hàng'}
+                     {order.serviceType === 'DAT_XE' ? 'Điểm Đến / Trả Khách' : 'Địa chỉ giao/nhận'}
                    </label>
                    <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" />
                 </div>
                 
+                {order.serviceType === 'GIAO_HANG' && (
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">Tên Người Nhận</label>
+                    <input type="text" name="receiverName" value={formData.receiverName} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white font-bold text-slate-700 focus:border-sky-500 focus:outline-none" placeholder="Tên khách nhận..." />
+                  </div>
+                )}
+
                 {(order.serviceType !== 'DAT_XE' && order.serviceType !== 'MUA_HO') && (
                   <div>
                     <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận Hàng</label>
-                    <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="SĐT khách nhận" />
+                    <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white font-bold text-sky-700 focus:border-sky-500 focus:outline-none" placeholder="SĐT khách nhận..." />
                   </div>
                 )}
               </div>

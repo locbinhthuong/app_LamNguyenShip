@@ -86,14 +86,6 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                 onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-orange-300 shadow-sm"
               />
-              <div className="mt-2">
-                <input 
-                  type="tel"
-                  placeholder="SĐT Lấy Hàng"
-                  className="w-full text-xs font-semibold text-orange-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
-                  value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
-                />
-              </div>
             </div>
           </div>
         </div>

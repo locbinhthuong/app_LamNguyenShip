@@ -297,17 +297,32 @@ export default function OrderDetail() {
              </div>
           )}
 
-          {/* DIEU_PHOI INFO (KÈM THỢ) */}
+          {/* DIEU_PHOI INFO */}
           {order.serviceType === 'DIEU_PHOI' && (
-             <div className="mb-4 bg-purple-50 p-4 rounded-xl border border-purple-100 shadow-sm relative overflow-hidden">
-               <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🛠️</div>
-               <p className="text-purple-800 text-sm flex flex-col relative z-10">
-                 <span className="text-[10px] text-purple-400 font-bold uppercase mb-1 tracking-wider">MÔ TẢ NHIỆM VỤ THỢ:</span>
-                 <span className="font-black text-lg">
-                   {order.subServiceType === 'KEM_THO_DIEN' ? '⚡ Thợ Điện' : order.subServiceType === 'KEM_THO_NUOC' ? '💧 Thợ Nước' : '🛠️ Sửa Chữa Khác'}
-                 </span>
-               </p>
-             </div>
+             <>
+               {(order.subServiceType === 'NAP_TIEN' || order.subServiceType === 'RUT_TIEN') ? (
+                 <div className="mb-4 bg-blue-50/50 p-4 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
+                   <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🏦</div>
+                   <div className="flex flex-col relative z-10 space-y-2">
+                     <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider border-b border-blue-100 pb-1">THÔNG TIN GIAO DỊCH TÀI CHÍNH:</span>
+                     <div className="font-medium text-xs text-slate-600 flex justify-between items-center pt-1"><span>Ngân Hàng:</span> <b className="text-blue-800 text-sm border border-blue-200 bg-white px-2 py-0.5 rounded">{order.financialDetails?.bankName || 'Chưa rõ'}</b></div>
+                     <div className="font-medium text-xs text-slate-600 flex justify-between items-center"><span>Tài Khoản:</span> <b className="text-blue-800 text-lg tracking-wider font-black">{order.financialDetails?.bankAccount || 'Rỗng'}</b></div>
+                     <div className="font-medium text-xs text-slate-600 flex justify-between items-center"><span>Chủ TK:</span> <b className="text-blue-800 text-sm uppercase">{order.financialDetails?.bankAccountName || 'Chưa rõ'}</b></div>
+                     <div className="font-medium text-xs text-slate-600 flex justify-between items-center mt-2 pt-2 border-t border-blue-100/50"><span>Yêu cầu giao dịch:</span> <b className="text-orange-600 text-xl font-black bg-orange-100 px-2 rounded-lg">{order.financialDetails?.transactionAmount?.toLocaleString() || 0}đ</b></div>
+                   </div>
+                 </div>
+               ) : (
+                 <div className="mb-4 bg-purple-50 p-4 rounded-xl border border-purple-100 shadow-sm relative overflow-hidden">
+                   <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🛠️</div>
+                   <p className="text-purple-800 text-sm flex flex-col relative z-10">
+                     <span className="text-[10px] text-purple-400 font-bold uppercase mb-1 tracking-wider">MÔ TẢ NHIỆM VỤ THỢ:</span>
+                     <span className="font-black text-lg">
+                       {order.subServiceType === 'KEM_THO_DIEN' ? '⚡ Thợ Điện' : order.subServiceType === 'KEM_THO_NUOC' ? '💧 Thợ Nước' : '🛠️ Sửa Chữa Khác'}
+                     </span>
+                   </p>
+                 </div>
+               )}
+             </>
           )}
 
           {/* XE ÔM / LÁI HỘ INFO (DAT_XE) */}
