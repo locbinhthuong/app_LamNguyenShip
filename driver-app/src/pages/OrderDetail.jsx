@@ -39,8 +39,34 @@ export default function OrderDetail() {
     }
   };
 
+  // Hàm theo dõi trạng thái thay đổi realtime
   useEffect(() => {
     loadOrder();
+
+    const handleOrderChange = (e) => {
+      // Nếu là order_cancelled hoặc updated event mà trùng ID thì nạp lại
+      const eventData = e.detail;
+      if (
+        (typeof eventData === 'string' && eventData === id) || 
+        (eventData && eventData._id === id)
+      ) {
+        loadOrder();
+      }
+    };
+
+    window.addEventListener('driver_order_cancelled', handleOrderChange);
+    window.addEventListener('driver_order_updated', handleOrderChange);
+    
+    // Mở rộng thêm phòng trường hợp Driver Cứ cắm mặt ngoài Order Detail
+    window.addEventListener('driver_order_picked_up', (e) => { if (e.detail?._id === id) loadOrder(); });
+    window.addEventListener('driver_order_delivering', (e) => { if (e.detail?._id === id) loadOrder(); });
+    window.addEventListener('driver_order_completed', (e) => { if (e.detail?._id === id) loadOrder(); });
+
+    return () => {
+      window.removeEventListener('driver_order_cancelled', handleOrderChange);
+      window.removeEventListener('driver_order_updated', handleOrderChange);
+      window.removeEventListener('driver_order_picked_up', handleOrderChange); // using handleOrderChange roughly
+    };
   }, [id]);
 
   const handleAction = async (action) => {

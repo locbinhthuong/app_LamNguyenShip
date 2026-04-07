@@ -77,6 +77,8 @@ function AppContent() {
       try { sourceNodeRef.current.disconnect(); } catch(e){}
       sourceNodeRef.current = null;
     }
+    // Dọn dẹp cả popup Thông báo lơ lửng nếu có lệnh tắt chuông/huỷ đơn
+    setPushMessage(null);
   }, []);
 
   const startAlarm = useCallback(() => {

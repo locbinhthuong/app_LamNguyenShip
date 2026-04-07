@@ -22,17 +22,46 @@ const initAdminAudio = async () => {
 window.addEventListener('click', initAdminAudio, { once: true });
 window.addEventListener('touchstart', initAdminAudio, { once: true });
 
+let adminAlarmTimer = null;
+let currentAdminSource = null;
+
 const playAdminAlarm = (isFinance = false) => {
     try {
+        if (currentAdminSource) {
+            try { currentAdminSource.stop(); } catch(e){}
+            currentAdminSource = null;
+        }
+        if (adminAlarmTimer) {
+            clearTimeout(adminAlarmTimer);
+            adminAlarmTimer = null;
+        }
+
         if (adminAudioCtx && (isFinance ? adminFinanceBuffer : adminAudioBuffer)) {
             if (adminAudioCtx.state === 'suspended') adminAudioCtx.resume();
             const source = adminAudioCtx.createBufferSource();
             source.buffer = isFinance ? adminFinanceBuffer : adminAudioBuffer;
             source.connect(adminAudioCtx.destination);
+            source.loop = !isFinance; // Chỉ loop Ting Ting
             source.start(0);
+            currentAdminSource = source;
+            
+            if (!isFinance) {
+                adminAlarmTimer = setTimeout(() => {
+                    if (currentAdminSource) {
+                        try { currentAdminSource.stop(); } catch(e){}
+                    }
+                }, 10000); // Tắt chuông sau 10 giây
+            }
         } else {
             // Chuông Fallback
-            new Audio(isFinance ? '/thanhtoantienchotaixe.mp3' : '/chuong.mp3').play().catch(e => console.log('Autoplay blocked'));
+            const fallbackAudio = new Audio(isFinance ? '/thanhtoantienchotaixe.mp3' : '/chuong.mp3');
+            fallbackAudio.loop = !isFinance;
+            fallbackAudio.play().catch(e => console.log('Autoplay blocked'));
+            if (!isFinance) {
+                setTimeout(() => {
+                    try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; } catch(e){}
+                }, 10000);
+            }
         }
     } catch(err) {}
 };
