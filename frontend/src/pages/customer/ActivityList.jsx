@@ -109,15 +109,14 @@ const ActivityList = () => {
     );
   };
 
-
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-20 font-sans relative">
-      <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-center">
+    <div className="flex flex-col h-[100dvh] bg-gray-50 font-sans overflow-hidden relative">
+      <div className="shrink-0 bg-white px-4 py-3 shadow-sm relative z-40 flex items-center justify-center">
         <span className="font-bold text-gray-800 text-lg">Hoạt động của tôi</span>
       </div>
       
       {/* Tabs */}
-      <div className="sticky top-0 z-30 flex bg-white border-b border-gray-200 shadow-sm">
+      <div className="shrink-0 sticky top-0 z-30 flex bg-white border-b border-gray-200 shadow-sm">
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'pending' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
           onClick={() => { setFilter('pending'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
@@ -141,7 +140,7 @@ const ActivityList = () => {
       {/* Swipeable container */}
       <div 
         ref={scrollRef}
-        className="flex w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar items-start"
+        className="flex-1 w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar flex items-start"
         onScroll={(e) => {
           const w = e.target.offsetWidth;
           const idx = Math.round(e.target.scrollLeft / w);
@@ -150,7 +149,7 @@ const ActivityList = () => {
           if (idx === 2 && filter !== 'history') setFilter('history');
         }}
       >
-        <div className="w-full shrink-0 snap-center p-4 pb-8" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-24 p-4" style={{ minWidth: '100%' }}>
           {loading ? (
             <div className="text-center text-gray-500 mt-10">Đang tải...</div>
           ) : pendingOrders.length === 0 ? (
@@ -164,7 +163,7 @@ const ActivityList = () => {
           )}
         </div>
 
-        <div className="w-full shrink-0 snap-center p-4 pb-8" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-24 p-4" style={{ minWidth: '100%' }}>
           {loading ? (
             <div className="text-center text-gray-500 mt-10">Đang tải...</div>
           ) : activeOrders.length === 0 ? (
@@ -177,7 +176,7 @@ const ActivityList = () => {
           )}
         </div>
 
-        <div className="w-full shrink-0 snap-center p-4 pb-8" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-24 p-4" style={{ minWidth: '100%' }}>
           {loading ? (
             <div className="text-center text-gray-500 mt-10">Đang tải...</div>
           ) : historyOrders.length === 0 ? (

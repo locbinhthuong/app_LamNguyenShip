@@ -558,7 +558,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24 sm:pb-28">
+    <div className="h-[100dvh] flex flex-col bg-slate-50 overflow-hidden relative">
       {/* Toast */}
       {showToast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
@@ -569,7 +569,7 @@ export default function Home() {
       )}
 
       {/* Header Siêu Gọn */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-800 p-2 sm:p-3 pt-[max(1rem,env(safe-area-inset-top))] shadow-md relative z-20">
+      <div className="shrink-0 bg-gradient-to-r from-blue-600 to-blue-800 p-2 sm:p-3 pt-[max(1rem,env(safe-area-inset-top))] shadow-md relative z-20">
         <div className="flex items-center justify-between gap-2">
           {/* Cụm trái: Logo rút gọn + Tên Tài xế */}
           <div className="flex items-center gap-2">
@@ -624,7 +624,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="w-full bg-gradient-to-b from-blue-700 to-blue-600 p-2 pb-3 shadow-inner relative z-10 flex justify-center">
+      <div className="shrink-0 w-full bg-gradient-to-b from-blue-700 to-blue-600 p-2 pb-3 shadow-inner relative z-10 flex justify-center">
 
         {/* Cặp Thống kê Doanh Số Ngày Thay Vì Đơn Cũ */}
         <div className="mt-2 grid grid-cols-2 gap-3 w-full max-w-sm px-2">
@@ -644,7 +644,7 @@ export default function Home() {
       </div>
 
       {/* Tabs */}
-      <div className="sticky top-0 z-20 flex bg-white border-b border-slate-200">
+      <div className="shrink-0 sticky top-0 z-20 flex bg-white border-b border-slate-200 shadow-sm">
         <button
           type="button"
           onClick={() => { setFilter('available'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
@@ -677,7 +677,7 @@ export default function Home() {
       {/* Swipeable Content Container */}
       <div 
         ref={scrollRef}
-        className="flex w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar items-start"
+        className="flex-1 w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar flex items-start"
         onScroll={(e) => {
           const w = e.target.offsetWidth;
           const idx = Math.round(e.target.scrollLeft / w);
@@ -688,7 +688,7 @@ export default function Home() {
       >
         
         {/* TAB 1: CHỜ NHẬN */}
-        <div className="w-full shrink-0 snap-center pb-8" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-28 pt-2" style={{ minWidth: '100%' }}>
           <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -721,7 +721,7 @@ export default function Home() {
         </div>
 
         {/* TAB 2: ĐANG GIAO */}
-        <div className="w-full shrink-0 snap-center pb-8" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-28 pt-2" style={{ minWidth: '100%' }}>
           <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -745,7 +745,7 @@ export default function Home() {
         </div>
 
         {/* TAB 3: LỊCH SỬ KHU TRÚ */}
-        <div className="w-full shrink-0 snap-center pb-8" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-28 pt-2" style={{ minWidth: '100%' }}>
           <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
             {loading ? (
               <div className="flex justify-center py-12">
