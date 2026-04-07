@@ -110,10 +110,6 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                 </label>
                 <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white focus:border-orange-500 focus:outline-none" />
               </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nơi Lấy / Điểm Đón (Phụ)</label>
-                <input type="text" name="senderPhone" value={formData.senderPhone} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white focus:border-orange-500 focus:outline-none" placeholder="Không bắt buộc" />
-              </div>
             </div>
           </div>
           
@@ -129,23 +125,10 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                    <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận (Chính)</label>
-                    <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="SĐT chính khách nhận" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận (Phụ)</label>
-                    <input type="text" name="receiverPhone2" value={formData.receiverPhone2} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="SĐT liên hệ thêm" />
-                  </div>
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận Hàng</label>
+                  <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="SĐT khách nhận" />
                 </div>
-
-                {(order.serviceType === 'GIAO_HANG' || order.serviceType === 'MUA_HO') && (
-                  <div>
-                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">Mô Tả Hàng Hóa / Tên món mua hộ</label>
-                    <textarea name="packageDescription" value={formData.packageDescription} onChange={handleChange} rows="2" className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="VD: Mua 2 ly trà sữa, giao tài liệu..."></textarea>
-                  </div>
-                )}
               </div>
             </div>
           )}

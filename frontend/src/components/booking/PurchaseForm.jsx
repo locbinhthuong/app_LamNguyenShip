@@ -28,7 +28,6 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
   const handleSubmit = (e) => {
     e.preventDefault();
     // Không cần bắt buộc điểm lấy hoặc điểm giao, để trống cũng được
-    if (!form.itemsToBuy.trim()) return alert('Vui lòng liệt kê món bạn muốn tài xế mua dùm!');
     // Không cần validate tên/SĐT nữa vì Backend/App đã tự móc ra từ phiên Đăng nhập
     // if (!form.customerName.trim() || !form.customerPhone.trim()) { ... }
 
@@ -45,8 +44,8 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       receiverPhone: form.receiverPhone.trim(),
       receiverPhone2: form.receiverPhone2.trim(),
       packageDetails: {
-        description: `NHỜ MUA: ${form.itemsToBuy.trim()}`,
-        itemsToBuy: [form.itemsToBuy.trim()]
+        description: 'MUA HỘ',
+        itemsToBuy: []
       }
     });
   };
@@ -86,19 +85,12 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                 onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-orange-300 shadow-sm"
               />
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2">
                 <input 
                   type="tel"
-                  placeholder="SĐT Lấy Hàng (Chính)"
+                  placeholder="SĐT Lấy Hàng"
                   className="w-full text-xs font-semibold text-orange-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
                   value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
-                />
-                <input 
-                  type="tel"
-                  placeholder="SĐT Nơi bán (Tùy chọn)"
-                  className="w-full text-xs font-semibold text-gray-800 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
-                  value={form.senderPhone}
-                  onChange={e => setForm({...form, senderPhone: e.target.value})}
                 />
               </div>
             </div>
@@ -125,20 +117,13 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                 onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
               />
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2">
                 <input 
                   type="tel"
-                  placeholder="SĐT Nhận Chính"
+                  placeholder="SĐT Nhận"
                   className="w-full text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-sky-300"
                   value={form.receiverPhone}
                   onChange={e => setForm({...form, receiverPhone: e.target.value})}
-                />
-                <input 
-                  type="tel"
-                  placeholder="SĐT Nhận Phụ (Tùy chọn)"
-                  className="w-full text-xs font-semibold text-gray-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-sky-300"
-                  value={form.receiverPhone2}
-                  onChange={e => setForm({...form, receiverPhone2: e.target.value})}
                 />
               </div>
             </div>
@@ -147,21 +132,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
 
       </div>
 
-      {/* DANH SÁCH MÓN ĐỒ */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block flex items-center gap-1">
-           <ShoppingBag size={14} className="text-orange-500" /> BẠN MUỐN MUA GÌ?
-        </label>
-        <div>
-          <textarea 
-            rows="3"
-            placeholder="Liệt kê chi tiết món đồ (Ví dụ: 1 Cơm sườn bì, 2 trà đá - Nhớ chan nhiều nước mắm...)"
-            className="w-full text-sm font-medium text-gray-800 bg-orange-50/50 border border-orange-100 p-3 rounded-xl outline-none focus:border-orange-300 focus:bg-white transition-colors resize-none placeholder:font-normal"
-            value={form.itemsToBuy}
-            onChange={e => setForm({...form, itemsToBuy: e.target.value})}
-          ></textarea>
-        </div>
-      </div>
+
 
       {/* THÔNG TIN KHÁCH HÀNG */}
       {/* ĐÃ ẨN KHỐI THÔNG TIN KHÁCH HÀNG - LẤY TỰ ĐỘNG TỪ ACCOUNT */}

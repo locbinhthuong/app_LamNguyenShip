@@ -92,17 +92,12 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300 shadow-sm"
               />
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-2">
               <input 
                 type="tel"
-                placeholder="SĐT Lấy Hàng (Chính)"
+                placeholder="SĐT Lấy Hàng"
                 className="w-full text-xs font-semibold text-orange-600 outline-none p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
                 value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
-              />
-              <input 
-                type="tel" placeholder="SĐT Phụ Lấy Hàng (Tùy chọn)"
-                className="w-full text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-bold text-slate-800"
-                value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
               />
             </div>
           </div>
@@ -135,16 +130,11 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 className="w-full mb-2 text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-medium text-slate-800"
                 value={form.receiverName} onChange={e => setForm({...form, receiverName: e.target.value})}
               />
-              <div className="grid grid-cols-2 gap-2">
+              <div className="mt-2">
                 <input 
-                  type="tel" placeholder="SĐT Nhận Chính"
+                  type="tel" placeholder="SĐT Người Nhận"
                   className="w-full text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-bold text-blue-600"
                   value={form.receiverPhone} onChange={e => setForm({...form, receiverPhone: e.target.value})}
-                />
-                <input 
-                  type="tel" placeholder="SĐT Nhận Phụ (Tùy chọn)"
-                  className="w-full text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-bold text-slate-600 focus:border-sky-300"
-                  value={form.receiverPhone2} onChange={e => setForm({...form, receiverPhone2: e.target.value})}
                 />
               </div>
             </div>
