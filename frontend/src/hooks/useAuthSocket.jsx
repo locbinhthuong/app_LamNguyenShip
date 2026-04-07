@@ -28,13 +28,25 @@ export const useAuthSocket = () => {
             } catch(err) {}
 
           } else if (order.status === 'ACCEPTED') {
-            message = `Tài xế ${order.assignedTo?.name || ''} đã nhận đơn và đang di chuyển!`;
+            if (order.serviceType === 'DAT_XE') {
+              message = `Tài xế ${order.assignedTo?.name || ''} đã nhận chuyến và đang đến đón bạn!`;
+            } else {
+              message = `Tài xế ${order.assignedTo?.name || ''} đã nhận đơn và trên đường lấy hàng!`;
+            }
             type = 'success';
           } else if (order.status === 'PICKED_UP') {
-            message = `Tài xế đã lấy hàng và bắt đầu giao!`;
+            if (order.serviceType === 'DAT_XE') {
+              message = `Tài xế đã đón bạn thành công! Bắt đầu di chuyển...`;
+            } else {
+              message = `Tài xế đã lấy hàng và bắt đầu giao!`;
+            }
             type = 'warning';
           } else if (order.status === 'COMPLETED') {
-            message = `Đơn hàng ${order.orderCode} đã hoàn thành. Cảm ơn quý khách!`;
+            if (order.serviceType === 'DAT_XE') {
+              message = `Chuyến đi ${order.orderCode} đã hoàn thành. Cảm ơn quý khách đã tin dùng!`;
+            } else {
+              message = `Đơn hàng ${order.orderCode} đã giao thành công. Cảm ơn quý khách!`;
+            }
             type = 'success';
           } else if (order.status === 'DRAFT') {
              message = `Thông tin đơn hàng ${order.orderCode} vừa được Admin cập nhật.`;

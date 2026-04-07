@@ -405,7 +405,9 @@ export default function OrderDetail() {
                 <div className="flex gap-3">
                   <span className="text-yellow-400">✓</span>
                   <div>
-                    <p className="text-slate-800 text-sm">Lấy hàng</p>
+                    <p className="text-slate-800 text-sm">
+                      {order.serviceType === 'DAT_XE' ? 'Tài xế đã Đón Khách' : 'Lấy hàng'}
+                    </p>
                     <p className="text-slate-500 text-xs">{new Date(order.pickedUpAt).toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
@@ -414,7 +416,9 @@ export default function OrderDetail() {
                 <div className="flex gap-3">
                   <span className="text-blue-400">✓</span>
                   <div>
-                    <p className="text-slate-800 text-sm">Giao hàng</p>
+                    <p className="text-slate-800 text-sm">
+                      {order.serviceType === 'DAT_XE' ? 'Tài xế đã Trả Khách' : 'Giao hàng'}
+                    </p>
                     <p className="text-slate-500 text-xs">{new Date(order.deliveredAt).toLocaleString('vi-VN')}</p>
                   </div>
                 </div>
