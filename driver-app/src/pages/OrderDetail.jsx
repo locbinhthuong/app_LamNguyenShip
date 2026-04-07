@@ -265,10 +265,14 @@ export default function OrderDetail() {
                       <p className="font-bold text-slate-400 text-[10px] uppercase mb-1">🏁 TRẠM 2: GIAO ĐẾN / NHẬN HÀNG</p>
                       <p className="text-slate-800 font-bold text-sm mb-2">{order.receiverName || order.customerName || 'Người nhận'}</p>
                       <div className="space-y-3 mt-3">
-                         <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT CHÍNH</span>
-                           <a href={`tel:${order.receiverPhone || order.customerPhone}`} className="bg-blue-100 text-blue-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200">📞 {order.receiverPhone || order.customerPhone}</a>
-                         </div>
+                         {order.receiverPhone ? (
+                           <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT CHÍNH</span>
+                             <a href={`tel:${order.receiverPhone}`} className="bg-blue-100 text-blue-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200">📞 {order.receiverPhone}</a>
+                           </div>
+                         ) : (
+                           <p className="text-xs text-slate-400 italic">Không có SĐT tại điểm đến</p>
+                         )}
                          {order.receiverPhone2 && (
                            <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT PHỤ</span>

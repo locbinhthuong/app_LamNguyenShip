@@ -135,7 +135,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                    <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" />
                 </div>
                 
-                {order.serviceType !== 'DAT_XE' && (
+                {(order.serviceType !== 'DAT_XE' && order.serviceType !== 'MUA_HO') && (
                   <div>
                     <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận Hàng</label>
                     <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="SĐT khách nhận" />

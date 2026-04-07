@@ -41,8 +41,8 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
       note: '',
       senderPhone: form.senderPhone.trim() || defaultPhone,
-      receiverPhone: form.receiverPhone.trim(),
-      receiverPhone2: form.receiverPhone2.trim(),
+      receiverPhone: '',
+      receiverPhone2: '',
       packageDetails: {
         description: 'MUA HỘ',
         itemsToBuy: []
@@ -109,23 +109,14 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
               GIAO ĐẾN ĐÂU (CÓ THỂ ĐỂ TRỐNG)
             </label>
             <div className="flex flex-col gap-2 relative mt-1">
-              <AddressAutocompleteInput 
-                value={form.deliveryAddress}
-                onChangeText={txt => setForm({...form, deliveryAddress: txt})}
-                onSelectCoordinates={coords => setForm({...form, deliveryCoordinates: coords})}
-                placeholder="Nhập địa chỉ nhận hoặc để trống..."
-                onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
-              />
-              <div className="mt-2">
-                <input 
-                  type="tel"
-                  placeholder="SĐT Nhận"
-                  className="w-full text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-sky-300"
-                  value={form.receiverPhone}
-                  onChange={e => setForm({...form, receiverPhone: e.target.value})}
+                <AddressAutocompleteInput 
+                  value={form.deliveryAddress}
+                  onChangeText={txt => setForm({...form, deliveryAddress: txt})}
+                  onSelectCoordinates={coords => setForm({...form, deliveryCoordinates: coords})}
+                  placeholder="Nhập địa chỉ nhận hoặc để trống..."
+                  onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
                 />
-              </div>
             </div>
           </div>
         </div>
