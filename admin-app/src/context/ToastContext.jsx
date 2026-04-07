@@ -69,12 +69,7 @@ export const ToastProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Sound & Persistent Logic
-    if (toast && toast.duration === 30000 && toast.type === 'warning') {
-      startAlarm();
-    } else {
-      stopAlarm();
-    }
+    // Removed internal broken audio logic because useAdminSocket.jsx handles sound playback properly
 
     let timer;
     if (toast && toast.duration > 0) {
@@ -115,7 +110,10 @@ export const ToastProvider = ({ children }) => {
               ${bgColors[toast.type]} 
               ${toast.duration === 0 ? 'animate-pulse ring-4 ring-orange-500/50 border-orange-500 scale-105 transition-transform' : ''}
             `}
-            onClick={() => setToast(null)}
+            onClick={() => {
+              setToast(null);
+              if (window.stopAdminAlarm) window.stopAdminAlarm();
+            }}
           >
             <div className={`shrink-0 mt-0.5 ${toast.duration === 0 ? 'animate-bounce' : ''}`}>
               {icons[toast.type]}
@@ -126,12 +124,16 @@ export const ToastProvider = ({ children }) => {
               </p>
               {toast.duration === 30000 && (
                 <p className="text-[10px] text-red-500 font-extrabold mt-1 uppercase animate-pulse">
-                  Nhấn vào đây để xác nhận!
+                  Nhấn vào đây để xem rỏ hơn!
                 </p>
               )}
             </div>
             <button 
-              onClick={(e) => { e.stopPropagation(); setToast(null); }}
+              onClick={(e) => { 
+                e.stopPropagation(); 
+                setToast(null); 
+                if (window.stopAdminAlarm) window.stopAdminAlarm();
+              }}
               className="shrink-0 text-gray-400 hover:text-gray-900 outline-none p-1 rounded-full hover:bg-black/10 bg-white/50"
             >
               <X size={18} />

@@ -32,16 +32,23 @@ window.addEventListener('touchstart', initAdminAudio, { once: true });
 let adminAlarmTimer = null;
 let currentAdminSource = null;
 
+// Expose a public function to stop the alarm immediately
+window.stopAdminAlarm = () => {
+    if (currentAdminSource) {
+        try { currentAdminSource.stop(); } catch(e){}
+        currentAdminSource = null;
+    }
+    if (adminAlarmTimer) {
+        clearTimeout(adminAlarmTimer);
+        adminAlarmTimer = null;
+    }
+    try { fallbackChuong.pause(); fallbackChuong.currentTime = 0; } catch(e){}
+    try { fallbackFinance.pause(); fallbackFinance.currentTime = 0; } catch(e){}
+};
+
 const playAdminAlarm = (isFinance = false) => {
     try {
-        if (currentAdminSource) {
-            try { currentAdminSource.stop(); } catch(e){}
-            currentAdminSource = null;
-        }
-        if (adminAlarmTimer) {
-            clearTimeout(adminAlarmTimer);
-            adminAlarmTimer = null;
-        }
+        window.stopAdminAlarm(); // Dừng chuông cũ trước khi kêu mới
 
         if (adminAudioCtx && (isFinance ? adminFinanceBuffer : adminAudioBuffer)) {
             if (adminAudioCtx.state === 'suspended') adminAudioCtx.resume();
