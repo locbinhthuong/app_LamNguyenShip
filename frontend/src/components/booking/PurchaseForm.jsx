@@ -143,7 +143,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       {/* ĐÃ ẨN KHỐI THÔNG TIN KHÁCH HÀNG - LẤY TỰ ĐỘNG TỪ ACCOUNT */}
 
       {/* FLOAT BUTTON */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50">
         <button 
           disabled={loading}
           type="submit"

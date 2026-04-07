@@ -117,9 +117,9 @@ export default function OrderDetail() {
   else if (order.status === 'CANCELLED') currentIndex = -1; // Hủy
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-8">
+    <div className="flex flex-col absolute top-0 left-0 right-0 bottom-[64px] bg-slate-50 overflow-hidden z-20">
       {/* Header */}
-      <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center gap-3">
+      <div className="shrink-0 bg-white px-4 py-3 shadow-sm z-40 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
           <ArrowLeft size={22} />
         </button>
@@ -132,7 +132,8 @@ export default function OrderDetail() {
         </button>
       </div>
 
-      <div className="p-4 space-y-4 max-w-lg mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-24">
+        <div className="max-w-lg mx-auto space-y-4">
         
         {/* Khối Trạng Thái Hoạt Động (Stepper) */}
         {!['CANCELLED'].includes(order.status) ? (
@@ -347,6 +348,7 @@ export default function OrderDetail() {
           </div>
         )}
 
+        </div>
       </div>
     </div>
   );

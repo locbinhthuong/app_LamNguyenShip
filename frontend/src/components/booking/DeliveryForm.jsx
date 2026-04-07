@@ -174,7 +174,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       </div>
 
       {/* FLOAT BUTTON */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50">
         <button 
           disabled={loading}
           type="submit"

@@ -75,7 +75,7 @@ export default function BookingFlow() {
   ];
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-gray-50 font-sans overflow-hidden relative">
+    <div className="flex flex-col absolute top-0 left-0 right-0 bottom-[64px] bg-gray-50 font-sans overflow-hidden z-20">
       {/* HEADER TỪ CHỐI VUỐT */}
       <div className="shrink-0 bg-white px-4 py-3 shadow-sm z-40 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">
@@ -92,7 +92,7 @@ export default function BookingFlow() {
       {/* ĐÃ XÓA TABS SWITCHER ĐỂ CHỈ TẬP TRUNG VÀO 1 DỊCH VỤ DUY NHẤT TRANH NHẦM LẪN */}
 
       {/* NỘI DUNG FORM */}
-      <div className="flex-1 overflow-y-auto p-4 transform transition-all animate-fadeIn">
+      <div className="flex-1 overflow-y-auto p-4 transform transition-all animate-fadeIn pb-24">
         {activeTab === 'GIAO_HANG' && (
           <DeliveryForm 
             onBooking={handleBookingSubmit} 

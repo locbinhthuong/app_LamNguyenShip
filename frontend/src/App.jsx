@@ -47,6 +47,22 @@ function App() {
               </ProtectedRoute>
             } 
           />
+          <Route 
+            path="/customer/book/:serviceType" 
+            element={
+              <ProtectedRoute allowedRole="CUSTOMER">
+                <BookingFlow />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/customer/order/:id" 
+            element={
+              <ProtectedRoute allowedRole="CUSTOMER">
+                <OrderDetail />
+              </ProtectedRoute>
+            } 
+          />
         </Route>
 
         {/* Các màn hình KHÔNG có Footer (Ví dụ: Form Lên Đơn, Đăng nhập, Shop) */}
@@ -63,22 +79,6 @@ function App() {
           } 
         />
 
-        <Route 
-          path="/customer/book/:serviceType" 
-          element={
-            <ProtectedRoute allowedRole="CUSTOMER">
-              <BookingFlow />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/customer/order/:id" 
-          element={
-            <ProtectedRoute allowedRole="CUSTOMER">
-              <OrderDetail />
-            </ProtectedRoute>
-          } 
-        />
       </Routes>
     </div>
   );
