@@ -92,7 +92,7 @@ export default function BookingFlow() {
       {/* ĐÃ XÓA TABS SWITCHER ĐỂ CHỈ TẬP TRUNG VÀO 1 DỊCH VỤ DUY NHẤT TRANH NHẦM LẪN */}
 
       {/* NỘI DUNG FORM */}
-      <div className="flex-1 overflow-y-auto p-4 transform transition-all animate-fadeIn pb-24">
+      <div className="flex-1 overflow-y-auto p-4 transform transition-all animate-fadeIn">
         {activeTab === 'GIAO_HANG' && (
           <DeliveryForm 
             onBooking={handleBookingSubmit} 

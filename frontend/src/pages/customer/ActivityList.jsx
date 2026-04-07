@@ -110,7 +110,7 @@ const ActivityList = () => {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 font-sans overflow-hidden relative">
+    <div className="flex flex-col absolute top-0 left-0 right-0 bottom-[80px] bg-gray-50 font-sans overflow-hidden z-10">
       <div className="shrink-0 bg-white px-4 py-3 shadow-sm relative z-40 flex items-center justify-center">
         <span className="font-bold text-gray-800 text-lg">Hoạt động của tôi</span>
       </div>
@@ -149,7 +149,7 @@ const ActivityList = () => {
           if (idx === 2 && filter !== 'history') setFilter('history');
         }}
       >
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-24 p-4" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
           {loading ? (
             <div className="text-center text-gray-500 mt-10">Đang tải...</div>
           ) : pendingOrders.length === 0 ? (
@@ -163,7 +163,7 @@ const ActivityList = () => {
           )}
         </div>
 
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-24 p-4" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
           {loading ? (
             <div className="text-center text-gray-500 mt-10">Đang tải...</div>
           ) : activeOrders.length === 0 ? (
@@ -176,7 +176,7 @@ const ActivityList = () => {
           )}
         </div>
 
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-24 p-4" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
           {loading ? (
             <div className="text-center text-gray-500 mt-10">Đang tải...</div>
           ) : historyOrders.length === 0 ? (

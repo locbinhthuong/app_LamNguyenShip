@@ -677,7 +677,7 @@ export default function Home() {
       {/* Swipeable Content Container */}
       <div 
         ref={scrollRef}
-        className="flex-1 w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar flex items-start"
+        className="flex-1 w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar flex items-start mb-[72px]"
         onScroll={(e) => {
           const w = e.target.offsetWidth;
           const idx = Math.round(e.target.scrollLeft / w);
@@ -688,7 +688,7 @@ export default function Home() {
       >
         
         {/* TAB 1: CHỜ NHẬN */}
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-28 pt-2" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
           <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -721,7 +721,7 @@ export default function Home() {
         </div>
 
         {/* TAB 2: ĐANG GIAO */}
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-28 pt-2" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
           <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -745,7 +745,7 @@ export default function Home() {
         </div>
 
         {/* TAB 3: LỊCH SỬ KHU TRÚ */}
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto pb-28 pt-2" style={{ minWidth: '100%' }}>
+        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
           <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
             {loading ? (
               <div className="flex justify-center py-12">
