@@ -365,9 +365,9 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver?.isOnline]);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const [available, myAllRes] = await Promise.all([
         getAvailableOrders(),
         getMyOrders() // Lấy toàn bộ, filter trên Client vì backend không hỗ trợ list param
@@ -403,7 +403,7 @@ export default function Home() {
     } catch (error) {
       console.error('Lỗi lấy dữ liệu trang chủ:', error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, []);
 
@@ -431,10 +431,10 @@ export default function Home() {
   useEffect(() => {
     loadData();
     // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
-    const interval = setInterval(loadData, 30000);
+    const interval = setInterval(() => loadData(false), 30000);
 
     const handleNewOrder = () => {
-       loadData();
+       loadData(false);
        // Global Alarm in App.jsx tự động lo khoản chuông
        
        if (Capacitor.isNativePlatform()) {
@@ -456,24 +456,26 @@ export default function Home() {
     };
 
     const handleOrderLost = () => {
-      loadData();
+      loadData(false);
     };
+
+    const loadDataSilent = () => loadData(false);
 
     window.addEventListener('driver_new_order', handleNewOrder);
     window.addEventListener('driver_order_accepted', handleOrderLost);
     window.addEventListener('driver_order_cancelled', handleOrderLost);
-    window.addEventListener('driver_order_picked_up', loadData);
-    window.addEventListener('driver_order_delivering', loadData);
-    window.addEventListener('driver_order_completed', loadData);
+    window.addEventListener('driver_order_picked_up', loadDataSilent);
+    window.addEventListener('driver_order_delivering', loadDataSilent);
+    window.addEventListener('driver_order_completed', loadDataSilent);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener('driver_new_order', handleNewOrder);
       window.removeEventListener('driver_order_accepted', handleOrderLost);
       window.removeEventListener('driver_order_cancelled', handleOrderLost);
-      window.removeEventListener('driver_order_picked_up', loadData);
-      window.removeEventListener('driver_order_delivering', loadData);
-      window.removeEventListener('driver_order_completed', loadData);
+      window.removeEventListener('driver_order_picked_up', loadDataSilent);
+      window.removeEventListener('driver_order_delivering', loadDataSilent);
+      window.removeEventListener('driver_order_completed', loadDataSilent);
     };
   }, [loadData]);
 

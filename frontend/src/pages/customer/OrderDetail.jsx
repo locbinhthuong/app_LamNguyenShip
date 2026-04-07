@@ -35,12 +35,14 @@ export default function OrderDetail() {
 
     const handleRefresh = (e) => {
       const updatedOrder = e.detail;
-      if (updatedOrder && updatedOrder._id === id) {
+      if (updatedOrder && String(updatedOrder._id) === String(id)) {
         // Cập nhật State trực tiếp cực nhanh
         setOrder(updatedOrder);
-      } else {
-        // Fallback fetch nếu không truyền data
-        fetchDetail();
+      } else if (!updatedOrder) {
+        // Fallback fetch nếu không truyền data, chạy nền không xoay spinner
+        getOrderDetails(id).then(res => {
+          if (res.success) setOrder(res.data);
+        }).catch(err => console.error(err));
       }
     };
 
@@ -251,10 +253,7 @@ export default function OrderDetail() {
                   <div className="space-y-1">
                     <p className="text-xs text-slate-600 font-medium">👤 {order.senderName || order.customerName || 'Người đặt'}</p>
                     <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
-                      <span className="font-bold text-orange-600">SĐT Chính:</span> {order.customerPhone || order.pickupPhone}
-                      {order.senderPhone && order.senderPhone !== order.customerPhone && (
-                        <span> | <span className="font-bold text-slate-600">SĐT Phụ:</span> {order.senderPhone}</span>
-                      )}
+                      <span className="font-bold text-orange-600">SĐT Liên Hệ:</span> {order.senderPhone || order.customerPhone || order.pickupPhone}
                     </p>
                   </div>
                </div>
@@ -269,10 +268,7 @@ export default function OrderDetail() {
                     <div className="space-y-1">
                       <p className="text-xs text-slate-600 font-medium">👤 {order.receiverName || order.customerName || 'Khách hàng'}</p>
                       <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
-                        <span className="font-bold text-blue-600">SĐT Chính:</span> {order.receiverPhone || order.customerPhone}
-                        {order.receiverPhone2 && (
-                          <span> | <span className="font-bold text-slate-600">SĐT Phụ:</span> {order.receiverPhone2}</span>
-                        )}
+                        <span className="font-bold text-blue-600">SĐT Liên Hệ:</span> {order.receiverPhone || order.customerPhone}
                       </p>
                     </div>
                  </div>
