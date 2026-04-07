@@ -44,9 +44,9 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       receiverPhone: form.receiverPhone.trim(),
       receiverPhone2: form.receiverPhone2.trim(),
       pickupAddress: form.pickupAddress.trim(),
-      pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, // Tọa độ mẫu ngã 4 Vĩnh Long
+      pickupCoordinates: form.pickupCoordinates || null, // Tọa độ thật hoặc rỗng
       deliveryAddress: form.deliveryAddress.trim(),
-      deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
+      deliveryCoordinates: form.deliveryCoordinates || null,
       note: form.note.trim(),
       codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
       packageDetails: {

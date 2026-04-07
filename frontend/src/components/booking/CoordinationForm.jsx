@@ -54,7 +54,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
       customerName: customerData?.name || form.customerName,
       customerPhone: defaultPhone || form.customerPhone,
       pickupAddress: form.pickupAddress.trim(),
-      pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
+      pickupCoordinates: form.pickupCoordinates || null, 
       deliveryAddress: '', // Điều phối thường chỉ cần 1 điểm (Nơi khách đứng)
       deliveryCoordinates: null,
       note: form.note.trim(),

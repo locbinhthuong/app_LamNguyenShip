@@ -73,7 +73,7 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
         pickupAddress: form.pickupAddress.trim(),
         deliveryAddress: form.deliveryAddress.trim(),
         pickupCoordinates: { lat: savedLoc.lat, lng: savedLoc.lng }, 
-        deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
+        deliveryCoordinates: form.deliveryCoordinates || null,
         packageDetails: { description: form.packageDescription },
         note: form.note,
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,

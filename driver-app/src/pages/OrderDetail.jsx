@@ -150,7 +150,7 @@ export default function OrderDetail() {
                   {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / LẤY TIỀN' : 'Lấy Hàng Tại'}
                 </p>
                 <a 
-                  href={`https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates?.lat ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
+                  href={`https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates?.lat && order.pickupCoordinates.lat !== 10.045 && order.pickupCoordinates.lat !== 10.050 ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
@@ -172,7 +172,7 @@ export default function OrderDetail() {
                       {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'Giao Hàng (Đến)'}
                     </p>
                     <a 
-                      href={`https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates?.lat ? `${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}` : encodeURIComponent(order.deliveryAddress)}`} 
+                      href={`https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates?.lat && order.deliveryCoordinates.lat !== 10.045 && order.deliveryCoordinates.lat !== 10.050 ? `${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}` : encodeURIComponent(order.deliveryAddress)}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
