@@ -59,7 +59,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 pb-28">
+    <form onSubmit={handleSubmit} className="space-y-4 pb-12">
       {/* KHUYẾN CÁO */}
       <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
         <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
@@ -173,8 +173,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         </div>
       </div>
 
-      {/* FLOAT BUTTON */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50">
+      {/* SUBMIT BUTTON */}
+      <div className="mt-6">
         <button 
           disabled={loading}
           type="submit"

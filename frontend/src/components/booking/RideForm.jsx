@@ -67,7 +67,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 pb-28">
+    <form onSubmit={handleSubmit} className="space-y-4 pb-12">
       
       {/* LOẠI DỊCH VỤ */}
       <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-3 gap-2">
@@ -217,8 +217,8 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
         </div>
       </div>
 
-      {/* FLOAT BUTTON */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100 z-50">
+      {/* SUBMIT BUTTON */}
+      <div className="mt-6">
         <button 
           disabled={loading}
           type="submit"

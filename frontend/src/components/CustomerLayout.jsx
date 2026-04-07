@@ -26,13 +26,13 @@ const CustomerLayout = () => {
   return (
     <div className="flex flex-col h-[100dvh] bg-gray-50 font-sans relative overflow-hidden">
       
-      {/* KHU VỰC HIỂN THỊ CÁC COMPONENT CON (Trang chủ, Hoạt động...) */}
-      <div className="flex-1 pb-[80px] w-full overflow-x-hidden overflow-y-auto">
+      {/* KHU VỰC HIỂN THỊ CÁC COMPONENT CON */}
+      <div className="absolute top-0 left-0 right-0 bottom-[64px] pb-[env(safe-area-inset-bottom)] overflow-y-auto overflow-x-hidden flex flex-col z-0">
         <Outlet />
       </div>
 
-      {/* THANH ĐIỀU HƯỚNG DƯỚI CÙNG (Dính cố định) */}
-      <div className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-16 pb-safe z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+      {/* THANH ĐIỀU HƯỚNG DƯỚI CÙNG */}
+      <div className="absolute bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/customer');
           return (
