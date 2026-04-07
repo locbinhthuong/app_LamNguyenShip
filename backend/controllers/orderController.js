@@ -204,10 +204,6 @@ const orderController = {
         items, note, packageDetails, rideDetails, financialDetails, codAmount
       } = req.body;
 
-      if (!pickupCoordinates || !pickupCoordinates.lat || !pickupCoordinates.lng) {
-        return res.status(400).json({ success: false, message: 'Vui lòng cung cấp tọa độ điểm đón hoặc giao dịch hợp lệ' });
-      }
-
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
         subServiceType: subServiceType || null,

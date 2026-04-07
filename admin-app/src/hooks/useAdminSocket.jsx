@@ -19,6 +19,13 @@ const initAdminAudio = async () => {
         if (adminAudioCtx.state === 'suspended') adminAudioCtx.resume();
     } catch(e){}
 };
+
+// Preload Fallback Audios for Zero Delay
+const fallbackChuong = new Audio('/chuong.mp3');
+fallbackChuong.preload = 'auto';
+const fallbackFinance = new Audio('/thanhtoantienchotaixe.mp3');
+fallbackFinance.preload = 'auto';
+
 window.addEventListener('click', initAdminAudio, { once: true });
 window.addEventListener('touchstart', initAdminAudio, { once: true });
 
@@ -53,13 +60,15 @@ const playAdminAlarm = (isFinance = false) => {
                 }, 10000); // Tắt chuông sau 10 giây
             }
         } else {
-            // Chuông Fallback
-            const fallbackAudio = new Audio(isFinance ? '/thanhtoantienchotaixe.mp3' : '/chuong.mp3');
-            fallbackAudio.loop = !isFinance;
-            fallbackAudio.play().catch(e => console.log('Autoplay blocked'));
+            // Chuông Fallback siêu tốc
+            const audioToPlay = isFinance ? fallbackFinance : fallbackChuong;
+            audioToPlay.loop = !isFinance;
+            audioToPlay.currentTime = 0;
+            audioToPlay.play().catch(e => console.log('Autoplay blocked'));
+            
             if (!isFinance) {
                 setTimeout(() => {
-                    try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; } catch(e){}
+                    try { audioToPlay.pause(); audioToPlay.currentTime = 0; } catch(e){}
                 }, 10000);
             }
         }
