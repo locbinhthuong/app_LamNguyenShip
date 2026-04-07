@@ -89,13 +89,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-[10px] font-semibold text-slate-600 mb-1">Tên khách hàng</label>
-                <input type="text" name="customerName" value={formData.customerName} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-white focus:border-blue-500 focus:outline-none" />
+                <input type="text" name="customerName" value={formData.customerName} readOnly className="w-full rounded-lg border border-slate-200 p-2 text-sm bg-slate-100 text-slate-500 cursor-not-allowed focus:outline-none" />
               </div>
               <div>
                 <label className="block text-[10px] font-semibold text-slate-600 mb-1">
-                  SĐT Đặt Cuốc (SĐT Chính)
+                  SĐT Đặt Cuốc (Tài Khoản)
                 </label>
-                <input type="text" name="customerPhone" value={formData.customerPhone} onChange={handleChange} required className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-white focus:border-blue-500 focus:outline-none" />
+                <input type="text" name="customerPhone" value={formData.customerPhone} readOnly className="w-full rounded-lg border border-slate-200 p-2 text-sm bg-slate-100 text-slate-500 cursor-not-allowed focus:outline-none" />
               </div>
             </div>
           </div>
@@ -109,6 +109,10 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                   {order.serviceType === 'DAT_XE' ? 'Điểm Đón Khách' : (order.serviceType === 'DIEU_PHOI' ? 'Nơi Gặp Mặt / Lấy Tiền' : 'Địa chỉ lấy hàng')}
                 </label>
                 <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white focus:border-orange-500 focus:outline-none" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nơi Lấy / Điểm Đón</label>
+                <input type="text" name="senderPhone" value={formData.senderPhone} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white font-bold text-orange-700 focus:border-orange-500 focus:outline-none" placeholder="Nhập SĐT của người gửi hàng..." />
               </div>
             </div>
           </div>

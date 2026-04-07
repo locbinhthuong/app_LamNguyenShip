@@ -8,7 +8,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const [form, setForm] = useState({
     senderName: '',
     customerPhone: defaultPhone || '',
-    senderPhone: '',
+    senderPhone: defaultPhone || '',
     pickupAddress: defaultLocation?.address || '',
     pickupCoordinates: defaultLocation?.coordinates || null,
     
@@ -38,8 +38,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     onBooking({
       serviceType: 'GIAO_HANG',
       senderName: form.senderName.trim() || 'Khách đặt qua App',
-      customerPhone: form.customerPhone.trim() || defaultPhone,
-      senderPhone: form.senderPhone.trim(),
+      customerPhone: defaultPhone || 'Khách Vãng Lai',
+      senderPhone: form.senderPhone.trim() || defaultPhone,
       receiverName: form.receiverName.trim(),
       receiverPhone: form.receiverPhone.trim(),
       receiverPhone2: form.receiverPhone2.trim(),
@@ -97,7 +97,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 type="tel"
                 placeholder="SĐT Lấy Hàng"
                 className="w-full text-xs font-semibold text-orange-600 outline-none p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
-                value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
+                value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
               />
             </div>
           </div>

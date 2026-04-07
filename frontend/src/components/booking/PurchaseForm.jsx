@@ -9,7 +9,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
     customerPhone: defaultPhone || '',
     pickupAddress: '', // Tiệm/Quán
     pickupCoordinates: null,
-    senderPhone: '', // SĐT tiệm quán (không bắt buộc)
+    senderPhone: defaultPhone || '', // SĐT tiệm quán
     deliveryAddress: defaultLocation?.address || '', // Giao cho khách
     deliveryCoordinates: defaultLocation?.coordinates || null,
     receiverPhone: '', // SĐT người nhận (không bắt buộc)
@@ -33,14 +33,14 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
 
     onBooking({
       serviceType: 'MUA_HO',
-      customerName: form.customerName.trim() || customerData?.name,
-      customerPhone: form.customerPhone.trim() || defaultPhone,
+      customerName: customerData?.name || 'Khách Vãng Lai',
+      customerPhone: defaultPhone || 'Chưa rõ',
       pickupAddress: form.pickupAddress.trim(),
       pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
       deliveryAddress: form.deliveryAddress.trim(),
       deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
       note: '',
-      senderPhone: form.senderPhone.trim(),
+      senderPhone: form.senderPhone.trim() || defaultPhone,
       receiverPhone: form.receiverPhone.trim(),
       receiverPhone2: form.receiverPhone2.trim(),
       packageDetails: {
@@ -90,7 +90,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                   type="tel"
                   placeholder="SĐT Lấy Hàng"
                   className="w-full text-xs font-semibold text-orange-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
-                  value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
+                  value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
                 />
               </div>
             </div>
