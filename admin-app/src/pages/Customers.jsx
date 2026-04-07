@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Edit2, Trash2, Search, X, Loader2, Calendar } from 'lucide-react';
-import { getCustomers, createCustomer, updateCustomer, deleteCustomer } from '../services/api';
+import { getCustomers, createCustomer, updateCustomer, deleteCustomer, getFullImageUrl, uploadDriverAvatar } from '../services/api';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -15,8 +15,11 @@ const Customers = () => {
     name: '',
     phone: '',
     password: '',
-    isActive: true
+    isActive: true,
+    avatar: ''
   });
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -46,14 +49,26 @@ const Customers = () => {
         name: customer.name,
         phone: customer.phone,
         password: '', // Chừa trống bớt nguy hiểm
-        isActive: customer.isActive
+        isActive: customer.isActive,
+        avatar: customer.avatar || ''
       });
+      setAvatarPreview(customer.avatar || null);
     } else {
       setIsEditing(false);
       setCurrentId(null);
-      setFormData({ name: '', phone: '', password: '', isActive: true });
+      setFormData({ name: '', phone: '', password: '', isActive: true, avatar: '' });
+      setAvatarPreview(null);
     }
+    setAvatarFile(null);
     setShowModal(true);
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -62,16 +77,24 @@ const Customers = () => {
     
     setSubmitting(true);
     try {
+      let finalAvatarUrl = formData.avatar;
+      if (avatarFile) {
+        const uploadRes = await uploadDriverAvatar(avatarFile);
+        if (uploadRes.success) {
+          finalAvatarUrl = uploadRes.data.url;
+        }
+      }
+
       if (isEditing) {
-        // Tùy chỉnh update data: Nếu ko nhập pass thì không gừi pass
-        const updateData = { ...formData };
+        // Tùy chỉnh update data: Nếu ko nhập pass thì không gửi pass
+        const updateData = { ...formData, avatar: finalAvatarUrl };
         if (!updateData.password) delete updateData.password;
         
         await updateCustomer(currentId, updateData);
         alert('Cập nhật thành công');
       } else {
         if (!formData.password) return alert('Vui lòng tạo mật khẩu cho Khách hàng mới');
-        await createCustomer(formData);
+        await createCustomer({ ...formData, avatar: finalAvatarUrl });
         alert('Thêm khách hàng thành công');
       }
       setShowModal(false);
@@ -155,8 +178,12 @@ const Customers = () => {
                     <tr key={customer._id} className="hover:bg-gray-50 transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold">
-                            {customer.name?.charAt(0).toUpperCase()}
+                          <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden border border-gray-200">
+                            {customer.avatar ? (
+                              <img src={getFullImageUrl(customer.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                              customer.name?.charAt(0).toUpperCase()
+                            )}
                           </div>
                           <div>
                              <p className="font-semibold text-gray-800">{customer.name}</p>
@@ -220,7 +247,23 @@ const Customers = () => {
               </button>
             </div>
             
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
+            <form onSubmit={handleSubmit} className="p-4 space-y-4 max-h-[80vh] overflow-y-auto">
+              
+              <div className="flex flex-col items-center justify-center mb-4">
+                <label className="text-sm font-semibold text-gray-700 mb-2">Ảnh Đại Diện</label>
+                <div className="relative w-24 h-24 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group">
+                  {avatarPreview ? (
+                    <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                  ) : (
+                    <Users size={32} className="text-gray-300" />
+                  )}
+                  <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                    <span className="text-[10px] font-bold text-white uppercase">Đổi ảnh</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                  </label>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1">Họ Tên</label>
                 <input 
