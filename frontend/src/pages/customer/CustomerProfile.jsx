@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2 } from 'lucide-react';
-import { api } from '../../services/api';
+import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera } from 'lucide-react';
+import { api, uploadCustomerAvatar, getFullImageUrl } from '../../services/api';
 
 const CustomerProfile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
 
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', phone: '', password: '' });
+  const [editForm, setEditForm] = useState({ name: '', phone: '', password: '', avatar: '' });
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const fetchProfile = async () => {
@@ -34,8 +36,18 @@ const CustomerProfile = () => {
   };
 
   const openEditModal = () => {
-    setEditForm({ name: profile?.name || '', phone: profile?.phone || '', password: '' });
+    setEditForm({ name: profile?.name || '', phone: profile?.phone || '', password: '', avatar: profile?.avatar || '' });
+    setAvatarPreview(profile?.avatar || null);
+    setAvatarFile(null);
     setShowEdit(true);
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
   };
 
   const handleUpdateProfile = async (e) => {
@@ -45,7 +57,25 @@ const CustomerProfile = () => {
     }
     setLoading(true);
     try {
-       const res = await api.put('/auth/customer/me', editForm);
+       // 1. Nếu có avatar mới, upload trước
+       let finalAvatarUrl = editForm.avatar;
+       if (avatarFile) {
+         try {
+           const result = await uploadCustomerAvatar(avatarFile);
+           if (result.data.success) {
+             finalAvatarUrl = result.data.url;
+           }
+         } catch (uploadError) {
+           console.error("Lỗi upload ảnh:", uploadError);
+           alert("Lỗi upload ảnh, vui lòng thử lại sau!");
+           setLoading(false);
+           return;
+         }
+       }
+
+       // 2. Gửi API update
+       const payload = { ...editForm, avatar: finalAvatarUrl };
+       const res = await api.put('/auth/customer/me', payload);
        if (res.data.success) {
          setProfile(res.data.data);
          setShowEdit(false);
@@ -63,16 +93,18 @@ const CustomerProfile = () => {
       {/* ẢNH BÌA & AVATAR */}
       <div className="relative h-[250px] shrink-0">
         {/* Ảnh bìa */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-800 border-b border-gray-200">
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-800 shadow-lg rounded-b-[40px] overflow-hidden">
            {/* Pattern trang trí cho giống cover xịn */}
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 40%)' }}></div>
         </div>
 
+        <h1 className="absolute top-8 left-6 text-xl font-bold mb-4 text-white">Hồ sơ khách hàng</h1>
+        
         {/* Thông tin phía dưới ảnh bìa */}
         <div className="absolute bottom-4 left-6 right-6 flex items-end gap-4 z-10">
           <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-white shadow-md relative overflow-hidden">
              {profile?.avatar ? (
-                <img src={profile.avatar} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={getFullImageUrl(profile.avatar)} alt="Avatar" className="w-full h-full object-cover" />
              ) : (
                 <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-400">
                     <User size={36} className="text-gray-400" />
@@ -125,10 +157,29 @@ const CustomerProfile = () => {
               </div>
               
               <form onSubmit={handleUpdateProfile} className="space-y-5 overflow-y-auto pb-4">
-                 <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl mb-4">
-                    <p className="text-xs text-blue-700 italic">Tính năng cập nhật ảnh bìa và ảnh đại diện đang được update ở phiên bản sau.</p>
-                 </div>
                  
+                 {/* Upload Avatar Khu vực */}
+                 <div className="flex flex-col items-center mb-6">
+                    <div className="relative w-24 h-24 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group">
+                      {avatarPreview ? (
+                        <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                      ) : (
+                        <User size={40} className="text-gray-300" />
+                      )}
+                      
+                      <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                        <Camera size={24} className="text-white mb-1" />
+                        <span className="text-[10px] font-bold text-white uppercase">Đổi ảnh</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                      </label>
+                      
+                      {/* Biểu tượng camera luôn hiện nhỏ ở góc nếu chưa có avatar hoặc luôn hiện để biết có thể click */}
+                      <div className="absolute bottom-1 right-1 bg-blue-600 p-1.5 rounded-full border-2 border-white md:hidden pointer-events-none">
+                         <Camera size={12} className="text-white" />
+                      </div>
+                    </div>
+                 </div>
+
                  <div>
                     <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Họ và Tên</label>
                     <input 

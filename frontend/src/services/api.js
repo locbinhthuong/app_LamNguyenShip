@@ -93,3 +93,24 @@ export const disconnectSocket = () => {
     socket = null;
   }
 };
+
+// ==================== HỖ TRỢ UPLOAD ====================
+export const uploadCustomerAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  // Sử dụng chung api upload của hệ thống
+  const response = await api.post('/upload/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response;
+};
+
+export const getFullImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  let API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
+  if (API_URL.endsWith('/api')) {
+    API_URL = API_URL.replace('/api', '');
+  }
+  return `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+};
