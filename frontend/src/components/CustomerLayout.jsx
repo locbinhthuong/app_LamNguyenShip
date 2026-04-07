@@ -24,10 +24,10 @@ const CustomerLayout = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 font-sans relative">
+    <div className="flex flex-col h-[100dvh] bg-gray-50 font-sans relative overflow-hidden">
       
       {/* KHU VỰC HIỂN THỊ CÁC COMPONENT CON (Trang chủ, Hoạt động...) */}
-      <div className="flex-1 pb-20 w-full overflow-x-hidden">
+      <div className="flex-1 pb-[80px] w-full overflow-x-hidden overflow-y-auto">
         <Outlet />
       </div>
 

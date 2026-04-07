@@ -75,9 +75,9 @@ export default function BookingFlow() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-8 font-sans relative">
+    <div className="flex flex-col h-[100dvh] bg-gray-50 font-sans overflow-hidden relative">
       {/* HEADER TỪ CHỐI VUỐT */}
-      <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-between">
+      <div className="shrink-0 bg-white px-4 py-3 shadow-sm z-40 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">
           <ArrowLeft size={22} />
         </button>
@@ -92,7 +92,7 @@ export default function BookingFlow() {
       {/* ĐÃ XÓA TABS SWITCHER ĐỂ CHỈ TẬP TRUNG VÀO 1 DỊCH VỤ DUY NHẤT TRANH NHẦM LẪN */}
 
       {/* NỘI DUNG FORM */}
-      <div className="p-4 transform transition-all animate-fadeIn">
+      <div className="flex-1 overflow-y-auto p-4 transform transition-all animate-fadeIn pb-24">
         {activeTab === 'GIAO_HANG' && (
           <DeliveryForm 
             onBooking={handleBookingSubmit} 
