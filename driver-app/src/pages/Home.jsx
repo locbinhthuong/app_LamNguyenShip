@@ -107,14 +107,14 @@ function ActiveOrderCard({ order, onAction, loading }) {
   const navigate = useNavigate();
   const config = STATUS_CONFIG[order.status] || {};
 
-  const getNextAction = () => {
+    const getNextAction = () => {
     switch (order.status) {
       case 'ACCEPTED':
-        return { label: '📦 Đã lấy hàng', action: 'pickup', color: 'btn-warning' };
+        return { label: order.serviceType === 'DAT_XE' ? '🚙 Đã đón khách' : '📦 Đã lấy hàng', action: 'pickup', color: 'btn-warning' };
       case 'PICKED_UP':
-        return { label: '✅ Hoàn thành', action: 'complete', color: 'btn-success' };
+        return { label: order.serviceType === 'DAT_XE' ? '✅ Đã trả khách' : '✅ Hoàn thành', action: 'complete', color: 'btn-success' };
       case 'DELIVERING':
-        return { label: '✅ Hoàn thành', action: 'complete', color: 'btn-success' };
+        return { label: order.serviceType === 'DAT_XE' ? '✅ Đã trả khách' : '✅ Hoàn thành', action: 'complete', color: 'btn-success' };
       default:
         return null;
     }

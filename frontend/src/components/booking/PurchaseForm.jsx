@@ -14,7 +14,8 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
     deliveryCoordinates: defaultLocation?.coordinates || null,
     receiverPhone: '', // SĐT người nhận (không bắt buộc)
     receiverPhone2: '', // SĐT người nhận phụ
-    itemsToBuy: ''
+    itemsToBuy: '',
+    note: ''
   });
 
   const [mapConfig, setMapConfig] = useState(null);
@@ -39,7 +40,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
       deliveryAddress: form.deliveryAddress.trim(),
       deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
-      note: '',
+      note: form.note.trim(),
       senderPhone: form.senderPhone.trim() || defaultPhone,
       receiverPhone: '',
       receiverPhone2: '',
@@ -125,6 +126,20 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
 
 
 
+      {/* GHI CHÚ MUA HỘ MÓN GÌ */}
+      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">GHI CHÚ / MUA MÓN GÌ?</label>
+        <div>
+          <textarea 
+            rows="3"
+            placeholder="VD: Mua 1 ly trà sữa truyền thống (ít đá, nhiều ngọt)..."
+            className="w-full text-sm text-gray-800 bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:border-blue-200 focus:bg-white transition-colors resize-none"
+            value={form.note}
+            onChange={e => setForm({...form, note: e.target.value})}
+          ></textarea>
+        </div>
+      </div>
+      
       {/* THÔNG TIN KHÁCH HÀNG */}
       {/* ĐÃ ẨN KHỐI THÔNG TIN KHÁCH HÀNG - LẤY TỰ ĐỘNG TỪ ACCOUNT */}
 
