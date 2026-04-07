@@ -7,8 +7,15 @@
     -webkit-tap-highlight-color: transparent;
   }
   
+  html {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+  }
+  
   body {
     @apply min-h-screen w-full bg-slate-50 font-sans antialiased;
+    touch-action: pan-x pan-y;
+    overflow-x: hidden;
   }
   
   input, textarea, select {

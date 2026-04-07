@@ -658,6 +658,13 @@ export default function Home() {
         >
           🚚 Đang giao ({myActiveOrders.length})
         </button>
+        <button
+          type="button"
+          onClick={() => navigate('/my-orders')}
+          className="flex-1 py-3 text-xs font-bold transition-all sm:text-sm text-slate-500 hover:bg-slate-50 active:bg-slate-100"
+        >
+          📋 Lịch sử
+        </button>
       </div>
 
       {/* Content */}
