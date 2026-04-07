@@ -183,6 +183,8 @@ export default function Home() {
   const [logoutModal, setLogoutModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [confirmAcceptOrder, setConfirmAcceptOrder] = useState(null); // ID đơn hàng đang được hỏi Xác Nhận
+  const [historyOrders, setHistoryOrders] = useState([]);
+  const scrollRef = useRef(null);
   const [dailyStats, setDailyStats] = useState({ fee: 0, orders: 0 });
 
   // GPS Tracking States
@@ -390,6 +392,9 @@ export default function Home() {
          return new Date(b.updatedAt) - new Date(a.updatedAt);
       });
       setMyActiveOrders(activeArr);
+      
+      const historyArr = allMyOrders.filter(o => ['COMPLETED', 'CANCELLED'].includes(o.status)).sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 15);
+      setHistoryOrders(historyArr);
 
       // Nạp Doanh thu nóng trong ngày
       const revenueRes = await getDriverRevenue();
@@ -639,10 +644,10 @@ export default function Home() {
       </div>
 
       {/* Tabs */}
-      <div className="sticky top-0 z-10 flex bg-white border-b border-slate-200">
+      <div className="sticky top-0 z-20 flex bg-white border-b border-slate-200">
         <button
           type="button"
-          onClick={() => setFilter('available')}
+          onClick={() => { setFilter('available'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
           className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'available' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
@@ -651,7 +656,7 @@ export default function Home() {
         </button>
         <button
           type="button"
-          onClick={() => setFilter('active')}
+          onClick={() => { setFilter('active'); scrollRef.current?.scrollTo({ left: window.innerWidth, behavior: 'smooth' }); }}
           className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'active' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
@@ -660,57 +665,122 @@ export default function Home() {
         </button>
         <button
           type="button"
-          onClick={() => navigate('/my-orders')}
-          className="flex-1 py-3 text-xs font-bold transition-all sm:text-sm text-slate-500 hover:bg-slate-50 active:bg-slate-100"
+          onClick={() => { setFilter('history'); scrollRef.current?.scrollTo({ left: window.innerWidth * 2, behavior: 'smooth' }); }}
+          className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
+            filter === 'history' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
+          }`}
         >
           📋 Lịch sử
         </button>
       </div>
 
-      {/* Content */}
-      <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+      {/* Swipeable Content Container */}
+      <div 
+        ref={scrollRef}
+        className="flex w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar items-start"
+        onScroll={(e) => {
+          const w = e.target.offsetWidth;
+          const idx = Math.round(e.target.scrollLeft / w);
+          if (idx === 0 && filter !== 'available') setFilter('available');
+          if (idx === 1 && filter !== 'active') setFilter('active');
+          if (idx === 2 && filter !== 'history') setFilter('history');
+        }}
+      >
+        
+        {/* TAB 1: CHỜ NHẬN */}
+        <div className="w-full shrink-0 snap-center pb-8" style={{ minWidth: '100%' }}>
+          <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : !driver?.isOnline ? (
+              <div className="text-center py-12 bg-slate-100 rounded-2xl mt-4 border border-slate-200">
+                <p className="text-5xl mb-3 grayscale opacity-80">😴</p>
+                <p className="font-black text-slate-700 text-lg uppercase tracking-wide">Bạn đang Nghỉ / Offline</p>
+                <p className="text-sm mt-2 text-slate-500 max-w-[250px] mx-auto">
+                  Không thể nhìn thấy đơn hàng khi đang Offline.<br/><br/>
+                  Hãy bật nút <b className="text-slate-800 bg-slate-200 px-2 py-1 rounded">⚫ Mở Nhận Đơn</b> phía trên để tiếp tục Cày cuốc!
+                </p>
+              </div>
+            ) : availableOrders.length > 0 ? (
+              <>
+                <p className="text-slate-500 text-sm mb-3 font-medium">Có {availableOrders.length} đơn hàng chờ bạn</p>
+                {availableOrders.map(order => (
+                  <OrderCard key={order._id} order={order} onAccept={() => setConfirmAcceptOrder(order._id)} loading={actionLoading === order._id || confirmAcceptOrder === order._id} />
+                ))}
+              </>
+            ) : (
+              <div className="text-center py-12 text-slate-400">
+                <p className="text-5xl mb-4">⏳</p>
+                <p className="font-medium text-slate-600">Không có đơn hàng nào</p>
+                <p className="text-sm mt-1">Đơn mới sẽ xuất hiện tại đây</p>
+              </div>
+            )}
           </div>
-        ) : filter === 'active' ? (
-          myActiveOrders.length > 0 ? (
-            <>
-              <p className="text-slate-500 text-sm mb-3 font-medium">Đơn đang giao</p>
-              {myActiveOrders.map(order => (
-                <ActiveOrderCard key={order._id} order={order} onAction={handleAction} loading={actionLoading === order._id} />
-              ))}
-            </>
-          ) : (
-            <div className="text-center py-12 text-slate-400">
-              <p className="text-5xl mb-4">📦</p>
-              <p className="font-medium text-slate-600">Chưa có đơn đang giao</p>
-              <p className="text-sm mt-1">Nhận đơn mới ở tab "Chờ nhận"</p>
-            </div>
-          )
-        ) : !driver?.isOnline ? (
-          <div className="text-center py-12 bg-slate-100 rounded-2xl mt-4 border border-slate-200">
-            <p className="text-5xl mb-3 grayscale opacity-80">😴</p>
-            <p className="font-black text-slate-700 text-lg uppercase tracking-wide">Bạn đang Nghỉ / Offline</p>
-            <p className="text-sm mt-2 text-slate-500 max-w-[250px] mx-auto">
-              Không thể nhìn thấy đơn hàng khi đang Offline.<br/><br/>
-              Hãy bật nút <b className="text-slate-800 bg-slate-200 px-2 py-1 rounded">⚫ Mở Nhận Đơn</b> phía trên để tiếp tục Cày cuốc!
-            </p>
+        </div>
+
+        {/* TAB 2: ĐANG GIAO */}
+        <div className="w-full shrink-0 snap-center pb-8" style={{ minWidth: '100%' }}>
+          <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : myActiveOrders.length > 0 ? (
+              <>
+                <p className="text-slate-500 text-sm mb-3 font-medium">Đơn đang giao</p>
+                {myActiveOrders.map(order => (
+                  <ActiveOrderCard key={order._id} order={order} onAction={handleAction} loading={actionLoading === order._id} />
+                ))}
+              </>
+            ) : (
+              <div className="text-center py-12 text-slate-400">
+                <p className="text-5xl mb-4">📦</p>
+                <p className="font-medium text-slate-600">Chưa có đơn đang giao</p>
+                <p className="text-sm mt-1">Nhận đơn mới ở tab "Chờ nhận"</p>
+              </div>
+            )}
           </div>
-        ) : availableOrders.length > 0 ? (
-          <>
-            <p className="text-slate-500 text-sm mb-3 font-medium">Có {availableOrders.length} đơn hàng chờ bạn</p>
-            {availableOrders.map(order => (
-              <OrderCard key={order._id} order={order} onAccept={() => setConfirmAcceptOrder(order._id)} loading={actionLoading === order._id || confirmAcceptOrder === order._id} />
-            ))}
-          </>
-        ) : (
-          <div className="text-center py-12 text-slate-400">
-            <p className="text-5xl mb-4">⏳</p>
-            <p className="font-medium text-slate-600">Không có đơn hàng nào</p>
-            <p className="text-sm mt-1">Đơn mới sẽ xuất hiện tại đây</p>
+        </div>
+
+        {/* TAB 3: LỊCH SỬ KHU TRÚ */}
+        <div className="w-full shrink-0 snap-center pb-8" style={{ minWidth: '100%' }}>
+          <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
+            {loading ? (
+              <div className="flex justify-center py-12">
+                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : historyOrders.length > 0 ? (
+              <>
+                <p className="text-slate-500 text-sm mb-3 font-medium">Lịch sử đơn (Gần đây nhất)</p>
+                {historyOrders.map(order => (
+                  <div key={order._id} className="bg-slate-200/50 rounded-2xl p-4 mb-3 border border-slate-200" onClick={() => navigate(`/order/${order._id}`)}>
+                     <div className="flex justify-between items-center mb-2">
+                       <span className="font-bold text-slate-600 text-xs">{order.orderCode || order._id.slice(-8).toUpperCase()}</span>
+                       <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">{order.status === 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}</span>
+                     </div>
+                     <p className="text-xs text-slate-500 truncate mb-1">📍 {order.pickupAddress}</p>
+                     <p className="text-xs text-slate-500 truncate mb-2">🏁 {order.deliveryAddress}</p>
+                     <div className="flex justify-between items-center mt-2 border-t border-slate-300 pt-2">
+                        <span className="text-slate-600 text-xs font-bold">Cước: {order.deliveryFee?.toLocaleString()}đ</span>
+                        <span className="text-[10px] text-slate-500">{new Date(order.updatedAt || order.createdAt).toLocaleDateString('vi-VN')}</span>
+                     </div>
+                  </div>
+                ))}
+                <button onClick={() => navigate('/my-orders')} className="w-full text-center py-3 text-blue-600 font-bold bg-blue-50 rounded-xl mt-2 active:bg-blue-100">
+                  Xem toàn bộ thống kê
+                </button>
+              </>
+            ) : (
+              <div className="text-center py-12 text-slate-400">
+                <p className="text-5xl mb-4">📋</p>
+                <p className="font-medium text-slate-600">Chưa có lịch sử</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+
       </div>
 
       {/* Bottom Nav */}

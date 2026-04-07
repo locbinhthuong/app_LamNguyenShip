@@ -107,27 +107,35 @@ export default function MyOrders() {
           <h1 className="text-xl font-black text-slate-800 tracking-tight">Thống Kê Đơn Hàng</h1>
         </div>
 
-        {/* Dashboard 4 Lớp củ (đã được bóp thành Scroll Ngang) */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 snap-x hide-scrollbar">
-          <div className="min-w-[140px] bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group snap-center shrink-0">
-             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Hôm Nay</span>
-             <span className="text-lg font-black text-blue-600 z-10">{stats.day} Đơn</span>
-             <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">⚡</div>
+        {/* Dashboard 4 Lớp củ (đã được bóp thành Scroll Ngang/DỌc) */}
+        <div className="flex flex-col gap-3 mb-4">
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+             <div className="flex flex-col z-10 w-full text-center">
+                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Hôm Nay</span>
+                 <span className="text-2xl font-black text-blue-600">{stats.day} Đơn</span>
+             </div>
+             <div className="absolute right-2 text-6xl opacity-[0.03]">⚡</div>
           </div>
-          <div className="min-w-[140px] bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group snap-center shrink-0">
-             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Tuần Này</span>
-             <span className="text-lg font-black text-blue-700 z-10">{stats.week} Đơn</span>
-             <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">📅</div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+             <div className="flex flex-col z-10 w-full text-center">
+                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Tuần Này</span>
+                 <span className="text-2xl font-black text-blue-700">{stats.week} Đơn</span>
+             </div>
+             <div className="absolute right-2 text-6xl opacity-[0.03]">📅</div>
           </div>
-          <div className="min-w-[140px] bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group snap-center shrink-0">
-             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Tháng Này</span>
-             <span className="text-lg font-black text-blue-800 z-10">{stats.month} Đơn</span>
-             <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">🏆</div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+             <div className="flex flex-col z-10 w-full text-center">
+                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Tháng Này</span>
+                 <span className="text-2xl font-black text-blue-800">{stats.month} Đơn</span>
+             </div>
+             <div className="absolute right-2 text-6xl opacity-[0.03]">🏆</div>
           </div>
-          <div className="min-w-[140px] bg-white rounded-xl p-3 border border-slate-200 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group snap-center shrink-0">
-             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1 z-10">Năm Nay</span>
-             <span className="text-lg font-black text-blue-900 z-10">{stats.year} Đơn</span>
-             <div className="absolute -bottom-4 -right-2 text-4xl opacity-[0.03] group-hover:opacity-10 transition-opacity">📦</div>
+          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
+             <div className="flex flex-col z-10 w-full text-center">
+                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Năm Nay</span>
+                 <span className="text-2xl font-black text-blue-900">{stats.year} Đơn</span>
+             </div>
+             <div className="absolute right-2 text-6xl opacity-[0.03]">📦</div>
           </div>
         </div>
 
