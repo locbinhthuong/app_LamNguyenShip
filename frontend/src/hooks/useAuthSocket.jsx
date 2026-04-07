@@ -2,6 +2,39 @@ import { useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import { connectSocket, disconnectSocket } from '../services/api';
 
+// Hack AudioContext Global
+let customerAudioCtx = null;
+let pricePingBuffer = null;
+const initCustomerAudio = async () => {
+    try {
+        if (!customerAudioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            customerAudioCtx = new AudioContext();
+            
+            fetch('/thongbaogiatienkhachhang.mp3').then(res => res.arrayBuffer()).then(arr => customerAudioCtx.decodeAudioData(arr)).then(buf => pricePingBuffer = buf);
+        }
+        if (customerAudioCtx.state === 'suspended') customerAudioCtx.resume();
+    } catch(e){}
+};
+window.addEventListener('click', initCustomerAudio, { once: true });
+window.addEventListener('touchstart', initCustomerAudio, { once: true });
+
+const playCustomerPing = () => {
+    try {
+        if (customerAudioCtx && pricePingBuffer) {
+            if (customerAudioCtx.state === 'suspended') customerAudioCtx.resume();
+            const source = customerAudioCtx.createBufferSource();
+            source.buffer = pricePingBuffer;
+            source.connect(customerAudioCtx.destination);
+            source.start(0);
+        } else {
+            // Chuông Fallback
+            new Audio('/thongbaogiatienkhachhang.mp3').play().catch(e => console.log('Autoplay blocked'));
+        }
+    } catch(err) {}
+};
+
 export const useAuthSocket = () => {
   const { showToast } = useToast();
 
@@ -22,11 +55,7 @@ export const useAuthSocket = () => {
             type = 'info';
             
             // Phát âm thanh Ting Ting cho khách
-            try {
-              const audio = new Audio('/thongbaogiatienkhachhang.mp3');
-              audio.play().catch(e => console.log('Autoplay bị chặn, cần tương tác:', e));
-            } catch(err) {}
-
+            playCustomerPing();
           } else if (order.status === 'ACCEPTED') {
             if (order.serviceType === 'DAT_XE') {
               message = `Tài xế ${order.assignedTo?.name || ''} đã nhận chuyến và đang đến đón bạn!`;
@@ -53,10 +82,7 @@ export const useAuthSocket = () => {
              type = 'info';
              
              // Phát âm thanh Ting Ting cho khách khi update lại giá
-             try {
-               const audio = new Audio('/thongbaogiatienkhachhang.mp3');
-               audio.play().catch(e => console.log('Autoplay bị chặn, cần tương tác:', e));
-             } catch(err) {}
+             playCustomerPing();
           }
 
           showToast(message, type, 6000);

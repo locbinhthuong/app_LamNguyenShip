@@ -2,6 +2,41 @@ import { useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useToast } from '../context/ToastContext';
 
+// Hack AudioContext Global
+let adminAudioCtx = null;
+let adminAudioBuffer = null;
+let adminFinanceBuffer = null;
+const initAdminAudio = async () => {
+    try {
+        if (!adminAudioCtx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            adminAudioCtx = new AudioContext();
+            
+            fetch('/chuong.mp3').then(res => res.arrayBuffer()).then(arr => adminAudioCtx.decodeAudioData(arr)).then(buf => adminAudioBuffer = buf);
+            fetch('/thanhtoantienchotaixe.mp3').then(res => res.arrayBuffer()).then(arr => adminAudioCtx.decodeAudioData(arr)).then(buf => adminFinanceBuffer = buf);
+        }
+        if (adminAudioCtx.state === 'suspended') adminAudioCtx.resume();
+    } catch(e){}
+};
+window.addEventListener('click', initAdminAudio, { once: true });
+window.addEventListener('touchstart', initAdminAudio, { once: true });
+
+const playAdminAlarm = (isFinance = false) => {
+    try {
+        if (adminAudioCtx && (isFinance ? adminFinanceBuffer : adminAudioBuffer)) {
+            if (adminAudioCtx.state === 'suspended') adminAudioCtx.resume();
+            const source = adminAudioCtx.createBufferSource();
+            source.buffer = isFinance ? adminFinanceBuffer : adminAudioBuffer;
+            source.connect(adminAudioCtx.destination);
+            source.start(0);
+        } else {
+            // Chuông Fallback
+            new Audio(isFinance ? '/thanhtoantienchotaixe.mp3' : '/chuong.mp3').play().catch(e => console.log('Autoplay blocked'));
+        }
+    } catch(err) {}
+};
+
 export const useAdminSocket = () => {
   const { showToast } = useToast();
   const socketRef = useRef(null);
@@ -27,6 +62,7 @@ export const useAdminSocket = () => {
       // Chỉ khi Đơn này do Khách Đặt (createdBy = null), thì ADMIN mới Kêu Chuông. Admin tự tạo đơn thì im lìm.
       if (!order.createdBy) {
         showToast(`📲 KHÁCH ĐẶT MỚI: ${order.orderCode || order._id?.slice(-8).toUpperCase() || ''}. Click Quản Lý Đơn để mở!`, 'warning', 30000);
+        playAdminAlarm(false); // Play chuong.mp3
       }
       window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
     });
@@ -49,10 +85,7 @@ export const useAdminSocket = () => {
     socket.on('debt_payment_request', (payload) => {
       // payload: { driverId, name, phone, driverCode, amount, timestamp }
       
-      try {
-        const audio = new Audio('/thanhtoantienchotaixe.mp3');
-        audio.play().catch(e => console.log('Autoplay blocked:', e));
-      } catch(err) {}
+      playAdminAlarm(true); // finance alarm
 
       showToast(`💸 BÁO CÁO NẠP TIỀN QUÉT MÃ QR CỦA TÀI XẾ ${payload.name.toUpperCase()} (Mã: ${payload.driverCode}). Chờ Sếp duyệt!`, 'error', 60000); // 60s
       
@@ -61,10 +94,7 @@ export const useAdminSocket = () => {
     });
 
     socket.on('wallet_withdrawal_request', (payload) => {
-      try {
-        const audio = new Audio('/thanhtoantienchotaixe.mp3');
-        audio.play().catch(e => console.log('Autoplay blocked:', e));
-      } catch(err) {}
+      playAdminAlarm(true); // finance alarm
 
       showToast(`💰 YÊU CẦU RÚT TIỀN TỪ TÀI XẾ ${payload.name.toUpperCase()} (Mã: ${payload.driverCode}). Số tiền: ${payload.amount.toLocaleString()}đ. Chờ Sếp duyệt!`, 'error', 60000); // 60s
       
