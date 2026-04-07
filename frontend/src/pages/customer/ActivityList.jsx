@@ -110,7 +110,7 @@ const ActivityList = () => {
   };
 
   return (
-    <div className="flex flex-col absolute top-0 left-0 right-0 bottom-[80px] bg-gray-50 font-sans overflow-hidden z-10">
+    <div className="flex flex-col h-full bg-gray-50 font-sans overflow-hidden relative">
       <div className="shrink-0 bg-white px-4 py-3 shadow-sm relative z-40 flex items-center justify-center">
         <span className="font-bold text-gray-800 text-lg">Hoạt động của tôi</span>
       </div>

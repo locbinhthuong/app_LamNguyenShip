@@ -75,7 +75,7 @@ export default function BookingFlow() {
   ];
 
   return (
-    <div className="flex flex-col absolute top-0 left-0 right-0 bottom-[64px] bg-gray-50 font-sans overflow-hidden z-20">
+    <div className="flex flex-col h-full bg-gray-50 font-sans overflow-hidden relative">
       {/* HEADER TỪ CHỐI VUỐT */}
       <div className="shrink-0 bg-white px-4 py-3 shadow-sm z-40 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">

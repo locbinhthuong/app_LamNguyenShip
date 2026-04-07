@@ -16,7 +16,7 @@ function App() {
   useAuthSocket();
 
   return (
-    <div className="mobile-container min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div className="h-[100dvh] bg-gray-50 flex flex-col font-sans overflow-hidden relative">
       <Routes>
         {/* Các màn hình con của Khách hàng (Được dính Footer Layout) */}
         <Route element={<CustomerLayout />}>
