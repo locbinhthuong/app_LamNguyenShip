@@ -41,29 +41,6 @@ export default function OrderDetail() {
 
   useEffect(() => {
     loadOrder();
-
-    const handleUpdate = (e) => {
-      const updatedOrder = e.detail;
-      if (updatedOrder && String(updatedOrder._id) === String(id)) {
-        setOrder((prev) => ({ ...prev, ...updatedOrder })); // Ghi đè nhanh
-      }
-    };
-
-    window.addEventListener('driver_order_updated', handleUpdate);
-    window.addEventListener('driver_order_accepted', handleUpdate);
-    window.addEventListener('driver_order_picked_up', handleUpdate);
-    window.addEventListener('driver_order_delivering', handleUpdate);
-    window.addEventListener('driver_order_completed', handleUpdate);
-    window.addEventListener('driver_order_cancelled', handleUpdate);
-
-    return () => {
-      window.removeEventListener('driver_order_updated', handleUpdate);
-      window.removeEventListener('driver_order_accepted', handleUpdate);
-      window.removeEventListener('driver_order_picked_up', handleUpdate);
-      window.removeEventListener('driver_order_delivering', handleUpdate);
-      window.removeEventListener('driver_order_completed', handleUpdate);
-      window.removeEventListener('driver_order_cancelled', handleUpdate);
-    };
   }, [id]);
 
   const handleAction = async (action) => {
@@ -222,9 +199,15 @@ export default function OrderDetail() {
                      <p className="text-slate-800 font-bold text-sm mb-2">{order.customerName}</p>
                      <div className="space-y-3">
                        <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT LIÊN HỆ</span>
-                         <a href={`tel:${order.senderPhone || order.customerPhone}`} className="bg-blue-100 text-blue-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200">📞 {order.senderPhone || order.customerPhone}</a>
+                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT CHÍNH</span>
+                         <a href={`tel:${order.customerPhone}`} className="bg-blue-100 text-blue-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200">📞 {order.customerPhone}</a>
                        </div>
+                       {order.senderPhone && order.senderPhone !== order.customerPhone && (
+                         <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT PHỤ</span>
+                           <a href={`tel:${order.senderPhone}`} className="bg-violet-100 text-violet-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-violet-200">📞 {order.senderPhone}</a>
+                         </div>
+                       )}
                      </div>
                   </div>
                 </div>
@@ -236,10 +219,17 @@ export default function OrderDetail() {
                      <div className="space-y-3 mt-3">
                        {order.receiverPhone ? (
                          <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT LIÊN HỆ</span>
+                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT CHÍNH</span>
                            <a href={`tel:${order.receiverPhone}`} className="bg-sky-100 text-sky-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-sky-200">📞 {order.receiverPhone}</a>
                          </div>
                        ) : <p className="text-xs text-slate-400 italic">Không có SĐT tại điểm đến</p>}
+                       
+                       {order.receiverPhone2 && (
+                         <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT PHỤ</span>
+                           <a href={`tel:${order.receiverPhone2}`} className="bg-indigo-100 text-indigo-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-indigo-200">📞 {order.receiverPhone2}</a>
+                         </div>
+                       )}
                      </div>
                   </div>
                 </div>
@@ -255,9 +245,15 @@ export default function OrderDetail() {
                     <p className="text-slate-800 font-bold text-sm mb-3">{order.senderName || order.customerName || 'Khách / Shop'}</p>
                     <div className="space-y-3">
                        <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT LIÊN HỆ</span>
-                         <a href={`tel:${order.senderPhone || order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200">📞 {order.senderPhone || order.customerPhone}</a>
+                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT CHÍNH</span>
+                         <a href={`tel:${order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200">📞 {order.customerPhone}</a>
                        </div>
+                       {order.senderPhone && order.senderPhone !== order.customerPhone && (
+                         <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT PHỤ</span>
+                           <a href={`tel:${order.senderPhone}`} className="bg-amber-100 text-amber-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-amber-200">📞 {order.senderPhone}</a>
+                         </div>
+                       )}
                     </div>
                   </div>
                 </div>
@@ -270,9 +266,15 @@ export default function OrderDetail() {
                       <p className="text-slate-800 font-bold text-sm mb-2">{order.receiverName || order.customerName || 'Người nhận'}</p>
                       <div className="space-y-3 mt-3">
                          <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
-                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT LIÊN HỆ</span>
+                           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT CHÍNH</span>
                            <a href={`tel:${order.receiverPhone || order.customerPhone}`} className="bg-blue-100 text-blue-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200">📞 {order.receiverPhone || order.customerPhone}</a>
                          </div>
+                         {order.receiverPhone2 && (
+                           <div className="flex items-center justify-between bg-slate-50 border border-slate-100 p-2.5 rounded-xl">
+                             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">SĐT PHỤ</span>
+                             <a href={`tel:${order.receiverPhone2}`} className="bg-sky-100 text-sky-700 font-black text-lg tracking-wider px-4 py-1.5 rounded-lg active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-sky-200">📞 {order.receiverPhone2}</a>
+                           </div>
+                         )}
                       </div>
                     </div>
                   </div>

@@ -102,7 +102,9 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
           
           {/* KHỐI 2: ĐIỂM ĐÓN / LẤY HÀNG */}
           <div className="bg-orange-50/30 p-3 rounded-xl border border-orange-100">
-            <h3 className="text-xs font-bold text-orange-600 uppercase mb-3 tracking-wider">ĐIỂM LẤY HÀNG / NƠI ĐÓN</h3>
+            <h3 className="text-xs font-bold text-orange-600 uppercase mb-3 tracking-wider">
+              {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : 'ĐIỂM LẤY HÀNG / NƠI ĐÓN'}
+            </h3>
             <div className="grid grid-cols-1 gap-4">
               <div>
                 <label className="block text-[10px] font-semibold text-slate-600 mb-1">
@@ -111,7 +113,9 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                 <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white focus:border-orange-500 focus:outline-none" />
               </div>
               <div>
-                <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nơi Lấy / Điểm Đón</label>
+                <label className="block text-[10px] font-semibold text-slate-600 mb-1">
+                  {order.serviceType === 'DAT_XE' ? 'SĐT Tương Tác Của Khách' : 'SĐT Nơi Lấy / Điểm Đón'}
+                </label>
                 <input type="text" name="senderPhone" value={formData.senderPhone} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white font-bold text-orange-700 focus:border-orange-500 focus:outline-none" placeholder="Nhập SĐT của người gửi hàng..." />
               </div>
             </div>
@@ -120,7 +124,9 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
           {/* KHỐI 3: ĐIỂM GIAO / TRẢ KHÁCH (ko cho Điều Phối) */}
           {order.serviceType !== 'DIEU_PHOI' && (
             <div className="bg-sky-50 p-3 rounded-xl border border-sky-100">
-              <h3 className="text-xs font-bold text-sky-600 uppercase mb-3 tracking-wider">ĐIỂM GIAO HÀNG / TRẢ KHÁCH</h3>
+              <h3 className="text-xs font-bold text-sky-600 uppercase mb-3 tracking-wider">
+                {order.serviceType === 'DAT_XE' ? 'ĐIỂM TRẢ KHÁCH' : 'ĐIỂM GIAO HÀNG / TRẢ KHÁCH'}
+              </h3>
               <div className="space-y-4">
                 <div>
                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">
@@ -129,10 +135,12 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                    <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" />
                 </div>
                 
-                <div>
-                  <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận Hàng</label>
-                  <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="SĐT khách nhận" />
-                </div>
+                {order.serviceType !== 'DAT_XE' && (
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-1">SĐT Nhận Hàng</label>
+                    <input type="text" name="receiverPhone" value={formData.receiverPhone} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" placeholder="SĐT khách nhận" />
+                  </div>
+                )}
               </div>
             </div>
           )}

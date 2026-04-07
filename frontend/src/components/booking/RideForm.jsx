@@ -12,7 +12,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
     customerPhone: defaultPhone || '',
     pickupAddress: defaultLocation?.address || '',
     pickupCoordinates: defaultLocation?.coordinates || null,
-    senderPhone: '',
+    senderPhone: defaultPhone || '',
     deliveryAddress: '',
     deliveryCoordinates: null,
     receiverPhone: '',
@@ -47,15 +47,15 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
     onBooking({
       serviceType: 'DAT_XE',
       subServiceType: subType, // XE_OM, LAI_HO_XE_MAY, LAI_HO_OTO
-      customerName: form.customerName.trim(),
-      customerPhone: form.customerPhone.trim(),
+      customerName: form.customerName.trim() || customerData?.name || 'Khách Vãng Lai',
+      customerPhone: defaultPhone || 'Chưa rõ',
       pickupAddress: form.pickupAddress.trim(),
       pickupCoordinates: form.pickupCoordinates || { lat: 10.045, lng: 105.746 }, 
       deliveryAddress: form.deliveryAddress.trim(),
       deliveryCoordinates: form.deliveryCoordinates || { lat: 10.050, lng: 105.750 },
       note: form.note.trim(),
-      senderPhone: form.senderPhone.trim(),
-      receiverPhone: form.receiverPhone.trim(),
+      senderPhone: form.senderPhone.trim() || defaultPhone,
+      receiverPhone: '',
       receiverPhone2: form.receiverPhone2.trim(),
       rideDetails: {
         vehicleType: subType === 'LAI_HO_OTO' ? 'OTO' : 'XE_MAY',
@@ -163,18 +163,11 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
                 onClickMapIcon={() => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300 shadow-sm"
               />
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2">
                 <input 
                   type="tel"
-                  placeholder="SĐT Đón Khách (Chính)"
+                  placeholder="SĐT Đón Khách (Điền vào nếu đặt dùm)"
                   className="w-full text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300"
-                  value={form.customerPhone}
-                  onChange={e => setForm({...form, customerPhone: e.target.value})}
-                />
-                <input 
-                  type="tel"
-                  placeholder="SĐT Phụ Điểm Đón (Tùy chọn)"
-                  className="w-full text-xs font-semibold text-gray-800 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300"
                   value={form.senderPhone}
                   onChange={e => setForm({...form, senderPhone: e.target.value})}
                 />
@@ -203,43 +196,16 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
                 onClickMapIcon={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
                 className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-red-300 shadow-sm"
               />
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <input 
-                  type="tel"
-                  placeholder="SĐT Nhận Chính"
-                  className="w-full text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-red-300"
-                  value={form.receiverPhone}
-                  onChange={e => setForm({...form, receiverPhone: e.target.value})}
-                />
-                <input 
-                  type="tel"
-                  placeholder="SĐT Nhận Phụ (Tùy chọn)"
-                  className="w-full text-xs font-semibold text-gray-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-red-300"
-                  value={form.receiverPhone2}
-                  onChange={e => setForm({...form, receiverPhone2: e.target.value})}
-                />
-              </div>
+
             </div>
           </div>
         </div>
 
       </div>
 
-      {/* THÔNG TIN KHÁCH HÀNG */}
+      {/* GHI CHÚ CHUYẾN ĐI */}
       <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">THÔNG TIN LIÊN HỆ CỦA BẠN</label>
-        <div className="grid grid-cols-2 gap-2">
-          <input 
-            type="text" placeholder="Tên của bạn *"
-            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-gray-800"
-            value={form.customerName} onChange={e => setForm({...form, customerName: e.target.value})}
-          />
-          <input 
-            type="tel" placeholder="SĐT của bạn *"
-            className="text-sm bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none font-medium text-blue-600"
-            value={form.customerPhone} onChange={e => setForm({...form, customerPhone: e.target.value})}
-          />
-        </div>
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">GHI CHÚ CHUYẾN ĐI</label>
         <div>
           <textarea 
             rows="2"
