@@ -155,8 +155,71 @@ export default function Earnings() {
         {activeTab === 'revenue' && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-300">
             {/* Lịch Sử Cuốc Xe Mới Nhất chuyển lên Tab ví hoặc giữ ở đây? Giữ ở đây hoặc dưới list Nợ */}
-            
-            {/* Vùng Thanh Toán Nợ Chi Tiết Nằm Đầu */}
+            {/* Biểu Đồ Cột 7 Ngày (Chuyển lên trên cùng) */}
+        {stats.chartData && stats.chartData.length > 0 && (
+          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 mb-4 shadow-sm mt-3">
+            <h2 className="text-slate-800 font-bold mb-4 text-sm">Thống Kê Doanh Thu Tuần Đi Làm</h2>
+            <div className="flex items-end justify-between h-48 gap-1 px-1">
+              {stats.chartData.map((d, idx) => {
+                const maxFee = Math.max(...stats.chartData.map(c => c.fee));
+                const heightPercent = maxFee > 0 ? (d.fee / maxFee) * 100 : 0;
+                // Nếu có cước thì min cao là 12%, nếu không có cước thì cao 2% để làm nền xám
+                const finalHeight = d.fee > 0 ? Math.max(12, heightPercent) : 2;
+                
+                // Format text hiển thị đẹp mắt (Bỏ số lẻ)
+                const feeText = d.fee >= 1000000 
+                  ? (d.fee / 1000000).toFixed(1).replace('.0', '') + 'M' 
+                  : d.fee > 0 ? Math.round(d.fee / 1000) + 'k' : '';
+
+                return (
+                  <div key={idx} className="flex flex-col items-center flex-1 h-full justify-end relative group">
+                    
+                    {/* Chữ hiển thị Tiền Mọc lên trên Cột */}
+                    {d.fee > 0 && (
+                      <div className="flex flex-col items-center mb-1 drop-shadow-md">
+                        <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap">{feeText}</span>
+                      </div>
+                    )}
+
+                    {/* Cái Cột Phép Thuật */}
+                    <div 
+                      className={`w-full max-w-[28px] sm:max-w-[40px] rounded-[4px] transition-all duration-1000 ${
+                        d.fee > 0 ? 'bg-gradient-to-t from-blue-500 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.3)] group-hover:from-blue-400 group-hover:to-sky-300' : 'bg-slate-100'
+                      }`}
+                      style={{ height: `${finalHeight}%` }}
+                    ></div>
+
+                    {/* Tên Ngày ở Dưới Cùng */}
+                    <div className="text-[10px] font-medium text-slate-500 mt-2 text-center w-full">
+                      {d.label}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Thống kê 2 cột */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 shadow-sm">
+            <p className="text-xs text-blue-600 mb-1 font-semibold">Tuần này</p>
+            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.weeklyFee)}</p>
+          </div>
+          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 shadow-sm">
+            <p className="text-xs text-blue-600 mb-1 font-semibold">Tháng này</p>
+            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.monthlyFee)}</p>
+          </div>
+        </div>
+        
+        {/* Thu Nhập Cả Tháng */}
+        <div className="rounded-2xl bg-blue-100 border border-blue-200 p-4 mb-8 text-center shadow-md">
+          <p className="text-xs text-blue-600 font-semibold mb-1">Tổng Tích Lũy Từ Trước Đến Nay</p>
+          <p className="text-2xl font-black text-blue-700 drop-shadow-sm shadow-blue-500/20">{formatCurrency(stats.totalFee)}</p>
+        </div>
+
+
+            {/* Vùng Thanh Toán Nợ Chi Tiết (Nằm Dưới Cùng) */}
             <h2 className="text-slate-800 font-bold mb-3 px-1 text-sm uppercase tracking-wide">CÔNG NỢ CẦN THANH TOÁN</h2>
             {unpaidDays.length === 0 ? (
                <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl text-center text-sky-700 shadow-sm font-semibold mb-6">
@@ -258,70 +321,6 @@ export default function Earnings() {
                   )})}
                 </div>
             )}
-
-            {/* Biểu Đồ Cột 7 Ngày (Chuyển xuống dưới Sổ Đen) */}
-        {stats.chartData && stats.chartData.length > 0 && (
-          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 mb-4 shadow-sm">
-            <h2 className="text-slate-800 font-bold mb-4 text-sm">Thống Kê Doanh Thu Tuần Đi Làm</h2>
-            <div className="flex items-end justify-between h-48 gap-1 px-1">
-              {stats.chartData.map((d, idx) => {
-                const maxFee = Math.max(...stats.chartData.map(c => c.fee));
-                const heightPercent = maxFee > 0 ? (d.fee / maxFee) * 100 : 0;
-                // Nếu có cước thì min cao là 12%, nếu không có cước thì cao 2% để làm nền xám
-                const finalHeight = d.fee > 0 ? Math.max(12, heightPercent) : 2;
-                
-                // Format text hiển thị đẹp mắt (Bỏ số lẻ)
-                const feeText = d.fee >= 1000000 
-                  ? (d.fee / 1000000).toFixed(1).replace('.0', '') + 'M' 
-                  : d.fee > 0 ? Math.round(d.fee / 1000) + 'k' : '';
-
-                return (
-                  <div key={idx} className="flex flex-col items-center flex-1 h-full justify-end relative group">
-                    
-                    {/* Chữ hiển thị Tiền & Số đơn Mọc lên trên Cột */}
-                    {d.fee > 0 && (
-                      <div className="flex flex-col items-center mb-1 drop-shadow-md">
-                        <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap">{feeText}</span>
-                        {d.orders > 0 && <span className="text-[8px] text-slate-500 whitespace-nowrap">{d.orders} đơn</span>}
-                      </div>
-                    )}
-
-                    {/* Cái Cột Phép Thuật */}
-                    <div 
-                      className={`w-full max-w-[28px] sm:max-w-[40px] rounded-[4px] transition-all duration-1000 ${
-                        d.fee > 0 ? 'bg-gradient-to-t from-blue-500 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.3)] group-hover:from-blue-400 group-hover:to-sky-300' : 'bg-slate-100'
-                      }`}
-                      style={{ height: `${finalHeight}%` }}
-                    ></div>
-
-                    {/* Tên Ngày ở Dưới Cùng */}
-                    <div className="text-[10px] font-medium text-slate-500 mt-2 text-center w-full">
-                      {d.label}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Thống kê 2 cột */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 shadow-sm">
-            <p className="text-xs text-blue-600 mb-1 font-semibold">Tuần này</p>
-            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.weeklyFee)}</p>
-          </div>
-          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 shadow-sm">
-            <p className="text-xs text-blue-600 mb-1 font-semibold">Tháng này</p>
-            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.monthlyFee)}</p>
-          </div>
-        </div>
-        
-        {/* Thu Nhập Cả Tháng */}
-        <div className="rounded-2xl bg-blue-100 border border-blue-200 p-4 mb-6 text-center shadow-md">
-          <p className="text-xs text-blue-600 font-semibold mb-1">Tổng Tích Lũy Từ Trước Đến Nay</p>
-          <p className="text-2xl font-black text-blue-700 drop-shadow-sm shadow-blue-500/20">{formatCurrency(stats.totalFee)}</p>
-        </div>
 
         </div>
         )}
