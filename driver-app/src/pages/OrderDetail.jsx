@@ -44,30 +44,39 @@ export default function OrderDetail() {
     loadOrder();
 
     const handleOrderChange = (e) => {
-      // Nếu là order_cancelled hoặc updated event mà trùng ID thì nạp lại
       const eventData = e.detail;
       if (
         (typeof eventData === 'string' && eventData === id) || 
         (eventData && eventData._id === id)
       ) {
+        showNotification('Đơn hàng đã được quản trị viên xử lý hoặc không còn tồn tại.', 'error');
+        navigate('/');
+      }
+    };
+
+    const handleOrderUpdate = (e) => {
+      const eventData = e.detail;
+      if ((typeof eventData === 'string' && eventData === id) || (eventData && eventData._id === id)) {
         loadOrder();
       }
     };
 
     window.addEventListener('driver_order_cancelled', handleOrderChange);
-    window.addEventListener('driver_order_updated', handleOrderChange);
-    
-    // Mở rộng thêm phòng trường hợp Driver Cứ cắm mặt ngoài Order Detail
-    window.addEventListener('driver_order_picked_up', (e) => { if (e.detail?._id === id) loadOrder(); });
-    window.addEventListener('driver_order_delivering', (e) => { if (e.detail?._id === id) loadOrder(); });
-    window.addEventListener('driver_order_completed', (e) => { if (e.detail?._id === id) loadOrder(); });
+    window.addEventListener('driver_order_deleted_event', handleOrderChange);
+    window.addEventListener('driver_order_updated', handleOrderUpdate);
+    window.addEventListener('driver_order_picked_up', handleOrderUpdate);
+    window.addEventListener('driver_order_delivering', handleOrderUpdate);
+    window.addEventListener('driver_order_completed', handleOrderUpdate);
 
     return () => {
       window.removeEventListener('driver_order_cancelled', handleOrderChange);
-      window.removeEventListener('driver_order_updated', handleOrderChange);
-      window.removeEventListener('driver_order_picked_up', handleOrderChange); // using handleOrderChange roughly
+      window.removeEventListener('driver_order_deleted_event', handleOrderChange);
+      window.removeEventListener('driver_order_updated', handleOrderUpdate);
+      window.removeEventListener('driver_order_picked_up', handleOrderUpdate);
+      window.removeEventListener('driver_order_delivering', handleOrderUpdate);
+      window.removeEventListener('driver_order_completed', handleOrderUpdate);
     };
-  }, [id]);
+  }, [id, navigate]);
 
   const handleAction = async (action) => {
     if (actionLoading) return; // Chặn bấm đúp Spam mạng

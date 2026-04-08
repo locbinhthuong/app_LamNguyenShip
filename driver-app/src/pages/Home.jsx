@@ -455,7 +455,7 @@ export default function Home() {
                   body: "🔔 CÓ ĐƠN HÀNG MỚI! Bấm vào đây để xem và giật đơn ngay!",
                   id: Math.floor(Math.random() * 1000000),
                   schedule: { at: new Date(Date.now() + 100) },
-                  sound: null,
+                  sound: "default",
                   smallIcon: "ic_stat_icon_config_sample",
                 }
               ]
