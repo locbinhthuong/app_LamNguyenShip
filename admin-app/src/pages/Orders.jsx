@@ -27,6 +27,12 @@ const STATUS_LABELS = {
   CANCELLED: 'Đã hủy'
 };
 
+const formatTime = (dateString) => {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+};
+
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -288,6 +294,7 @@ export default function Orders() {
                   <th className="table-th">Khách hàng</th>
                   <th className="table-th">Lộ trình / Địa chỉ giao</th>
                   <th className="table-th">Tài xế</th>
+                  <th className="table-th">Thời gian</th>
                   <th className="table-th">Trạng thái</th>
                   <th className="table-th">PHÍ GIAO HÀNG</th>
                   <th className="table-th">Hành động</th>
@@ -335,6 +342,12 @@ export default function Orders() {
                        )}
                     </td>
                     <td className="table-td text-slate-600 text-sm">{order.assignedTo?.name || '—'}</td>
+                    <td className="table-td text-[11px] text-slate-500 whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        <div><span className="font-bold text-slate-700">Tạo:</span> {formatTime(order.createdAt)}</div>
+                        {order.acceptedAt && <div><span className="font-bold text-primary-600 inline-block text-blue-600">Nhận:</span> {formatTime(order.acceptedAt)}</div>}
+                      </div>
+                    </td>
                     <td className="table-td">
                       <div className="flex flex-col items-start gap-1">
                         <span className={`rounded-full px-2 py-1 text-xs font-bold text-slate-800 ${STATUS_COLORS[order.status]}`}>
