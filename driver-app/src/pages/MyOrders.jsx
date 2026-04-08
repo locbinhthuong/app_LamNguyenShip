@@ -49,13 +49,25 @@ export default function MyOrders() {
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
 
+    // Chart Data (7 Days)
+    const chartMap = {};
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      let label = d.toLocaleDateString('vi-VN', { weekday: 'short' });
+      label = label === 'CN' ? 'CN' : label.replace(/^T/, 'T');
+      chartMap[d.toDateString()] = { label, orders: 0 };
+    }
+
     let dCount = 0, wCount = 0, mCount = 0, yCount = 0;
 
     orders.forEach(o => {
       if (o.status !== 'COMPLETED') return;
       const oDate = new Date(o.updatedAt || o.createdAt);
+      const oDateStr = oDate.toDateString();
       
-      if (oDate.toDateString() === todayStr) dCount += 1;
+      if (chartMap[oDateStr]) chartMap[oDateStr].orders += 1;
+      if (oDateStr === todayStr) dCount += 1;
       if (oDate >= weekStart) wCount += 1;
       if (oDate.getMonth() === currentMonth && oDate.getFullYear() === currentYear) mCount += 1;
       if (oDate.getFullYear() === currentYear) yCount += 1;
@@ -65,7 +77,8 @@ export default function MyOrders() {
       day: dCount, 
       week: wCount, 
       month: mCount, 
-      year: yCount 
+      year: yCount,
+      chartData: Object.values(chartMap)
     };
   }, [orders]);
 
@@ -107,35 +120,51 @@ export default function MyOrders() {
           <h1 className="text-xl font-black text-slate-800 tracking-tight">Thống Kê Đơn Hàng</h1>
         </div>
 
-        {/* Dashboard 4 Lớp củ (đã được bóp thành Scroll Ngang/DỌc) */}
-        <div className="flex flex-col gap-3 mb-4">
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
-             <div className="flex flex-col z-10 w-full text-center">
-                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Hôm Nay</span>
-                 <span className="text-2xl font-black text-blue-600">{stats.day} Đơn</span>
-             </div>
-             <div className="absolute right-2 text-6xl opacity-[0.03]">⚡</div>
+        {/* Biểu Đồ Cột 7 Ngày Mới */}
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm mb-4 overflow-hidden">
+          <h2 className="text-slate-800 font-black mb-4 text-sm tracking-tight text-center">Hoạt Động 7 Ngày Qua</h2>
+          <div className="flex items-end justify-between h-32 gap-1 px-1">
+             {stats.chartData.map((d, idx) => {
+                const maxOrders = Math.max(...stats.chartData.map(c => c.orders), 1);
+                const heightPercent = (d.orders / maxOrders) * 100;
+                const finalHeight = d.orders > 0 ? Math.max(12, heightPercent) : 2;
+                return (
+                  <div key={idx} className="flex flex-col items-center flex-1 h-full justify-end relative group">
+                    {d.orders > 0 && (
+                      <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap mb-1 drop-shadow-sm">{d.orders}</span>
+                    )}
+                    <div 
+                      className={`w-full max-w-[28px] sm:max-w-[40px] rounded-[4px] transition-all duration-500 ${
+                        d.orders > 0 ? 'bg-gradient-to-t from-blue-500 to-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.3)]' : 'bg-slate-100'
+                      }`}
+                      style={{ height: `${finalHeight}%` }}
+                    ></div>
+                    <div className="text-[10px] font-medium text-slate-500 mt-2 text-center w-full">
+                      {d.label}
+                    </div>
+                  </div>
+                );
+             })}
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
-             <div className="flex flex-col z-10 w-full text-center">
-                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Tuần Này</span>
-                 <span className="text-2xl font-black text-blue-700">{stats.week} Đơn</span>
-             </div>
-             <div className="absolute right-2 text-6xl opacity-[0.03]">📅</div>
+        </div>
+
+        {/* Khung Thống Kê Nhập Liền / Gạch Ngang Mới */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col mb-4 overflow-hidden divide-y divide-slate-100">
+          <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">⚡</span> Hôm Nay</span>
+             <span className="text-lg font-black text-blue-600">{stats.day} Đơn</span>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
-             <div className="flex flex-col z-10 w-full text-center">
-                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Tháng Này</span>
-                 <span className="text-2xl font-black text-blue-800">{stats.month} Đơn</span>
-             </div>
-             <div className="absolute right-2 text-6xl opacity-[0.03]">🏆</div>
+          <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">📅</span> Tuần Này</span>
+             <span className="text-lg font-black text-blue-600">{stats.week} Đơn</span>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex items-center justify-between relative overflow-hidden group">
-             <div className="flex flex-col z-10 w-full text-center">
-                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Năm Nay</span>
-                 <span className="text-2xl font-black text-blue-900">{stats.year} Đơn</span>
-             </div>
-             <div className="absolute right-2 text-6xl opacity-[0.03]">📦</div>
+          <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">🏆</span> Tháng Này</span>
+             <span className="text-lg font-black text-blue-600">{stats.month} Đơn</span>
+          </div>
+          <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">📦</span> Năm Nay</span>
+             <span className="text-lg font-black text-blue-600">{stats.year} Đơn</span>
           </div>
         </div>
 
