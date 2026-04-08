@@ -23,7 +23,10 @@ if (typeof window !== 'undefined' && 'Notification' in window) {
 }
 
 export const requestFirebaseToken = async () => {
-  if (!messaging) return "LỖI_HỀ_THỐNG: Trình duyệt hoặc iOS chặn không cho khởi tạo Firebase Messaging. Hãy chắc chắn bạn đang dùng App từ Màn Hình Chính.";
+  if (!messaging) {
+    console.error("LỖI_HỀ_THỐNG: Trình duyệt chặn Firebase Messaging.");
+    return null;
+  }
   
   try {
     const permission = await Notification.requestPermission();
@@ -33,15 +36,21 @@ export const requestFirebaseToken = async () => {
           vapidKey: "BJFyR5tb1wUHs920cM9Kj-AXcN1jnXJ8QaGC4wcboezCYW9pWbUytVMUum7r9VloT0eoMl_evcFhdIM-iOwMu-4"
         });
         if (currentToken) return currentToken;
-        else return "LỖI_TOKEN: Firebase trả về rỗng không có cớ.";
+        else {
+          console.error("LỖI_TOKEN: Firebase trả về rỗng.");
+          return null;
+        }
       } catch (err) {
-        return "LỖI_GET_TOKEN: " + err.message + " | Callstack: " + err.stack;
+        console.error("LỖI_GET_TOKEN: " + err.message);
+        return null;
       }
     } else {
-      return "LỖI_QUYỀN: Người dùng hoặc Máy từ chối quyền, trạng thái hiện tại là: " + permission;
+      console.warn("LỖI_QUYỀN: Người dùng từ chối quyền push: " + permission);
+      return null;
     }
   } catch (error) {
-    return 'LỖI_NGOẠI_LỆ: Mẻ catch request: ' + error.message;
+    console.error('LỖI_NGOẠI_LỆ: catch request: ' + error.message);
+    return null;
   }
 };
 

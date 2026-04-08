@@ -24,6 +24,9 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         click_action: "FLUTTER_NOTIFICATION_CLICK",
         ...data
       },
+      android: {
+        priority: "high"
+      },
       webpush: {
         headers: { Urgency: "high", TTL: "60" },
         notification: {
@@ -66,6 +69,9 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
       data: {
         click_action: "FLUTTER_NOTIFICATION_CLICK",
         ...data
+      },
+      android: {
+        priority: "high"
       },
       webpush: {
         headers: { Urgency: "high", TTL: "60" },
