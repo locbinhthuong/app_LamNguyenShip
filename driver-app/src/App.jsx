@@ -130,14 +130,14 @@ function AppContent() {
     window.addEventListener('driver_new_order', handleNewOrderEvent);
     window.addEventListener('driver_order_accepted', handleStopEvent);
     window.addEventListener('driver_order_cancelled', handleStopEvent);
-    window.addEventListener('order_deleted_event', handleStopEvent);
+    window.addEventListener('driver_order_deleted_event', handleStopEvent);
 
     return () => {
       window.removeEventListener('stop_alarm_event', handleStopEvent);
       window.removeEventListener('driver_new_order', handleNewOrderEvent);
       window.removeEventListener('driver_order_accepted', handleStopEvent);
       window.removeEventListener('driver_order_cancelled', handleStopEvent);
-      window.removeEventListener('order_deleted_event', handleStopEvent);
+      window.removeEventListener('driver_order_deleted_event', handleStopEvent);
     };
   }, [startAlarm, stopAlarm]);
 
@@ -150,7 +150,10 @@ function AppContent() {
 
     const handlePush = (e) => {
       setPushMessage({ title: e.detail.title, message: e.detail.body });
-      // Xoá dispatch driver_new_order để nhường sân cho Socket nhồi Payload đầy đủ
+      // PHÁT CHUÔNG NGAY LẬP TỨC (Chống delay Socket)
+      if (e.detail.title && e.detail.title.toUpperCase().includes('MỚI')) {
+         window.dispatchEvent(new CustomEvent('driver_new_order')); 
+      }
     };
     window.addEventListener('fcm_foreground_alert', handlePush);
 
