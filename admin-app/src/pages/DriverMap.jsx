@@ -2,10 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // KHÔNG dùng react-leaflet để tránh lỗi tương thích Vite Production
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { io } from 'socket.io-client';
 import { getDrivers, getOrders, getDriverById } from '../services/api';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
 
 // Hàm tạo Icon thuần có Badge số dư động
 const getMotorbikeIcon = (activeOrderCount, status) => {
@@ -180,17 +177,10 @@ export default function DriverMap() {
 
     loadInitialData();
 
-    // 2. Kết nối Socket Realtime
-    const token = localStorage.getItem('admin_token');
-    const socket = io(API_BASE_URL, {
-      auth: { token },
-      transports: ['websocket', 'polling']
-    });
-
-    socket.on('connect', () => console.log('✅ Admin Map Socket Connected!'));
-
+    // 2. Lắng nghe Socket Realtime qua biến toàn cục window
     // Lắng nghe Tọa độ Realme
-    socket.on('driver_location_update', async (data) => {
+    const handleLocationUpdate = async (e) => {
+      const data = e.detail;
       const _id = data.driverId;
       const existing = dataRef.current.drivers[_id] || {};
       
@@ -221,13 +211,16 @@ export default function DriverMap() {
              }
           } catch(e) {}
       }
-    });
+    };
+    window.addEventListener('driver_location_update', handleLocationUpdate);
 
     // Lắng nghe thay đổi trạng thái Online/Offline để gỡ/thêm marker
-    socket.on('driver_status_change', async (data) => {
+    const handleStatusChange = async (e) => {
+      const data = e.detail;
       const _id = data.driverId;
       if (!data.isOnline || !data.lat || !data.lng) {
         delete dataRef.current.drivers[_id];
+        updateMapMarkers();
       } else {
         const existing = dataRef.current.drivers[_id] || {};
         dataRef.current.drivers[_id] = {
@@ -252,20 +245,17 @@ export default function DriverMap() {
            }
         } catch(e) {}
       }
-    });
+    };
+    window.addEventListener('driver_status_change', handleStatusChange);
 
     // Lắng nghe thay đổi trạng thái đơn
     const reloadOrders = () => loadInitialData();
-    socket.on('order_accepted', reloadOrders);
-    socket.on('order_picked_up', reloadOrders);
-    socket.on('order_delivering', reloadOrders);
-    socket.on('order_completed', reloadOrders);
-    socket.on('order_cancelled', reloadOrders);
-    socket.on('order_updated', reloadOrders);
-    socket.on('new_order', reloadOrders);
+    window.addEventListener('refresh_admin_orders', reloadOrders);
 
     return () => {
-      socket.disconnect();
+      window.removeEventListener('driver_location_update', handleLocationUpdate);
+      window.removeEventListener('driver_status_change', handleStatusChange);
+      window.removeEventListener('refresh_admin_orders', reloadOrders);
       // Xóa bản đồ khi tắt trang
       if (mapInstance.current) {
           mapInstance.current.remove();

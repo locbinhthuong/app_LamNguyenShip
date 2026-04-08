@@ -613,9 +613,10 @@ const authController = {
   // PUT /api/auth/customer/me
   updateOwnCustomerProfile: async (req, res) => {
     try {
-      const { name, phone, password } = req.body;
+      const { name, phone, password, avatar } = req.body;
       const updateData = {};
       if (name) updateData.name = name;
+      if (avatar !== undefined) updateData.avatar = avatar;
 
       if (phone && phone !== req.customer.phone) {
          // Check if phone already exists

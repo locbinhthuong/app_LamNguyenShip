@@ -77,8 +77,6 @@ function AppContent() {
       try { sourceNodeRef.current.disconnect(); } catch(e){}
       sourceNodeRef.current = null;
     }
-    // Dọn dẹp cả popup Thông báo lơ lửng nếu có lệnh tắt chuông/huỷ đơn
-    setPushMessage(null);
   }, []);
 
   const startAlarm = useCallback(() => {
@@ -107,10 +105,18 @@ function AppContent() {
   }, [stopAlarm]);
 
   useEffect(() => {
-    const handleStopEvent = () => stopAlarm();
+    const handleStopEvent = () => {
+      stopAlarm();
+      setPushMessage(null);
+    };
     window.addEventListener('stop_alarm_event', handleStopEvent);
     
+    let lastNewOrderTime = 0;
     const handleNewOrderEvent = (e) => {
+       const now = Date.now();
+       if (now - lastNewOrderTime < 1000) return; // Debounce 1 giây chống báo trùng giữa FCM và Socket
+       lastNewOrderTime = now;
+
        startAlarm();
        const order = e.detail;
        if (order) {
@@ -123,12 +129,14 @@ function AppContent() {
     window.addEventListener('driver_new_order', handleNewOrderEvent);
     window.addEventListener('driver_order_accepted', handleStopEvent);
     window.addEventListener('driver_order_cancelled', handleStopEvent);
+    window.addEventListener('order_deleted_event', handleStopEvent);
 
     return () => {
       window.removeEventListener('stop_alarm_event', handleStopEvent);
       window.removeEventListener('driver_new_order', handleNewOrderEvent);
       window.removeEventListener('driver_order_accepted', handleStopEvent);
       window.removeEventListener('driver_order_cancelled', handleStopEvent);
+      window.removeEventListener('order_deleted_event', handleStopEvent);
     };
   }, [startAlarm, stopAlarm]);
 
@@ -191,7 +199,7 @@ function AppContent() {
         setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');
       });
 
-      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated'];
+      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated'];
       forwardEvents.forEach(event => {
         socketRef.current.on(event, (data) => {
           window.dispatchEvent(new CustomEvent(`driver_${event}`, { detail: data }));

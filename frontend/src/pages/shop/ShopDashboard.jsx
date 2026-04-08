@@ -22,12 +22,60 @@ const ShopDashboard = () => {
 
   const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
 
+  const calculateStatsAndSet = (newOrders) => {
+    const today = new Date().toDateString();
+    let p = 0, d = 0, c = 0, cod = 0;
+    newOrders.forEach(o => {
+      if (o.status === 'PENDING') p++;
+      if (['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(o.status)) d++;
+      
+      if (o.status === 'COMPLETED' && new Date(o.createdAt).toDateString() === today) {
+        c++;
+        cod += (o.codAmount || 0);
+      }
+    });
+    setStats({ pending: p, delivering: d, completedToday: c, codCollectedToday: cod });
+  };
+
   useEffect(() => {
     fetchOrders();
 
-    window.addEventListener('refresh_orders_data', fetchOrders);
+    const handleRefresh = (e) => {
+      const updatedOrder = e.detail;
+      if (updatedOrder && updatedOrder._id) {
+        setOrders(prev => {
+          let exists = false;
+          const newList = prev.map(o => {
+            if (o._id === updatedOrder._id) {
+              exists = true;
+              return updatedOrder;
+            }
+            return o;
+          });
+          if (!exists) newList.unshift(updatedOrder);
+          calculateStatsAndSet(newList);
+          return newList;
+        });
+      } else {
+        fetchOrders();
+      }
+    };
+
+    const handleDeleted = (e) => {
+      if (typeof e.detail === 'string') {
+        setOrders(prev => {
+           const newList = prev.filter(o => o._id !== e.detail);
+           calculateStatsAndSet(newList);
+           return newList;
+        });
+      }
+    };
+
+    window.addEventListener('refresh_orders_data', handleRefresh);
+    window.addEventListener('order_deleted_event', handleDeleted);
     return () => {
-      window.removeEventListener('refresh_orders_data', fetchOrders);
+      window.removeEventListener('refresh_orders_data', handleRefresh);
+      window.removeEventListener('order_deleted_event', handleDeleted);
     };
   }, []);
 
@@ -68,22 +116,7 @@ const ShopDashboard = () => {
       if (res.data.success) {
         const allOrders = res.data.data;
         setOrders(allOrders);
-
-        // Calculate Stats
-        const today = new Date().toDateString();
-        let p = 0, d = 0, c = 0, cod = 0;
-
-        allOrders.forEach(o => {
-          if (o.status === 'PENDING') p++;
-          if (['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(o.status)) d++;
-          
-          if (o.status === 'COMPLETED' && new Date(o.createdAt).toDateString() === today) {
-            c++;
-            cod += (o.codAmount || 0);
-          }
-        });
-
-        setStats({ pending: p, delivering: d, completedToday: c, codCollectedToday: cod });
+        calculateStatsAndSet(allOrders);
       }
     } catch (error) {
       console.error('Lỗi lấy đơn shop', error);

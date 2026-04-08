@@ -464,13 +464,27 @@ export default function Home() {
        }
     };
 
-    const handleOrderLost = () => {
+    const handleOrderLost = (e) => {
+      const orderId = typeof e?.detail === 'string' ? e.detail : e?.detail?._id;
+      if (orderId) {
+        setAvailableOrders(prev => prev.filter(o => o._id !== orderId));
+        setMyActiveOrders(prev => prev.filter(o => o._id !== orderId));
+      }
+      loadData();
+    };
+
+    const handleOrderAccepted = (e) => {
+      const orderId = typeof e?.detail === 'string' ? e.detail : e?.detail?._id;
+      if (orderId) {
+        setAvailableOrders(prev => prev.filter(o => o._id !== orderId));
+      }
       loadData();
     };
 
     window.addEventListener('driver_new_order', handleNewOrder);
-    window.addEventListener('driver_order_accepted', handleOrderLost);
+    window.addEventListener('driver_order_accepted', handleOrderAccepted);
     window.addEventListener('driver_order_cancelled', handleOrderLost);
+    window.addEventListener('order_deleted_event', handleOrderLost);
     window.addEventListener('driver_order_picked_up', loadData);
     window.addEventListener('driver_order_delivering', loadData);
     window.addEventListener('driver_order_completed', loadData);
@@ -478,8 +492,9 @@ export default function Home() {
     return () => {
       clearInterval(interval);
       window.removeEventListener('driver_new_order', handleNewOrder);
-      window.removeEventListener('driver_order_accepted', handleOrderLost);
+      window.removeEventListener('driver_order_accepted', handleOrderAccepted);
       window.removeEventListener('driver_order_cancelled', handleOrderLost);
+      window.removeEventListener('order_deleted_event', handleOrderLost);
       window.removeEventListener('driver_order_picked_up', loadData);
       window.removeEventListener('driver_order_delivering', loadData);
       window.removeEventListener('driver_order_completed', loadData);

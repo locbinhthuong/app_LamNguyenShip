@@ -63,7 +63,7 @@ const CustomerProfile = () => {
          try {
            const result = await uploadCustomerAvatar(avatarFile);
            if (result.data.success) {
-             finalAvatarUrl = result.data.url;
+             finalAvatarUrl = result.data.data.url;
            }
          } catch (uploadError) {
            console.error("Lỗi upload ảnh:", uploadError);

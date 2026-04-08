@@ -146,6 +146,14 @@ export const useAdminSocket = () => {
       // Kích hoạt một sự kiện nếu có (hiện tại chưa có modal popup cho rút tiền, chỉ vào Lịch sử ví)
     });
 
+    socket.on('driver_location_update', (data) => {
+      window.dispatchEvent(new CustomEvent('driver_location_update', { detail: data }));
+    });
+
+    socket.on('driver_status_change', (data) => {
+      window.dispatchEvent(new CustomEvent('driver_status_change', { detail: data }));
+    });
+
     return () => {
       socket.disconnect();
     };

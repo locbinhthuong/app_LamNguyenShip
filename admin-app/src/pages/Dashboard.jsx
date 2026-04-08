@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { io } from 'socket.io-client';
 import { getDashboardStats, API_BASE_URL } from '../services/api';
 import { startOfTodayVietnam } from '../utils/todayVietnam';
 
@@ -48,117 +47,17 @@ export default function Dashboard() {
     // Load lần đầu
     load();
 
-    // Socket.io: cập nhật số liệu TỨC THÌ khi có sự kiện
-    const token = localStorage.getItem('admin_token');
-    if (!token) return;
-
-    const socket = io(API_BASE_URL || window.location.origin, {
-      auth: { token },
-      transports: ['websocket', 'polling']
-    });
-
-    socket.on('connect', () => console.log('[Dashboard] Socket connected'));
-    socket.on('connect_error', (err) => console.error('[Dashboard] Socket error:', err.message));
-
-    // Khi có đơn mới → tăng số PENDING, tăng tổng
-    // Sự kiện new_order = đơn vừa tạo trên server → luôn +1 "đơn hôm nay" (tránh lệch do parse createdAt / múi giờ trình duyệt). Polling load() sẽ đồng bộ lại.
-    socket.on('new_order', (order) => {
-      setStats(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          orders: {
-            ...prev.orders,
-            total: prev.orders.total + 1,
-            pending: prev.orders.pending + 1,
-          },
-          today: {
-            ...prev.today,
-            total: (prev.today?.total || 0) + 1,
-          },
-          recentOrders: [order, ...(prev.recentOrders || [])].slice(0, 10),
-        };
-      });
-    });
-
-    socket.on('order_accepted', () => {
-      setStats(prev => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          orders: {
-            ...prev.orders,
-            pending: Math.max(0, prev.orders.pending - 1),
-            active: prev.orders.active + 1,
-          },
-        };
-      });
-    });
-
-    // Lấy hàng / đang giao → cập nhật lại
-    socket.on('order_picked_up', () => {
-      // PICKED_UP vẫn tính active → không đổi số
-    });
-
-    socket.on('order_delivering', () => {
-      // DELIVERING vẫn tính active → không đổi số
-    });
-
-    // Hoàn thành → giảm ACTIVE, tăng COMPLETED
-    socket.on('order_completed', (order) => {
-      setStats(prev => {
-        if (!prev) return prev;
-        const todayStart = startOfTodayVietnam();
-        const deliveredAt = order.deliveredAt ? new Date(order.deliveredAt) : new Date();
-        const isDeliveredToday = deliveredAt >= todayStart;
-        const codAmt = order.codAmount || 0;
-        return {
-          ...prev,
-          orders: {
-            ...prev.orders,
-            active: Math.max(0, prev.orders.active - 1),
-            completed: prev.orders.completed + 1,
-          },
-          today: {
-            ...prev.today,
-            completed: isDeliveredToday ? (prev.today?.completed || 0) + 1 : (prev.today?.completed || 0),
-            revenue: isDeliveredToday ? (prev.today?.revenue || 0) + codAmt : (prev.today?.revenue || 0),
-          },
-        };
-      });
-    });
-
-    socket.on('order_cancelled', (order) => {
-      setStats(prev => {
-        if (!prev) return prev;
-        const todayStart = startOfTodayVietnam();
-        const cancelledAt = order.cancelledAt ? new Date(order.cancelledAt) : new Date();
-        const isCancelledToday = cancelledAt >= todayStart;
-        // Sau hủy status luôn CANCELLED — dùng acceptedAt để biết đã vào luồng tài xế chưa
-        const wasInDriverFlow = Boolean(order.acceptedAt);
-        return {
-          ...prev,
-          orders: {
-            ...prev.orders,
-            pending: !wasInDriverFlow ? Math.max(0, prev.orders.pending - 1) : prev.orders.pending,
-            active: wasInDriverFlow ? Math.max(0, prev.orders.active - 1) : prev.orders.active,
-            cancelled: prev.orders.cancelled + 1,
-          },
-          today: {
-            ...prev.today,
-            cancelled: isCancelledToday ? (prev.today?.cancelled || 0) + 1 : (prev.today?.cancelled || 0),
-          },
-        };
-      });
-    });
+    // Lắng nghe sự kiện kiện từ useAdminSocket.jsx (Singleton Socket)
+    window.addEventListener('refresh_admin_orders', load);
 
     // Backup: polling 15s phòng khi socket lỗi
     const interval = setInterval(load, 15000);
     return () => {
+      window.removeEventListener('refresh_admin_orders', load);
       clearInterval(interval);
-      socket.disconnect();
     };
   }, [load]);
+
 
   if (loading) return (
     <div className="flex h-screen items-center justify-center">

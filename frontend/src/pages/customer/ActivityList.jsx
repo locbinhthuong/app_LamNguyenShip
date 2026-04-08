@@ -24,9 +24,37 @@ const ActivityList = () => {
   useEffect(() => {
     fetchOrders();
 
-    window.addEventListener('refresh_orders_data', fetchOrders);
+    const handleRefresh = (e) => {
+      const updatedOrder = e.detail;
+      if (updatedOrder && updatedOrder._id) {
+        setOrders(prev => {
+          let exists = false;
+          const newList = prev.map(o => {
+            if (o._id === updatedOrder._id) {
+              exists = true;
+              return updatedOrder;
+            }
+            return o;
+          });
+          if (!exists) newList.unshift(updatedOrder);
+          return newList;
+        });
+      } else {
+        fetchOrders();
+      }
+    };
+
+    const handleDeleted = (e) => {
+      if (typeof e.detail === 'string') {
+        setOrders(prev => prev.filter(o => o._id !== e.detail));
+      }
+    };
+
+    window.addEventListener('refresh_orders_data', handleRefresh);
+    window.addEventListener('order_deleted_event', handleDeleted);
     return () => {
-      window.removeEventListener('refresh_orders_data', fetchOrders);
+      window.removeEventListener('refresh_orders_data', handleRefresh);
+      window.removeEventListener('order_deleted_event', handleDeleted);
     };
   }, []);
 
