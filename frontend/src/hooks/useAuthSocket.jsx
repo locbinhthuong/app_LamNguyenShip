@@ -22,6 +22,9 @@ window.addEventListener('touchstart', initCustomerAudio, { once: true });
 
 const playCustomerPing = () => {
     try {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            navigator.vibrate([200, 100, 200]); // Rung máy (Mobile) hỗ trợ fallback cho loa
+        }
         if (customerAudioCtx && pricePingBuffer) {
             if (customerAudioCtx.state === 'suspended') customerAudioCtx.resume();
             const source = customerAudioCtx.createBufferSource();

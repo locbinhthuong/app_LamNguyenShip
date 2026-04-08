@@ -113,11 +113,6 @@ function AppContent() {
     
     let lastNewOrderTime = 0;
     const handleNewOrderEvent = (e) => {
-       const now = Date.now();
-       if (now - lastNewOrderTime < 1000) return; // Debounce 1 giây chống báo trùng giữa FCM và Socket
-       lastNewOrderTime = now;
-
-       startAlarm();
        const order = e.detail;
        if (order) {
            setPushMessage({ 
@@ -125,6 +120,12 @@ function AppContent() {
                message: order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Có Đơn Hàng Mới Cho Bạn!'
            });
        }
+
+       const now = Date.now();
+       if (now - lastNewOrderTime < 2000) return; // Chỉ Debounce tiếng chuông để chống hú Spam
+       lastNewOrderTime = now;
+       
+       startAlarm();
     };
     window.addEventListener('driver_new_order', handleNewOrderEvent);
     window.addEventListener('driver_order_accepted', handleStopEvent);
@@ -149,10 +150,7 @@ function AppContent() {
 
     const handlePush = (e) => {
       setPushMessage({ title: e.detail.title, message: e.detail.body });
-      // PHÁT CHUÔNG NGAY LẬP TỨC (Dự phòng rớt Mạng Socket Web)
-      if (e.detail.title && e.detail.title.toUpperCase().includes('MỚI')) {
-         window.dispatchEvent(new CustomEvent('driver_new_order')); 
-      }
+      // Xoá dispatch driver_new_order để nhường sân cho Socket nhồi Payload đầy đủ
     };
     window.addEventListener('fcm_foreground_alert', handlePush);
 

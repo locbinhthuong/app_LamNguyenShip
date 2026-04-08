@@ -127,6 +127,14 @@ export const useAdminSocket = () => {
       window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
     });
 
+    socket.on('order_cancelled', (order) => {
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+    });
+
+    socket.on('order_deleted_event', (orderId) => {
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+    });
+
     socket.on('debt_payment_request', (payload) => {
       // payload: { driverId, name, phone, driverCode, amount, timestamp }
       
