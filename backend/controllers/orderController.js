@@ -22,6 +22,19 @@ const orderController = {
         query.assignedTo = driverId;
       }
 
+      if (req.query.search) {
+        const searchRegex = new RegExp(req.query.search, 'i');
+        query.$or = [
+          { customerPhone: searchRegex },
+          { customerName: searchRegex }
+        ];
+        // Xử lý tìm theo OrderCode (bất cứ chuỗi nào khớp id)
+        const pureSearch = req.query.search.replace(/^DH/i, '').toLowerCase();
+        if (pureSearch.length > 0) {
+           query.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: pureSearch, options: "i" } } });
+        }
+      }
+
       const skip = (parseInt(page) - 1) * parseInt(limit);
 
       const [orders, total] = await Promise.all([

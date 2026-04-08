@@ -42,6 +42,7 @@ export default function Orders() {
   
   const [confirmModal, setConfirmModal] = useState({ isOpen: false });
   const [cancelModal, setCancelModal] = useState({ isOpen: false, order: null });
+  const [globalSearch, setGlobalSearch] = useState('');
 
   const tabs = [
     { key: '', label: 'Tất cả' },
@@ -55,7 +56,10 @@ export default function Orders() {
 
   const load = useCallback(async () => {
     try {
-      const params = filter ? { status: filter } : {};
+      const params = {};
+      if (filter) params.status = filter;
+      if (globalSearch) params.search = globalSearch;
+      
       const { orders: list } = await getOrders(params);
       setOrders(list);
     } catch (err) {
@@ -63,11 +67,18 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, globalSearch]);
 
   useEffect(() => {
     setLoading(true);
-    load();
+    const delayDebounceFn = setTimeout(() => {
+      load();
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [load]);
+
+  useEffect(() => {
     const interval = setInterval(load, 30000); // Tăng lên 30s vì đã có Realtime
 
     window.addEventListener('refresh_admin_orders', load);
@@ -164,12 +175,21 @@ export default function Orders() {
 
   return (
     <div className="p-4 pb-8 sm:p-6">
-      {/* Header + Tabs */}
+      {/* Header + Tabs + Search */}
       <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-lg font-bold text-slate-800 sm:text-2xl">📦 Quản lý Đơn hàng</h1>
-        <Link to="/orders/create" className="btn-primary shrink-0 text-center text-sm sm:w-auto sm:px-6 sm:text-base">
-          + Tạo đơn
-        </Link>
+        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          <input 
+            type="text" 
+            placeholder="🔍 Tìm Mã đơn, Tên, Số điện thoại..." 
+            className="border border-slate-200 rounded-lg px-3 py-1.5 text-sm w-full sm:w-64 focus:outline-none focus:border-blue-500"
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+          />
+          <Link to="/orders/create" className="btn-primary shrink-0 text-center text-sm font-bold sm:px-6 sm:text-base">
+            + Tạo đơn
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -346,6 +366,7 @@ export default function Orders() {
                       <div className="flex flex-col gap-1">
                         <div><span className="font-bold text-slate-700">Tạo:</span> {formatTime(order.createdAt)}</div>
                         {order.acceptedAt && <div><span className="font-bold text-primary-600 inline-block text-blue-600">Nhận:</span> {formatTime(order.acceptedAt)}</div>}
+                        {order.deliveredAt && <div><span className="font-bold inline-block text-emerald-600">Hoàn thành:</span> {formatTime(order.deliveredAt)}</div>}
                       </div>
                     </td>
                     <td className="table-td">
