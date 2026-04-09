@@ -411,7 +411,29 @@ const orderController = {
         return res.status(403).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
       }
 
-      if (driver.walletDebt > 0) {
+      let hasUnpaidDebt = driver.walletDebt > 0;
+
+      if (!hasUnpaidDebt) {
+        // Double check chi tiết từng ngày (nếu nợ cộng dồn âm, nhưng vẫn sót ngày chưa báo toán)
+        const transactions = await DebtTransaction.find({ driverId: req.driver._id }).select('amount targetDate createdAt status').lean();
+        const debtByDate = {};
+        transactions.forEach(tx => {
+          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+             if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+             debtByDate[dateStr] += tx.amount;
+          }
+        });
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          if (amount > 0 && dateStr !== todayStr) {
+            hasUnpaidDebt = true;
+            break;
+          }
+        }
+      }
+
+      if (hasUnpaidDebt) {
         return res.status(403).json({
           success: false,
           message: 'Bạn chưa thanh toán công nợ'
