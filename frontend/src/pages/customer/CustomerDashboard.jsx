@@ -112,7 +112,7 @@ const CustomerDashboard = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-20 relative font-sans">
+    <div className="flex flex-col min-h-screen bg-gray-50 pb-20 relative font-sans w-full max-w-7xl mx-auto">
       
       {/* HEADER: Địa điểm của tôi */}
       <div 
@@ -154,7 +154,7 @@ const CustomerDashboard = () => {
       {/* DANH SÁCH DỊCH VỤ (GRID) */}
       <div className="px-4 mb-4">
         <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-          <div className="grid grid-cols-4 gap-y-6 gap-x-2">
+          <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-y-6 gap-x-2 md:gap-x-8 md:gap-y-8">
             {services.map((svc) => (
               <div 
                 key={svc.id} 
@@ -162,11 +162,11 @@ const CustomerDashboard = () => {
                 className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group"
               >
                 {/* Vòng tròn Icon */}
-                <div className={`w-[60px] h-[60px] rounded-full flex items-center justify-center text-3xl shadow-sm border-2 border-white ring-1 ring-gray-100 group-hover:ring-blue-200 ${svc.color}`}>
+                <div className="w-[60px] h-[60px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-3xl md:text-4xl shadow-sm border-2 border-white ring-1 ring-gray-100 group-hover:ring-blue-200 transition-all ${svc.color}">
                   {svc.icon}
                 </div>
                 {/* Tên dịch vụ */}
-                <span className="text-[11px] font-semibold text-gray-700 text-center leading-tight w-full">
+                <span className="text-[11px] md:text-sm font-semibold text-gray-700 text-center leading-tight w-full mt-1 md:mt-2">
                   {svc.name}
                 </span>
               </div>
@@ -187,7 +187,7 @@ const CustomerDashboard = () => {
               <div 
                 key={ann._id} 
                 onClick={() => setSelectedAnnouncement(ann)}
-                className="w-48 bg-white rounded-2xl border border-red-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer active:scale-95 transition-transform"
+                className="w-48 md:w-64 bg-white rounded-2xl border border-red-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
               >
                 {ann.imageUrl ? (
                   <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Khuyến mãi" />
@@ -222,7 +222,7 @@ const CustomerDashboard = () => {
               <div 
                 key={ann._id} 
                 onClick={() => setSelectedAnnouncement(ann)}
-                className="w-40 bg-white rounded-2xl border border-blue-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer active:scale-95 transition-transform"
+                className="w-40 md:w-56 bg-white rounded-2xl border border-blue-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
               >
                 {ann.imageUrl ? (
                   <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-36 object-cover bg-gray-100" alt="Tin tức" />

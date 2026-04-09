@@ -67,13 +67,10 @@ const CustomerLayout = () => {
       </div>
 
       {/* VÙNG CHỨA APP GIỮA MÀN HÌNH */}
-      <div className="flex-1 h-[100dvh] relative flex justify-center items-center overflow-hidden">
+      <div className="flex-1 h-[100dvh] relative flex overflow-hidden">
         
-        {/* CONTAINER GIẢ LẬP ĐIỆN THOẠI TRÊN DESKTOP */}
-        <div className="relative w-full h-full md:w-[420px] md:min-w-[420px] md:h-[85vh] md:min-h-[700px] md:rounded-[2.5rem] bg-white overflow-hidden flex flex-col z-10 md:shadow-2xl md:ring-8 md:ring-gray-900 md:ring-opacity-10 transition-all shrink-0">
-          
-          {/* LOA ĐIỆN THOẠI TRANG TRÍ TRÊN DESKTOP */}
-          <div className="hidden md:block absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-900/10 rounded-b-2xl z-[60]"></div>
+        {/* CONTAINER NỘI DUNG WEB FULL TỶ LỆ */}
+        <div className="relative w-full h-full bg-white overflow-hidden flex flex-col z-10 transition-all">
 
           {/* VÙNG RENDER COMPONENT CON THỰC TẾ CỦA APP */}
           <div className="absolute top-0 left-0 right-0 bottom-[64px] md:bottom-0 pb-[env(safe-area-inset-bottom)] overflow-y-auto overflow-x-hidden flex flex-col z-0 bg-gray-50 scroll-smooth">
