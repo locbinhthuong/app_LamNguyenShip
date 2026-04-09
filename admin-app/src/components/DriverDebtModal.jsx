@@ -44,6 +44,10 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
          await updateDriverDebt(editingTx._id, amount, description);
          alert('Đã cập nhật giao dịch thành công!');
          setEditingTx(null);
+      } else if (isAddingPenalty) {
+         await addDriverPenalty(driverId, amount, description, targetDate);
+         alert('Đã thêm Ghi nợ / Phạt mới thành công!');
+         setIsAddingPenalty(false);
       } else {
          const payAmount = forcedAmount || amount;
          const payDesc = forcedAmount ? `Thu tiền công nợ ngày ${new Date(targetDate).toLocaleDateString('vi-VN')}` : description;
@@ -144,7 +148,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
             </div>
 
             {/* FORM HOẶC DANH SÁCH THU NỢ THEO NGÀY */}
-            {!editingTx ? (
+            {!editingTx && !isAddingPenalty ? (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
                 <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 uppercase text-sm flex justify-between items-center">
                    <span>Các Khung Nợ Chờ Thu</span>
@@ -207,10 +211,10 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
                 )}
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 border-l-4 border-l-amber-500">
+              <form onSubmit={handleSubmit} className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 border-l-4 ${isAddingPenalty ? 'border-l-red-500' : 'border-l-amber-500'}`}>
                   <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2 flex justify-between items-center">
-                     <span>Sửa Giao Dịch Đã Chọn</span>
-                     <button type="button" onClick={() => { setEditingTx(null); setAmount(''); setDescription(''); }} className="text-xs text-slate-400 font-normal underline hover:text-slate-700">Hủy sửa</button>
+                     <span>{isAddingPenalty ? 'Ghi Nợ / Phạt Mới' : 'Sửa Giao Dịch Đã Chọn'}</span>
+                     <button type="button" onClick={() => { setEditingTx(null); setIsAddingPenalty(false); setAmount(''); setDescription(''); }} className="text-xs text-slate-400 font-normal underline hover:text-slate-700">Hủy</button>
                   </h4>
 
                  <div>
@@ -232,7 +236,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
 
                  <button 
                    disabled={submitting}
-                   className="w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 bg-amber-500 shadow-amber-500/30"
+                   className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-transform hover:scale-[1.02] active:scale-95 ${isAddingPenalty ? 'bg-red-500 shadow-red-500/30' : 'bg-amber-500 shadow-amber-500/30'}`}
                  >
                    {submitting ? 'Đang Xử Lý...' : 'LƯU THAY ĐỔI'}
                  </button>

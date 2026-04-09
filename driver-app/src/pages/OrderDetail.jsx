@@ -87,7 +87,11 @@ export default function OrderDetail() {
         pickup: pickedUpOrder,
         complete: completeOrder
       };
-      await actions[action](id);
+      const res = await actions[action](id);
+      if (res && res.success === false) {
+        showNotification(res.message || 'Thao tác thất bại', 'error');
+        return;
+      }
       showNotification('Cập nhật thành công!');
       await loadOrder();
     } catch (err) {
