@@ -156,8 +156,65 @@ const Customers = () => {
              <Loader2 size={32} className="animate-spin" />
            </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[700px]">
+          <>
+            {/* MOBILE VIEW (Cards) */}
+            <div className="space-y-4 lg:hidden">
+              {filteredCustomers.length === 0 ? (
+                <div className="py-10 text-center text-gray-500">Không tìm thấy khách hàng nào.</div>
+              ) : (
+                filteredCustomers.map(customer => (
+                  <div key={customer._id} className="bg-white border text-sm border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 shrink-0 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden border border-gray-200">
+                        {customer.avatar ? (
+                          <img src={getFullImageUrl(customer.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                        ) : (
+                          customer.name?.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-gray-800 text-base truncate">{customer.name}</p>
+                        <p className="text-gray-500 text-xs font-mono">{customer.phone}</p>
+                      </div>
+                      <div className="shrink-0 flex flex-col items-end gap-1.5">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${customer.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {customer.isActive ? 'Đang HĐ' : 'Bị Khóa'}
+                        </span>
+                        <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-100">
+                          {customer.role === 'SHOP' ? 'SHOP / Đối tác' : 'KHÁCH'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+                      <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100">
+                        <Calendar size={14} className="text-gray-400" />
+                        Tham gia: {new Date(customer.createdAt).toLocaleDateString()}
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => handleOpenModal(customer)}
+                          className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-semibold"
+                        >
+                          <Edit2 size={14} /> Sửa
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(customer._id, customer.name)}
+                          className="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-semibold"
+                        >
+                          <Trash2 size={14} /> Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* DESKTOP VIEW (Table) */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[700px]">
               <thead>
                 <tr className="bg-gray-50 text-gray-500 text-sm border-b border-gray-100">
                   <th className="py-3 px-4 font-medium whitespace-nowrap">Khách Hàng</th>
@@ -231,6 +288,7 @@ const Customers = () => {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 

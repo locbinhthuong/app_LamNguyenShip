@@ -136,7 +136,49 @@ export default function Dispatchers() {
         {loading ? (
           <div className="p-10 text-center text-slate-500">Đang tải dữ liệu...</div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          {/* MOBILE VIEW */}
+          <div className="grid grid-cols-1 gap-3 p-4 md:hidden">
+            {staffs.length === 0 ? (
+               <div className="py-8 text-center text-slate-500">Chưa có nhân viên nào.</div>
+            ) : (
+              staffs.map(staff => (
+                <div key={staff._id} className="bg-white border text-sm border-slate-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="font-bold text-slate-800 text-lg">{staff.name}</div>
+                    <div className="font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-lg font-mono text-xs">{staff.phone}</div>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 mb-4">
+                      {staff.role === 'admin' ? (
+                        <span className="bg-red-100 text-red-700 py-1 px-2.5 rounded-lg font-bold text-[10px] uppercase">Quản Trị</span>
+                      ) : staff.role === 'manager' ? (
+                        <span className="bg-blue-100 text-blue-700 py-1 px-2.5 rounded-lg font-bold text-[10px] uppercase">Quản Lý</span>
+                      ) : (
+                        <span className="bg-green-100 text-green-700 py-1 px-2.5 rounded-lg font-bold text-[10px] uppercase">Tổng Đài Viên</span>
+                      )}
+                      
+                      <div className="flex items-center gap-1.5 ml-auto">
+                        <div className={`w-2 h-2 rounded-full ${staff.status === 'active' ? 'bg-green-500' : 'bg-slate-300'}`} />
+                        <span className={`text-[10px] font-bold uppercase ${staff.status === 'active' ? 'text-green-600' : 'text-slate-500'}`}>
+                          {staff.status === 'active' ? 'Hoạt động' : 'Khoá'}
+                        </span>
+                      </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                    <button onClick={() => handleOpenEdit(staff)} className="flex-1 text-blue-600 hover:text-blue-800 hover:bg-blue-100 font-bold px-3 py-2 bg-blue-50/50 rounded-xl transition-colors text-center">Sửa</button>
+                    {staff._id !== admin?._id && (
+                        <button onClick={() => handleDelete(staff)} className="flex-1 text-red-600 hover:text-red-800 hover:bg-red-100 font-bold px-3 py-2 bg-red-50/50 rounded-xl transition-colors text-center">Xóa</button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* DESKTOP VIEW */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left text-sm whitespace-nowrap">
               <thead className="bg-slate-50 text-slate-500 font-medium">
                 <tr>
@@ -188,6 +230,7 @@ export default function Dispatchers() {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 

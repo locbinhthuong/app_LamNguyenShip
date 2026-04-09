@@ -110,7 +110,72 @@ export default function Revenue() {
           </h2>
         </div>
         
-        <div className="flex-1 overflow-x-auto">
+        {/* MOBILE VIEW BẢNG CÔNG NỢ */}
+        <div className="grid grid-cols-1 gap-4 p-4 lg:hidden">
+            {drivers.length === 0 ? (
+                <div className="py-8 text-center text-slate-500 italic">Chưa có tài xế nào hoàn thành đơn hàng.</div>
+            ) : (
+                drivers.map(d => (
+                    <div key={d.driverId} className="bg-white border text-sm border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-3">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                                <p className="font-bold text-slate-800 text-lg">{d.name || 'Không tên'}</p>
+                                <p className="text-xs text-slate-500">📞 {d.phone || 'N/A'}</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-xs font-bold text-blue-500 uppercase">Thu 15% Hôm Nay</p>
+                                <p className="text-xl font-black text-blue-600 drop-shadow-sm">{formatCurrency(d.debt || 0)}</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-center bg-slate-50 rounded-lg p-3">
+                            <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Đơn Hoàn Thành</p>
+                                <p className="text-base font-bold text-slate-700">{d.totalOrders || 0}</p>
+                            </div>
+                            <div>
+                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Tổng Cước (100%)</p>
+                                <p className="text-base font-bold text-emerald-600">{formatCurrency(d.totalFee || 0)}</p>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setExpandedRow(expandedRow === d.driverId ? null : d.driverId)}
+                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+                        >
+                            {expandedRow === d.driverId ? 'Thu Gọn Chi Tiết 🔼' : 'Xem Chi Tiết 🔽'}
+                        </button>
+
+                        {expandedRow === d.driverId && (
+                            <div className="grid grid-cols-2 gap-3 mt-1 pt-3 border-t border-slate-100">
+                                <div className="bg-white rounded-xl p-3 border border-blue-100 shadow-sm col-span-2 relative overflow-hidden">
+                                  <p className="text-[10px] font-bold text-blue-500 uppercase mb-1 relative z-10">Trong Ngày</p>
+                                  <div className="flex items-center justify-between relative z-10">
+                                    <p className="text-xl font-black text-slate-800">{formatCurrency(d.todayFee)}</p>
+                                    <p className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{d.todayOrders || 0} đơn</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="bg-gray-50 rounded-xl p-3 border border-slate-100 shadow-inner">
+                                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Tuần Này</p>
+                                  <p className="text-sm font-bold text-slate-800">{formatCurrency(d.weekFee)}</p>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">{d.weekOrders || 0} đơn</p>
+                                </div>
+
+                                <div className="bg-gray-50 rounded-xl p-3 border border-slate-100 shadow-inner">
+                                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Tháng Này</p>
+                                  <p className="text-sm font-bold text-slate-800">{formatCurrency(d.monthFee)}</p>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">{d.monthOrders || 0} đơn</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ))
+            )}
+        </div>
+
+        {/* DESKTOP VIEW BẢNG CÔNG NỢ */}
+        <div className="hidden lg:block flex-1 overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-500">
             <thead className="bg-slate-50/50 text-xs uppercase text-slate-500 sticky top-0">
               <tr>

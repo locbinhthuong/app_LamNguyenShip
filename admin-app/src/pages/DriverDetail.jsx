@@ -228,7 +228,29 @@ export default function DriverDetail() {
             {stats.recentOrders?.length === 0 ? (
               <div className="p-8 text-center text-slate-500 text-sm">Tài xế chưa hoàn thành đơn nào.</div>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* MOBILE VIEW LỊCH SỬ ĐƠN (CARDS) */}
+              <div className="grid grid-cols-1 gap-3 p-4 sm:hidden">
+                {stats.recentOrders.map(order => (
+                  <div key={order.id} className="bg-white border text-sm border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
+                    <div className="flex justify-between items-start border-b border-slate-100 pb-2">
+                       <span className="font-mono font-bold text-blue-600 truncate">#{order.orderCode}</span>
+                       <span className="font-bold text-sky-600">+{formatCurrency(order.deliveryFee)}</span>
+                    </div>
+                    <div>
+                       <span className="text-xs text-slate-500 block uppercase font-semibold">Khách Hàng</span>
+                       <span className="font-bold text-slate-800">{order.customerName}</span>
+                    </div>
+                    <div className="text-left">
+                       <span className="text-xs text-slate-500 block uppercase font-semibold">Hoàn Thành Lúc</span>
+                       <span className="text-sm font-medium text-slate-600">{new Date(order.date).toLocaleString('vi-VN')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP VIEW LỊCH SỬ ĐƠN (TABLE) */}
+              <div className="hidden sm:block overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600">
                   <thead className="bg-white/80 text-xs uppercase text-slate-500">
                     <tr>
@@ -252,6 +274,7 @@ export default function DriverDetail() {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
           </div>
 

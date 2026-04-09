@@ -179,7 +179,30 @@ export default function Finance() {
              <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
                 <span className="w-2 h-6 bg-slate-300 rounded-full"></span> Lịch sử Giao dịch Nợ gần nhất
              </h2>
-             <div className="border border-slate-200 rounded-xl overflow-x-auto">
+             
+             {/* Lịch sử Nợ: MOBILE VIEW */}
+             <div className="grid grid-cols-1 gap-3 lg:hidden">
+                {data.recentDebts.map(tx => (
+                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
+                      <div className="flex justify-between items-start">
+                         <div className="font-bold text-slate-800 truncate">{tx.driverId?.name}</div>
+                         <div className={`font-black ${tx.amount > 0 ? 'text-red-500' : 'text-green-500'}`}>
+                            {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} đ
+                         </div>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                         <span className={`px-2 py-1 rounded font-bold ${tx.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {tx.status}
+                         </span>
+                         <span className="text-slate-400">{new Date(tx.createdAt).toLocaleString('vi-VN')}</span>
+                      </div>
+                      <div className="text-sm text-slate-600 mt-1 pb-1 border-b border-slate-100 italic">{tx.description}</div>
+                   </div>
+                ))}
+             </div>
+
+             {/* Lịch sử Nợ: DESKTOP VIEW */}
+             <div className="hidden lg:block border border-slate-200 rounded-xl overflow-x-auto">
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
@@ -212,7 +235,30 @@ export default function Finance() {
              <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
                 <span className="w-2 h-6 bg-blue-400 rounded-full"></span> Danh Sách Quản Lý Công Nợ Tài Xế
              </h2>
-             <div className="border border-slate-200 rounded-xl overflow-x-auto mb-8">
+             
+             {/* Quản lý sổ đen: MOBILE VIEW */}
+             <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
+                {drivers.map(drv => (
+                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                      <div>
+                         <div className="font-bold text-slate-800 text-lg mb-1">{drv.name}</div>
+                         <div className="text-xs text-slate-500 mb-2">{drv.phone}</div>
+                         <div className="text-xs text-slate-500 uppercase font-semibold">Nợ: <span className={`font-black ml-1 text-sm ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                             {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Thanh toán đủ'}
+                         </span></div>
+                      </div>
+                      <button
+                         onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
+                         className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-bold text-orange-600 hover:bg-orange-100 transition-colors shadow-sm whitespace-nowrap"
+                      >
+                         📓 Sổ Đen
+                      </button>
+                   </div>
+                ))}
+             </div>
+
+             {/* Quản lý sổ đen: DESKTOP VIEW */}
+             <div className="hidden lg:block border border-slate-200 rounded-xl overflow-x-auto mb-8">
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
@@ -242,8 +288,6 @@ export default function Finance() {
                               📓 Nợ (Sổ Đen)
                             </button>
                          </td>
-                         
-
                       </tr>
                     ))}
                   </tbody>
@@ -313,7 +357,35 @@ export default function Finance() {
              <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
                 <span className="w-2 h-6 bg-slate-300 rounded-full"></span> Lịch sử Xử lý Rút Ví gần nhất
              </h2>
-             <div className="border border-slate-200 rounded-xl overflow-x-auto">
+             
+             {/* Lịch sử Rút ví: MOBILE VIEW */}
+             <div className="grid grid-cols-1 gap-3 lg:hidden">
+                {data.recentWallets.map(tx => (
+                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+                      <div className="flex justify-between items-start">
+                         <div className="font-bold text-slate-800 truncate">{tx.driverId?.name}</div>
+                         <div className={`font-black ${tx.amount > 0 ? 'text-green-500' : 'text-slate-600'}`}>
+                            {Math.abs(tx.amount).toLocaleString()} đ
+                         </div>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                         <span className={`px-2 py-1 rounded font-bold ${tx.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {tx.status}
+                         </span>
+                         <span className="text-slate-400">{new Date(tx.createdAt).toLocaleString('vi-VN')}</span>
+                      </div>
+                      <div className="text-sm text-slate-600 mt-1 pb-2 border-b border-slate-100 italic">{tx.description}</div>
+                      <div className="text-right pt-1">
+                         <button onClick={() => handleDeleteWalletTx(tx._id)} className="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors text-xs font-bold w-full" title="Xóa lệnh này">
+                            🗑 XÓA LỊCH SỬ NÀY
+                         </button>
+                      </div>
+                   </div>
+                ))}
+             </div>
+
+             {/* Lịch sử Rút ví: DESKTOP VIEW */}
+             <div className="hidden lg:block border border-slate-200 rounded-xl overflow-x-auto">
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
@@ -352,7 +424,30 @@ export default function Finance() {
              <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
                 <span className="w-2 h-6 bg-emerald-400 rounded-full"></span> Danh Sách Quản Lý Ví Bóp Tài Xế
              </h2>
-             <div className="border border-slate-200 rounded-xl overflow-x-auto mb-8">
+
+             {/* Quản lý ví bóp: MOBILE VIEW */}
+             <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
+                {drivers.map(drv => (
+                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                      <div>
+                         <div className="font-bold text-slate-800 text-lg mb-1">{drv.name}</div>
+                         <div className="text-xs text-slate-500 mb-2">{drv.phone}</div>
+                         <div className="text-xs text-slate-500 uppercase font-semibold">Ví Tồn: <span className={`font-black ml-1 text-sm ${drv.walletBalance > 0 ? 'text-emerald-500' : 'text-slate-400'}`}>
+                             {drv.walletBalance > 0 ? drv.walletBalance.toLocaleString() + ' đ' : '0 đ'}
+                         </span></div>
+                      </div>
+                      <button
+                         onClick={() => setWalletModal({ isOpen: true, driverId: drv._id })}
+                         className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm whitespace-nowrap"
+                      >
+                         🏦 Nạp/Rút
+                      </button>
+                   </div>
+                ))}
+             </div>
+
+             {/* Quản lý ví bóp: DESKTOP VIEW */}
+             <div className="hidden lg:block border border-slate-200 rounded-xl overflow-x-auto mb-8">
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
