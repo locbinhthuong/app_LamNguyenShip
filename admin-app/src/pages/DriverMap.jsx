@@ -2,28 +2,37 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // KHÔNG dùng react-leaflet để tránh lỗi tương thích Vite Production
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { getDrivers, getOrders, getDriverById } from '../services/api';
+import { getDrivers, getOrders, getDriverById, getFullImageUrl } from '../services/api';
 
 // Hàm tạo Icon thuần có Badge số dư động
-const getMotorbikeIcon = (activeOrderCount, status) => {
+const getMotorbikeIcon = (activeOrderCount, status, avatar) => {
     let badgeHtml = '';
+    let borderColor = '#10b981'; // Green for online but no order
     if (activeOrderCount > 0) {
         let bgColor = '#3b82f6'; // Xanh biển mặc định (Đang giao)
-        if (status === 'ACCEPTED') bgColor = '#f97316'; // Cam (Đang lấy)
+        borderColor = '#3b82f6';
+        if (status === 'ACCEPTED') {
+            bgColor = '#f97316'; // Cam (Đang lấy)
+            borderColor = '#f97316';
+        }
         badgeHtml = `<div style="position: absolute; top: -8px; right: -12px; background: ${bgColor}; color: white; border-radius: 12px; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1000;">${activeOrderCount} ĐƠN</div>`;
     }
+
+    const imgHtml = avatar 
+        ? `<img src="${getFullImageUrl(avatar)}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" crossorigin="anonymous" />` 
+        : `<span style="font-size: 22px;">🛵</span>`;
 
     return L.divIcon({
         className: 'custom-driver-marker',
         html: `
-            <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: white; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid #3b82f6;">
-                <span style="font-size: 22px;">🛵</span>
+            <div style="position: relative; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: white; border-radius: 50%; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 2px solid ${borderColor};">
+                ${imgHtml}
                 ${badgeHtml}
             </div>
         `,
         iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40]
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20]
     });
 };
 
@@ -101,7 +110,7 @@ export default function DriverMap() {
       `;
 
       const firstOrderStatus = activeJobs.length > 0 ? activeJobs[0].status : null;
-      const currentIcon = getMotorbikeIcon(activeJobs.length, firstOrderStatus);
+      const currentIcon = getMotorbikeIcon(activeJobs.length, firstOrderStatus, driver.avatar);
 
       if (markersRef.current[driver.id]) {
         // Đã có marker, chỉ cần dời vị trí và cập nhật popup và icon tĩnh
@@ -140,6 +149,7 @@ export default function DriverMap() {
           id: d._id,
           name: d.name,
           phone: d.phone,
+          avatar: d.avatar,
           lat: d.currentLocation.lat,
           lng: d.currentLocation.lng,
           updatedAt: d.currentLocation.updatedAt
@@ -188,6 +198,7 @@ export default function DriverMap() {
           ...existing,
           id: _id,
           name: data.name || existing.name || 'Đang tải tên...',
+          avatar: data.avatar || existing.avatar,
           lat: data.lat,
           lng: data.lng,
           updatedAt: data.timestamp
@@ -204,7 +215,8 @@ export default function DriverMap() {
                   dataRef.current.drivers[_id] = {
                      ...dataRef.current.drivers[_id],
                      name: apiData.data.name,
-                     phone: apiData.data.phone
+                     phone: apiData.data.phone,
+                     avatar: apiData.data.avatar
                   };
                   updateMapMarkers();
                 }
@@ -226,6 +238,7 @@ export default function DriverMap() {
         dataRef.current.drivers[_id] = {
             ...existing,
             id: _id,
+            avatar: data.avatar || existing.avatar,
             lat: data.lat,
             lng: data.lng,
             updatedAt: data.updatedAt
@@ -239,7 +252,8 @@ export default function DriverMap() {
               dataRef.current.drivers[_id] = {
                  ...dataRef.current.drivers[_id],
                  name: apiData.data.name,
-                 phone: apiData.data.phone
+                 phone: apiData.data.phone,
+                 avatar: apiData.data.avatar
               };
               updateMapMarkers();
            }
