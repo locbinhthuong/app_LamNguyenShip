@@ -2,10 +2,13 @@ import { useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useToast } from '../context/ToastContext';
 
+import { getOrders } from '../services/api';
+
 // Hack AudioContext Global
 let adminAudioCtx = null;
 let adminAudioBuffer = null;
 let adminFinanceBuffer = null;
+let adminDraftPendingBuffer = null;
 const initAdminAudio = async () => {
     try {
         if (!adminAudioCtx) {
@@ -15,6 +18,7 @@ const initAdminAudio = async () => {
             
             fetch('/chuong.mp3').then(res => res.arrayBuffer()).then(arr => adminAudioCtx.decodeAudioData(arr)).then(buf => adminAudioBuffer = buf);
             fetch('/thanhtoantienchotaixe.mp3').then(res => res.arrayBuffer()).then(arr => adminAudioCtx.decodeAudioData(arr)).then(buf => adminFinanceBuffer = buf);
+            fetch('/dontreo5phut_admin.mp3').then(res => res.arrayBuffer()).then(arr => adminAudioCtx.decodeAudioData(arr)).then(buf => adminDraftPendingBuffer = buf);
         }
         if (adminAudioCtx.state === 'suspended') adminAudioCtx.resume();
     } catch(e){}
@@ -25,6 +29,8 @@ const fallbackChuong = new Audio('/chuong.mp3');
 fallbackChuong.preload = 'auto';
 const fallbackFinance = new Audio('/thanhtoantienchotaixe.mp3');
 fallbackFinance.preload = 'auto';
+const fallbackDraftPending = new Audio('/dontreo5phut_admin.mp3');
+fallbackDraftPending.preload = 'auto';
 
 window.addEventListener('click', initAdminAudio, { once: true });
 window.addEventListener('touchstart', initAdminAudio, { once: true });
@@ -44,22 +50,30 @@ window.stopAdminAlarm = () => {
     }
     try { fallbackChuong.pause(); fallbackChuong.currentTime = 0; } catch(e){}
     try { fallbackFinance.pause(); fallbackFinance.currentTime = 0; } catch(e){}
+    try { fallbackDraftPending.pause(); fallbackDraftPending.currentTime = 0; } catch(e){}
 };
 
-const playAdminAlarm = (isFinance = false) => {
+const playAdminAlarm = (type = 'NORMAL') => {
     try {
         window.stopAdminAlarm(); // Dừng chuông cũ trước khi kêu mới
 
-        if (adminAudioCtx && (isFinance ? adminFinanceBuffer : adminAudioBuffer)) {
+        let targetBuffer = null;
+        let targetFallback = null;
+
+        if (type === 'FINANCE') { targetBuffer = adminFinanceBuffer; targetFallback = fallbackFinance; }
+        else if (type === 'DRAFT_PENDING') { targetBuffer = adminDraftPendingBuffer; targetFallback = fallbackDraftPending; }
+        else { targetBuffer = adminAudioBuffer; targetFallback = fallbackChuong; }
+
+        if (adminAudioCtx && targetBuffer) {
             if (adminAudioCtx.state === 'suspended') adminAudioCtx.resume();
             const source = adminAudioCtx.createBufferSource();
-            source.buffer = isFinance ? adminFinanceBuffer : adminAudioBuffer;
+            source.buffer = targetBuffer;
             source.connect(adminAudioCtx.destination);
-            source.loop = !isFinance; // Chỉ loop Ting Ting
+            source.loop = type === 'NORMAL'; // Chỉ loop Ting Ting
             source.start(0);
             currentAdminSource = source;
             
-            if (!isFinance) {
+            if (type === 'NORMAL') {
                 adminAlarmTimer = setTimeout(() => {
                     if (currentAdminSource) {
                         try { currentAdminSource.stop(); } catch(e){}
@@ -68,14 +82,13 @@ const playAdminAlarm = (isFinance = false) => {
             }
         } else {
             // Chuông Fallback siêu tốc
-            const audioToPlay = isFinance ? fallbackFinance : fallbackChuong;
-            audioToPlay.loop = !isFinance;
-            audioToPlay.currentTime = 0;
-            audioToPlay.play().catch(e => console.log('Autoplay blocked'));
+            targetFallback.loop = type === 'NORMAL';
+            targetFallback.currentTime = 0;
+            targetFallback.play().catch(e => console.log('Autoplay blocked'));
             
-            if (!isFinance) {
+            if (type === 'NORMAL') {
                 setTimeout(() => {
-                    try { audioToPlay.pause(); audioToPlay.currentTime = 0; } catch(e){}
+                    try { targetFallback.pause(); targetFallback.currentTime = 0; } catch(e){}
                 }, 10000);
             }
         }
@@ -103,11 +116,28 @@ export const useAdminSocket = () => {
       console.log('🔗 Admin Socket Connected');
     });
 
+    // Polling Đơn Bị Treo quá 5 phút
+    const checkDraftOrders = async () => {
+        try {
+            const res = await getOrders({ status: 'DRAFT', limit: 50 });
+            const list = res.orders || [];
+            const now = Date.now();
+            // Nếu có đơn nào tồn tại quá 5 phút
+            const hasPendingTooLong = list.some(o => (now - new Date(o.createdAt).getTime()) > 5 * 60 * 1000);
+            
+            if (hasPendingTooLong) {
+                playAdminAlarm('DRAFT_PENDING');
+                showToast('⚠️ BÁO ĐỘNG: CÓ ĐƠN KHÁCH ĐẶT CHỜ BÁO GIÁ QUÁ 5 PHÚT CHƯA XỬ LÝ!', 'error', 15000);
+            }
+        } catch (err) {}
+    };
+    const pollInterval = setInterval(checkDraftOrders, 60 * 1000); // Quét mỗi phút
+
     socket.on('new_order', (order) => {
       // Chỉ khi Đơn này do Khách Đặt (createdBy = null), thì ADMIN mới Kêu Chuông. Admin tự tạo đơn thì im lìm.
       if (!order.createdBy) {
         showToast(`📲 KHÁCH ĐẶT MỚI: ${order.orderCode || order._id?.slice(-8).toUpperCase() || ''}. Click Quản Lý Đơn để mở!`, 'warning', 30000);
-        playAdminAlarm(false); // Play chuong.mp3
+        playAdminAlarm('NORMAL'); // Play chuong.mp3
       }
       window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
     });
@@ -136,22 +166,17 @@ export const useAdminSocket = () => {
     });
 
     socket.on('debt_payment_request', (payload) => {
-      // payload: { driverId, name, phone, driverCode, amount, timestamp }
-      
-      playAdminAlarm(true); // finance alarm
+      playAdminAlarm('FINANCE'); // finance alarm
 
       showToast(`💸 BÁO CÁO NẠP TIỀN QUÉT MÃ QR CỦA TÀI XẾ ${payload.name.toUpperCase()} (Mã: ${payload.driverCode}). Chờ Sếp duyệt!`, 'error', 60000); // 60s
       
-      // Kích hoạt một sự kiện để hiển thị Pop-up thao tác nhanh ở Dashboard
       window.dispatchEvent(new CustomEvent('show_debt_approval_modal', { detail: payload }));
     });
 
     socket.on('wallet_withdrawal_request', (payload) => {
-      playAdminAlarm(true); // finance alarm
+      playAdminAlarm('FINANCE'); // finance alarm
 
       showToast(`💰 YÊU CẦU RÚT TIỀN TỪ TÀI XẾ ${payload.name.toUpperCase()} (Mã: ${payload.driverCode}). Số tiền: ${payload.amount.toLocaleString()}đ. Chờ Sếp duyệt!`, 'error', 60000); // 60s
-      
-      // Kích hoạt một sự kiện nếu có (hiện tại chưa có modal popup cho rút tiền, chỉ vào Lịch sử ví)
     });
 
     socket.on('driver_location_update', (data) => {
@@ -163,6 +188,7 @@ export const useAdminSocket = () => {
     });
 
     return () => {
+      clearInterval(pollInterval);
       socket.disconnect();
     };
   }, [showToast]);
