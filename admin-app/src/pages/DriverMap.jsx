@@ -15,7 +15,7 @@ const getMotorbikeIcon = (activeOrderCount, status, avatar) => {
             bgColor = '#f97316'; // Cam (Đang lấy)
             borderColor = '#f97316';
         }
-        badgeHtml = `<div style="position: absolute; top: -8px; right: -12px; background: ${bgColor}; color: white; border-radius: 12px; padding: 2px 6px; font-size: 11px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1000;">${activeOrderCount} ĐƠN</div>`;
+        badgeHtml = `<div style="position: absolute; top: -14px; right: -24px; background: ${bgColor}; color: white; border-radius: 12px; padding: 3px 6px; font-size: 10px; font-weight: black; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 1000; white-space: nowrap;">${activeOrderCount} ĐƠN</div>`;
     }
 
     const imgHtml = avatar 
