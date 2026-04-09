@@ -405,9 +405,9 @@ const orderController = {
     try {
       const { id } = req.params;
 
-      const driver = await Driver.findById(req.driver._id).select('walletDebt isActive');
+      const driver = await Driver.findById(req.driver._id).select('walletDebt status');
       
-      if (!driver || !driver.isActive) {
+      if (!driver || driver.status !== 'active') {
         return res.status(403).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
       }
 
