@@ -405,6 +405,19 @@ const orderController = {
     try {
       const { id } = req.params;
 
+      const driver = await Driver.findById(req.driver._id).select('walletDebt isActive');
+      
+      if (!driver || !driver.isActive) {
+        return res.status(403).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
+      }
+
+      if (driver.walletDebt > 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Bạn chưa thanh toán công nợ'
+        });
+      }
+
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
       const order = await Order.findOneAndUpdate(
         { _id: id, status: 'PENDING' },
