@@ -61,6 +61,20 @@ export default function OrderDetail() {
       }
     };
 
+    const handleOrderAccepted = (e) => {
+      const eventData = e.detail;
+      if (eventData && eventData._id === id) {
+        const assignedDriverId = eventData.assignedTo?._id || eventData.assignedTo;
+        if (assignedDriverId && assignedDriverId !== driver?._id) {
+          showNotification('Đơn hàng đã được tài xế khác nhận.', 'error');
+          navigate('/');
+        } else {
+          loadOrder();
+        }
+      }
+    };
+
+    window.addEventListener('driver_order_accepted', handleOrderAccepted);
     window.addEventListener('driver_order_cancelled', handleOrderChange);
     window.addEventListener('driver_order_deleted_event', handleOrderChange);
     window.addEventListener('driver_order_updated', handleOrderUpdate);
@@ -69,6 +83,7 @@ export default function OrderDetail() {
     window.addEventListener('driver_order_completed', handleOrderUpdate);
 
     return () => {
+      window.removeEventListener('driver_order_accepted', handleOrderAccepted);
       window.removeEventListener('driver_order_cancelled', handleOrderChange);
       window.removeEventListener('driver_order_deleted_event', handleOrderChange);
       window.removeEventListener('driver_order_updated', handleOrderUpdate);
@@ -76,7 +91,7 @@ export default function OrderDetail() {
       window.removeEventListener('driver_order_delivering', handleOrderUpdate);
       window.removeEventListener('driver_order_completed', handleOrderUpdate);
     };
-  }, [id, navigate]);
+  }, [id, navigate, driver]);
 
   const handleAction = async (action) => {
     if (actionLoading) return; // Chặn bấm đúp Spam mạng

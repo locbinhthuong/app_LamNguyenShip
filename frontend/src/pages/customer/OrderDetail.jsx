@@ -54,9 +54,17 @@ export default function OrderDetail() {
     };
     window.addEventListener('order_deleted_event', handleDeleted);
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDetail();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       window.removeEventListener('refresh_orders_data', handleRefresh);
       window.removeEventListener('order_deleted_event', handleDeleted);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [id]);
 

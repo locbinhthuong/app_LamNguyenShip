@@ -50,11 +50,19 @@ const ActivityList = () => {
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchOrders();
+      }
+    };
+
     window.addEventListener('refresh_orders_data', handleRefresh);
     window.addEventListener('order_deleted_event', handleDeleted);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('refresh_orders_data', handleRefresh);
       window.removeEventListener('order_deleted_event', handleDeleted);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 
