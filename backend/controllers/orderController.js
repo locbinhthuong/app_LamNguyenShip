@@ -408,7 +408,7 @@ const orderController = {
       const driver = await Driver.findById(req.driver._id).select('walletDebt status');
       
       if (!driver || driver.status !== 'active') {
-        return res.status(403).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
+        return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
       }
 
       let hasUnpaidDebt = driver.walletDebt > 0;
@@ -434,7 +434,7 @@ const orderController = {
       }
 
       if (hasUnpaidDebt) {
-        return res.status(403).json({
+        return res.status(200).json({
           success: false,
           message: 'Bạn chưa thanh toán công nợ'
         });

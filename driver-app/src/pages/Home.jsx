@@ -510,7 +510,11 @@ export default function Home() {
     setActionLoading(orderId);
     try {
       window.dispatchEvent(new CustomEvent('stop_alarm_event'));
-      await acceptOrder(orderId);
+      const res = await acceptOrder(orderId);
+      if (res.success === false) {
+        showNotification(res.message || 'Không thể nhận đơn', 'error');
+        return;
+      }
       showNotification('Nhận đơn thành công!');
       await loadData();
     } catch (err) {
