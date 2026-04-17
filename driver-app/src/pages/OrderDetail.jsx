@@ -375,24 +375,24 @@ export default function OrderDetail() {
             </div>
           )}
 
-          {/* BLOCK THANH TOÁN */}
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {/* BLOCK THANH TOÁN (GỘP CHUNG THÀNH GRID 2 CỘT TỰ ĐỘNG) */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-3">
             
             {/* Cột 1: Tiền Phí/Cước */}
             <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
                <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">💰</div>
-               <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider relative z-10 mb-1">
-                 {order.serviceType === 'DAT_XE' ? 'Cước chuyến đi' : order.serviceType === 'DIEU_PHOI' ? 'Phí gọi thợ' : 'Phí dịch vụ / Ship'}
+               <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">
+                 {order.serviceType === 'DAT_XE' ? 'Cước xe' : order.serviceType === 'DIEU_PHOI' ? 'Phí thợ' : 'Phí giao hàng'}
                </p>
                <div className="flex flex-col relative z-10">
                  {order.deliveryFee > 0 ? (
-                    <p className="text-green-600 font-black text-2xl drop-shadow-sm">{order.deliveryFee?.toLocaleString()}đ</p>
+                    <p className="text-green-600 font-black text-xl sm:text-2xl drop-shadow-sm">{order.deliveryFee?.toLocaleString()}đ</p>
                  ) : (
-                    <p className="text-green-600 font-black text-xl drop-shadow-sm">Thỏa Thuận</p>
+                    <p className="text-green-600 font-black text-lg sm:text-xl drop-shadow-sm">Thỏa Thuận</p>
                  )}
                  {order.packageDetails?.bulkyFee > 0 && (
-                   <p className="text-[11px] text-orange-600 font-bold mt-1 bg-orange-50 px-2 py-0.5 rounded-md inline-block max-w-max border border-orange-100">
-                     + {order.packageDetails.bulkyFee.toLocaleString()}đ Phí cồng kềnh
+                   <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-orange-100">
+                     + {order.packageDetails.bulkyFee.toLocaleString()}đ Cồng kềnh
                    </p>
                  )}
                </div>
@@ -402,8 +402,8 @@ export default function OrderDetail() {
             {order.serviceType === 'GIAO_HANG' && (order.codAmount > 0 || order.codAmount === 0) && (
               <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
                 <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">💎</div>
-                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider relative z-10 mb-1">Cần Thu hộ (COD)</p>
-                <p className="text-blue-600 font-black text-2xl drop-shadow-sm relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Cần Thu hộ COD</p>
+                <p className="text-blue-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
               </div>
             )}
 
@@ -411,42 +411,31 @@ export default function OrderDetail() {
             {order.serviceType === 'MUA_HO' && (
               <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
                 <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">🛒</div>
-                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider relative z-10 mb-1">Tiền hàng dự kiến</p>
-                <p className="text-orange-600 font-black text-2xl drop-shadow-sm relative z-10">
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Tiền hàng dự kiến</p>
+                <p className="text-orange-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">
                   {order.purchaseDetails?.estimatedTotal ? `${order.purchaseDetails.estimatedTotal.toLocaleString()}đ` : 'Thỏa thuận'}
                 </p>
               </div>
             )}
 
-          </div>
-          
-          {/* BLOCK THƯỞNG VÍ */}
-          {order.adminBonus > 0 && (
-             <div className="mt-3 bg-emerald-50 rounded-xl p-3 flex items-center justify-between border border-emerald-200 shadow-sm relative overflow-hidden">
-               <div className="absolute -right-2 text-6xl opacity-5">🎁</div>
-               <div className="relative z-10">
-                  <p className="text-emerald-700 text-[11px] font-bold uppercase tracking-wider">Thưởng thêm vào Ví</p>
-                  <p className="text-emerald-600 font-black text-2xl">+{order.adminBonus?.toLocaleString()}đ</p>
+            {/* Cột 3: BLOCK THƯỞNG VÍ (Nằm chung Grid) */}
+            {order.adminBonus > 0 && (
+               <div className="bg-emerald-50 rounded-xl p-3 flex flex-col justify-center border border-emerald-200 shadow-sm relative overflow-hidden group">
+                 <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">🎁</div>
+                 <p className="text-emerald-700 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Thưởng Độc quyền</p>
+                 <p className="text-emerald-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">+{order.adminBonus?.toLocaleString()}đ</p>
                </div>
-               <div className="relative z-10 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200">
-                 <span className="text-emerald-700 text-xs font-bold uppercase tracking-widest">ĐỘC QUYỀN</span>
-               </div>
-             </div>
-          )}
+            )}
 
-          {/* BLOCK THƯỞNG KPI HẰNG NGÀY */}
-          {order.kpiBonus > 0 && (
-             <div className="mt-3 bg-orange-50 rounded-xl p-3 flex items-center justify-between border border-orange-200 shadow-sm relative overflow-hidden">
-               <div className="absolute -right-2 text-6xl opacity-5">🏆</div>
-               <div className="relative z-10">
-                  <p className="text-orange-700 text-[11px] font-bold uppercase tracking-wider">Thưởng năng suất (KPI)</p>
-                  <p className="text-orange-600 font-black text-2xl">+{order.kpiBonus?.toLocaleString()}đ</p>
+            {/* Cột 4: BLOCK THƯỞNG KPI HẰNG NGÀY (Nằm chung Grid) */}
+            {order.kpiBonus > 0 && (
+               <div className="bg-orange-50 rounded-xl p-3 flex flex-col justify-center border border-orange-200 shadow-sm relative overflow-hidden group">
+                 <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">🏆</div>
+                 <p className="text-orange-700 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Thưởng năng suất (KPI)</p>
+                 <p className="text-orange-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">+{order.kpiBonus?.toLocaleString()}đ</p>
                </div>
-               <div className="relative z-10 bg-orange-100 px-3 py-1.5 rounded-lg border border-orange-200">
-                 <span className="text-orange-700 text-xs font-bold uppercase tracking-widest">MỐC ĐẠT CHUẨN</span>
-               </div>
-             </div>
-          )}
+            )}
+          </div>
         </div>
 
         {/* Timeline */}
