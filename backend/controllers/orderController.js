@@ -332,7 +332,7 @@ const orderController = {
       }
       
       // XỬ LÝ KIỂM TRA BẮN ĐƠN MẠNH BẠO TỪ ADMIN (KHÔNG VƯỢT TƯỜNG LỬA CHẶN NỢ)
-      if (forceAssignDriverId && orderToUpdate.status === 'PENDING') {
+      if (forceAssignDriverId && forceAssignDriverId !== orderToUpdate.assignedTo?.toString()) {
         const Driver = require('../models/Driver');
         const DebtTransaction = require('../models/DebtTransaction');
         
@@ -346,13 +346,13 @@ const orderController = {
         const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
         const debtByDate = {};
         transactions.forEach(tx => {
-          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
           if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
              if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
              debtByDate[dateStr] += tx.amount;
           }
         });
-        const todayStr = new Date().toLocaleDateString('en-CA');
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
         for (const [dateStr, amount] of Object.entries(debtByDate)) {
           if (amount > 0 && dateStr !== todayStr) {
             hasUnpaidDebt = true;
@@ -369,8 +369,13 @@ const orderController = {
 
         // Qua ải, được phép chốt đơn cho Tài Xế này
         orderToUpdate.assignedTo = forceAssignDriverId;
-        orderToUpdate.status = 'ACCEPTED';
-        orderToUpdate.acceptedAt = new Date();
+        
+        // Bắt buộc chuyển Order sang Đã nhận (Bất kể DRAFT hay PENDING)
+        if (['DRAFT', 'PENDING'].includes(orderToUpdate.status)) {
+           orderToUpdate.status = 'ACCEPTED';
+           orderToUpdate.acceptedAt = new Date();
+        }
+        
         didAdminForceAssign = true;
         
         // Hú Còi Push Notification tận Điện Thoại
@@ -689,18 +694,19 @@ const orderController = {
       }
 
       // ==========================================
-      // LOGIC THƯỞNG MỐC ĐƠN HẰNG NGÀY (DAILY KPI)
+      // LOGIC THƯỞNG MỐC ĐƠN HẰNG NGÀY (DAILY KPI) - MÚI GIỜ VIỆT NAM (UTC+7)
       // ==========================================
-      const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date();
-      endOfDay.setHours(23, 59, 59, 999);
+      const todayStrVN = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }); // Format: "YYYY-MM-DD"
+      
+      // Chuyển đổi "YYYY-MM-DD" của VN thành Range thời gian chuẩn UTC để query chuẩn xác MongoDB 
+      const startOfDayUTC = new Date(`${todayStrVN}T00:00:00.000+07:00`);
+      const endOfDayUTC = new Date(`${todayStrVN}T23:59:59.999+07:00`);
 
-      // Đếm số đơn đã hoàn thành trong ngày hôm nay của tài xế này (bao gồm cả đơn vừa update status)
+      // Đếm số đơn đã hoàn thành TỪ 0H SÁNG ĐẾN 23H59 THEO GIỜ VIỆT NAM
       const todayCompletedCount = await Order.countDocuments({
         status: 'COMPLETED',
         assignedTo: req.driver._id,
-        deliveredAt: { $gte: startOfDay, $lte: endOfDay }
+        deliveredAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
       });
 
       let milestoneBonus = 0;
