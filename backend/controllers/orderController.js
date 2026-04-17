@@ -464,6 +464,8 @@ const orderController = {
         // Quát làng nước là đơn này đã vào túi ai qua emitOrderAccepted
         if (didAdminForceAssign) {
            emitOrderAccepted(req.io, payload);
+           // Phát còi báo động riêng cho tài xế xui xẻo/may mắn này
+           req.io.to(`driver_${forceAssignDriverId.toString()}`).emit('force_assigned', payload);
         } else {
            // Bắn socket thông thường
            req.io.to('admins').emit('order_updated', payload);

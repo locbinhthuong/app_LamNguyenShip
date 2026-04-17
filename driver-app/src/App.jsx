@@ -132,12 +132,25 @@ function AppContent() {
     window.addEventListener('driver_order_cancelled', handleStopEvent);
     window.addEventListener('driver_order_deleted_event', handleStopEvent);
 
+    const handleForceAssign = (e) => {
+        const order = e.detail;
+        if (order) {
+            setPushMessage({ 
+                title: '⚡ TỔNG ĐÀI GÁN ĐƠN ĐẶC BIỆT', 
+                message: order.pickupAddress ? `Nơi lấy/đón: ${order.pickupAddress}` : 'Nhiệm vụ mới Mở app ngay!'
+            });
+        }
+        startAlarm(); // Còi rú ngay lập tức
+    };
+    window.addEventListener('driver_force_assigned', handleForceAssign);
+
     return () => {
       window.removeEventListener('stop_alarm_event', handleStopEvent);
       window.removeEventListener('driver_new_order', handleNewOrderEvent);
       window.removeEventListener('driver_order_accepted', handleStopEvent);
       window.removeEventListener('driver_order_cancelled', handleStopEvent);
       window.removeEventListener('driver_order_deleted_event', handleStopEvent);
+      window.removeEventListener('driver_force_assigned', handleForceAssign);
     };
   }, [startAlarm, stopAlarm]);
 
@@ -200,7 +213,7 @@ function AppContent() {
         setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');
       });
 
-      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated'];
+      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated', 'force_assigned'];
       forwardEvents.forEach(event => {
         socketRef.current.on(event, (data) => {
           window.dispatchEvent(new CustomEvent(`driver_${event}`, { detail: data }));
