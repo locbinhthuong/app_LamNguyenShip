@@ -8,7 +8,7 @@ const walletTransactionSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['DEPOSIT', 'WITHDRAW_REQUEST', 'WITHDRAW_SUCCESS', 'WITHDRAW_REJECT', 'ADMIN_ADJUST'],
+    enum: ['DEPOSIT', 'WITHDRAW_REQUEST', 'WITHDRAW_SUCCESS', 'WITHDRAW_REJECT', 'ADMIN_ADJUST', 'BONUS'],
     required: true
   },
   amount: {

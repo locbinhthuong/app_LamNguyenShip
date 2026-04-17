@@ -608,10 +608,11 @@ const orderController = {
       const adminBonus = order.adminBonus || 0;
       let walletInc = { 'stats.completedOrders': 1, walletDebt: debtAmount };
       
+      const WalletTransaction = require('../models/WalletTransaction');
+
       if (adminBonus > 0) {
         walletInc.walletBalance = adminBonus;
 
-        const WalletTransaction = require('../models/WalletTransaction');
         const walletTx = new WalletTransaction({
           driverId: driver._id,
           type: 'DEPOSIT', // 'DEPOSIT' dùng chung cho Nạp Tiền / Thưởng
@@ -620,6 +621,45 @@ const orderController = {
           description: `Thưởng nóng từ đơn ${order.orderCode} hoàn thành`
         });
         await walletTx.save();
+      }
+
+      // ==========================================
+      // LOGIC THƯỞNG MỐC ĐƠN HẰNG NGÀY (DAILY KPI)
+      // ==========================================
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Đếm số đơn đã hoàn thành trong ngày hôm nay của tài xế này (bao gồm cả đơn vừa update status)
+      const todayCompletedCount = await Order.countDocuments({
+        status: 'COMPLETED',
+        assignedTo: req.driver._id,
+        deliveredAt: { $gte: startOfDay, $lte: endOfDay }
+      });
+
+      let milestoneBonus = 0;
+      let milestoneDesc = '';
+      if (todayCompletedCount === 2) {
+        milestoneBonus = 1000;
+        milestoneDesc = 'Thưởng hoàn thành mốc 2 đơn/ngày';
+      } else if (todayCompletedCount === 4) {
+        milestoneBonus = 2000;
+        milestoneDesc = 'Thưởng hoàn thành mốc 4 đơn/ngày';
+      }
+
+      if (milestoneBonus > 0) {
+        if (!walletInc.walletBalance) walletInc.walletBalance = 0;
+        walletInc.walletBalance += milestoneBonus;
+
+        const bonusTx = new WalletTransaction({
+          driverId: driver._id,
+          type: 'BONUS',
+          amount: milestoneBonus,
+          status: 'SUCCESS',
+          description: milestoneDesc
+        });
+        await bonusTx.save();
       }
 
       await Driver.findByIdAndUpdate(req.driver._id, { $inc: walletInc });
