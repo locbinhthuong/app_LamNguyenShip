@@ -161,6 +161,22 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
             </div>
           </div>
           
+          {/* KHỐI THƯỞNG KPI NĂNG SUẤT (READ-ONLY) */}
+          {order.kpiBonus > 0 && (
+             <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-3 rounded-xl border border-orange-200 flex justify-between items-center shadow-sm">
+               <div className="flex items-center gap-2">
+                 <span className="text-2xl">🏆</span>
+                 <div className="flex flex-col">
+                   <span className="text-[10px] font-bold text-orange-600 uppercase tracking-wider">Phần Thưởng KPI (Hệ thống tự cấp)</span>
+                   <span className="text-xs text-orange-500 font-medium tracking-tight">Thưởng tự động cho Tài xế này!</span>
+                 </div>
+               </div>
+               <div className="text-lg font-black text-orange-600 drop-shadow-sm px-3 py-1 bg-white rounded-lg border border-orange-100">
+                 +{order.kpiBonus.toLocaleString()}đ
+               </div>
+             </div>
+          )}
+
           {/* KHỐI 3: ĐIỂM GIAO / TRẢ KHÁCH (ko cho Điều Phối) */}
           {order.serviceType !== 'DIEU_PHOI' && (
             <div className="bg-sky-50 p-3 rounded-xl border border-sky-100">

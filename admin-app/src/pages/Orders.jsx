@@ -279,7 +279,15 @@ export default function Orders() {
                  </div>
               )}
               <div className="flex flex-wrap items-center gap-2 mt-2">
-                <p className="text-sm font-bold text-blue-600 mr-auto">Phí giao: {order.deliveryFee?.toLocaleString()}đ</p>
+                <div className="flex flex-col mr-auto">
+                   <p className="text-sm font-bold text-blue-600">Phí giao: {order.deliveryFee?.toLocaleString()}đ</p>
+                   {(order.kpiBonus > 0 || order.adminBonus > 0) && (
+                     <div className="flex flex-wrap gap-1 mt-0.5">
+                       {order.adminBonus > 0 && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200">+ {order.adminBonus.toLocaleString()}đ Độc quyền</span>}
+                       {order.kpiBonus > 0 && <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200">+ {order.kpiBonus.toLocaleString()}đ KPI</span>}
+                     </div>
+                   )}
+                </div>
                 {order.status !== 'CANCELLED' && (
                   <button onClick={() => setEditingOrder(order)} className="rounded-lg bg-orange-100 px-2 py-1 text-xs font-bold text-orange-600 hover:bg-orange-200">
                     ✏️ Sửa
@@ -316,7 +324,7 @@ export default function Orders() {
                   <th className="table-th">Tài xế</th>
                   <th className="table-th">Thời gian</th>
                   <th className="table-th">Trạng thái</th>
-                  <th className="table-th">PHÍ GIAO HÀNG</th>
+                  <th className="table-th">PHÍ & THƯỞNG</th>
                   <th className="table-th">Hành động</th>
                 </tr>
               </thead>
@@ -381,7 +389,15 @@ export default function Orders() {
                         )}
                       </div>
                     </td>
-                    <td className="table-td font-bold text-blue-600">{order.deliveryFee?.toLocaleString()}đ</td>
+                    <td className="table-td">
+                       <p className="font-bold text-blue-600 text-sm whitespace-nowrap">{order.deliveryFee?.toLocaleString()}đ</p>
+                       {(order.kpiBonus > 0 || order.adminBonus > 0) && (
+                         <div className="flex flex-col items-start gap-1 mt-1">
+                           {order.adminBonus > 0 && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap">+ {order.adminBonus.toLocaleString()}đ (Độc quyền)</span>}
+                           {order.kpiBonus > 0 && <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200 whitespace-nowrap">+ {order.kpiBonus.toLocaleString()}đ (KPI)</span>}
+                         </div>
+                       )}
+                    </td>
                     <td className="table-td text-right">
                       <div className="flex items-center gap-3">
                         {order.status !== 'CANCELLED' && (
