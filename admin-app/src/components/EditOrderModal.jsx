@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import CurrencyInput from './CurrencyInput';
+import api from '../services/api';
 
 export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
+  const [drivers, setDrivers] = useState([]);
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
@@ -20,8 +22,21 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     transactionAmount: 0,
     note: '',
     packageDescription: '',
-    adminBonus: 0
+    adminBonus: 0,
+    forceAssignDriverId: ''
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      api.get('/api/drivers?status=active')
+        .then(res => {
+          if (res.data?.success) {
+            setDrivers(res.data.data);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (order) {
@@ -46,7 +61,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         transactionAmount: order.financialDetails?.transactionAmount || 0,
         note: order.note || '',
         packageDescription: order.packageDetails?.description || '',
-        adminBonus: order.adminBonus || 0
+        adminBonus: order.adminBonus || 0,
+        forceAssignDriverId: order.assignedTo?._id || order.assignedTo || ''
       });
     }
   }, [order]);
@@ -87,6 +103,33 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         </div>
         
         <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* KHỐI 0: ĐIỀU PHỐI TÀI XẾ */}
+          {(!order.assignedTo || order.status === 'PENDING') && (
+            <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 shadow-sm relative overflow-hidden">
+               <div className="absolute -right-2 -top-2 text-6xl opacity-5">🎯</div>
+               <label className="block text-xs font-bold text-purple-700 uppercase mb-2 tracking-wider relative z-10">
+                 👨‍✈️ ĐIỀU PHỐI / GÁN TÀI XẾ MỚI
+               </label>
+               <select 
+                  name="forceAssignDriverId" 
+                  value={formData.forceAssignDriverId} 
+                  onChange={handleChange} 
+                  className="w-full rounded-lg border border-purple-300 p-2.5 text-sm bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none font-medium relative z-10 appearance-none"
+               >
+                  <option value="">-- Đơn tự do (Tài xế tự giành) --</option>
+                  {drivers.sort((a,b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)).map(d => (
+                    <option key={d._id} value={d._id}>
+                      {d.isOnline ? '🟢 [ONLINE]' : '🔴 [OFFLINE]'} - {d.name} ({d.phone})
+                    </option>
+                  ))}
+               </select>
+               <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">
+                 * Hệ thống sẽ đánh giá công nợ của tài xế trước khi chốt gán đơn.
+               </p>
+            </div>
+          )}
+
           {/* KHỐI 1: KHÁCH ĐẶT */}
           <div className="bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 flex justify-between items-center">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Khách Đặt Tự Động:</h3>

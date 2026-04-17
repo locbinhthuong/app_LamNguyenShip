@@ -292,12 +292,15 @@ const orderController = {
         bulkyFee, surcharge, // Các phí mới
         packageDescription, // Chi tiết Hàng hóa / Mua hộ
         vehicleClass, // Cập nhật loại xe nếu cần
-        bankName, bankAccount, bankAccountName, transactionAmount // Nạp Rút
+        bankName, bankAccount, bankAccountName, transactionAmount, // Nạp Rút
+        forceAssignDriverId // Cờ Admin cướp quyền Gán đơn
       } = req.body;
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
       }
+      
+      let didAdminForceAssign = false;
 
       // Xử lý nhánh "Thu hồi về Lưu Nháp (DRAFT)" (Gỡ bỏ tài xế, ẩn khỏi chợ)
       if (status === 'DRAFT' && orderToUpdate.status !== 'DRAFT') {
@@ -322,8 +325,60 @@ const orderController = {
         // Phát socket đăng đơn lại lên chợ cho tài xế
         if (req.io) {
           const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
+          const { emitNewOrder } = require('../sockets/index');
           emitNewOrder(req.io, payload, true); // true = isSilentAdmin (Treo lại đơn không báo hú Admin)
           req.io.to('admins').emit('order_updated', payload); // Cập nhật danh sách bên Admin
+        }
+      }
+      
+      // XỬ LÝ KIỂM TRA BẮN ĐƠN MẠNH BẠO TỪ ADMIN (KHÔNG VƯỢT TƯỜNG LỬA CHẶN NỢ)
+      if (forceAssignDriverId && orderToUpdate.status === 'PENDING') {
+        const Driver = require('../models/Driver');
+        const DebtTransaction = require('../models/DebtTransaction');
+        
+        const driver = await Driver.findById(forceAssignDriverId);
+        if (!driver || driver.status !== 'active') {
+          return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
+        }
+
+        // Tường lửa Đòi Nợ y chang App Tài Xế (Không nể nang)
+        let hasUnpaidDebt = false;
+        const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
+        const debtByDate = {};
+        transactions.forEach(tx => {
+          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+             if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+             debtByDate[dateStr] += tx.amount;
+          }
+        });
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          if (amount > 0 && dateStr !== todayStr) {
+            hasUnpaidDebt = true;
+            break;
+          }
+        }
+
+        if (hasUnpaidDebt) {
+          return res.status(400).json({
+            success: false,
+            message: 'Tài xế này đang MẮC NỢ CŨ CHƯA THANH TOÁN. Hệ thống đã chặn gán đơn!'
+          });
+        }
+
+        // Qua ải, được phép chốt đơn cho Tài Xế này
+        orderToUpdate.assignedTo = forceAssignDriverId;
+        orderToUpdate.status = 'ACCEPTED';
+        orderToUpdate.acceptedAt = new Date();
+        didAdminForceAssign = true;
+        
+        // Hú Còi Push Notification tận Điện Thoại
+        if (driver.fcmToken) {
+           const { sendMultipleNotifications } = require('../utils/notification');
+           const feeResponse = orderToUpdate.deliveryFee ? `${orderToUpdate.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+           let msgBody = `📍 Đón: ${orderToUpdate.pickupAddress}\n💵 Phí: ${feeResponse}`;
+           await sendMultipleNotifications([driver.fcmToken], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${orderToUpdate._id}` }).catch(e => console.log('Push lỗi', e));
         }
       }
 
@@ -367,13 +422,23 @@ const orderController = {
       }
 
       await orderToUpdate.save();
+      
+      // Load gắp thông tin tài xế để socket báo chuẩn chữ
+      if (didAdminForceAssign) {
+         await orderToUpdate.populate('assignedTo', 'name phone driverCode');
+      }
 
       if (req.io) {
-        const { emitToDriver } = require('../sockets/index');
+        const { emitToDriver, emitOrderAccepted } = require('../sockets/index');
         const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
         
-        // Emit tới Admin map
-        req.io.to('admins').emit('order_updated', payload);
+        // Quát làng nước là đơn này đã vào túi ai qua emitOrderAccepted
+        if (didAdminForceAssign) {
+           emitOrderAccepted(req.io, payload);
+        } else {
+           // Bắn socket thông thường
+           req.io.to('admins').emit('order_updated', payload);
+        }
         
         // Emit tới Khách hàng/Shop đã tạo đơn
         if (orderToUpdate.customerId) {
