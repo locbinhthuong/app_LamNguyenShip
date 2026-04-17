@@ -4,7 +4,6 @@ const API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
 
 const api = axios.create({
   baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
 
@@ -139,6 +138,11 @@ export const getMyWalletDetail = async () => {
 
 export const requestWithdraw = async (amount, bankName, accountNumber, accountName) => {
   const response = await api.post('/api/wallets/driver/request-withdraw', { amount, bankName, accountNumber, accountName });
+  return response.data;
+};
+// ==================== BẢNG TIN / ANNOUNCEMENTS ====================
+export const getActiveAnnouncements = async () => {
+  const response = await api.get(`/api/announcements?t=${new Date().getTime()}`);
   return response.data;
 };
 

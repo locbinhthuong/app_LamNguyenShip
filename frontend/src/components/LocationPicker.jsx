@@ -50,7 +50,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       const fetchInitialCoord = async () => {
         setIsSearching(true);
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(initialSearchQuery)}&limit=1&countrycodes=vn`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(initialSearchQuery)}&limit=1&countrycodes=vn&accept-language=vi`);
           const data = await res.json();
           if (data && data.length > 0) {
             const lat = parseFloat(data[0].lat);
@@ -77,7 +77,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     const delayDebounce = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=vn`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=vn&accept-language=vi`);
         const data = await res.json();
         setSuggestions(data);
       } catch (err) {
@@ -106,7 +106,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       setIsLoadingAddress(true);
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${mapCenter[0]}&lon=${mapCenter[1]}`
+          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${mapCenter[0]}&lon=${mapCenter[1]}&accept-language=vi`
         );
         const data = await res.json();
         if (data && data.display_name) {
@@ -219,7 +219,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
         >
           <TileLayer
             attribution='&copy; Google Maps'
-            url="http://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
+            url="https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
           />
           <MapController setMapCenter={setMapCenter} setIsDragging={setIsDragging} />
           {flyPos && <FlyToLocation targetPos={flyPos} />}

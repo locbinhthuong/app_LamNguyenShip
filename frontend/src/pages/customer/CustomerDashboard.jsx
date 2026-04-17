@@ -36,7 +36,7 @@ const CustomerDashboard = () => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=vi`);
             const data = await res.json();
             if (data && data.display_name) {
               const shortAddress = data.display_name.split(',').slice(0, 3).join(', ');

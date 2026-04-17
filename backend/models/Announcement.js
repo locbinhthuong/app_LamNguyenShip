@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const announcementSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['PROMO', 'NEWS', 'NOTIFICATION'],
+    enum: ['PROMO', 'NEWS', 'NOTIFICATION', 'TERMS_DRIVER'],
     default: 'NOTIFICATION'
   },
   title: {

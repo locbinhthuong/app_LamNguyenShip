@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { uploadDriverAvatar, getFullImageUrl } from '../services/api';
+import { getActiveAnnouncements, uploadDriverAvatar, getFullImageUrl } from '../services/api';
 
 export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -7,6 +7,10 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const fileInputRef = useRef(null);
+
+  const [showTerms, setShowTerms] = useState(false);
+  const [termsData, setTermsData] = useState([]);
+  const [loadingTerms, setLoadingTerms] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -81,6 +85,21 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
     }
   };
 
+  const handleShowTerms = async () => {
+    setShowTerms(true);
+    setLoadingTerms(true);
+    try {
+      const res = await getActiveAnnouncements();
+      if (res.success) {
+        setTermsData(res.data.filter(item => item.type === 'TERMS_DRIVER'));
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
+
   const VEHICLE_EMOJI = {
     motorcycle: '🏍️ Xe máy',
     bike: '🚲 Xe đạp',
@@ -141,6 +160,12 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               className="w-full py-3.5 rounded-xl font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors border-2 border-transparent hover:border-blue-200"
             >
               ✏️ Chỉnh sửa hồ sơ
+            </button>
+            <button 
+              onClick={handleShowTerms}
+              className="w-full mt-3 py-3.5 rounded-xl font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors border-2 border-transparent hover:border-purple-200 flex items-center justify-center gap-2"
+            >
+              📜 Quy định & Điều khoản
             </button>
           </div>
         ) : (
@@ -244,6 +269,56 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
           </div>
         )}
       </div>
+
+      {/* Modal hiện Điều khoản T.X */}
+      {showTerms && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl h-[80vh] sm:h-[80vh] flex flex-col overflow-hidden animate-slideUp">
+            <div className="bg-purple-600 p-4 shrink-0 flex justify-between items-center text-white relative">
+              <h2 className="font-bold text-lg flex items-center gap-2">📜 Quy định & Điều khoản</h2>
+              <button onClick={() => setShowTerms(false)} className="rounded-full bg-black/10 hover:bg-black/20 p-2 border-0 w-8 h-8 flex items-center justify-center transition-colors">
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-5 bg-slate-50">
+              {loadingTerms ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : termsData.length === 0 ? (
+                <div className="flex flex-col justify-center items-center h-full text-slate-400">
+                  <span className="text-4xl mb-3">📭</span>
+                  <p className="font-medium">Chưa có điều khoản nào được đăng.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {termsData.map(term => (
+                    <div key={term._id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                      <h3 className="font-bold text-lg text-slate-800 mb-2">{term.title}</h3>
+                      <div className="text-xs text-slate-400 mb-3 bg-slate-100 inline-block px-2 py-1 rounded">
+                        Cập nhật: {new Date(term.updatedAt || term.createdAt).toLocaleDateString('vi-VN')}
+                      </div>
+                      
+                      {term.imageUrl && (
+                        <img src={getFullImageUrl(term.imageUrl)} alt="Term Banner" className="w-full rounded-xl mb-3" />
+                      )}
+                      
+                      {term.videoUrl && (
+                        <video src={getFullImageUrl(term.videoUrl)} controls className="w-full rounded-xl mb-3" />
+                      )}
+                      
+                      <div className="text-slate-600 text-sm whitespace-pre-wrap leading-relaxed">
+                        {term.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -205,6 +205,11 @@ export default function Announcements() {
                      <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">🔔 THÔNG BÁO</span>
                    </div>
                  )}
+                 {ann.type === 'TERMS_DRIVER' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 ĐIỀU KHOẢN T.XẾ</span>
+                   </div>
+                 )}
                  
                  <div className="absolute top-2 right-2 flex gap-2 z-20">
                    <button 
@@ -267,6 +272,10 @@ export default function Announcements() {
                      <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'NOTIFICATION' ? 'bg-orange-50 border-orange-500 text-orange-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
                         <input type="radio" name="type" value="NOTIFICATION" checked={form.type === 'NOTIFICATION'} onChange={(e) => setForm({...form, type: 'NOTIFICATION'})} className="hidden" />
                         🔔 Thông Báo
+                     </label>
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_DRIVER' ? 'bg-purple-50 border-purple-500 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="TERMS_DRIVER" checked={form.type === 'TERMS_DRIVER'} onChange={(e) => setForm({...form, type: 'TERMS_DRIVER'})} className="hidden" />
+                        📜 Điều Khoản
                      </label>
                   </div>
                </div>
