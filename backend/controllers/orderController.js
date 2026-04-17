@@ -135,6 +135,30 @@ const orderController = {
         });
       }
 
+      // Xử lý Hiển thị "Tiền thưởng KPI Tạm tính" (Cho Tài Xế xem trước viễn cảnh khi họ chuẩn bị đi Giao)
+      if (order.assignedTo && ['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(order.status) && !order.kpiBonus) {
+         try {
+           const todayStrVN = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+           const startOfDayUTC = new Date(`${todayStrVN}T00:00:00.000+07:00`);
+           const endOfDayUTC = new Date(`${todayStrVN}T23:59:59.999+07:00`);
+           
+           const todayCount = await Order.countDocuments({
+              status: 'COMPLETED',
+              assignedTo: order.assignedTo._id || order.assignedTo,
+              deliveredAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
+           });
+
+           const prospective = todayCount + 1;
+           if (prospective >= 2 && prospective < 4) {
+              order.kpiBonus = 1000;
+              order.isExpectedKpi = true;
+           } else if (prospective >= 4) {
+              order.kpiBonus = 2000;
+              order.isExpectedKpi = true;
+           }
+         } catch(e) { console.error('Error calculating prospective KPI:', e); }
+      }
+
       res.status(200).json({
         success: true,
         data: order

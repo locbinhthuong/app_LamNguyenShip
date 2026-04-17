@@ -429,10 +429,12 @@ export default function OrderDetail() {
 
             {/* Cột 4: BLOCK THƯỞNG KPI HẰNG NGÀY (Nằm chung Grid) */}
             {order.kpiBonus > 0 && (
-               <div className="bg-orange-50 rounded-xl p-3 flex flex-col justify-center border border-orange-200 shadow-sm relative overflow-hidden group">
-                 <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">🏆</div>
-                 <p className="text-orange-700 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Thưởng năng suất (KPI)</p>
-                 <p className="text-orange-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">+{order.kpiBonus?.toLocaleString()}đ</p>
+               <div className={`rounded-xl p-3 flex flex-col justify-center border shadow-sm relative overflow-hidden group ${order.isExpectedKpi ? 'bg-slate-50 border-orange-200 border-dashed' : 'bg-orange-50 border-orange-200'}`}>
+                 <div className={`absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform ${order.isExpectedKpi ? 'grayscale opacity-10 text-slate-500' : ''}`}>🏆</div>
+                 <p className={`${order.isExpectedKpi ? 'text-slate-500' : 'text-orange-700'} text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1`}>
+                   {order.isExpectedKpi ? 'DỰ KIẾN (NẾU HOÀN THÀNH)' : 'Thưởng năng suất (KPI)'}
+                 </p>
+                 <p className={`${order.isExpectedKpi ? 'text-slate-600' : 'text-orange-600'} font-black text-xl sm:text-2xl drop-shadow-sm relative z-10`}>+{order.kpiBonus?.toLocaleString()}đ</p>
                </div>
             )}
           </div>
