@@ -379,33 +379,40 @@ export default function OrderDetail() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             
             {/* Cột 1: Tiền Phí/Cước */}
-            <div className="bg-slate-700 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
-               <div className="absolute -right-3 -bottom-3 text-5xl opacity-10 group-hover:scale-110 transition-transform">💰</div>
-               <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider relative z-10">
+            <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
+               <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">💰</div>
+               <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider relative z-10 mb-1">
                  {order.serviceType === 'DAT_XE' ? 'Cước chuyến đi' : order.serviceType === 'DIEU_PHOI' ? 'Phí gọi thợ' : 'Phí dịch vụ / Ship'}
                </p>
-               {order.deliveryFee > 0 ? (
-                  <p className="text-green-400 font-black text-2xl drop-shadow-sm relative z-10">{order.deliveryFee?.toLocaleString()}đ</p>
-               ) : (
-                  <p className="text-green-400 font-black text-xl drop-shadow-sm relative z-10">Thỏa Thuận</p>
-               )}
+               <div className="flex flex-col relative z-10">
+                 {order.deliveryFee > 0 ? (
+                    <p className="text-green-600 font-black text-2xl drop-shadow-sm">{order.deliveryFee?.toLocaleString()}đ</p>
+                 ) : (
+                    <p className="text-green-600 font-black text-xl drop-shadow-sm">Thỏa Thuận</p>
+                 )}
+                 {order.packageDetails?.bulkyFee > 0 && (
+                   <p className="text-[11px] text-orange-600 font-bold mt-1 bg-orange-50 px-2 py-0.5 rounded-md inline-block max-w-max border border-orange-100">
+                     + {order.packageDetails.bulkyFee.toLocaleString()}đ Phí cồng kềnh
+                   </p>
+                 )}
+               </div>
             </div>
             
             {/* Cột 2: Thu Hộ (Giao Hàng) */}
             {order.serviceType === 'GIAO_HANG' && (order.codAmount > 0 || order.codAmount === 0) && (
-              <div className="bg-slate-700 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
-                <div className="absolute -right-3 -bottom-3 text-5xl opacity-10 group-hover:scale-110 transition-transform">💎</div>
-                <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider relative z-10">Cần Thu hộ (COD)</p>
-                <p className="text-blue-400 font-black text-2xl drop-shadow-sm relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
+              <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
+                <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">💎</div>
+                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider relative z-10 mb-1">Cần Thu hộ (COD)</p>
+                <p className="text-blue-600 font-black text-2xl drop-shadow-sm relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
               </div>
             )}
 
             {/* Cột 2: Tiền Hàng Dự Kiến (Mua Hộ) */}
             {order.serviceType === 'MUA_HO' && (
-              <div className="bg-slate-700 rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group">
-                <div className="absolute -right-3 -bottom-3 text-5xl opacity-10 group-hover:scale-110 transition-transform">🛒</div>
-                <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider relative z-10">Tiền hàng dự kiến</p>
-                <p className="text-orange-400 font-black text-2xl drop-shadow-sm relative z-10">
+              <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
+                <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">🛒</div>
+                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-wider relative z-10 mb-1">Tiền hàng dự kiến</p>
+                <p className="text-orange-600 font-black text-2xl drop-shadow-sm relative z-10">
                   {order.purchaseDetails?.estimatedTotal ? `${order.purchaseDetails.estimatedTotal.toLocaleString()}đ` : 'Thỏa thuận'}
                 </p>
               </div>
@@ -415,28 +422,28 @@ export default function OrderDetail() {
           
           {/* BLOCK THƯỞNG VÍ */}
           {order.adminBonus > 0 && (
-             <div className="mt-3 bg-gradient-to-r from-emerald-500 to-green-600 rounded-xl p-3 flex items-center justify-between border border-emerald-400 shadow-lg shadow-emerald-500/20 relative overflow-hidden">
-               <div className="absolute -right-2 text-6xl opacity-[0.15]">🎁</div>
+             <div className="mt-3 bg-emerald-50 rounded-xl p-3 flex items-center justify-between border border-emerald-200 shadow-sm relative overflow-hidden">
+               <div className="absolute -right-2 text-6xl opacity-5">🎁</div>
                <div className="relative z-10">
-                  <p className="text-emerald-100 text-[11px] font-bold uppercase tracking-wider">Thưởng thêm vào Ví</p>
-                  <p className="text-white font-black text-2xl drop-shadow-md">+{order.adminBonus?.toLocaleString()}đ</p>
+                  <p className="text-emerald-700 text-[11px] font-bold uppercase tracking-wider">Thưởng thêm vào Ví</p>
+                  <p className="text-emerald-600 font-black text-2xl">+{order.adminBonus?.toLocaleString()}đ</p>
                </div>
-               <div className="relative z-10 bg-white/20 px-3 py-1.5 rounded-lg border border-white/30 backdrop-blur-sm">
-                 <span className="text-white text-xs font-bold uppercase tracking-widest">ĐỘC QUYỀN</span>
+               <div className="relative z-10 bg-emerald-100 px-3 py-1.5 rounded-lg border border-emerald-200">
+                 <span className="text-emerald-700 text-xs font-bold uppercase tracking-widest">ĐỘC QUYỀN</span>
                </div>
              </div>
           )}
 
           {/* BLOCK THƯỞNG KPI HẰNG NGÀY */}
           {order.kpiBonus > 0 && (
-             <div className="mt-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-3 flex items-center justify-between border border-yellow-400 shadow-lg shadow-orange-500/20 relative overflow-hidden">
-               <div className="absolute -right-2 text-6xl opacity-[0.25]">🏆</div>
+             <div className="mt-3 bg-orange-50 rounded-xl p-3 flex items-center justify-between border border-orange-200 shadow-sm relative overflow-hidden">
+               <div className="absolute -right-2 text-6xl opacity-5">🏆</div>
                <div className="relative z-10">
-                  <p className="text-orange-100 text-[11px] font-bold uppercase tracking-wider text-shadow">Thưởng năng suất (KPI)</p>
-                  <p className="text-white font-black text-2xl drop-shadow-md">+{order.kpiBonus?.toLocaleString()}đ</p>
+                  <p className="text-orange-700 text-[11px] font-bold uppercase tracking-wider">Thưởng năng suất (KPI)</p>
+                  <p className="text-orange-600 font-black text-2xl">+{order.kpiBonus?.toLocaleString()}đ</p>
                </div>
-               <div className="relative z-10 bg-white/20 px-3 py-1.5 rounded-lg border border-white/30 backdrop-blur-sm">
-                 <span className="text-white text-xs font-bold uppercase tracking-widest">MỐC ĐẠT CHUẨN</span>
+               <div className="relative z-10 bg-orange-100 px-3 py-1.5 rounded-lg border border-orange-200">
+                 <span className="text-orange-700 text-xs font-bold uppercase tracking-widest">MỐC ĐẠT CHUẨN</span>
                </div>
              </div>
           )}
