@@ -160,6 +160,11 @@ const orderSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  kpiBonus: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
 
   // Đánh giá
   rating: {

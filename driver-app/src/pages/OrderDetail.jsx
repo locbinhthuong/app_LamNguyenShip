@@ -118,18 +118,24 @@ export default function OrderDetail() {
 
   const getActionButton = () => {
     if (!order) return null;
+    
+    // Khách hoặc Admin vừa tạo đơn, đang treo
     if (order.status === 'PENDING' && !order.assignedTo) {
       return <button onClick={() => handleAction('accept')} disabled={actionLoading} className="btn-success">Nhận đơn này</button>;
     }
-    if (order.assignedTo?._id === driver?._id || order.assignedTo === driver?._id) {
+    
+    // Kiểm tra xem đơn này có đúng là của tài xế đang login không
+    const assignedId = String(order.assignedTo?._id || order.assignedTo);
+    const myId = String(driver?._id);
+    
+    if (assignedId === myId) {
       if (order.status === 'ACCEPTED') {
-         // Nếu là chở khách thì text là "Đã Đón Khách", mua hộ là "Đã Mua Hàng", giao hàng là "Đã lấy hàng"
+         // Chở khách thì "Đã Đón Khách", mua hộ "Đã mua", giao "Đã lấy"
          const btnText = order.serviceType === 'DAT_XE' ? '🚙 Đã Đón Khách' : order.serviceType === 'MUA_HO' ? '🛒 Đã mua hàng' : '📦 Đã lấy hàng';
          return <button onClick={() => handleAction('pickup')} disabled={actionLoading} className="btn-warning">{btnText}</button>;
       }
-      if (order.status === 'PICKED_UP') {
-         // Nếu là chở khách thì text là "Trả Khách & Hoàn Thành"
-         const btnText = order.serviceType === 'DAT_XE' ? '✅ Trả Khách & Hoàn Thành' : '✅ Hoàn thành';
+      if (order.status === 'PICKED_UP' || order.status === 'DELIVERING') {
+         const btnText = order.serviceType === 'DAT_XE' ? '✅ Trả Khách & Hoàn Thành' : '✅ Hoàn thành chuyến';
          return <button onClick={() => handleAction('complete')} disabled={actionLoading} className="btn-success">{btnText}</button>;
       }
     }
@@ -417,6 +423,20 @@ export default function OrderDetail() {
                </div>
                <div className="relative z-10 bg-white/20 px-3 py-1.5 rounded-lg border border-white/30 backdrop-blur-sm">
                  <span className="text-white text-xs font-bold uppercase tracking-widest">ĐỘC QUYỀN</span>
+               </div>
+             </div>
+          )}
+
+          {/* BLOCK THƯỞNG KPI HẰNG NGÀY */}
+          {order.kpiBonus > 0 && (
+             <div className="mt-3 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-xl p-3 flex items-center justify-between border border-yellow-400 shadow-lg shadow-orange-500/20 relative overflow-hidden">
+               <div className="absolute -right-2 text-6xl opacity-[0.25]">🏆</div>
+               <div className="relative z-10">
+                  <p className="text-orange-100 text-[11px] font-bold uppercase tracking-wider text-shadow">Thưởng năng suất (KPI)</p>
+                  <p className="text-white font-black text-2xl drop-shadow-md">+{order.kpiBonus?.toLocaleString()}đ</p>
+               </div>
+               <div className="relative z-10 bg-white/20 px-3 py-1.5 rounded-lg border border-white/30 backdrop-blur-sm">
+                 <span className="text-white text-xs font-bold uppercase tracking-widest">MỐC ĐẠT CHUẨN</span>
                </div>
              </div>
           )}

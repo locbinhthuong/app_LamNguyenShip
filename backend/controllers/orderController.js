@@ -660,6 +660,10 @@ const orderController = {
           description: milestoneDesc
         });
         await bonusTx.save();
+        
+        // Cập nhật mức thưởng KPI vào chính đơn hàng này
+        order.kpiBonus = milestoneBonus;
+        await order.save();
       }
 
       await Driver.findByIdAndUpdate(req.driver._id, { $inc: walletInc });

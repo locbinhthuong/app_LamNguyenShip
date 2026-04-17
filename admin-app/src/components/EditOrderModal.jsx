@@ -193,6 +193,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               <label className="block text-xs font-semibold text-emerald-600 mb-1">Ví Tài Xế (Admin Bonus)</label>
               <CurrencyInput name="adminBonus" value={formData.adminBonus} onChange={handleChange} min="0" className="w-full rounded-lg border border-emerald-300 p-2 text-sm bg-emerald-50 font-bold text-emerald-700 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-100" placeholder="Thưởng thêm cho tài xế gốc..." />
             </div>
+            
+            {order.kpiBonus > 0 && (
+              <div className="bg-gradient-to-r from-orange-100 to-yellow-50 border-l-4 border-orange-400 p-2 rounded-lg rounded-l-none flex flex-col justify-center shadow-sm">
+                 <span className="text-[10px] uppercase font-bold text-orange-600 tracking-wider">Hệ Thống Thưởng KPI</span>
+                 <span className="font-black text-lg text-orange-600">+{order.kpiBonus.toLocaleString()}đ</span>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
