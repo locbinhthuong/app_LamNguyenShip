@@ -267,7 +267,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
         {/* NÚT VỀ VỊ TRÍ CỦA TÔI */}
         <button 
           onClick={locateMe}
-          className="absolute bottom-6 right-4 z-[400] bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
+          className="absolute bottom-16 right-4 z-[2000] bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
         >
           <Target size={24} />
         </button>

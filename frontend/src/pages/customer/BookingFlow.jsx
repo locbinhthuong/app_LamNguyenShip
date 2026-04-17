@@ -36,7 +36,7 @@ export default function BookingFlow() {
     loadProfile();
 
     // Load saved pinned location
-    const saved = localStorage.getItem('savedLocation');
+    const saved = sessionStorage.getItem('savedLocation');
     if (saved) {
       setDefaultLocation(JSON.parse(saved));
     }
