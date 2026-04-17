@@ -19,8 +19,8 @@ const CustomerDashboard = () => {
   const news = announcements.filter(a => a.type === 'NEWS');
 
   useEffect(() => {
-    // Ưu tiên đọc từ LocalStorage
-    const saved = localStorage.getItem('savedLocation');
+    // Ưu tiên đọc từ sessionStorage (vị trí tạm thời trong phiên làm việc)
+    const saved = sessionStorage.getItem('savedLocation');
     if (saved) {
       const loc = JSON.parse(saved);
       setLocationDetails(loc);
@@ -43,7 +43,7 @@ const CustomerDashboard = () => {
               setAddress(shortAddress);
               const locData = { lat, lng, address: data.display_name };
               setLocationDetails(locData);
-              localStorage.setItem('savedLocation', JSON.stringify(locData));
+              sessionStorage.setItem('savedLocation', JSON.stringify(locData));
             } else {
               setAddress('Không thể xác định tên đường');
               setLocationDetails({ lat, lng, address: 'Không thể xác định tên đường' });
@@ -89,7 +89,7 @@ const CustomerDashboard = () => {
 
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
-    localStorage.setItem('savedLocation', JSON.stringify(loc));
+    sessionStorage.setItem('savedLocation', JSON.stringify(loc));
     // Cắt ngắn để hiển thị trên top bar
     const shortAddress = loc.address.split(',').slice(0, 3).join(', ');
     setAddress(shortAddress);

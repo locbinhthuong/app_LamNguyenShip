@@ -68,6 +68,26 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     }
   }, [isOpen, initialPosition, initialSearchQuery]);
 
+  // Luôn luôn lấy lại vị trí GPS thực tế khi bản đồ vừa được mở (Theo yêu cầu: bấm vào lần nữa lấy vị trí điện thoại)
+  useEffect(() => {
+    if (isOpen) {
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            setMapCenter([lat, lng]);
+            setFlyPos([lat, lng]);
+          },
+          (err) => {
+            console.log('Không thể lấy GPS tự động:', err);
+          },
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        );
+      }
+    }
+  }, [isOpen]);
+
   // Xử lý Gợi ý Địa chỉ (Autocomplete)
   useEffect(() => {
     if (searchQuery.trim().length < 2) {
