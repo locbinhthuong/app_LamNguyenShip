@@ -10,12 +10,16 @@
   html {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;
+    height: 100%;
   }
   
   body {
     @apply min-h-screen w-full bg-slate-50 font-sans antialiased;
-    touch-action: pan-x pan-y;
-    overflow-x: hidden;
+    height: 100%; /* Sửa lỗi fixed overflow của Safari/Webview */
+  }
+  
+  #root {
+    min-height: 100%;
   }
   
   input, textarea, select {
@@ -52,8 +56,12 @@
     @apply px-3 py-1 rounded-full text-xs font-bold;
   }
 
+  /* CLASS CHUẨN TRỊ LỖI CHẠY FOOTER CỦA IOS WEBVIEW / SAFARI */
   .bottom-nav-safe {
-    @apply fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white;
+    @apply fixed bottom-0 left-0 right-0 z-50 border-t border-slate-200 bg-white;
+    /* Xóa các translate, filter 3D nào có thể gây break viewport context */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
   }
 }
