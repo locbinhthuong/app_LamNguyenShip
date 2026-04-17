@@ -711,12 +711,12 @@ const orderController = {
 
       let milestoneBonus = 0;
       let milestoneDesc = '';
-      if (todayCompletedCount === 2) {
-        milestoneBonus = 1000;
-        milestoneDesc = 'Thưởng hoàn thành mốc 2 đơn/ngày';
-      } else if (todayCompletedCount === 4) {
-        milestoneBonus = 2000;
-        milestoneDesc = 'Thưởng hoàn thành mốc 4 đơn/ngày';
+      if (todayCompletedCount === 17) {
+        milestoneBonus = 10000;
+        milestoneDesc = 'Thưởng vượt mốc 17 đơn/ngày';
+      } else if (todayCompletedCount === 25) {
+        milestoneBonus = 15000;
+        milestoneDesc = 'Thưởng bứt phá 25 đơn/ngày';
       }
 
       if (milestoneBonus > 0) {
