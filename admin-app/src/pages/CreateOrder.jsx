@@ -33,13 +33,13 @@ export default function CreateOrder() {
 
     const newForm = { ...form };
 
-    // 1. Phân tích Điểm Lấy (Cho phép có khoảng trắng trước dấu : hoặc bỏ qua dấu :)
-    const pickupRegex = /^(?:(?:📍)?điểm lấy đơn|điểm lấy|từ|lấy đơn tại|lấy hàng|lấy tại|nhận tại|địa chỉ lấy|nơi lấy|chỗ lấy|chỗ này lấy đơn|lấy chỗ này|lấy chỗ)\s*:?\s*([^\n]+)/im;
+    // 1. Phân tích Điểm Lấy (Sắp xếp từ khóa dài trước, ngắn sau để không bị bắt hụt)
+    const pickupRegex = /^(?:(?:📍)?điểm lấy đơn|điểm lấy|lấy đơn tại|lấy hàng|lấy tại|lấy ở|nhận tại|địa chỉ lấy|nơi lấy|chỗ này lấy đơn|chỗ lấy|lấy chỗ này|lấy chỗ|lấy|từ)\s*:?\s*([^\n]+)/im;
     const pickupMatch = text.match(pickupRegex);
     let rawPickup = pickupMatch ? pickupMatch[1].trim() : '';
 
     // 2. Phân tích Điểm Giao
-    const deliveryRegex = /^(?:(?:📍)?điểm giao|đến|giao|giao đơn tại|giao hàng|giao tại|giao đến|địa chỉ giao|nơi giao|chỗ giao|giao chỗ này|trực tiếp|gửi cho|ship qua|địa chỉ nhận|nơi nhận)\s*:?\s*([^\n]+)/im;
+    const deliveryRegex = /^(?:(?:📍)?điểm giao|giao đơn tại|giao hàng|giao tại|giao ở|giao tới|giao đến|giao chỗ này|giao|địa chỉ giao|nơi giao|chỗ giao|trực tiếp|gửi cho|ship qua|địa chỉ nhận|nơi nhận|đến)\s*:?\s*([^\n]+)/im;
     const deliveryMatch = text.match(deliveryRegex);
     let rawDelivery = deliveryMatch ? deliveryMatch[1].trim() : '';
 
@@ -74,7 +74,7 @@ export default function CreateOrder() {
     if (dPhone && !newForm.customerName) newForm.customerName = 'Khách đặt qua Chat';
 
     // 4. Phân tích COD
-    const codMatch = text.match(/^Thu\s*:?\s*([0-9\.,]+[kK]?)/im);
+    const codMatch = text.match(/^(?:tiền\s*)?Thu\s*:?\s*([0-9\.,]+[kK]?)/im);
     if (codMatch) {
        let codStr = codMatch[1].toLowerCase().replace(/[,.]/g, '');
        let cod = 0;
@@ -85,7 +85,7 @@ export default function CreateOrder() {
     }
 
     // 5. Phân tích Ship
-    const shipMatch = text.match(/^Ship\s*:?\s*([0-9\.,]+[kK]?)/im);
+    const shipMatch = text.match(/^(?:tiền\s*)?Ship\s*:?\s*([0-9\.,]+[kK]?)/im);
     if (shipMatch) {
        let shipStr = shipMatch[1].toLowerCase().replace(/[,.]/g, '');
        let ship = 0;
@@ -98,17 +98,19 @@ export default function CreateOrder() {
     // 6. Trích xuất ghi chú
     const noteLines = text.split('\n').map(l => l.trim()).filter(l => {
        if (!l) return false;
-       if (l.match(/^(?:(?:📍)?điểm lấy đơn|điểm lấy|từ|lấy đơn tại|lấy hàng|lấy tại|nhận tại|địa chỉ lấy|nơi lấy|chỗ lấy|chỗ này lấy đơn|lấy chỗ này|lấy chỗ)/i)) return false;
-       if (l.match(/^(?:(?:📍)?điểm giao|đến|giao|giao đơn tại|giao hàng|giao tại|giao đến|địa chỉ giao|nơi giao|chỗ giao|giao chỗ này|trực tiếp|gửi cho|ship qua|địa chỉ nhận|nơi nhận)/i)) return false;
+       if (l.match(/^(?:(?:📍)?điểm lấy đơn|điểm lấy|lấy đơn tại|lấy hàng|lấy tại|lấy ở|nhận tại|địa chỉ lấy|nơi lấy|chỗ này lấy đơn|chỗ lấy|lấy chỗ này|lấy chỗ|lấy|từ)/i)) return false;
+       if (l.match(/^(?:(?:📍)?điểm giao|giao đơn tại|giao hàng|giao tại|giao ở|giao tới|giao đến|giao chỗ này|giao|địa chỉ giao|nơi giao|chỗ giao|trực tiếp|gửi cho|ship qua|địa chỉ nhận|nơi nhận|đến)/i)) return false;
        if (l.match(/^(?:sđt|sdt|đt|dt|phone)/i)) return false;
        if (l.match(/^0[0-9]{7,10}$/)) return false; // Chỉ có số đt
-       if (l.match(/^Thu\s*:?\s*([0-9\.,]+[kK]?)$/i)) return false; // Dòng chỉ chứa COD
-       if (l.match(/^Ship\s*:?\s*([0-9\.,]+[kK]?)$/i)) return false; // Dòng chỉ chứa Ship
+       if (l.match(/^(?:tiền\s*)?Thu\s*:?\s*([0-9\.,]+[kK]?)$/i)) return false; // Dòng chỉ chứa COD
+       if (l.match(/^(?:tiền\s*)?Ship\s*:?\s*([0-9\.,]+[kK]?)$/i)) return false; // Dòng chỉ chứa Ship
        return true;
     });
     const parsedNote = noteLines.join(' | ');
     if (parsedNote) {
-       newForm.note = newForm.note ? newForm.note + ' | ' + parsedNote : parsedNote;
+       newForm.note = parsedNote; // Không xài cộng dồn (tránh lỗi lặp chữ khi gõ tay từng ký tự)
+    } else {
+       newForm.note = '';
     }
 
     setForm(newForm);
