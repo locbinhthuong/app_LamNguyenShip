@@ -82,6 +82,14 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     onSave(order._id, formData);
   };
 
+  const pickupLink = order.pickupCoordinates?.lat 
+    ? `https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formData.pickupAddress)}`;
+
+  const deliveryLink = order.deliveryCoordinates?.lat
+    ? `https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formData.deliveryAddress)}`;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
       <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
@@ -143,8 +151,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
             </h3>
             <div className="grid grid-cols-1 gap-4">
               <div>
-                <label className="block text-[10px] font-semibold text-slate-600 mb-1">
-                  {order.serviceType === 'DAT_XE' ? 'Điểm Đón Khách' : (order.serviceType === 'DIEU_PHOI' ? 'Nơi Gặp Mặt / Lấy Tiền' : 'Địa chỉ lấy hàng')}
+                <label className="text-[10px] font-semibold text-slate-600 mb-1 flex justify-between items-center">
+                  <span>{order.serviceType === 'DAT_XE' ? 'Điểm Đón Khách' : (order.serviceType === 'DIEU_PHOI' ? 'Nơi Gặp Mặt / Lấy Tiền' : 'Địa chỉ lấy hàng')}</span>
+                  {formData.pickupAddress && (
+                    <a href={pickupLink} target="_blank" rel="noopener noreferrer" className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase hover:bg-orange-200 transition-colors flex items-center gap-1 shadow-sm">
+                      🗺️ XEM BẢN ĐỒ
+                    </a>
+                  )}
                 </label>
                 <input type="text" name="pickupAddress" value={formData.pickupAddress} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white focus:border-orange-500 focus:outline-none" />
               </div>
@@ -185,8 +198,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               </h3>
               <div className="space-y-4">
                 <div>
-                   <label className="block text-[10px] font-semibold text-slate-600 mb-1">
-                     {order.serviceType === 'DAT_XE' ? 'Điểm Đến / Trả Khách' : 'Địa chỉ giao/nhận'}
+                   <label className="text-[10px] font-semibold text-slate-600 mb-1 flex justify-between items-center">
+                     <span>{order.serviceType === 'DAT_XE' ? 'Điểm Đến / Trả Khách' : 'Địa chỉ giao/nhận'}</span>
+                     {formData.deliveryAddress && (
+                        <a href={deliveryLink} target="_blank" rel="noopener noreferrer" className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase hover:bg-sky-200 transition-colors flex items-center gap-1 shadow-sm">
+                          🗺️ XEM BẢN ĐỒ
+                        </a>
+                     )}
                    </label>
                    <input type="text" name="deliveryAddress" value={formData.deliveryAddress} onChange={handleChange} className="w-full rounded-lg border border-sky-200 p-2 text-sm bg-white focus:border-sky-500 focus:outline-none" />
                 </div>
