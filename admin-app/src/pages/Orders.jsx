@@ -160,7 +160,9 @@ export default function Orders() {
       setEditingOrder(null);
       await load();
     } catch (err) {
-      alert('Lỗi sửa đơn');
+      const msg = err.response?.data?.message || err.message;
+      alert(`Lỗi sửa đơn: ${msg}`);
+      console.error('Lỗi chi tiết:', err.response?.data || err);
     }
   };
 
