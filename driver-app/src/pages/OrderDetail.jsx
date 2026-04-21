@@ -268,12 +268,16 @@ export default function OrderDetail() {
               <>
                 <div className="flex items-center justify-between mx-[-12px] px-3 pb-3 border-b border-slate-100">
                   <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg">📍 TRẠM 1 (CHỖ LẤY)</span>
-                  <a href={`tel:${order.senderPhone || order.pickupPhone || order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200 text-sm">📞 {order.senderPhone || order.pickupPhone || order.customerPhone}</a>
+                  {(order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : null)) ? (
+                    <a href={`tel:${order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200 text-sm">📞 {order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}</a>
+                  ) : (
+                    <span className="text-xs text-slate-400 italic">Không có SĐT</span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between mx-[-12px] px-3 pt-1 pb-2">
                   <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg">🏁 TRẠM 2 (CHỖ GIAO)</span>
-                  {(order.receiverPhone || order.customerPhone) ? (
-                    <a href={`tel:${order.receiverPhone || order.customerPhone}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200 text-sm">📞 {order.receiverPhone || order.customerPhone}</a>
+                  {(order.receiverPhone || (order.createdBy ? order.customerPhone : null)) ? (
+                    <a href={`tel:${order.receiverPhone || (order.createdBy ? order.customerPhone : '')}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200 text-sm">📞 {order.receiverPhone || (order.createdBy ? order.customerPhone : '')}</a>
                   ) : (
                     <span className="text-xs text-slate-400 italic">Không có SĐT</span>
                   )}
