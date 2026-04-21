@@ -7,6 +7,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
+    pickupPhone: '',
     senderPhone: '',
     senderName: '',
     receiverName: '',
@@ -43,10 +44,11 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
       setFormData({
         customerName: order.customerName || '',
         customerPhone: order.customerPhone || '',
+        pickupPhone: order.pickupPhone || order.senderPhone || '',
         senderPhone: order.senderPhone || '',
         senderName: order.senderName || '',
         receiverName: order.receiverName || '',
-        receiverPhone: order.receiverPhone || '',
+        receiverPhone: order.receiverPhone || order.customerPhone || '',
         receiverPhone2: order.receiverPhone2 || '',
         pickupAddress: order.pickupAddress || '',
         deliveryAddress: order.deliveryAddress || '',
@@ -168,7 +170,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                   <label className="block text-[10px] font-semibold text-slate-600 mb-1">
                     {order.serviceType === 'DAT_XE' ? 'SĐT Khách Lên Xe' : 'SĐT Nơi Lấy / Điểm Đón'}
                   </label>
-                  <input type="text" name="senderPhone" value={formData.senderPhone} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white font-bold text-orange-700 focus:border-orange-500 focus:outline-none" placeholder="Nhập SĐT nơi lấy..." />
+                  <input type="text" name="pickupPhone" value={formData.pickupPhone} onChange={handleChange} className="w-full rounded-lg border border-orange-200 p-2 text-sm bg-white font-bold text-orange-700 focus:border-orange-500 focus:outline-none" placeholder="Nhập SĐT nơi lấy..." />
                 </div>
               )}
             </div>
