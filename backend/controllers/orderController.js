@@ -31,7 +31,7 @@ const orderController = {
         // Xử lý tìm theo OrderCode (bất cứ chuỗi nào khớp id)
         const pureSearch = req.query.search.replace(/^DH/i, '').toLowerCase();
         if (pureSearch.length > 0) {
-           query.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: pureSearch, options: "i" } } });
+          query.$or.push({ $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: pureSearch, options: "i" } } });
         }
       }
 
@@ -137,26 +137,26 @@ const orderController = {
 
       // Xử lý Hiển thị "Tiền thưởng KPI Tạm tính" (Cho Tài Xế xem trước viễn cảnh khi họ chuẩn bị đi Giao)
       if (order.assignedTo && ['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(order.status) && !order.kpiBonus) {
-         try {
-           const todayStrVN = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
-           const startOfDayUTC = new Date(`${todayStrVN}T00:00:00.000+07:00`);
-           const endOfDayUTC = new Date(`${todayStrVN}T23:59:59.999+07:00`);
-           
-           const todayCount = await Order.countDocuments({
-              status: 'COMPLETED',
-              assignedTo: order.assignedTo._id || order.assignedTo,
-              deliveredAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
-           });
+        try {
+          const todayStrVN = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+          const startOfDayUTC = new Date(`${todayStrVN}T00:00:00.000+07:00`);
+          const endOfDayUTC = new Date(`${todayStrVN}T23:59:59.999+07:00`);
 
-           const prospective = todayCount + 1;
-           if (prospective >= 2 && prospective < 4) {
-              order.kpiBonus = 1000;
-              order.isExpectedKpi = true;
-           } else if (prospective >= 4) {
-              order.kpiBonus = 2000;
-              order.isExpectedKpi = true;
-           }
-         } catch(e) { console.error('Error calculating prospective KPI:', e); }
+          const todayCount = await Order.countDocuments({
+            status: 'COMPLETED',
+            assignedTo: order.assignedTo._id || order.assignedTo,
+            deliveredAt: { $gte: startOfDayUTC, $lte: endOfDayUTC }
+          });
+
+          const prospective = todayCount + 1;
+          if (prospective >= 17 && prospective < 25) {
+            order.kpiBonus = 1000;
+            order.isExpectedKpi = true;
+          } else if (prospective >= 25) {
+            order.kpiBonus = 2000;
+            order.isExpectedKpi = true;
+          }
+        } catch (e) { console.error('Error calculating prospective KPI:', e); }
       }
 
       res.status(200).json({
@@ -234,10 +234,10 @@ const orderController = {
   createCustomerOrder: async (req, res) => {
     try {
       const customerId = req.customer._id;
-      const { 
+      const {
         serviceType, subServiceType, customerName, customerPhone, pickupPhone,
         senderName, senderPhone, receiverName, receiverPhone, receiverPhone2,
-        pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates, 
+        pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates,
         items, note, packageDetails, rideDetails, financialDetails, codAmount
       } = req.body;
 
@@ -310,7 +310,7 @@ const orderController = {
   updateOrder: async (req, res) => {
     try {
       const { id } = req.params;
-      const { 
+      const {
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, senderPhone, receiverPhone, receiverPhone2,
         items, note, codAmount, deliveryFee, status, adminBonus,
         bulkyFee, surcharge, // Các phí mới
@@ -323,7 +323,7 @@ const orderController = {
       if (!orderToUpdate) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
       }
-      
+
       let didAdminForceAssign = false;
 
       // Xử lý nhánh "Thu hồi về Lưu Nháp (DRAFT)" (Gỡ bỏ tài xế, ẩn khỏi chợ)
@@ -333,7 +333,7 @@ const orderController = {
         orderToUpdate.acceptedAt = undefined;
         orderToUpdate.pickedUpAt = undefined;
         orderToUpdate.cancelReason = undefined; // Bắt buộc xóa Lý do hủy lỗi cũ để khi Treo lại không bị Rống Chuông Admin
-        
+
         // Tước đơn khỏi map của Admin và xóa trên App của tài xế (như hủy nhưng thực ra là thu hồi ẩn)
         if (req.io) {
           req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn
@@ -345,7 +345,7 @@ const orderController = {
       // Xử lý nhánh "Đưa lên Đơn Treo" (Từ DRAFT lên PENDING)
       if (status === 'PENDING' && orderToUpdate.status === 'DRAFT') {
         orderToUpdate.status = 'PENDING';
-        
+
         // Phát socket đăng đơn lại lên chợ cho tài xế
         if (req.io) {
           const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
@@ -354,12 +354,12 @@ const orderController = {
           req.io.to('admins').emit('order_updated', payload); // Cập nhật danh sách bên Admin
         }
       }
-      
+
       // XỬ LÝ KIỂM TRA BẮN ĐƠN MẠNH BẠO TỪ ADMIN (KHÔNG VƯỢT TƯỜNG LỬA CHẶN NỢ)
       if (forceAssignDriverId && forceAssignDriverId !== orderToUpdate.assignedTo?.toString()) {
         const Driver = require('../models/Driver');
         const DebtTransaction = require('../models/DebtTransaction');
-        
+
         const driver = await Driver.findById(forceAssignDriverId);
         if (!driver || driver.status !== 'active') {
           return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
@@ -372,8 +372,8 @@ const orderController = {
         transactions.forEach(tx => {
           const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
           if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-             if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-             debtByDate[dateStr] += tx.amount;
+            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+            debtByDate[dateStr] += tx.amount;
           }
         });
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -393,21 +393,21 @@ const orderController = {
 
         // Qua ải, được phép chốt đơn cho Tài Xế này
         orderToUpdate.assignedTo = forceAssignDriverId;
-        
+
         // Bắt buộc chuyển Order sang Đã nhận (Bất kể DRAFT hay PENDING)
         if (['DRAFT', 'PENDING'].includes(orderToUpdate.status)) {
-           orderToUpdate.status = 'ACCEPTED';
-           orderToUpdate.acceptedAt = new Date();
+          orderToUpdate.status = 'ACCEPTED';
+          orderToUpdate.acceptedAt = new Date();
         }
-        
+
         didAdminForceAssign = true;
-        
+
         // Hú Còi Push Notification tận Điện Thoại
         if (driver.fcmToken) {
-           const { sendMultipleNotifications } = require('../utils/notification');
-           const feeResponse = orderToUpdate.deliveryFee ? `${orderToUpdate.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
-           let msgBody = `📍 Đón: ${orderToUpdate.pickupAddress}\n💵 Phí: ${feeResponse}`;
-           await sendMultipleNotifications([driver.fcmToken], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${orderToUpdate._id}` }).catch(e => console.log('Push lỗi', e));
+          const { sendMultipleNotifications } = require('../utils/notification');
+          const feeResponse = orderToUpdate.deliveryFee ? `${orderToUpdate.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+          let msgBody = `📍 Đón: ${orderToUpdate.pickupAddress}\n💵 Phí: ${feeResponse}`;
+          await sendMultipleNotifications([driver.fcmToken], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${orderToUpdate._id}` }).catch(e => console.log('Push lỗi', e));
         }
       }
 
@@ -440,7 +440,7 @@ const orderController = {
         if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};
         orderToUpdate.rideDetails.vehicleClass = vehicleClass;
       }
-      
+
       // Tài chính Nạp rút
       if (bankName !== undefined || bankAccount !== undefined || bankAccountName !== undefined || transactionAmount !== undefined) {
         if (!orderToUpdate.financialDetails) orderToUpdate.financialDetails = {};
@@ -451,26 +451,26 @@ const orderController = {
       }
 
       await orderToUpdate.save();
-      
+
       // Load gắp thông tin tài xế để socket báo chuẩn chữ
       if (didAdminForceAssign) {
-         await orderToUpdate.populate('assignedTo', 'name phone driverCode');
+        await orderToUpdate.populate('assignedTo', 'name phone driverCode');
       }
 
       if (req.io) {
         const { emitToDriver, emitOrderAccepted } = require('../sockets/index');
         const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-        
+
         // Quát làng nước là đơn này đã vào túi ai qua emitOrderAccepted
         if (didAdminForceAssign) {
-           emitOrderAccepted(req.io, payload);
-           // Phát còi báo động riêng cho tài xế xui xẻo/may mắn này
-           req.io.to(`driver_${forceAssignDriverId.toString()}`).emit('force_assigned', payload);
+          emitOrderAccepted(req.io, payload);
+          // Phát còi báo động riêng cho tài xế xui xẻo/may mắn này
+          req.io.to(`driver_${forceAssignDriverId.toString()}`).emit('force_assigned', payload);
         } else {
-           // Bắn socket thông thường
-           req.io.to('admins').emit('order_updated', payload);
+          // Bắn socket thông thường
+          req.io.to('admins').emit('order_updated', payload);
         }
-        
+
         // Emit tới Khách hàng/Shop đã tạo đơn
         if (orderToUpdate.customerId) {
           const creatorId = orderToUpdate.customerId._id || orderToUpdate.customerId;
@@ -502,7 +502,7 @@ const orderController = {
       const { id } = req.params;
 
       const driver = await Driver.findById(req.driver._id).select('walletDebt status');
-      
+
       if (!driver || driver.status !== 'active') {
         return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
       }
@@ -515,8 +515,8 @@ const orderController = {
       transactions.forEach(tx => {
         const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
         if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-           if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-           debtByDate[dateStr] += tx.amount;
+          if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+          debtByDate[dateStr] += tx.amount;
         }
       });
       const todayStr = new Date().toLocaleDateString('en-CA');
@@ -679,7 +679,7 @@ const orderController = {
 
       // Update driver stats
       const driver = await Driver.findById(req.driver._id);
-      
+
       // LOGIC CỘNG CÔNG NỢ TỰ ĐỘNG KHI HOÀN THÀNH ĐƠN
       // Tiền nợ = Tổng Phí Giao Hàng * Phần Trăm Chiết Khấu Hiện Tại Của Tài Xế
       const deliveryFee = order.deliveryFee || 0;
@@ -703,7 +703,7 @@ const orderController = {
       // Nếu đơn hàng có tiền thưởng, cộng ngay vào Ví
       const adminBonus = order.adminBonus || 0;
       let walletInc = { 'stats.completedOrders': 1, walletDebt: debtAmount };
-      
+
       const WalletTransaction = require('../models/WalletTransaction');
 
       if (adminBonus > 0) {
@@ -723,7 +723,7 @@ const orderController = {
       // LOGIC THƯỞNG MỐC ĐƠN HẰNG NGÀY (DAILY KPI) - MÚI GIỜ VIỆT NAM (UTC+7)
       // ==========================================
       const todayStrVN = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }); // Format: "YYYY-MM-DD"
-      
+
       // Chuyển đổi "YYYY-MM-DD" của VN thành Range thời gian chuẩn UTC để query chuẩn xác MongoDB 
       const startOfDayUTC = new Date(`${todayStrVN}T00:00:00.000+07:00`);
       const endOfDayUTC = new Date(`${todayStrVN}T23:59:59.999+07:00`);
@@ -737,10 +737,10 @@ const orderController = {
 
       let milestoneBonus = 0;
       let milestoneDesc = '';
-      if (todayCompletedCount >= 2 && todayCompletedCount < 4) {
+      if (todayCompletedCount >= 17 && todayCompletedCount < 25) {
         milestoneBonus = 1000;
         milestoneDesc = `Thưởng đạt KPI (đơn thứ ${todayCompletedCount})`;
-      } else if (todayCompletedCount >= 4) {
+      } else if (todayCompletedCount >= 25) {
         milestoneBonus = 2000;
         milestoneDesc = `Thưởng KPI cày cuốc (đơn thứ ${todayCompletedCount})`;
       }
@@ -757,7 +757,7 @@ const orderController = {
           description: milestoneDesc
         });
         await bonusTx.save();
-        
+
         // Cập nhật mức thưởng KPI vào chính đơn hàng này
         order.kpiBonus = milestoneBonus;
         await order.save();
@@ -821,7 +821,7 @@ const orderController = {
         );
 
         if (!order) {
-           return res.status(400).json({ success: false, message: 'Không thể hủy! Đơn có thể đã được Tài xế nhận.' });
+          return res.status(400).json({ success: false, message: 'Không thể hủy! Đơn có thể đã được Tài xế nhận.' });
         }
 
         if (req.io) {
