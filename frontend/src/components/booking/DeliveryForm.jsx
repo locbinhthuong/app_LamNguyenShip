@@ -10,7 +10,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     customerPhone: defaultPhone || '',
     senderPhone: defaultPhone || '',
     pickupAddress: defaultLocation?.address || '',
-    pickupCoordinates: defaultLocation?.coordinates || null,
+    pickupCoordinates: defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null,
     
     receiverName: '',
     receiverPhone: '',
@@ -26,7 +26,11 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
   useEffect(() => {
     if (defaultLocation?.address) {
-      setForm(prev => ({ ...prev, pickupAddress: defaultLocation.address, pickupCoordinates: defaultLocation.coordinates }));
+      setForm(prev => ({ 
+        ...prev, 
+        pickupAddress: defaultLocation.address, 
+        pickupCoordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
+      }));
     }
   }, [defaultLocation]);
 

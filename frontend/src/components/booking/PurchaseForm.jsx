@@ -11,7 +11,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
     pickupCoordinates: null,
     senderPhone: defaultPhone || '', // SĐT tiệm quán
     deliveryAddress: defaultLocation?.address || '', // Giao cho khách
-    deliveryCoordinates: defaultLocation?.coordinates || null,
+    deliveryCoordinates: defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null,
     receiverPhone: '', // SĐT người nhận (không bắt buộc)
     receiverPhone2: '', // SĐT người nhận phụ
     itemsToBuy: '',
@@ -22,7 +22,11 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
 
   useEffect(() => {
     if (defaultLocation?.address) {
-      setForm(prev => ({ ...prev, deliveryAddress: defaultLocation.address, deliveryCoordinates: defaultLocation.coordinates }));
+      setForm(prev => ({ 
+        ...prev, 
+        deliveryAddress: defaultLocation.address, 
+        deliveryCoordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
+      }));
     }
   }, [defaultLocation]);
 

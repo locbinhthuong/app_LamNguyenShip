@@ -11,7 +11,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
     customerName: customerData?.name || '',
     customerPhone: defaultPhone || '',
     pickupAddress: defaultLocation?.address || '',
-    pickupCoordinates: defaultLocation?.coordinates || null,
+    pickupCoordinates: defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null,
     senderPhone: defaultPhone || '',
     deliveryAddress: '',
     deliveryCoordinates: null,
@@ -24,7 +24,11 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
 
   useEffect(() => {
     if (defaultLocation?.address) {
-      setForm(prev => ({ ...prev, pickupAddress: defaultLocation.address, pickupCoordinates: defaultLocation.coordinates }));
+      setForm(prev => ({ 
+        ...prev, 
+        pickupAddress: defaultLocation.address, 
+        pickupCoordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
+      }));
     }
   }, [defaultLocation]);
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, MapPin, Phone, User, Package, DollarSign, StickyNote, Banknote, Navigation } from 'lucide-react';
 import { api } from '../services/api';
 import LocationPicker from './LocationPicker';
+import AddressAutocompleteInput from './AddressAutocompleteInput';
 
 const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -179,18 +180,15 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
                   className="w-full text-sm font-bold text-slate-800 border-b border-slate-200 pb-2 focus:border-blue-500 outline-none transition-colors placeholder-slate-400"
                 />
               </div>
-              <div className="flex items-center bg-white border-b border-slate-200 focus-within:border-blue-500 transition-colors">
-                <input 
-                  type="text" name="deliveryAddress" value={form.deliveryAddress} onChange={handleChange}
+              <div className="flex items-center bg-white border-b border-slate-200 focus-within:border-blue-500 transition-colors pb-1">
+                <AddressAutocompleteInput 
+                  value={form.deliveryAddress}
+                  onChangeText={txt => setForm(prev => ({...prev, deliveryAddress: txt}))}
+                  onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                   placeholder="Địa chỉ giao đến *"
-                  className="w-full text-sm font-bold text-slate-800 pb-2 outline-none placeholder-slate-400 bg-transparent flex-1"
+                  onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
+                  className="w-full font-bold text-slate-800"
                 />
-                <div 
-                  className="p-2 mb-2 text-blue-600 bg-blue-50 rounded-lg cursor-pointer active:scale-95 transition-transform"
-                  onClick={() => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null })}
-                >
-                  <MapPin size={18} />
-                </div>
               </div>
             </div>
           </div>
@@ -252,6 +250,7 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
         isOpen={mapConfig !== null}
         onClose={() => setMapConfig(null)}
         initialPosition={mapConfig?.pos}
+        initialSearchQuery={mapConfig?.query}
         onSelect={(loc) => {
           if (mapConfig?.type === 'delivery') {
             setForm({ ...form, deliveryAddress: loc.address, deliveryCoordinates: { lat: loc.lat, lng: loc.lng } });

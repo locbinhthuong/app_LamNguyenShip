@@ -11,7 +11,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
     customerName: customerData?.name || '',
     customerPhone: defaultPhone || '',
     pickupAddress: defaultLocation?.address || '',
-    pickupCoordinates: defaultLocation?.coordinates || null,
+    pickupCoordinates: defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null,
     senderPhone: '',
     bankName: '',
     bankAccount: '',
@@ -23,7 +23,11 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
 
   useEffect(() => {
     if (defaultLocation?.address) {
-      setForm(prev => ({ ...prev, pickupAddress: defaultLocation.address, pickupCoordinates: defaultLocation.coordinates }));
+      setForm(prev => ({ 
+        ...prev, 
+        pickupAddress: defaultLocation.address, 
+        pickupCoordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
+      }));
     }
   }, [defaultLocation]);
 

@@ -68,9 +68,9 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     }
   }, [isOpen, initialPosition, initialSearchQuery]);
 
-  // Luôn luôn lấy lại vị trí GPS thực tế khi bản đồ vừa được mở (Theo yêu cầu: bấm vào lần nữa lấy vị trí điện thoại)
+  // Luôn luôn lấy lại vị trí GPS thực tế khi bản đồ vừa được mở (NẾU KHÔNG CÓ POS VÀ QUERY)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !initialPosition && !initialSearchQuery) {
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
           (pos) => {
@@ -86,7 +86,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
         );
       }
     }
-  }, [isOpen]);
+  }, [isOpen, initialPosition, initialSearchQuery]);
 
   // Xử lý Gợi ý Địa chỉ (Autocomplete)
   useEffect(() => {
