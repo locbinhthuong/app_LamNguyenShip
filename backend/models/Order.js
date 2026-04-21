@@ -34,6 +34,11 @@ const orderSchema = new mongoose.Schema({
     required: [true, 'Số điện thoại người đặt là bắt buộc'],
     trim: true
   },
+  pickupPhone: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   // THÔNG TIN GIAO HÀNG (Người gửi / Người nhận)
   senderName: { type: String, trim: true },
   senderPhone: { type: String, trim: true },
