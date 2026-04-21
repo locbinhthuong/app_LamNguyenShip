@@ -283,7 +283,7 @@ const ShopDashboard = () => {
           isOpen={showLocationPicker}
           onClose={() => setShowLocationPicker(false)}
           onSelect={handleLocationSelect}
-          initialPosition={locationDetails ? [locationDetails.lat, locationDetails.lng] : null}
+          initialPosition={null}
         />
       )}
     </div>
