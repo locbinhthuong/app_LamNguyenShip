@@ -33,12 +33,12 @@ export default function CreateOrder() {
 
     const newForm = { ...form };
 
-    // 1. Phân tích Điểm Lấy
-    const pickupMatch = text.match(/(?:📍?Điểm Lấy Đơn:|Điểm Lấy:|Từ:)\s*([^\n]+)/i);
+    // 1. Phân tích Điểm Lấy (Thêm nhiều cụm từ linh hoạt như khách hay nhắn)
+    const pickupMatch = text.match(/(?:📍?Điểm Lấy Đơn:|Điểm Lấy:|Từ:|Lấy đơn tại:|Lấy hàng:|Lấy tại:|Nhận tại:|Địa chỉ lấy:|Nơi lấy:|Chỗ lấy:|Chỗ này lấy đơn:|Lấy chỗ này:|Lấy chỗ:)\s*([^\n]+)/i);
     let rawPickup = pickupMatch ? pickupMatch[1].trim() : '';
 
-    // 2. Phân tích Điểm Giao
-    const deliveryMatch = text.match(/(?:Điểm Giao:|Đến:|Giao:)\s*([^\n]+)/i);
+    // 2. Phân tích Điểm Giao (Thêm nhiều cụm từ linh hoạt)
+    const deliveryMatch = text.match(/(?:Điểm Giao:|Đến:|Giao:|Giao đơn tại:|Giao hàng:|Giao tại:|Giao đến:|Địa chỉ giao:|Nơi giao:|Chỗ giao:|Giao chỗ này:|Trực tiếp:|Gửi cho:|Ship qua:)\s*([^\n]+)/i);
     let rawDelivery = deliveryMatch ? deliveryMatch[1].trim() : '';
 
     // 3. Phân tích SĐT
@@ -98,7 +98,7 @@ export default function CreateOrder() {
     // 6. Trích xuất ghi chú
     const noteLines = text.split('\n').map(l => l.trim()).filter(l => {
        if (!l) return false;
-       if (l.match(/^(📍?Điểm Lấy Đơn:|Điểm Lấy:|Từ:|Điểm Giao:|Đến:|Giao:|Ship:)/i)) return false;
+       if (l.match(/^(📍?Điểm Lấy Đơn:|Điểm Lấy:|Từ:|Lấy đơn|Lấy hàng|Lấy tại|Nơi lấy|Chỗ lấy|Điểm Giao:|Đến:|Giao:|Giao đơn|Giao hàng|Nơi giao|Chỗ giao|Ship:)/i)) return false;
        if (l.match(/^0\d{9,10}$/)) return false; 
        if (l.match(/^Thu\s*([0-9\.,]+[kK]?)$/i)) return false; // Chỉ bỏ qua nếu dòng CHỈ chứa mệnh giá thu
        return true;
