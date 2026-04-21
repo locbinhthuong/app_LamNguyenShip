@@ -20,8 +20,95 @@ export default function CreateOrder() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [smartText, setSmartText] = useState('');
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSmartPaste = (e) => {
+    const text = e.target.value;
+    setSmartText(text);
+    if (!text.trim()) return;
+
+    const newForm = { ...form };
+
+    // 1. Phân tích Điểm Lấy
+    const pickupMatch = text.match(/(?:📍?Điểm Lấy Đơn:|Điểm Lấy:|Từ:)\s*([^\n]+)/i);
+    let rawPickup = pickupMatch ? pickupMatch[1].trim() : '';
+
+    // 2. Phân tích Điểm Giao
+    const deliveryMatch = text.match(/(?:Điểm Giao:|Đến:|Giao:)\s*([^\n]+)/i);
+    let rawDelivery = deliveryMatch ? deliveryMatch[1].trim() : '';
+
+    // 3. Phân tích SĐT
+    let pPhone = '';
+    const pMatch = rawPickup.match(/(0\d{9,10})/);
+    if (pMatch) { 
+      pPhone = pMatch[1]; 
+      rawPickup = rawPickup.replace(pMatch[1], '').replace(/[-,\s]+$/, '').trim(); 
+    }
+
+    let dPhone = '';
+    const dMatch = rawDelivery.match(/(0\d{9,10})/);
+    if (dMatch) { 
+      dPhone = dMatch[1]; 
+      rawDelivery = rawDelivery.replace(dMatch[1], '').replace(/[-,\s]+$/, '').trim(); 
+    }
+
+    const allPhones = text.match(/0\d{9,10}/g) || [];
+    if (!pPhone && allPhones.length > 0) pPhone = allPhones[0];
+
+    const deliveryIndex = text.toLowerCase().indexOf('điểm giao');
+    if (!dPhone && deliveryIndex !== -1) {
+       const textAfter = text.substring(deliveryIndex);
+       const phonesAfter = textAfter.match(/0\d{9,10}/g);
+       if (phonesAfter && phonesAfter.length > 0) dPhone = phonesAfter[0];
+    }
+    if (!dPhone && allPhones.length > 1) dPhone = allPhones[allPhones.length - 1];
+
+    if (rawPickup) newForm.pickupAddress = rawPickup;
+    if (pPhone) newForm.pickupPhone = pPhone;
+    if (rawDelivery) newForm.deliveryAddress = rawDelivery;
+    if (dPhone) newForm.customerPhone = dPhone; 
+    if (dPhone && !newForm.customerName) newForm.customerName = 'Khách đặt qua Chat';
+
+    // 4. Phân tích COD
+    const codMatch = text.match(/Thu\s*([0-9\.,]+[kK]?)/i);
+    if (codMatch) {
+       let codStr = codMatch[1].toLowerCase().replace(/[,.]/g, '');
+       let cod = 0;
+       if (codStr.includes('k')) cod = parseInt(codStr.replace('k', '')) * 1000;
+       else cod = parseInt(codStr);
+       if (cod > 0 && cod < 1000) cod = cod * 1000;
+       newForm.codAmount = cod;
+    }
+
+    // 5. Phân tích Ship
+    const shipMatch = text.match(/Ship:\s*([0-9\.,]+[kK]?)/i);
+    if (shipMatch) {
+       let shipStr = shipMatch[1].toLowerCase().replace(/[,.]/g, '');
+       let ship = 0;
+       if (shipStr.includes('k')) ship = parseInt(shipStr.replace('k', '')) * 1000;
+       else ship = parseInt(shipStr);
+       if (ship > 0 && ship < 1000) ship = ship * 1000;
+       newForm.deliveryFee = ship;
+    }
+
+    // 6. Trích xuất ghi chú
+    const noteLines = text.split('\n').map(l => l.trim()).filter(l => {
+       if (!l) return false;
+       if (l.match(/^(📍?Điểm Lấy Đơn:|Điểm Lấy:|Từ:|Điểm Giao:|Đến:|Giao:|Ship:)/i)) return false;
+       if (l.match(/^0\d{9,10}$/)) return false; 
+       if (l.match(/^Thu\s*([0-9\.,]+[kK]?)$/i)) return false; // Chỉ bỏ qua nếu dòng CHỈ chứa mệnh giá thu
+       return true;
+    });
+    const parsedNote = noteLines.join(' | ');
+    if (parsedNote) {
+       newForm.note = newForm.note ? newForm.note + ' | ' + parsedNote : parsedNote;
+    }
+
+    setForm(newForm);
   };
 
   const handleSubmit = async (e) => {
@@ -60,6 +147,28 @@ export default function CreateOrder() {
   return (
     <div className="mx-auto max-w-3xl p-4 pb-8 sm:p-6">
       <h1 className="mb-5 text-lg font-bold text-slate-800 sm:mb-6 sm:text-2xl">📦 Tạo Đơn hàng Mới</h1>
+
+      {/* TẠO ĐƠN THÔNG MINH */}
+      <div className="mb-6 rounded-2xl border-2 border-dashed border-blue-300 bg-blue-50/50 p-4">
+        <label className="mb-2 block text-sm font-bold text-blue-800 flex items-center justify-between">
+          <span>🤖 Dán Nhanh Đơn Zalo / Facebook</span>
+          <button 
+            type="button" 
+            onClick={() => { setSmartText(''); setForm({ customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '' }); }}
+            className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
+          >
+            🔄 Tạo Mới Lại
+          </button>
+        </label>
+        <textarea
+          value={smartText}
+          onChange={handleSmartPaste}
+          rows={4}
+          placeholder="Dán nguyên văn tin nhắn của khách vào đây...&#10;Ví dụ:&#10;📍Điểm Lấy: 120 Tân An 0788123123&#10;Điểm Giao: 132 Hùng Vương 0367123123&#10;Thu 425k - Ship 17k"
+          className="w-full rounded-xl border border-blue-200 p-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white placeholder-slate-400 font-mono shadow-sm"
+        />
+        <p className="mt-2 text-xs text-blue-600 font-medium">Hệ thống sẽ tự động bắt chữ và điền xuống các ô bên dưới giúp bạn!</p>
+      </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
         {error && (
