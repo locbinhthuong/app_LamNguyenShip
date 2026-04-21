@@ -57,6 +57,20 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
             const lon = parseFloat(data[0].lon);
             setMapCenter([lat, lon]);
             setFlyPos([lat, lon]);
+          } else {
+            // FALLBACK TO GPS IF TEXT SEARCH YIELDS NOTHING
+            if ('geolocation' in navigator) {
+              navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                  const lat = pos.coords.latitude;
+                  const lng = pos.coords.longitude;
+                  setMapCenter([lat, lng]);
+                  setFlyPos([lat, lng]);
+                },
+                (err) => console.log('Không thể lấy GPS fallback:', err),
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+              );
+            }
           }
         } catch (err) {
           console.error(err);
@@ -68,7 +82,15 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     }
   }, [isOpen, initialPosition, initialSearchQuery]);
 
-  // Luôn luôn lấy lại vị trí GPS thực tế khi bản đồ vừa được mở (NẾU KHÔNG CÓ POS VÀ QUERY)
+  // Cập nhật lại toạ độ đích mỗi khi mở lên nếu CÓ truyền initialPosition từ bên ngoài
+  useEffect(() => {
+    if (isOpen && initialPosition) {
+      setMapCenter(initialPosition);
+      setFlyPos(initialPosition);
+    }
+  }, [isOpen, initialPosition]);
+
+  // Luôn luôn lấy lại vị trí GPS thực tế khi bản đồ vừa được mở (NẾU KHÔNG CÓ POS VÀ CŨNG KHÔNG CÓ QUERY TỪ FORM TRUYỀN VÀO)
   useEffect(() => {
     if (isOpen && !initialPosition && !initialSearchQuery) {
       if ('geolocation' in navigator) {
