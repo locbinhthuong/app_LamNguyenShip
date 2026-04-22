@@ -446,7 +446,7 @@ export default function Home() {
        loadData();
        // Global Alarm in App.jsx tự động lo khoản chuông
        
-       if (Capacitor.isNativePlatform()) {
+       if (Capacitor.isNativePlatform() && document.visibilityState !== 'visible') {
           import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
             LocalNotifications.schedule({
               notifications: [

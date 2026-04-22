@@ -125,7 +125,10 @@ function AppContent() {
        if (now - lastNewOrderTime < 2000) return; // Chỉ Debounce tiếng chuông để chống hú Spam
        lastNewOrderTime = now;
        
-       startAlarm();
+       // CHỈ BẬT CHUÔNG VÀ CÒI KHI TÀI XẾ ĐANG MỞ APP TRÊN MÀN HÌNH
+       if (document.visibilityState === 'visible') {
+           startAlarm();
+       }
     };
     window.addEventListener('driver_new_order', handleNewOrderEvent);
     window.addEventListener('driver_order_accepted', handleStopEvent);
@@ -140,7 +143,9 @@ function AppContent() {
                 message: order.pickupAddress ? `Nơi lấy/đón: ${order.pickupAddress}` : 'Nhiệm vụ mới Mở app ngay!'
             });
         }
-        startAlarm(); // Còi rú ngay lập tức
+        if (document.visibilityState === 'visible') {
+            startAlarm(); // Còi rú ngay lập tức
+        }
     };
     window.addEventListener('driver_force_assigned', handleForceAssign);
 
@@ -257,7 +262,10 @@ function AppContent() {
             <span className="text-xl animate-pulse shrink-0">🔔</span>
             <div 
               className="flex-1 min-w-0 cursor-pointer"
-              onClick={() => setPushMessage(null)}
+              onClick={() => {
+                setPushMessage(null);
+                navigate('/');
+              }}
             >
               <h3 className="text-[13px] font-bold text-blue-400 truncate">{pushMessage.title || "Có đơn hàng mới"}</h3>
               <p className="text-[11px] text-slate-300 truncate mt-0.5">{pushMessage.message?.replace(/\n/g, ' 🔜 ')}</p>
