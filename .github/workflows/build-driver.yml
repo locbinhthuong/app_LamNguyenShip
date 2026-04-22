@@ -32,7 +32,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
-          java-version: '17'
+          java-version: '21'
 
       - name: Build APK
         working-directory: ./driver-app/android
@@ -70,6 +70,7 @@ jobs:
       - name: Build iOS App (Unsigned)
         working-directory: ./driver-app/ios/App
         run: |
+          pod install
           xcodebuild -workspace App.xcworkspace -scheme App -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
           mkdir -p Payload
           cp -r build/Release-iphoneos/App.app Payload/
