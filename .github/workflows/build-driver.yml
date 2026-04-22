@@ -70,7 +70,8 @@ jobs:
       - name: Build iOS App (Unsigned)
         working-directory: ./driver-app/ios/App
         run: |
-          xcodebuild -project App.xcodeproj -scheme App -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
+          pod install
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
           mkdir -p Payload
           cp -r build/Release-iphoneos/App.app Payload/
           zip -r DriverApp-Unsigned.ipa Payload
