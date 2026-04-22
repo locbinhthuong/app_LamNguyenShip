@@ -258,28 +258,22 @@ function AppContent() {
       />
       {pushMessage && (
         <div className="fixed top-2 left-2 right-2 z-[9999] animate-[slideDown_0.3s_ease-out] flex justify-center pointer-events-none">
-          <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-2.5 flex items-center gap-3 ring-2 ring-blue-500/50 w-full max-w-md pointer-events-auto">
+          <div 
+            onClick={() => {
+              window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+              setPushMessage(null);
+              navigate('/');
+            }}
+            className="cursor-pointer bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-2.5 flex items-center gap-3 ring-2 ring-blue-500/50 w-full max-w-md pointer-events-auto active:scale-[0.98] transition-transform"
+          >
             <span className="text-xl animate-pulse shrink-0">🔔</span>
-            <div 
-              className="flex-1 min-w-0 cursor-pointer"
-              onClick={() => {
-                setPushMessage(null);
-                navigate('/');
-              }}
-            >
+            <div className="flex-1 min-w-0">
               <h3 className="text-[13px] font-bold text-blue-400 truncate">{pushMessage.title || "Có đơn hàng mới"}</h3>
               <p className="text-[11px] text-slate-300 truncate mt-0.5">{pushMessage.message?.replace(/\n/g, ' 🔜 ')}</p>
             </div>
-            <button 
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  window.dispatchEvent(new CustomEvent('stop_alarm_event')); 
-                  setPushMessage(null); 
-                }}
-                className="shrink-0 bg-red-600 active:bg-red-700 text-white text-[10px] font-black px-3 py-2 rounded-lg ml-1 shadow-md uppercase tracking-wider"
-            >
-              🔕 Tắt
-            </button>
+            <div className="shrink-0 bg-red-600 text-white text-[10px] font-black px-3 py-2 rounded-lg ml-1 shadow-md uppercase tracking-wider">
+              🔕 TẮT
+            </div>
           </div>
         </div>
       )}
