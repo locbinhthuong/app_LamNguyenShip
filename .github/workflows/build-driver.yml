@@ -1,0 +1,82 @@
+name: Build Driver App (APK & IPA)
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'driver-app/**'
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install & Build Web
+        working-directory: ./driver-app
+        run: |
+          npm install
+          npm run build
+          npx cap sync android
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build APK
+        working-directory: ./driver-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: Driver-App-Android-APK
+          path: driver-app/android/app/build/outputs/apk/debug/app-debug.apk
+
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install & Build Web
+        working-directory: ./driver-app
+        run: |
+          npm install
+          npm run build
+          npm install @capacitor/ios
+          npx cap add ios || true
+          npx cap sync ios
+
+      - name: Build iOS App (Unsigned)
+        working-directory: ./driver-app/ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO build
+          mkdir -p Payload
+          cp -r build/Release-iphoneos/App.app Payload/
+          zip -r DriverApp-Unsigned.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: Driver-App-iOS-IPA
+          path: driver-app/ios/App/DriverApp-Unsigned.ipa
