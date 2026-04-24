@@ -40,8 +40,8 @@ const CustomerNotifications = () => {
               message: ann.content,
               time: new Date(ann.createdAt).toLocaleString('vi-VN'),
               read: false,
-              icon: <Speaker className="text-orange-500" size={20} />,
-              bg: 'bg-orange-100',
+              icon: <Speaker className="text-blue-500" size={20} />,
+              bg: 'bg-blue-100',
               imageUrl: ann.imageUrl,
               videoUrl: ann.videoUrl
             }));
@@ -58,13 +58,13 @@ const CustomerNotifications = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 pb-20 font-sans relative">
-      <div className="bg-white px-4 py-3 shadow-sm sticky top-0 z-40 flex items-center justify-center">
+      <div className="bg-white px-4 py-3 sticky top-0 z-40 flex items-center justify-center">
         <span className="font-bold text-gray-800 text-lg">Thông báo</span>
       </div>
 
       <div className="p-4 space-y-3">
         {allNotifications.map(noti => (
-          <div key={noti.id} className={`bg-white rounded-2xl p-4 shadow-sm border ${noti.read ? 'border-gray-100 opacity-70' : 'border-blue-100'}`}>
+          <div key={noti.id} className={`bg-white rounded-2xl p-4 border ${noti.read ? 'border-gray-100 opacity-70' : 'border-blue-100'}`}>
             <div className="flex gap-3">
                <div className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center ${noti.bg}`}>
                   {noti.icon}
@@ -77,10 +77,10 @@ const CustomerNotifications = () => {
                  
                  {/* Nếu có đính kèm ảnh thì hiển thị thu nhỏ */}
                  {noti.imageUrl && !noti.videoUrl && (
-                   <img src={`https://api.aloshipp.com${noti.imageUrl}`} alt="đính kèm" className="w-full h-32 object-cover rounded-lg mb-2 border border-orange-100" />
+                   <img src={`https://api.aloshipp.com${noti.imageUrl}`} alt="đính kèm" className="w-full h-32 object-cover rounded-lg mb-2 border border-blue-100" />
                  )}
                  {noti.videoUrl && (
-                   <video src={`https://api.aloshipp.com${noti.videoUrl}`} className="w-full h-32 object-cover rounded-lg mb-2 border border-orange-100" muted autoPlay playsInline loop></video>
+                   <video src={`https://api.aloshipp.com${noti.videoUrl}`} className="w-full h-32 object-cover rounded-lg mb-2 border border-blue-100" muted autoPlay playsInline loop></video>
                  )}
 
                  <span className="text-[10px] text-gray-400 font-medium">{noti.time}</span>

@@ -74,7 +74,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
     <form onSubmit={handleSubmit} className="space-y-4 pb-12">
       
       {/* LOẠI DỊCH VỤ */}
-      <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 grid grid-cols-3 gap-2">
+      <div className="bg-white p-2 rounded-2xl border border-gray-100 grid grid-cols-3 gap-2">
         <button 
           type="button"
           onClick={() => { setSubType('XE_OM'); setVehicleClass(''); }}
@@ -102,7 +102,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       </div>
 
       {subType === 'LAI_HO_XE_MAY' && (
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-teal-100 animate-fadeIn">
+        <div className="bg-white p-3 rounded-2xl border border-teal-100 animate-fadeIn">
           <label className="text-[10px] font-bold text-teal-600 uppercase tracking-wider block mb-2 text-center">LOẠI XE BẠN ĐANG MANG</label>
           <div className="flex gap-2">
             {['TAY_GA', 'XE_SO', 'CON_TAY'].map(type => (
@@ -119,7 +119,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       )}
 
       {subType === 'LAI_HO_OTO' && (
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-indigo-100 animate-fadeIn">
+        <div className="bg-white p-3 rounded-2xl border border-indigo-100 animate-fadeIn">
           <label className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block mb-2 text-center">DÒNG XE BẠN ĐANG ĐI</label>
           <div>
             <input 
@@ -144,7 +144,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       </div>
 
       {/* THÔNG TIN HÀNH TRÌNH */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-4">
         
         {/* ĐIỂM ĐÓN */}
         <div className="flex items-start gap-4">
@@ -165,7 +165,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="Nhập địa chỉ đón..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300 shadow-sm"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300"
               />
               <div className="mt-2">
                 <input 
@@ -198,7 +198,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
                 onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                 placeholder="Nhập địa chỉ đến..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-red-300 shadow-sm"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-red-300"
               />
 
             </div>
@@ -208,7 +208,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       </div>
 
       {/* GHI CHÚ CHUYẾN ĐI */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-3">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">GHI CHÚ CHUYẾN ĐI</label>
         <div>
           <textarea 

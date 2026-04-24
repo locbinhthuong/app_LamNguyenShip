@@ -103,7 +103,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
       <div className="w-full max-w-lg bg-slate-50 h-full flex flex-col shadow-2xl animate-fade-in-right">
         
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
           <div>
             <h2 className="text-xl font-bold text-slate-800">Sổ Đen Công Nợ</h2>
             <p className="text-xs text-slate-500 font-medium">Quản lý thu chi vi phạm / chiết khấu</p>
@@ -121,7 +121,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             
             {/* THÔNG TIN CHUNG */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col items-center">
+            <div className="bg-white rounded-2xl p-5 border border-slate-200 flex flex-col items-center">
               <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-xl mb-3">
                  {data.driver.name.charAt(0)}
               </div>
@@ -149,7 +149,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
 
             {/* FORM HOẶC DANH SÁCH THU NỢ THEO NGÀY */}
             {!editingTx && !isAddingPenalty ? (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+              <div className="bg-white rounded-2xl p-6 border border-slate-200">
                 <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 uppercase text-sm flex justify-between items-center">
                    <span>Các Khung Nợ Chờ Thu</span>
                    <button 
@@ -211,7 +211,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
                 )}
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className={`bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4 border-l-4 ${isAddingPenalty ? 'border-l-red-500' : 'border-l-amber-500'}`}>
+              <form onSubmit={handleSubmit} className={`bg-white rounded-2xl p-6 border border-slate-200 space-y-4 border-l-4 ${isAddingPenalty ? 'border-l-red-500' : 'border-l-amber-500'}`}>
                   <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2 flex justify-between items-center">
                      <span>{isAddingPenalty ? 'Ghi Nợ / Phạt Mới' : 'Sửa Giao Dịch Đã Chọn'}</span>
                      <button type="button" onClick={() => { setEditingTx(null); setIsAddingPenalty(false); setAmount(''); setDescription(''); }} className="text-xs text-slate-400 font-normal underline hover:text-slate-700">Hủy</button>
@@ -244,7 +244,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
             )}
 
             {/* LỊCH SỬ GIAO DỊCH */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <div className="bg-white rounded-2xl p-5 border border-slate-200">
               <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
                  🕒 Lịch sử Sổ Đen
               </h4>

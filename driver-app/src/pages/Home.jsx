@@ -592,12 +592,12 @@ export default function Home() {
         <div className="flex items-center justify-between gap-2">
           {/* Cụm trái: Logo rút gọn + Tên Tài xế */}
           <div className="flex items-center gap-2">
-            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="w-20 h-auto object-contain drop-shadow-md scale-125 mr-1" />
+            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="w-20 h-auto object-contain  scale-125 mr-1" />
             <div 
               onClick={() => setEditModal(true)}
               className="flex items-center gap-2 bg-white/10 p-1 pr-3 rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-95 group"
             >
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white/50 shadow-sm relative">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white/50 relative">
                 {driver?.avatar ? (
                   <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
@@ -619,7 +619,7 @@ export default function Home() {
               type="button"
               onClick={toggleOnline}
               disabled={isToggling}
-              className={`rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 min-w-[110px] justify-center ${
+              className={`rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1.5 min-w-[110px] justify-center ${
                 driver?.isOnline 
                   ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-400' 
                      : gpsStatus === 'FINDING' ? 'bg-yellow-500 text-slate-900 border border-yellow-400 animate-pulse'
@@ -647,14 +647,14 @@ export default function Home() {
 
         {/* Cặp Thống kê Doanh Số Ngày Thay Vì Đơn Cũ */}
         <div className="mt-2 grid grid-cols-2 gap-3 w-full max-w-sm px-2">
-          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 shadow-sm backdrop-blur-sm">
+          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 backdrop-blur-sm">
             <p className="text-[11px] opacity-80 uppercase font-semibold tracking-wider mb-1 text-blue-100">Đã Hoàn Thành</p>
-            <p className="text-xl sm:text-2xl font-black drop-shadow-sm">{dailyStats.orders}</p>
+            <p className="text-xl sm:text-2xl font-black ">{dailyStats.orders}</p>
             <p className="text-[9px] mt-0.5 opacity-60">hôm nay</p>
           </div>
-          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 shadow-sm backdrop-blur-sm">
+          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 backdrop-blur-sm">
             <p className="text-[11px] opacity-80 uppercase font-semibold tracking-wider mb-1 text-blue-100">Thu Nhập Tạm Tính</p>
-            <p className="text-xl sm:text-2xl font-black text-green-300 drop-shadow-md">
+            <p className="text-xl sm:text-2xl font-black text-green-300 ">
                {dailyStats.fee.toLocaleString()}<span className="text-xs ml-0.5 opacity-80">đ</span>
             </p>
             <p className="text-[9px] mt-0.5 opacity-60">chưa trừ 15%</p>
@@ -663,7 +663,7 @@ export default function Home() {
       </div>
 
       {/* Tabs */}
-      <div className="shrink-0 sticky top-0 z-20 flex bg-white border-b border-slate-200 shadow-sm">
+      <div className="shrink-0 sticky top-0 z-20 flex bg-white border-b border-slate-200">
         <button
           type="button"
           onClick={() => { setFilter('available'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}

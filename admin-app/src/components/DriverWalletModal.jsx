@@ -97,7 +97,7 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
       <div className="w-full max-w-lg bg-slate-50 h-full flex flex-col shadow-2xl animate-fade-in-right">
         
         {/* Header */}
-        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10">
           <div>
             <h2 className="text-xl font-bold text-emerald-700 flex items-center gap-2">🏦 Ví Tài Xế</h2>
             <p className="text-xs text-slate-500 font-medium tracking-wide">Quản lý nhận tiền COD / Thưởng</p>
@@ -126,7 +126,7 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
                  </svg>
               </div>
               <p className="text-emerald-100 font-medium text-[10px] mb-1 uppercase tracking-widest relative z-10">SỐ DƯ VÍ KHẢ DỤNG</p>
-              <h2 className="text-4xl font-black mb-1 relative z-10 drop-shadow-md">
+              <h2 className="text-4xl font-black mb-1 relative z-10 ">
                  {(data.driver.walletBalance - totalPendingAmount).toLocaleString()} đ
               </h2>
               <p className="text-[10px] font-medium bg-emerald-900/20 px-3 py-1 rounded-full border border-emerald-400/20">
@@ -140,11 +140,11 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
 
             {/* DANH SÁCH LỆNH CHỜ DUYỆT RÚT */}
             {pendingTxs.length > 0 && (
-               <div className="bg-amber-50 rounded-2xl p-4 shadow-sm border border-amber-200">
+               <div className="bg-amber-50 rounded-2xl p-4 border border-amber-200">
                  <h4 className="font-bold text-amber-800 border-b border-amber-200/50 pb-2 mb-3">🔔 Yêu Cầu Rút Tiền Kìa Sếp!</h4>
                  <div className="space-y-3">
                     {pendingTxs.map(ptx => (
-                       <div key={ptx._id} className="bg-white border border-amber-200 p-3 rounded-xl shadow-sm">
+                       <div key={ptx._id} className="bg-white border border-amber-200 p-3 rounded-xl">
                           <p className="font-black text-lg text-amber-600 mb-1">Rút: {Math.abs(ptx.amount).toLocaleString()} đ</p>
                           <div className="bg-slate-50 p-2 rounded text-xs text-slate-600 border border-slate-100 mb-3 space-y-0.5">
                              <div className="flex justify-between"><span>Bank:</span> <strong className="text-blue-700">{ptx.bankInfo?.bankName}</strong></div>
@@ -152,8 +152,8 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
                              <div className="flex justify-between"><span>STK:</span> <strong className="text-teal-700 font-mono text-sm">{ptx.bankInfo?.accountNumber}</strong></div>
                           </div>
                           <div className="flex gap-2">
-                             <button onClick={() => handeProcessPending(ptx._id, 'APPROVE')} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded shadow-sm text-xs transition-colors">🔥 DUYỆT CHI & CHUYỂN KHOẢN</button>
-                             <button onClick={() => handeProcessPending(ptx._id, 'REJECT')} className="basis-1/3 bg-slate-100 hover:bg-red-100 text-red-600 hover:text-red-700 font-bold py-2 rounded shadow-sm border border-slate-200 text-xs transition-colors">TỪ CHỐI</button>
+                             <button onClick={() => handeProcessPending(ptx._id, 'APPROVE')} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded text-xs transition-colors">🔥 DUYỆT CHI & CHUYỂN KHOẢN</button>
+                             <button onClick={() => handeProcessPending(ptx._id, 'REJECT')} className="basis-1/3 bg-slate-100 hover:bg-red-100 text-red-600 hover:text-red-700 font-bold py-2 rounded border border-slate-200 text-xs transition-colors">TỪ CHỐI</button>
                           </div>
                        </div>
                     ))}
@@ -162,7 +162,7 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
             )}
 
             {/* FORM GIAO DỊCH VÍ CHỦ ĐỘNG */}
-            <form onSubmit={handleAdjustWallet} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+            <form onSubmit={handleAdjustWallet} className="bg-white rounded-2xl p-5 border border-slate-200 space-y-4">
                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-2 text-sm">Trao Thưởng / Nạp Rút Chủ Động</h4>
                
                <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
@@ -198,7 +198,7 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
             </form>
 
             {/* LỊCH SỬ GIAO DỊCH */}
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <div className="bg-white rounded-2xl p-5 border border-slate-200">
                <h4 className="font-bold text-slate-800 border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
                   <span className="text-xl">💰</span> Sao Kê Giao Dịch Ví
                </h4>

@@ -138,7 +138,7 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
         <div className="overflow-y-auto p-5 space-y-4 hide-scrollbar">
           
           {/* Thông tin Cửa hàng */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative overflow-hidden group focus-within:border-blue-200 focus-within:shadow-md transition-all">
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 relative overflow-hidden group focus-within:border-blue-200 focus-within:shadow-md transition-all">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center"><MapPin size={12} className="text-slate-500"/></span>
               Nơi Lấy Hàng (Shop)
@@ -160,7 +160,7 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Thông tin Khách nhận */}
-          <div className="bg-white p-5 rounded-2xl border border-blue-100 shadow-sm relative overflow-hidden group focus-within:border-blue-300 focus-within:shadow-md transition-all">
+          <div className="bg-white p-5 rounded-2xl border border-blue-100 relative overflow-hidden group focus-within:border-blue-300 focus-within:shadow-md transition-all">
             <div className="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
             <h3 className="text-xs font-bold text-blue-500 uppercase tracking-widest mb-4 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center"><User size={12} className="text-blue-600"/></span>
@@ -194,7 +194,7 @@ const ShopCreateOrderModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Thông tin Hàng & Tiền */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-100 space-y-4">
             <div className="flex items-center gap-4">
               <div className="text-slate-400 bg-slate-50 p-2 rounded-lg"><Package size={18}/></div>
               <input 

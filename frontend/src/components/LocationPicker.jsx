@@ -197,7 +197,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
   return (
     <div className="fixed inset-0 z-[999] bg-white flex flex-col font-sans">
       {/* MAP HEADER */}
-      <div className="h-14 bg-white shadow-sm flex items-center px-4 relative z-[1000] border-b border-gray-100">
+      <div className="h-14 bg-white flex items-center px-4 relative z-[1000] border-b border-gray-100">
         <button onClick={onClose} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">
           <X size={24} />
         </button>
@@ -205,7 +205,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       </div>
 
       {/* THANH TÌM KIẾM TỰ ĐỘNG BỒI ĐẮP (AUTOCOMPETE) MẶT TIỀN */}
-      <div className="bg-white px-4 pb-3 shadow-sm relative z-[1001]">
+      <div className="bg-white px-4 pb-3 relative z-[1001]">
         <div className="relative">
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
             <Search size={18} />
@@ -276,7 +276,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
           {/* Biểu tượng Pin (Dùng ảnh SVG hoặc biểu tượng từ Lucide) */}
           <div className="relative">
             <svg 
-              className={`w-10 h-10 ${isDragging ? 'text-orange-400 -translate-y-2' : 'text-orange-600'} transition-all duration-200 drop-shadow-xl`} 
+              className={`w-10 h-10 ${isDragging ? 'text-blue-400 -translate-y-2' : 'text-blue-600'} transition-all duration-200 drop-shadow-xl`} 
               viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
             >
               <path d="M12 2C8.13 2 5 5.13 5 9C5 14.25 12 22 12 22C12 22 19 14.25 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" />
@@ -298,7 +298,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       {/* FOOTER: XÁC NHẬN VỊ TRÍ */}
       <div className="bg-white p-5 shadow-[0_-5px_20px_rgba(0,0,0,0.05)] z-[1000] sticky bottom-0 border-t border-gray-100">
         <div className="flex items-start gap-3 mb-5">
-          <MapPin size={24} className="text-orange-600 mt-1 flex-shrink-0" />
+          <MapPin size={24} className="text-blue-600 mt-1 flex-shrink-0" />
           <div className="flex-1">
             <h4 className="text-sm font-bold text-gray-800 mb-1">Chi tiết địa chỉ</h4>
             {isLoadingAddress ? (
@@ -315,7 +315,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
           onClick={handleConfirm}
           disabled={isLoadingAddress}
           className={`w-full py-4 text-center rounded-2xl font-bold text-white shadow-xl transition-all ${
-            isLoadingAddress ? 'bg-orange-300' : 'bg-orange-600 active:bg-orange-700 active:scale-[0.98]'
+            isLoadingAddress ? 'bg-blue-300' : 'bg-blue-600 active:bg-blue-700 active:scale-[0.98]'
           }`}
         >
           XÁC NHẬN ĐIỂM NÀY

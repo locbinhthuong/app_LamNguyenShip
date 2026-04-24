@@ -93,16 +93,16 @@ export default function Login() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="mx-auto mb-4 flex items-center justify-center">
-            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-28 w-auto object-contain drop-shadow-sm scale-125" />
-          </div>
-          <h1 className="hidden text-2xl font-bold text-slate-800">AloShipp</h1>
-          <p className="text-slate-500 mt-1">Quản trị hệ thống</p>
-        </div>
-
         <div className="card">
-          <h2 className="text-lg font-bold text-slate-800 mb-6">Đăng nhập Admin</h2>
+          <div className="text-center mb-6">
+            <div className="mx-auto flex items-center justify-center">
+              <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-28 w-auto object-contain scale-125" />
+            </div>
+            <h1 className="hidden text-2xl font-bold text-slate-800">AloShipp</h1>
+            <p className="text-slate-500 mt-1">Quản trị hệ thống</p>
+          </div>
+
+          <h2 className="text-lg font-bold text-slate-800 mb-6 border-t border-slate-100 pt-6">Đăng nhập Admin</h2>
 
           {error && (
             <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-xl mb-4 text-sm">

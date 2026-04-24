@@ -137,7 +137,7 @@ const Customers = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-xl border border-gray-100 p-4">
         <div className="flex flex-col sm:flex-row gap-4 mb-4">
           <div className="flex-1 relative">
             <input 
@@ -163,7 +163,7 @@ const Customers = () => {
                 <div className="py-10 text-center text-gray-500">Không tìm thấy khách hàng nào.</div>
               ) : (
                 filteredCustomers.map(customer => (
-                  <div key={customer._id} className="bg-white border text-sm border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div key={customer._id} className="bg-white border text-sm border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-12 h-12 shrink-0 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden border border-gray-200">
                         {customer.avatar ? (

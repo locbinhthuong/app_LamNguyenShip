@@ -181,7 +181,7 @@ export default function OrderDetail() {
             <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-bold text-white sm:px-3 sm:text-sm">
               {STATUS_LABELS[order.status] || order.status}
             </span>
-            <button onClick={loadOrder} className="text-[10px] bg-slate-100 px-2 py-1.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 active:scale-95 transition-all shadow-sm flex items-center gap-1 border border-slate-200">
+            <button onClick={loadOrder} className="text-[10px] bg-slate-100 px-2 py-1.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 active:scale-95 transition-all flex items-center gap-1 border border-slate-200">
                🔄 LÀM MỚI ĐƠN
             </button>
           </div>
@@ -213,7 +213,7 @@ export default function OrderDetail() {
                   href={`https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates?.lat && order.pickupCoordinates.lat !== 10.045 && order.pickupCoordinates.lat !== 10.050 ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
+                  className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors"
                 >
                   🗺️ DẪN ĐƯỜNG
                 </a>
@@ -235,7 +235,7 @@ export default function OrderDetail() {
                       href={`https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates?.lat && order.deliveryCoordinates.lat !== 10.045 && order.deliveryCoordinates.lat !== 10.050 ? `${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}` : encodeURIComponent(order.deliveryAddress)}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors shadow-sm"
+                      className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors"
                     >
                       🗺️ DẪN ĐƯỜNG
                     </a>
@@ -257,19 +257,19 @@ export default function OrderDetail() {
             {order.serviceType === 'DAT_XE' ? (
               <div className="flex items-center justify-between mx-[-12px] px-3 pb-2">
                 <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg">📍 ĐÓN KHÁCH</span>
-                <a href={`tel:${order.senderPhone || order.pickupPhone || order.customerPhone}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200 text-sm">📞 {order.senderPhone || order.pickupPhone || order.customerPhone}</a>
+                <a href={`tel:${order.senderPhone || order.pickupPhone || order.customerPhone}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-blue-200 text-sm">📞 {order.senderPhone || order.pickupPhone || order.customerPhone}</a>
               </div>
             ) : order.serviceType === 'MUA_HO' ? (
               <div className="flex items-center justify-between mx-[-12px] px-3 pb-2">
                 <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg">👤 LIÊN HỆ KHÁCH</span>
-                <a href={`tel:${order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200 text-sm">📞 {order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}</a>
+                <a href={`tel:${order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-orange-200 text-sm">📞 {order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}</a>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mx-[-12px] px-3 pb-3 border-b border-slate-100">
                   <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg">📍 TRẠM 1 (CHỖ LẤY)</span>
                   {(order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : null)) ? (
-                    <a href={`tel:${order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-orange-200 text-sm">📞 {order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}</a>
+                    <a href={`tel:${order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-orange-200 text-sm">📞 {order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}</a>
                   ) : (
                     <span className="text-xs text-slate-400 italic">Không có SĐT</span>
                   )}
@@ -277,7 +277,7 @@ export default function OrderDetail() {
                 <div className="flex items-center justify-between mx-[-12px] px-3 pt-1 pb-2">
                   <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg">🏁 TRẠM 2 (CHỖ GIAO)</span>
                   {(order.receiverPhone || (order.createdBy ? order.customerPhone : null)) ? (
-                    <a href={`tel:${order.receiverPhone || (order.createdBy ? order.customerPhone : '')}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 shadow-sm border border-blue-200 text-sm">📞 {order.receiverPhone || (order.createdBy ? order.customerPhone : '')}</a>
+                    <a href={`tel:${order.receiverPhone || (order.createdBy ? order.customerPhone : '')}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-blue-200 text-sm">📞 {order.receiverPhone || (order.createdBy ? order.customerPhone : '')}</a>
                   ) : (
                     <span className="text-xs text-slate-400 italic">Không có SĐT</span>
                   )}
@@ -329,7 +329,7 @@ export default function OrderDetail() {
           {order.serviceType === 'DIEU_PHOI' && (
              <>
                {(order.subServiceType === 'NAP_TIEN' || order.subServiceType === 'RUT_TIEN') ? (
-                 <div className="mb-4 bg-blue-50/50 p-4 rounded-xl border border-blue-200 shadow-sm relative overflow-hidden">
+                 <div className="mb-4 bg-blue-50/50 p-4 rounded-xl border border-blue-200 relative overflow-hidden">
                    <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🏦</div>
                    <div className="flex flex-col relative z-10 space-y-2">
                      <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider border-b border-blue-100 pb-1">THÔNG TIN GIAO DỊCH TÀI CHÍNH:</span>
@@ -340,7 +340,7 @@ export default function OrderDetail() {
                    </div>
                  </div>
                ) : (
-                 <div className="mb-4 bg-purple-50 p-4 rounded-xl border border-purple-100 shadow-sm relative overflow-hidden">
+                 <div className="mb-4 bg-purple-50 p-4 rounded-xl border border-purple-100 relative overflow-hidden">
                    <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🛠️</div>
                    <p className="text-purple-800 text-sm flex flex-col relative z-10">
                      <span className="text-[10px] text-purple-400 font-bold uppercase mb-1 tracking-wider">MÔ TẢ NHIỆM VỤ THỢ:</span>
@@ -355,7 +355,7 @@ export default function OrderDetail() {
 
           {/* XE ÔM / LÁI HỘ INFO (DAT_XE) */}
           {order.serviceType === 'DAT_XE' && order.rideDetails && (
-            <div className="mb-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 shadow-sm relative overflow-hidden">
+            <div className="mb-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100/50 relative overflow-hidden">
               <div className="absolute -right-4 -top-4 text-7xl opacity-[0.03]">🛵</div>
               <p className="text-indigo-800 text-sm flex flex-col relative z-10">
                 <span className="text-[10px] text-indigo-400 font-bold uppercase mb-1 tracking-wider">PHƯƠNG TIỆN YÊU CẦU:</span>
@@ -373,7 +373,7 @@ export default function OrderDetail() {
 
           {/* GHI CHÚ CHUNG */}
           {order.note && (
-            <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-200 mb-4 shadow-sm">
+            <div className="bg-yellow-50 rounded-xl p-3 border border-yellow-200 mb-4">
               <p className="text-yellow-600 text-xs font-bold uppercase mb-0.5">📝 Ghi chú từ khách hàng</p>
               <p className="text-slate-800 text-sm font-medium">{order.note}</p>
             </div>
@@ -383,16 +383,16 @@ export default function OrderDetail() {
           <div className="grid grid-cols-2 gap-2 sm:gap-3">
             
             {/* Cột 1: Tiền Phí/Cước */}
-            <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
+            <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200">
                <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">💰</div>
                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">
                  {order.serviceType === 'DAT_XE' ? 'Cước xe' : order.serviceType === 'DIEU_PHOI' ? 'Phí thợ' : 'Phí giao hàng'}
                </p>
                <div className="flex flex-col relative z-10">
                  {order.deliveryFee > 0 ? (
-                    <p className="text-green-600 font-black text-xl sm:text-2xl drop-shadow-sm">{order.deliveryFee?.toLocaleString()}đ</p>
+                    <p className="text-green-600 font-black text-xl sm:text-2xl ">{order.deliveryFee?.toLocaleString()}đ</p>
                  ) : (
-                    <p className="text-green-600 font-black text-lg sm:text-xl drop-shadow-sm">Thỏa Thuận</p>
+                    <p className="text-green-600 font-black text-lg sm:text-xl ">Thỏa Thuận</p>
                  )}
                  {order.packageDetails?.bulkyFee > 0 && (
                    <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-orange-100">
@@ -404,19 +404,19 @@ export default function OrderDetail() {
             
             {/* Cột 2: Thu Hộ (Giao Hàng) */}
             {order.serviceType === 'GIAO_HANG' && (order.codAmount > 0 || order.codAmount === 0) && (
-              <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200">
                 <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">💎</div>
                 <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Cần Thu hộ COD</p>
-                <p className="text-blue-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
+                <p className="text-blue-600 font-black text-xl sm:text-2xl  relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
               </div>
             )}
 
             {/* Cột 2: Tiền Hàng Dự Kiến (Mua Hộ) */}
             {order.serviceType === 'MUA_HO' && (
-              <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200 shadow-sm">
+              <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200">
                 <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">🛒</div>
                 <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Tiền hàng dự kiến</p>
-                <p className="text-orange-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">
+                <p className="text-orange-600 font-black text-xl sm:text-2xl  relative z-10">
                   {order.purchaseDetails?.estimatedTotal ? `${order.purchaseDetails.estimatedTotal.toLocaleString()}đ` : 'Thỏa thuận'}
                 </p>
               </div>
@@ -424,21 +424,21 @@ export default function OrderDetail() {
 
             {/* Cột 3: BLOCK THƯỞNG VÍ (Nằm chung Grid) */}
             {order.adminBonus > 0 && (
-               <div className="bg-emerald-50 rounded-xl p-3 flex flex-col justify-center border border-emerald-200 shadow-sm relative overflow-hidden group">
+               <div className="bg-emerald-50 rounded-xl p-3 flex flex-col justify-center border border-emerald-200 relative overflow-hidden group">
                  <div className="absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform">🎁</div>
                  <p className="text-emerald-700 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Thưởng Độc quyền</p>
-                 <p className="text-emerald-600 font-black text-xl sm:text-2xl drop-shadow-sm relative z-10">+{order.adminBonus?.toLocaleString()}đ</p>
+                 <p className="text-emerald-600 font-black text-xl sm:text-2xl  relative z-10">+{order.adminBonus?.toLocaleString()}đ</p>
                </div>
             )}
 
             {/* Cột 4: BLOCK THƯỞNG KPI HẰNG NGÀY (Nằm chung Grid) */}
             {order.kpiBonus > 0 && (
-               <div className={`rounded-xl p-3 flex flex-col justify-center border shadow-sm relative overflow-hidden group ${order.isExpectedKpi ? 'bg-slate-50 border-orange-200 border-dashed' : 'bg-orange-50 border-orange-200'}`}>
+               <div className={`rounded-xl p-3 flex flex-col justify-center border relative overflow-hidden group ${order.isExpectedKpi ? 'bg-slate-50 border-orange-200 border-dashed' : 'bg-orange-50 border-orange-200'}`}>
                  <div className={`absolute -right-3 -top-1 text-5xl opacity-5 group-hover:scale-110 transition-transform ${order.isExpectedKpi ? 'grayscale opacity-10 text-slate-500' : ''}`}>🏆</div>
                  <p className={`${order.isExpectedKpi ? 'text-slate-500' : 'text-orange-700'} text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1`}>
                    {order.isExpectedKpi ? 'DỰ KIẾN (NẾU HOÀN THÀNH)' : 'Thưởng năng suất (KPI)'}
                  </p>
-                 <p className={`${order.isExpectedKpi ? 'text-slate-600' : 'text-orange-600'} font-black text-xl sm:text-2xl drop-shadow-sm relative z-10`}>+{order.kpiBonus?.toLocaleString()}đ</p>
+                 <p className={`${order.isExpectedKpi ? 'text-slate-600' : 'text-orange-600'} font-black text-xl sm:text-2xl  relative z-10`}>+{order.kpiBonus?.toLocaleString()}đ</p>
                </div>
             )}
           </div>

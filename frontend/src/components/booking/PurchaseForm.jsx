@@ -67,13 +67,13 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       </div>
 
       {/* THÔNG TIN HÀNH TRÌNH */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-4">
         
         {/* ĐIỂM MUA HÀNG (QUÁN) */}
         <div className="flex items-start gap-4">
           <div className="flex flex-col items-center mt-1">
-            <div className="w-4 h-4 rounded-full bg-orange-100 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-orange-600"></div>
+            <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
             </div>
             <div className="w-0.5 h-10 bg-gray-200 mt-1"></div>
           </div>
@@ -88,7 +88,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="VD: Để trống nếu mua nhiều nơi..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-orange-300 shadow-sm"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300"
               />
             </div>
           </div>
@@ -112,7 +112,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                   onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                   placeholder="Nhập địa chỉ nhận hoặc để trống..."
                   onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
-                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300"
                 />
                 <input 
                   type="tel"
@@ -130,7 +130,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
 
 
       {/* GHI CHÚ MUA HỘ MÓN GÌ */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-3">
         <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">GHI CHÚ / MUA MÓN GÌ?</label>
         <div>
           <textarea 

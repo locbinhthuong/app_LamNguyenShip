@@ -141,7 +141,7 @@ const ShopDashboard = () => {
       {/* HEADER: Kéo ghim toạ độ Shop */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center justify-between cursor-pointer active:bg-gray-50"
+        className="bg-white px-4 py-3 sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50"
       >
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
           <div className="flex items-center gap-1 text-slate-500 mb-0.5">
@@ -189,14 +189,14 @@ const ShopDashboard = () => {
       <div className="px-6 -mt-8 relative z-20">
         
         {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-start gap-3 shadow-sm relative overflow-hidden mb-6">
-          <div className="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
-          <div className="mt-0.5 text-orange-500 animate-bounce">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-3 relative overflow-hidden mb-6">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+          <div className="mt-0.5 text-blue-500 animate-bounce">
             <MapPin size={20} />
           </div>
           <div>
-            <h4 className="text-[11px] font-extrabold text-orange-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
-            <p className="text-[11px] text-orange-700 leading-relaxed font-medium">
+            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
+            <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
               Shop vui lòng bấm vào thanh <strong>"📍 Toạ độ cửa hàng"</strong> ở trên cùng để cập nhật định vị chính xác trước khi lên đơn nhé!
             </p>
           </div>
@@ -214,9 +214,9 @@ const ShopDashboard = () => {
         </button>
 
         {/* THỐNG KÊ ĐƠN */}
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-5 grid grid-cols-3 gap-4 mb-6 relative overflow-hidden">
+        <div className="bg-white rounded-3xl border border-slate-100 p-5 grid grid-cols-3 gap-4 mb-6 relative overflow-hidden">
           <div className="flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-orange-50 flex items-center justify-center text-orange-500 mb-2"><Clock size={20} /></div>
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Clock size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.pending}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Chờ Xế</p>
           </div>
@@ -243,11 +243,11 @@ const ShopDashboard = () => {
 
           <div className="space-y-3">
             {orders.slice(0, 5).map(order => (
-              <div key={order._id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between hover:border-blue-200 transition-colors">
+              <div key={order._id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-blue-200 transition-colors">
                 <div className="flex-1 overflow-hidden pr-3">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold">{new Date(order.createdAt).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${order.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' : order.status === 'PENDING' ? 'bg-orange-50 text-orange-600' : order.status === 'DRAFT' ? 'bg-purple-50 text-purple-600' : order.status === 'CANCELLED' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${order.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-600' : order.status === 'PENDING' ? 'bg-blue-50 text-blue-600' : order.status === 'DRAFT' ? 'bg-purple-50 text-purple-600' : order.status === 'CANCELLED' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
                       {order.status === 'DRAFT' ? 'Chờ Báo Giá' : order.status === 'PENDING' ? 'Chờ Xế' : order.status}
                     </span>
                   </div>

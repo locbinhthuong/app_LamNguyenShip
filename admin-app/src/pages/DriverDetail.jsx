@@ -189,7 +189,7 @@ export default function DriverDetail() {
           {/* Cảnh báo Giam Tiền */}
           <div className="rounded-2xl bg-red-500/10 border border-red-500/30 p-5 shadow-xl">
              <h3 className="text-sm font-bold text-red-400 mb-1">Công nợ Phát Sinh Hôm Nay (15%)</h3>
-             <p className="text-3xl font-black text-red-500 drop-shadow-sm">{formatCurrency(stats.totalDebt)}</p>
+             <p className="text-3xl font-black text-red-500 ">{formatCurrency(stats.totalDebt)}</p>
              <p className="text-xs text-red-400/80 mt-2 font-medium">Khoản này cần thu cuối ngày để đối soát.</p>
           </div>
         </div>
@@ -232,7 +232,7 @@ export default function DriverDetail() {
               {/* MOBILE VIEW LỊCH SỬ ĐƠN (CARDS) */}
               <div className="grid grid-cols-1 gap-3 p-4 sm:hidden">
                 {stats.recentOrders.map(order => (
-                  <div key={order.id} className="bg-white border text-sm border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
+                  <div key={order.id} className="bg-white border text-sm border-slate-200 rounded-xl p-4 flex flex-col gap-2">
                     <div className="flex justify-between items-start border-b border-slate-100 pb-2">
                        <span className="font-mono font-bold text-blue-600 truncate">#{order.orderCode}</span>
                        <span className="font-bold text-sky-600">+{formatCurrency(order.deliveryFee)}</span>
@@ -292,7 +292,7 @@ export default function DriverDetail() {
               <div className="flex flex-col items-center mb-4">
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center mb-2 shadow-sm cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors relative group"
+                  className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center mb-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors relative group"
                 >
                   {avatarPreview ? (
                     <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />

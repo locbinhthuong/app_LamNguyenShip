@@ -127,8 +127,8 @@ export default function Earnings() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h1 className="text-sm font-bold text-white uppercase tracking-widest relative z-10 drop-shadow-sm">Doanh Thu Của Mì Hôm Nay</h1>
-        <p className="mt-1 text-4xl font-black text-white relative z-10 drop-shadow-md">
+        <h1 className="text-sm font-bold text-white uppercase tracking-widest relative z-10 ">Doanh Thu Của Mì Hôm Nay</h1>
+        <p className="mt-1 text-4xl font-black text-white relative z-10 ">
           {formatCurrency(stats.dailyFee)}
         </p>
 
@@ -157,7 +157,7 @@ export default function Earnings() {
             {/* Lịch Sử Cuốc Xe Mới Nhất chuyển lên Tab ví hoặc giữ ở đây? Giữ ở đây hoặc dưới list Nợ */}
             {/* Biểu Đồ Cột 7 Ngày (Chuyển lên trên cùng) */}
         {stats.chartData && stats.chartData.length > 0 && (
-          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 mb-4 shadow-sm mt-3">
+          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 mb-4 mt-3">
             <h2 className="text-slate-800 font-bold mb-4 text-sm">Thống Kê Doanh Thu Tuần Đi Làm</h2>
             <div className="flex items-end justify-between h-48 gap-1 px-1">
               {stats.chartData.map((d, idx) => {
@@ -176,7 +176,7 @@ export default function Earnings() {
                     
                     {/* Chữ hiển thị Tiền Mọc lên trên Cột */}
                     {d.fee > 0 && (
-                      <div className="flex flex-col items-center mb-1 drop-shadow-md">
+                      <div className="flex flex-col items-center mb-1 ">
                         <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap">{feeText}</span>
                       </div>
                     )}
@@ -202,11 +202,11 @@ export default function Earnings() {
 
         {/* Thống kê 2 cột */}
         <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 shadow-sm">
+          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4">
             <p className="text-xs text-blue-600 mb-1 font-semibold">Tuần này</p>
             <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.weeklyFee)}</p>
           </div>
-          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 shadow-sm">
+          <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4">
             <p className="text-xs text-blue-600 mb-1 font-semibold">Tháng này</p>
             <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.monthlyFee)}</p>
           </div>
@@ -215,27 +215,27 @@ export default function Earnings() {
         {/* Thu Nhập Cả Tháng */}
         <div className="rounded-2xl bg-blue-100 border border-blue-200 p-4 mb-8 text-center shadow-md">
           <p className="text-xs text-blue-600 font-semibold mb-1">Tổng Tích Lũy Từ Trước Đến Nay</p>
-          <p className="text-2xl font-black text-blue-700 drop-shadow-sm shadow-blue-500/20">{formatCurrency(stats.totalFee)}</p>
+          <p className="text-2xl font-black text-blue-700  shadow-blue-500/20">{formatCurrency(stats.totalFee)}</p>
         </div>
 
 
             {/* Vùng Thanh Toán Nợ Chi Tiết (Nằm Dưới Cùng) */}
             <h2 className="text-slate-800 font-bold mb-3 px-1 text-sm uppercase tracking-wide">CÔNG NỢ CẦN THANH TOÁN</h2>
             {unpaidDays.length === 0 ? (
-               <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl text-center text-sky-700 shadow-sm font-semibold mb-6">
+               <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl text-center text-sky-700 font-semibold mb-6">
                   Bạn không có công nợ cũ nào cần thanh toán! 🎉
                </div>
             ) : (
                unpaidDays.map((debt, i) => {
                  const isPending = pendingDays.includes(debt.date);
                  return (
-                 <div key={i} className="rounded-2xl bg-sky-50/80 border border-sky-200 p-4 mb-4 shadow-sm flex flex-col">
+                 <div key={i} className="rounded-2xl bg-sky-50/80 border border-sky-200 p-4 mb-4 flex flex-col">
                    <div className="flex items-center justify-between mb-3">
                      <div>
                        <p className="text-xs text-slate-500 mb-1 font-semibold flex items-center gap-1">
                          <span>Công Nợ Ngày: {new Date(debt.date).toLocaleDateString('vi-VN')}</span>
                        </p>
-                       <p className="text-xl font-black text-red-600 drop-shadow-sm">{formatCurrency(debt.amount)}</p>
+                       <p className="text-xl font-black text-red-600 ">{formatCurrency(debt.amount)}</p>
                      </div>
                      <div className="h-10 w-10 bg-gradient-to-br from-red-400 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
                        🧾
@@ -243,7 +243,7 @@ export default function Earnings() {
                    </div>
                    
                    {isPending ? (
-                      <div className="w-full bg-amber-100 text-amber-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm border border-amber-200">
+                      <div className="w-full bg-amber-100 text-amber-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 border border-amber-200">
                         <span>⏳</span> Đang chờ Kế toán duyệt...
                       </div>
                    ) : (
@@ -304,7 +304,7 @@ export default function Earnings() {
                      }
 
                      return (
-                     <div key={dtx._id} className={`${bgClass} border text-sm border-slate-200 p-3 rounded-xl flex justify-between items-center shadow-sm`}>
+                     <div key={dtx._id} className={`${bgClass} border text-sm border-slate-200 p-3 rounded-xl flex justify-between items-center`}>
                        <div>
                           <p className={`font-semibold flex items-center gap-1 ${colorClass}`}>
                              <span>{icon}</span> {title}
@@ -336,7 +336,7 @@ export default function Earnings() {
                  </svg>
               </div>
               <p className="text-emerald-100 font-medium text-sm mb-1 uppercase tracking-wider relative z-10">Số Dư Hoàn COD / Thưởng</p>
-              <h2 className="text-4xl font-black mb-4 relative z-10 drop-shadow-md">
+              <h2 className="text-4xl font-black mb-4 relative z-10 ">
                  {formatCurrency(walletDetail.availableBalance || 0)}
               </h2>
               
@@ -386,7 +386,7 @@ export default function Earnings() {
                      if (wtx.type === 'ADMIN_ADJUST' && wtx.amount < 0) colorObj = { icon: '📉', color: 'text-orange-600', bg: 'bg-orange-50' };
 
                      return (
-                     <div key={wtx._id} className="bg-white border text-sm border-slate-200 p-3.5 rounded-2xl flex justify-between items-center shadow-sm">
+                     <div key={wtx._id} className="bg-white border text-sm border-slate-200 p-3.5 rounded-2xl flex justify-between items-center">
                        <div className="flex gap-3 items-center">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${colorObj.bg}`}>{colorObj.icon}</div>
                           <div>
@@ -449,7 +449,7 @@ export default function Earnings() {
                 </div>
               </div>
 
-              <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 relative mb-4">
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 relative mb-4">
                 <img 
                   src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=THANHTOANNO ${driver?.driverCode || ''} ${selectedDebt?.date}&accountName=NGUYEN LAM NGUYEN`} 
                   alt="QR Code Công Nợ" 

@@ -72,7 +72,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         </p>
       </div>
 
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-5">
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-5">
         
         {/* LẤY HÀNG (SENDER) */}
         <div className="flex items-start gap-4">
@@ -93,14 +93,14 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="Nhập địa chỉ lấy hàng..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300 shadow-sm"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300"
               />
             </div>
             <div className="mt-2">
               <input 
                 type="tel"
                 placeholder="SĐT Lấy Hàng"
-                className="w-full text-xs font-semibold text-orange-600 outline-none p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:border-orange-300"
+                className="w-full text-xs font-semibold text-blue-600 outline-none p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300"
                 value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
               />
             </div>
@@ -125,7 +125,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                 placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300 shadow-sm"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300"
               />
             </div>
             <div className="mt-2">
@@ -148,7 +148,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       </div>
 
       {/* THÔNG TIN BỔ SUNG */}
-      <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-4">
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-4">
         <div>
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
             <DollarSign size={14} className="text-yellow-500" /> THU HỘ TIỀN HÀNG (COD)

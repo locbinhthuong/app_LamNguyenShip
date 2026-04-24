@@ -103,12 +103,12 @@ export default function Finance() {
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">Trung Tâm Tài Chính</h1>
           <p className="text-slate-500 mt-1 font-medium">Duyệt các Yêu cầu nạp/rút tiền của Tài xế</p>
         </div>
-        <button onClick={fetchData} className="px-5 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 font-semibold shadow-sm transition-all focus:ring-2 focus:ring-blue-500 outline-none flex items-center gap-2">
+        <button onClick={fetchData} className="px-5 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 font-semibold transition-all focus:ring-2 focus:ring-blue-500 outline-none flex items-center gap-2">
           🔄 Làm mới (Refresh)
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden min-h-[500px]">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden min-h-[500px]">
         {/* TAB HEADER */}
         <div className="flex border-b border-slate-200">
            <button 
@@ -145,7 +145,7 @@ export default function Finance() {
              ) : (
                 <div className="space-y-4">
                   {data.pendingDebts.map(tx => (
-                    <div key={tx._id} className="bg-white border-2 border-amber-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row items-center gap-4 justify-between relative overflow-hidden">
+                    <div key={tx._id} className="bg-white border-2 border-amber-200 rounded-2xl p-5 hover:shadow-md transition-shadow flex flex-col md:flex-row items-center gap-4 justify-between relative overflow-hidden">
                        <div className="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
                        <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
@@ -183,7 +183,7 @@ export default function Finance() {
              {/* Lịch sử Nợ: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden">
                 {data.recentDebts.map(tx => (
-                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2">
+                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-2">
                       <div className="flex justify-between items-start">
                          <div className="font-bold text-slate-800 truncate">{tx.driverId?.name}</div>
                          <div className={`font-black ${tx.amount > 0 ? 'text-red-500' : 'text-green-500'}`}>
@@ -239,7 +239,7 @@ export default function Finance() {
              {/* Quản lý sổ đen: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
                 {drivers.map(drv => (
-                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between">
                       <div>
                          <div className="font-bold text-slate-800 text-lg mb-1">{drv.name}</div>
                          <div className="text-xs text-slate-500 mb-2">{drv.phone}</div>
@@ -249,7 +249,7 @@ export default function Finance() {
                       </div>
                       <button
                          onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
-                         className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-bold text-orange-600 hover:bg-orange-100 transition-colors shadow-sm whitespace-nowrap"
+                         className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-bold text-orange-600 hover:bg-orange-100 transition-colors whitespace-nowrap"
                       >
                          📓 Sổ Đen
                       </button>
@@ -283,7 +283,7 @@ export default function Finance() {
                          <td className="px-4 py-3 text-center">
                             <button
                               onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
-                              className="rounded-lg bg-orange-50 px-4 py-2 text-xs font-bold text-orange-600 hover:bg-orange-100 transition-colors shadow-sm"
+                              className="rounded-lg bg-orange-50 px-4 py-2 text-xs font-bold text-orange-600 hover:bg-orange-100 transition-colors"
                             >
                               📓 Nợ (Sổ Đen)
                             </button>
@@ -310,7 +310,7 @@ export default function Finance() {
              ) : (
                 <div className="space-y-4">
                   {data.pendingWallets.map(tx => (
-                    <div key={tx._id} className="bg-white border-2 border-emerald-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row items-center gap-4 justify-between relative overflow-hidden">
+                    <div key={tx._id} className="bg-white border-2 border-emerald-200 rounded-2xl p-5 hover:shadow-md transition-shadow flex flex-col md:flex-row items-center gap-4 justify-between relative overflow-hidden">
                        <div className="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                        <div className="flex-1 w-full">
                           <div className="flex items-center gap-3 mb-2">
@@ -324,7 +324,7 @@ export default function Finance() {
                              <div><span className="text-xs text-slate-400 font-semibold block uppercase">Chủ tài khoản</span> <span className="font-bold text-slate-700">{tx.bankInfo?.accountName}</span></div>
                              <div className="sm:col-span-2 flex items-center justify-between">
                                <div><span className="text-xs text-slate-400 font-semibold block uppercase">Số tài khoản</span> <span className="font-bold text-blue-600 text-lg tracking-wider">{tx.bankInfo?.accountNumber}</span></div>
-                               <button onClick={() => {navigator.clipboard.writeText(tx.bankInfo?.accountNumber); alert('Đã copy số tài khoản')}} className="text-xs bg-white border border-slate-200 px-2 py-1 rounded shadow-sm hover:bg-slate-50 active:scale-95">Copy STK</button>
+                               <button onClick={() => {navigator.clipboard.writeText(tx.bankInfo?.accountNumber); alert('Đã copy số tài khoản')}} className="text-xs bg-white border border-slate-200 px-2 py-1 rounded hover:bg-slate-50 active:scale-95">Copy STK</button>
                              </div>
                           </div>
                           
@@ -336,7 +336,7 @@ export default function Finance() {
                        
                        <div className="text-right flex flex-col items-end md:ml-4">
                           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">CẦN CHUYỂN KHOẢN</p>
-                          <div className="text-3xl font-black text-emerald-600 tabular-nums border-2 border-emerald-100 bg-emerald-50 px-5 py-2 rounded-xl inline-block shadow-sm">
+                          <div className="text-3xl font-black text-emerald-600 tabular-nums border-2 border-emerald-100 bg-emerald-50 px-5 py-2 rounded-xl inline-block">
                              {Math.abs(tx.amount).toLocaleString()} đ
                           </div>
                        </div>
@@ -361,7 +361,7 @@ export default function Finance() {
              {/* Lịch sử Rút ví: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden">
                 {data.recentWallets.map(tx => (
-                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex flex-col gap-2 relative overflow-hidden">
+                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-2 relative overflow-hidden">
                       <div className="flex justify-between items-start">
                          <div className="font-bold text-slate-800 truncate">{tx.driverId?.name}</div>
                          <div className={`font-black ${tx.amount > 0 ? 'text-green-500' : 'text-slate-600'}`}>
@@ -428,7 +428,7 @@ export default function Finance() {
              {/* Quản lý ví bóp: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
                 {drivers.map(drv => (
-                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm flex items-center justify-between">
+                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between">
                       <div>
                          <div className="font-bold text-slate-800 text-lg mb-1">{drv.name}</div>
                          <div className="text-xs text-slate-500 mb-2">{drv.phone}</div>
@@ -438,7 +438,7 @@ export default function Finance() {
                       </div>
                       <button
                          onClick={() => setWalletModal({ isOpen: true, driverId: drv._id })}
-                         className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm whitespace-nowrap"
+                         className="rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-600 hover:bg-emerald-100 transition-colors whitespace-nowrap"
                       >
                          🏦 Nạp/Rút
                       </button>
@@ -471,7 +471,7 @@ export default function Finance() {
                          <td className="px-4 py-3 text-center">
                             <button
                               onClick={() => setWalletModal({ isOpen: true, driverId: drv._id })}
-                              className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 transition-colors shadow-sm"
+                              className="rounded-lg bg-emerald-50 px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-100 transition-colors"
                             >
                               🏦 Nạp / Rút Ví
                             </button>

@@ -121,7 +121,7 @@ export default function MyOrders() {
         </div>
 
         {/* Biểu Đồ Cột 7 Ngày Mới */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm mb-4 overflow-hidden">
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 mb-4 overflow-hidden">
           <h2 className="text-slate-800 font-black mb-4 text-sm tracking-tight text-center">Hoạt Động 7 Ngày Qua</h2>
           <div className="flex items-end justify-between h-32 gap-1 px-1">
              {stats.chartData.map((d, idx) => {
@@ -131,7 +131,7 @@ export default function MyOrders() {
                 return (
                   <div key={idx} className="flex flex-col items-center flex-1 h-full justify-end relative group">
                     {d.orders > 0 && (
-                      <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap mb-1 drop-shadow-sm">{d.orders}</span>
+                      <span className="text-[10px] text-blue-600 font-bold whitespace-nowrap mb-1 ">{d.orders}</span>
                     )}
                     <div 
                       className={`w-full max-w-[28px] sm:max-w-[40px] rounded-[4px] transition-all duration-500 ${
@@ -149,7 +149,7 @@ export default function MyOrders() {
         </div>
 
         {/* Khung Thống Kê Nhập Liền / Gạch Ngang Mới */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col mb-4 overflow-hidden divide-y divide-slate-100">
+        <div className="bg-white rounded-2xl border border-slate-200 flex flex-col mb-4 overflow-hidden divide-y divide-slate-100">
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
              <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">⚡</span> Hôm Nay</span>
              <span className="text-lg font-black text-blue-600">{stats.day} Đơn</span>

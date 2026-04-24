@@ -177,7 +177,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               <div className="flex flex-col items-center mb-4">
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center mb-2 shadow-sm cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors relative group"
+                  className="w-20 h-20 rounded-full bg-slate-100 border-2 border-dashed border-slate-300 overflow-hidden flex items-center justify-center mb-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors relative group"
                 >
                   {avatarPreview ? (
                     <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
@@ -294,7 +294,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               ) : (
                 <div className="space-y-6">
                   {termsData.map(term => (
-                    <div key={term._id} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <div key={term._id} className="bg-white rounded-2xl p-5 border border-slate-100">
                       <h3 className="font-bold text-lg text-slate-800 mb-2">{term.title}</h3>
                       <div className="text-xs text-slate-400 mb-3 bg-slate-100 inline-block px-2 py-1 rounded">
                         Cập nhật: {new Date(term.updatedAt || term.createdAt).toLocaleDateString('vi-VN')}

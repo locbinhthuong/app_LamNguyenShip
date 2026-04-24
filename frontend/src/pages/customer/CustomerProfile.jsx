@@ -111,7 +111,7 @@ const CustomerProfile = () => {
                 </div>
              )}
           </div>
-          <div className="pb-1 text-white text-shadow-sm drop-shadow-md">
+          <div className="pb-1 text-white text-shadow-sm ">
             <h2 className="text-2xl font-bold tracking-tight">{profile ? profile.name : 'Đang tải...'}</h2>
             <div className="flex items-center gap-1.5 mt-1 font-medium text-blue-50 opacity-90">
               <Phone size={14} />
@@ -124,19 +124,19 @@ const CustomerProfile = () => {
       <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
         <div 
           onClick={openEditModal}
-          className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
+          className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
         >
            <span className="font-semibold text-gray-800">Cập nhật thông tin</span>
            <ChevronRight size={18} className="text-gray-400" />
         </div>
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
            <span className="font-semibold text-gray-800">Các Điều Khoản App</span>
            <ChevronRight size={18} className="text-gray-400" />
         </div>
 
         <button 
           onClick={handleLogout}
-          className="w-full bg-white mt-8 p-4 rounded-2xl text-red-500 font-bold shadow-sm border border-red-50 flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
+          className="w-full bg-white mt-8 p-4 rounded-2xl text-red-500 font-bold border border-red-50 flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
         >
           <LogOut size={20} />
           ĐĂNG XUẤT TÀI KHOẢN

@@ -126,13 +126,13 @@ export default function Dispatchers() {
         </div>
         <button 
           onClick={handleOpenAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors shadow-sm text-sm"
+          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-xl transition-colors text-sm"
         >
           + Thêm Nhân Viên
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
         {loading ? (
           <div className="p-10 text-center text-slate-500">Đang tải dữ liệu...</div>
         ) : (
@@ -143,7 +143,7 @@ export default function Dispatchers() {
                <div className="py-8 text-center text-slate-500">Chưa có nhân viên nào.</div>
             ) : (
               staffs.map(staff => (
-                <div key={staff._id} className="bg-white border text-sm border-slate-200 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                <div key={staff._id} className="bg-white border text-sm border-slate-200 p-4 rounded-xl hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-3">
                     <div className="font-bold text-slate-800 text-lg">{staff.name}</div>
                     <div className="font-medium text-slate-600 bg-slate-100 px-2 py-1 rounded-lg font-mono text-xs">{staff.phone}</div>

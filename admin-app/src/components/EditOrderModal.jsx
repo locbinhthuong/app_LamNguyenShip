@@ -116,7 +116,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
           
           {/* KHỐI 0: ĐIỀU PHỐI TÀI XẾ */}
           {(!order.assignedTo || order.status === 'PENDING') && (
-            <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 shadow-sm relative overflow-hidden">
+            <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 relative overflow-hidden">
                <div className="absolute -right-2 -top-2 text-6xl opacity-5">🎯</div>
                <label className="block text-xs font-bold text-purple-700 uppercase mb-2 tracking-wider relative z-10">
                  👨‍✈️ ĐIỀU PHỐI / GÁN TÀI XẾ MỚI
@@ -156,7 +156,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                 <label className="text-[10px] font-semibold text-slate-600 mb-1 flex justify-between items-center">
                   <span>{order.serviceType === 'DAT_XE' ? 'Điểm Đón Khách' : (order.serviceType === 'DIEU_PHOI' ? 'Nơi Gặp Mặt / Lấy Tiền' : 'Địa chỉ lấy hàng')}</span>
                   {formData.pickupAddress && (
-                    <a href={pickupLink} target="_blank" rel="noopener noreferrer" className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase hover:bg-orange-200 transition-colors flex items-center gap-1 shadow-sm">
+                    <a href={pickupLink} target="_blank" rel="noopener noreferrer" className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase hover:bg-orange-200 transition-colors flex items-center gap-1">
                       🗺️ XEM BẢN ĐỒ
                     </a>
                   )}
@@ -178,7 +178,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
           
           {/* KHỐI THƯỞNG KPI NĂNG SUẤT (READ-ONLY) */}
           {order.kpiBonus > 0 && (
-             <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-3 rounded-xl border border-orange-200 flex justify-between items-center shadow-sm">
+             <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-3 rounded-xl border border-orange-200 flex justify-between items-center">
                <div className="flex items-center gap-2">
                  <span className="text-2xl">🏆</span>
                  <div className="flex flex-col">
@@ -186,7 +186,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                    <span className="text-xs text-orange-500 font-medium tracking-tight">Thưởng tự động cho Tài xế này!</span>
                  </div>
                </div>
-               <div className="text-lg font-black text-orange-600 drop-shadow-sm px-3 py-1 bg-white rounded-lg border border-orange-100">
+               <div className="text-lg font-black text-orange-600  px-3 py-1 bg-white rounded-lg border border-orange-100">
                  +{order.kpiBonus.toLocaleString()}đ
                </div>
              </div>
@@ -203,7 +203,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                    <label className="text-[10px] font-semibold text-slate-600 mb-1 flex justify-between items-center">
                      <span>{order.serviceType === 'DAT_XE' ? 'Điểm Đến / Trả Khách' : 'Địa chỉ giao/nhận'}</span>
                      {formData.deliveryAddress && (
-                        <a href={deliveryLink} target="_blank" rel="noopener noreferrer" className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase hover:bg-sky-200 transition-colors flex items-center gap-1 shadow-sm">
+                        <a href={deliveryLink} target="_blank" rel="noopener noreferrer" className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase hover:bg-sky-200 transition-colors flex items-center gap-1">
                           🗺️ XEM BẢN ĐỒ
                         </a>
                      )}
@@ -274,7 +274,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
             </div>
             
             {order.kpiBonus > 0 && (
-              <div className="bg-gradient-to-r from-orange-100 to-yellow-50 border-l-4 border-orange-400 p-2 rounded-lg rounded-l-none flex flex-col justify-center shadow-sm">
+              <div className="bg-gradient-to-r from-orange-100 to-yellow-50 border-l-4 border-orange-400 p-2 rounded-lg rounded-l-none flex flex-col justify-center">
                  <span className="text-[10px] uppercase font-bold text-orange-600 tracking-wider">Hệ Thống Thưởng KPI</span>
                  <span className="font-black text-lg text-orange-600">+{order.kpiBonus.toLocaleString()}đ</span>
               </div>

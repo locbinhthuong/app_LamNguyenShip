@@ -128,7 +128,7 @@ export default function Login() {
             <img 
               src="/logoALOSHIPP.png" 
               alt="AloShipp Logo" 
-              className="h-28 w-auto drop-shadow-sm" 
+              className="h-28 w-auto " 
             />
           </div>
           <h1 className="hidden">AloShipp</h1>

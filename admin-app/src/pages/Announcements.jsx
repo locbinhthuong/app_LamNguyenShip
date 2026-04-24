@@ -165,7 +165,7 @@ export default function Announcements() {
           <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
       ) : announcements.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200">
           <div className="text-6xl mb-4">📰</div>
           <h3 className="text-lg font-bold text-slate-700">Chưa có bản tin nào</h3>
           <p className="text-slate-500">Hãy thêm bài đăng quảng cáo đầu tiên đi Sếp!</p>

@@ -46,11 +46,11 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-orange-50">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-blue-50">
       <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl transition-all">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
-            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-32 w-auto drop-shadow-sm scale-125" />
+            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-32 w-auto  scale-125" />
           </div>
           <h1 className="hidden">AloShipp</h1>
           <p className="text-sm text-gray-500 mt-1">Nhanh chóng & An toàn</p>
@@ -69,7 +69,7 @@ const Login = () => {
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="Nhập số điện thoại"
               required
             />
@@ -81,7 +81,7 @@ const Login = () => {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               placeholder="Nhập mật khẩu"
               required
             />
@@ -91,7 +91,7 @@ const Login = () => {
             type="submit"
             disabled={loading}
             className={`w-full py-3.5 mt-2 rounded-xl text-white font-semibold flex justify-center items-center shadow-md active:scale-95 transition-all ${
-              loading ? 'bg-orange-400' : 'bg-orange-600 hover:bg-orange-500'
+              loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-500'
             }`}
           >
             {loading ? (
@@ -107,7 +107,7 @@ const Login = () => {
 
         <p className="mt-8 text-center text-sm text-gray-600">
           Chưa có tài khoản?{' '}
-          <Link to="/register" className="text-orange-600 font-semibold hover:underline">
+          <Link to="/register" className="text-blue-600 font-semibold hover:underline">
             Đăng ký ngay
           </Link>
         </p>

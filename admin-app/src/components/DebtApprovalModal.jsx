@@ -78,7 +78,7 @@ export default function DebtApprovalModal() {
         
         <div className="p-8 flex flex-col items-center justify-center bg-slate-50 relative">
           
-          <div className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+          <div className="w-full bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
             <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
               <span className="text-slate-500 font-semibold text-sm">THÔNG TIN CHUYỂN KHOẢN</span>
               <span className="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded font-mono">{new Date(payload.timestamp).toLocaleTimeString('vi-VN')}</span>

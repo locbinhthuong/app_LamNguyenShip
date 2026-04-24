@@ -117,7 +117,7 @@ const CustomerDashboard = () => {
       {/* HEADER: Địa điểm của tôi */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center justify-between cursor-pointer active:bg-gray-50"
+        className="bg-white px-4 py-3 sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50"
       >
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
           <div className="flex items-center gap-1 text-gray-500 mb-0.5">
@@ -137,14 +137,14 @@ const CustomerDashboard = () => {
 
       {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}
       <div className="px-4 pb-4">
-        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 flex items-start gap-3 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
-          <div className="mt-0.5 text-orange-500 animate-bounce">
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-3 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+          <div className="mt-0.5 text-blue-500 animate-bounce">
             <MapPin size={20} />
           </div>
           <div>
-            <h4 className="text-[11px] font-extrabold text-orange-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
-            <p className="text-[11px] text-orange-700 leading-relaxed font-medium">
+            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
+            <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
               Vui lòng chạm vào thanh <strong>"📍 Kéo ghim"</strong> ở trên cùng để kiểm tra và định vị chính xác vị trí của bạn trên bản đồ giúp tài xế tìm đến nhanh hơn nhé!
             </p>
           </div>
@@ -153,7 +153,7 @@ const CustomerDashboard = () => {
 
       {/* DANH SÁCH DỊCH VỤ (GRID) */}
       <div className="px-4 mb-4">
-        <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100">
           <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-y-6 gap-x-2 md:gap-x-8 md:gap-y-8">
             {services.map((svc) => (
               <div 
@@ -162,7 +162,7 @@ const CustomerDashboard = () => {
                 className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group"
               >
                 {/* Vòng tròn Icon */}
-                <div className="w-[60px] h-[60px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-3xl md:text-4xl shadow-sm border-2 border-white ring-1 ring-gray-100 group-hover:ring-blue-200 transition-all ${svc.color}">
+                <div className="w-[60px] h-[60px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-3xl md:text-4xl border-2 border-white ring-1 ring-gray-100 group-hover:ring-blue-200 transition-all ${svc.color}">
                   {svc.icon}
                 </div>
                 {/* Tên dịch vụ */}
@@ -187,7 +187,7 @@ const CustomerDashboard = () => {
               <div 
                 key={ann._id} 
                 onClick={() => setSelectedAnnouncement(ann)}
-                className="w-48 md:w-64 bg-white rounded-2xl border border-red-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
+                className="w-48 md:w-64 bg-white rounded-2xl border border-red-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
               >
                 {ann.imageUrl ? (
                   <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Khuyến mãi" />
@@ -222,7 +222,7 @@ const CustomerDashboard = () => {
               <div 
                 key={ann._id} 
                 onClick={() => setSelectedAnnouncement(ann)}
-                className="w-40 md:w-56 bg-white rounded-2xl border border-blue-100 flex-shrink-0 shadow-sm overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
+                className="w-40 md:w-56 bg-white rounded-2xl border border-blue-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
               >
                 {ann.imageUrl ? (
                   <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-36 object-cover bg-gray-100" alt="Tin tức" />

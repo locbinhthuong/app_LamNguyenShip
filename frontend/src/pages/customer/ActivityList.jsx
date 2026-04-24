@@ -70,7 +70,7 @@ const ActivityList = () => {
     const { status, serviceType } = order;
     switch(status) {
       case 'DRAFT': return { text: 'Đang Tính Phí', color: 'text-purple-500', bg: 'bg-purple-50', icon: <Clock size={16}/> };
-      case 'PENDING': return { text: 'Đang chờ xế', color: 'text-orange-500', bg: 'bg-orange-50', icon: <Clock size={16}/> };
+      case 'PENDING': return { text: 'Đang chờ xế', color: 'text-blue-500', bg: 'bg-blue-50', icon: <Clock size={16}/> };
       case 'ACCEPTED': return { text: 'Đã có xế nhận', color: 'text-blue-500', bg: 'bg-blue-50', icon: <Truck size={16}/> };
       case 'PICKED_UP': return { text: serviceType === 'DAT_XE' ? 'Xế đã đón khách' : serviceType === 'MUA_HO' ? 'Xế đã mua hàng' : 'Xế đã lấy hàng', color: 'text-indigo-500', bg: 'bg-indigo-50', icon: <PackageCheck size={16}/> };
       case 'DELIVERING': return { text: serviceType === 'DAT_XE' ? 'Đang trên đường' : 'Đang trên đường giao', color: 'text-blue-600', bg: 'bg-blue-100', icon: <Truck size={16}/> };
@@ -92,7 +92,7 @@ const ActivityList = () => {
     return (
       <div 
         key={order._id} 
-        className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all mb-4"
+        className="bg-white p-4 rounded-2xl border border-gray-100 relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all mb-4"
         onClick={() => navigate(`/customer/order/${order._id}`)}
       >
         {/* Status Bar */}
@@ -136,7 +136,7 @@ const ActivityList = () => {
                 <p className="text-[10px] text-gray-500">Tài xế nhận đơn</p>
               </div>
             </div>
-            <a href={`tel:${order.assignedTo.phone}`} onClick={(e) => e.stopPropagation()} className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold shadow-sm z-10">
+            <a href={`tel:${order.assignedTo.phone}`} onClick={(e) => e.stopPropagation()} className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold z-10">
               Gọi
             </a>
           </div>
@@ -147,12 +147,12 @@ const ActivityList = () => {
 
   return (
     <div className="flex flex-col flex-1 w-full bg-gray-50 font-sans overflow-hidden">
-      <div className="shrink-0 bg-white px-4 py-3 shadow-sm relative z-40 flex items-center justify-center">
+      <div className="shrink-0 bg-white px-4 py-3 relative z-40 flex items-center justify-center">
         <span className="font-bold text-gray-800 text-lg">Hoạt động của tôi</span>
       </div>
       
       {/* Tabs */}
-      <div className="shrink-0 sticky top-0 z-30 flex bg-white border-b border-gray-200 shadow-sm">
+      <div className="shrink-0 sticky top-0 z-30 flex bg-white border-b border-gray-200">
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'pending' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
           onClick={() => { setFilter('pending'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}

@@ -80,7 +80,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
     <form onSubmit={handleSubmit} className="space-y-4 pb-12">
       
       {/* LOẠI DỊCH VỤ */}
-      <div className="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 flex gap-2">
+      <div className="bg-white p-2 rounded-2xl border border-gray-100 flex gap-2">
         <button 
           type="button"
           onClick={() => setSubType('GAP_TRUC_TIEP')}
@@ -121,7 +121,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
 
       {/* THÔNG TIN HÀNH TRÌNH CHỈ HIỂN THỊ KHI NẠP/RÚT */}
       {subType !== 'GAP_TRUC_TIEP' && (
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-4">
           {/* ĐỊA ĐIỂM */}
           <div className="flex items-start gap-4">
             <div className="flex flex-col items-center mt-1">
@@ -140,7 +140,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
                   onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                   placeholder="Nhập địa chỉ giao dịch..."
                   onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300 shadow-sm"
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300"
                 />
                 <input 
                   type="tel"
@@ -157,7 +157,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
 
       {/* DATA NẠP / RÚT */}
       {(subType === 'NAP_TIEN' || subType === 'RUT_TIEN') && (
-        <div className={`bg-white p-4 rounded-2xl shadow-sm border space-y-3 animate-fadeIn ${subType === 'NAP_TIEN' ? 'border-blue-100' : 'border-orange-100'}`}>
+        <div className={`bg-white p-4 rounded-2xl border space-y-3 animate-fadeIn ${subType === 'NAP_TIEN' ? 'border-blue-100' : 'border-orange-100'}`}>
           <label className={`text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${subType === 'NAP_TIEN' ? 'text-blue-500' : 'text-orange-500'}`}>
              {subType === 'NAP_TIEN' ? <Landmark size={14} /> : <DollarSign size={14} />} 
              CUNG CẤP TÀI KHOẢN {subType === 'NAP_TIEN' ? 'NHẬN TIỀN' : 'RÚT TIỀN'}
@@ -194,7 +194,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
 
       {/* THÔNG TIN KHÁCH HÀNG ĐÃ ĐƯỢC ẨN VÌ TỰ LẤY TỪ ACCOUNT DỮ LIỆU CHÍNH */}
       {subType !== 'GAP_TRUC_TIEP' && (
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 space-y-3">
+        <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-3">
           <div>
             <textarea 
               rows="2"
@@ -209,7 +209,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
 
       {/* FLOAT BUTTON / UI TỔNG ĐÀI THEO LOẠI */}
       {subType === 'GAP_TRUC_TIEP' ? (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100 flex flex-col items-center justify-center text-center space-y-4 mb-4 mt-6 animate-fadeIn">
+        <div className="bg-white p-6 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center text-center space-y-4 mb-4 mt-6 animate-fadeIn">
           <div className="w-32 h-32 mb-2 bg-indigo-50 rounded-2xl p-2 border border-indigo-100 flex items-center justify-center shadow-inner">
              <img src="https://img.vietqr.io/image/970422-0827758062-compact.jpg?amount=0&addInfo=AloShipp%20Lien%20He&accountName=LAM%20NGUYEN" alt="QR" className="w-full h-full object-contain rounded-xl" />
           </div>
