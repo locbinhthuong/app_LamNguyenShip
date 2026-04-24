@@ -88,7 +88,7 @@ export default function Layout() {
       >
         <div className="border-b border-slate-200 p-5">
           <h1 className="text-lg font-bold text-blue-600 flex items-center gap-2">
-            <img src="/aloshipp.png" alt="AloShipp" className="h-8 w-auto object-contain" />
+            <img src="/logoALOSHIPP.png" alt="AloShipp" className="h-8 w-auto object-contain" />
           </h1>
           <p className="mt-0.5 text-xs text-slate-500">Quản trị hệ thống</p>
         </div>
@@ -141,7 +141,7 @@ export default function Layout() {
             </svg>
           </button>
           <div className="flex items-center gap-2">
-            <img src="/aloshipp.png" alt="AloShipp" className="h-6 w-auto object-contain" />
+            <img src="/logoALOSHIPP.png" alt="AloShipp" className="h-6 w-auto object-contain" />
           </div>
         </header>
 

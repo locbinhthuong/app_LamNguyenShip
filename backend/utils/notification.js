@@ -32,7 +32,7 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         notification: {
           title,
           body,
-          icon: "/aloshipp.png",
+          icon: "/logoALOSHIPP.png",
           vibrate: [200, 100, 200, 100, 200, 100, 200],
           requireInteraction: true,
           click_action: data.url || "/"
@@ -78,7 +78,7 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
         notification: {
           title,
           body,
-          icon: "/aloshipp.png",
+          icon: "/logoALOSHIPP.png",
           vibrate: [200, 100, 200, 100, 200, 100, 200],
           requireInteraction: true,
           click_action: data.url || "/"
