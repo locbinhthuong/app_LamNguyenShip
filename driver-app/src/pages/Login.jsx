@@ -128,7 +128,8 @@ export default function Login() {
           <img 
             src="/logoALOSHIPP.png" 
             alt="AloShipp Logo" 
-            className="w-full h-full object-contain drop-shadow-md scale-125"
+            className="w-full h-full object-contain scale-125"
+            style={{ filter: 'drop-shadow(0px 0px 3px rgba(0,0,0,0.5)) drop-shadow(0px 0px 1px rgba(0,0,0,0.8))' }}
           />
         </div>
         <h1 className="text-3xl font-bold text-slate-800">AloShipp</h1>
