@@ -211,15 +211,15 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
       {subType === 'GAP_TRUC_TIEP' ? (
         <div className="bg-white p-6 rounded-2xl border border-indigo-100 flex flex-col items-center justify-center text-center space-y-4 mb-4 mt-6 animate-fadeIn">
           <div className="w-32 h-32 mb-2 bg-indigo-50 rounded-2xl p-2 border border-indigo-100 flex items-center justify-center shadow-inner">
-             <img src="https://img.vietqr.io/image/970422-0827758062-compact.jpg?amount=0&addInfo=AloShipp%20Lien%20He&accountName=LAM%20NGUYEN" alt="QR" className="w-full h-full object-contain rounded-xl" />
+             <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=https://zalo.me/0765120777" alt="Zalo QR" className="w-full h-full object-contain rounded-xl" />
           </div>
-          <p className="text-indigo-900 font-bold text-lg mb-1 tracking-tight">Tổng đài Điều Phối AloShipp</p>
+          <p className="text-indigo-900 font-bold text-lg mb-1 tracking-tight">Điều Phối Alos</p>
           <p className="text-slate-500 text-sm mb-4 leading-relaxed px-2 font-medium">Quét mã QR qua Zalo hoặc bấm gọi trực tiếp để kết nối nhanh nhất với bộ phận điều phối.</p>
           <div className="flex gap-3 w-full">
-            <a href="tel:0827758062" className="flex-1 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold rounded-xl py-3.5 shadow-lg shadow-indigo-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
+            <a href="tel:0765120777" className="flex-1 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold rounded-xl py-3.5 shadow-lg shadow-indigo-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
               <span className="text-xl">📞</span> Trực Tiếp
             </a>
-            <a href="https://zalo.me/0827758062" target="_blank" rel="noopener noreferrer" className="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold rounded-xl py-3.5 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
+            <a href="https://zalo.me/0765120777" target="_blank" rel="noopener noreferrer" className="flex-1 bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold rounded-xl py-3.5 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2">
               <span className="text-xl">💬</span> Zalo
             </a>
           </div>
