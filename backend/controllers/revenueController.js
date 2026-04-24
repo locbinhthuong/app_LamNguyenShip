@@ -32,6 +32,7 @@ const revenueController = {
       // 2. Chạy vòng lặp cộng dồn (Do dữ liệu MongoDB đã cache in-memory nhanh)
       completedOrders.forEach(order => {
         const fee = order.deliveryFee || 0;
+        const bonus = (order.adminBonus || 0) + (order.kpiBonus || 0);
         const date = order.deliveredAt || order.updatedAt;
         
         // Cộng dồn thống kê Admin
@@ -48,11 +49,11 @@ const revenueController = {
               driverId: driverId,
               name: order.assignedTo.name,
               phone: order.assignedTo.phone,
-              totalOrders: 0, totalFee: 0,
-              todayOrders: 0, todayFee: 0,
-              weekOrders: 0, weekFee: 0,
-              monthOrders: 0, monthFee: 0,
-              yearOrders: 0, yearFee: 0,
+              totalOrders: 0, totalFee: 0, totalBonus: 0,
+              todayOrders: 0, todayFee: 0, todayBonus: 0,
+              weekOrders: 0, weekFee: 0, weekBonus: 0,
+              monthOrders: 0, monthFee: 0, monthBonus: 0,
+              yearOrders: 0, yearFee: 0, yearBonus: 0,
               debt: 0  // Đây sẽ là công nợ HÔM NAY
             };
           }
@@ -60,24 +61,29 @@ const revenueController = {
           // Tổng số đơn và tổng doanh thu mọi thời đại
           driverDebts[driverId].totalOrders += 1;
           driverDebts[driverId].totalFee += fee;
+          driverDebts[driverId].totalBonus += bonus;
 
           // Cập nhật các KPI con
           if (date >= today) {
             driverDebts[driverId].todayOrders += 1;
             driverDebts[driverId].todayFee += fee;
+            driverDebts[driverId].todayBonus += bonus;
             driverDebts[driverId].debt += fee * 0.15; // Công nợ
           }
           if (date >= startOfWeek) {
             driverDebts[driverId].weekOrders += 1;
             driverDebts[driverId].weekFee += fee;
+            driverDebts[driverId].weekBonus += bonus;
           }
           if (date >= startOfMonth) {
             driverDebts[driverId].monthOrders += 1;
             driverDebts[driverId].monthFee += fee;
+            driverDebts[driverId].monthBonus += bonus;
           }
           if (date >= startOfYear) {
             driverDebts[driverId].yearOrders += 1;
             driverDebts[driverId].yearFee += fee;
+            driverDebts[driverId].yearBonus += bonus;
           }
         }
       });

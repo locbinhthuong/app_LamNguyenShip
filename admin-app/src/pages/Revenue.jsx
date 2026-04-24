@@ -174,101 +174,55 @@ export default function Revenue() {
             )}
         </div>
 
-        {/* DESKTOP VIEW BẢNG CÔNG NỢ */}
+        {/* DESKTOP VIEW BẢNG DOANH THU HOẠT ĐỘNG */}
         <div className="hidden lg:block flex-1 overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-500">
-            <thead className="bg-slate-50/50 text-xs uppercase text-slate-500 sticky top-0">
+          {/* Header filter (Mô phỏng như hình) */}
+          <div className="border-b border-slate-200 p-4 bg-white flex items-center gap-3">
+             <span className="font-bold text-slate-700">Bộ lọc hoạt động</span>
+             <span className="bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 rounded-lg text-sm font-bold flex items-center gap-2 cursor-pointer">
+                Ngày: {new Date().toLocaleDateString('vi-VN')}
+             </span>
+          </div>
+          <table className="w-full text-left text-sm text-slate-700 font-medium">
+            <thead className="bg-white border-b border-slate-200 text-slate-800 text-sm">
               <tr>
-                <th className="px-6 py-4 font-semibold text-slate-600">tài xế / sđt</th>
-                <th className="px-6 py-4 font-semibold text-slate-600">Đơn Hoàn Thành</th>
-                <th className="px-6 py-4 font-semibold text-slate-600 text-right">Tổng Cước (100%)</th>
-                <th className="px-6 py-4 font-bold text-blue-600 text-right bg-blue-50">Thu Hôm Nay (15%)</th>
+                <th className="px-4 py-4 font-bold">#</th>
+                <th className="px-4 py-4 font-bold">Tài xế</th>
+                <th className="px-4 py-4 font-bold">Đơn Tổng</th>
+                <th className="px-4 py-4 font-bold">Bonus Tổng</th>
+                <th className="px-4 py-4 font-bold">Ship Tổng</th>
+                <th className="px-4 py-4 font-bold">Đơn Tháng</th>
+                <th className="px-4 py-4 font-bold">Bonus tháng</th>
+                <th className="px-4 py-4 font-bold">Ship tháng</th>
+                <th className="px-4 py-4 font-bold">Đơn Ngày</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {drivers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-slate-500 italic text-base">
+                  <td colSpan="9" className="px-6 py-12 text-center text-slate-500 italic text-base">
                     Chưa có tài xế nào hoàn thành đơn hàng.
                   </td>
                 </tr>
               ) : (
-                drivers.map((d) => (
-                  <React.Fragment key={d.driverId}>
-                    <tr 
-                      onClick={() => setExpandedRow(expandedRow === d.driverId ? null : d.driverId)}
-                      className={`transition-colors cursor-pointer group ${expandedRow === d.driverId ? 'bg-blue-50/30' : 'hover:bg-slate-50'}`}
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-slate-400 transition-transform ${expandedRow === d.driverId ? 'rotate-90 text-blue-500' : ''}`}>▶</span>
-                          <div>
-                            <p className="font-bold text-slate-800 text-base group-hover:text-blue-600 transition-colors">{d.name || 'Không tên'}</p>
-                            <p className="text-xs text-slate-500 mt-0.5">📞 {d.phone || 'N/A'}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-block px-3 py-1 bg-white border border-slate-200 rounded-full text-slate-600 font-medium">
-                          {d.totalOrders || 0} đơn
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="text-slate-800 font-medium">{formatCurrency(d.totalFee || 0)}</span>
-                      </td>
-                      <td className="px-6 py-4 text-right bg-blue-50/50">
-                        <span className="text-lg font-bold text-blue-600 ">{formatCurrency(d.debt || 0)}</span>
-                      </td>
-                    </tr>
-                    {expandedRow === d.driverId && (
-                      <tr className="bg-slate-50/60 border-b-2 border-slate-200 shadow-inner">
-                        <td colSpan="4" className="p-0">
-                          <div className="p-4 sm:p-6 grid grid-cols-2 md:grid-cols-4 gap-4 bg-gradient-to-b from-slate-100/50 to-white">
-                            {/* Khối Hôm Nay */}
-                            <div className="bg-white rounded-xl p-4 border border-blue-100 relative overflow-hidden">
-                              <div className="absolute top-0 right-0 w-12 h-12 bg-blue-50 rounded-bl-full z-0"></div>
-                              <p className="text-xs font-bold text-blue-500 uppercase mb-2 relative z-10">Trong Ngày</p>
-                              <div className="space-y-1 relative z-10">
-                                <p className="text-2xl font-black text-slate-800">{formatCurrency(d.todayFee)}</p>
-                                <p className="text-xs font-semibold text-slate-500 bg-slate-100 inline-block px-2 py-0.5 rounded-full">{d.todayOrders || 0} đơn</p>
-                              </div>
-                              <div className="mt-3 pt-3 border-t border-blue-50 relative z-10">
-                                <p className="text-[10px] text-slate-400 font-medium tracking-wide">CÔNG NỢ 15%</p>
-                                <p className="text-sm font-bold text-red-500">{formatCurrency(d.debt || 0)}</p>
-                              </div>
-                            </div>
-                            
-                            {/* Khối Tuần */}
-                            <div className="bg-white rounded-xl p-4 border border-slate-200">
-                              <p className="text-xs font-bold text-slate-500 uppercase mb-2">Tuần Này</p>
-                              <div className="space-y-1">
-                                <p className="text-xl font-bold text-slate-800">{formatCurrency(d.weekFee)}</p>
-                                <p className="text-xs font-medium text-slate-500">{d.weekOrders || 0} đơn</p>
-                              </div>
-                            </div>
-
-                            {/* Khối Tháng */}
-                            <div className="bg-white rounded-xl p-4 border border-slate-200">
-                              <p className="text-xs font-bold text-slate-500 uppercase mb-2">Tháng Này</p>
-                              <div className="space-y-1">
-                                <p className="text-xl font-bold text-slate-800">{formatCurrency(d.monthFee)}</p>
-                                <p className="text-xs font-medium text-slate-500">{d.monthOrders || 0} đơn</p>
-                              </div>
-                            </div>
-
-                            {/* Khối Năm */}
-                            <div className="bg-white rounded-xl p-4 border border-slate-200">
-                              <p className="text-xs font-bold text-slate-500 uppercase mb-2">Năm Nay</p>
-                              <div className="space-y-1">
-                                <p className="text-xl font-bold text-slate-800">{formatCurrency(d.yearFee)}</p>
-                                <p className="text-xs font-medium text-slate-500">{d.yearOrders || 0} đơn</p>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                drivers.map((d, idx) => (
+                  <tr key={d.driverId} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-4 font-bold text-slate-800">{idx + 1}</td>
+                    <td className="px-4 py-4 font-bold text-slate-800 whitespace-nowrap">{d.name || 'Không tên'}</td>
+                    <td className="px-4 py-4 text-blue-600 font-bold whitespace-nowrap flex items-center gap-1.5">
+                      <span className="text-lg">📄</span> {d.totalOrders || 0}
+                    </td>
+                    <td className="px-4 py-4 font-bold whitespace-nowrap">{formatCurrency(d.totalBonus || 0)}</td>
+                    <td className="px-4 py-4 text-blue-600 font-bold whitespace-nowrap">{formatCurrency(d.totalFee || 0)}</td>
+                    <td className="px-4 py-4 text-orange-500 font-bold whitespace-nowrap flex items-center gap-1.5">
+                      <span className="text-lg">📅</span> {d.monthOrders || 0}
+                    </td>
+                    <td className="px-4 py-4 font-bold whitespace-nowrap">{formatCurrency(d.monthBonus || 0)}</td>
+                    <td className="px-4 py-4 text-orange-500 font-bold whitespace-nowrap">{formatCurrency(d.monthFee || 0)}</td>
+                    <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap flex items-center gap-1.5">
+                      <span className="text-lg">☀️</span> {d.todayOrders || 0}
+                    </td>
+                  </tr>
                 ))
               )}
             </tbody>
