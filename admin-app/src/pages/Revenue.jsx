@@ -56,57 +56,29 @@ export default function Revenue() {
       </div>
 
       {/* 4 THẺ THỐNG KÊ DOANH THU (GỘP CHUNG MỘT KHUNG) */}
-      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm divide-y divide-slate-100">
+      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm divide-y divide-slate-100">
         {/* DOANH THU NGÀY */}
-        <div className="relative overflow-hidden p-5 flex items-center justify-between">
-          <div>
-             <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest relative z-10">Trong Ngày</h3>
-             <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.dailyRevenue)}</p>
-          </div>
-          <div className="text-blue-500/10 h-16 w-16 relative z-0">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+        <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Ngày:</h3>
+          <p className="text-xl font-black text-slate-800">{formatCurrency(stats.dailyRevenue)}</p>
         </div>
 
         {/* DOANH THU TUẦN */}
-        <div className="relative overflow-hidden p-5 flex items-center justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-sky-600 uppercase tracking-widest relative z-10">Trong Tuần</h3>
-            <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.weeklyRevenue)}</p>
-          </div>
-          <div className="text-sky-500/10 h-16 w-16 relative z-0">
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
+        <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tuần:</h3>
+          <p className="text-xl font-black text-slate-800">{formatCurrency(stats.weeklyRevenue)}</p>
         </div>
 
         {/* DOANH THU THÁNG */}
-        <div className="relative overflow-hidden p-5 flex items-center justify-between">
-          <div>
-            <h3 className="text-xs font-bold text-cyan-600 uppercase tracking-widest relative z-10">Trong Tháng</h3>
-            <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.monthlyRevenue)}</p>
-          </div>
-          <div className="text-cyan-500/10 h-16 w-16 relative z-0">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-          </div>
+        <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tháng:</h3>
+          <p className="text-xl font-black text-slate-800">{formatCurrency(stats.monthlyRevenue)}</p>
         </div>
 
         {/* TỔNG DOANH THU */}
-        <div className="relative overflow-hidden p-5 flex items-center justify-between bg-amber-50/30">
-          <div>
-            <h3 className="text-xs font-bold text-amber-600 uppercase tracking-widest relative z-10">Tổng Doanh Thu Cước</h3>
-            <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.totalRevenue)}</p>
-          </div>
-          <div className="text-amber-500/10 h-16 w-16 relative z-0">
-             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+        <div className="p-4 sm:p-5 flex items-center justify-between bg-amber-50/30 hover:bg-amber-50/50 transition-colors">
+          <h3 className="text-sm font-bold text-amber-600 uppercase tracking-widest">Tổng Cước:</h3>
+          <p className="text-xl font-black text-amber-600">{formatCurrency(stats.totalRevenue)}</p>
         </div>
       </div>
 
