@@ -124,12 +124,11 @@ export default function Login() {
     <div className="flex min-h-screen flex-col bg-slate-50">
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 pt-[max(4rem,env(safe-area-inset-top))] text-center">
-        <div className="w-48 h-48 mx-auto mb-2 flex items-center justify-center">
+        <div className="w-36 h-36 bg-white/25 backdrop-blur-md border border-white/40 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-xl p-4">
           <img 
             src="/logoALOSHIPP.png" 
             alt="AloShipp Logo" 
-            className="w-full h-full object-contain"
-            style={{ filter: 'drop-shadow(0px 0px 3px rgba(0,0,0,0.5)) drop-shadow(0px 0px 1px rgba(0,0,0,0.8))' }}
+            className="w-full h-full object-contain drop-shadow-md"
           />
         </div>
         <h1 className="text-3xl font-bold text-slate-800">AloShipp</h1>
