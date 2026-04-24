@@ -121,113 +121,113 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-50">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 to-blue-800 p-8 pt-[max(4rem,env(safe-area-inset-top))] text-center">
-        <div className="w-36 h-36 bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-xl p-0 overflow-hidden">
-          <img 
-            src="/logoALOSHIPP.png" 
-            alt="AloShipp Logo" 
-            className="w-full h-full object-contain scale-125"
-            style={{ filter: 'drop-shadow(0px 0px 3px rgba(0,0,0,0.5)) drop-shadow(0px 0px 1px rgba(0,0,0,0.8))' }}
-          />
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-slate-50">
+      <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl transition-all border border-slate-100">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center mb-4">
+            <img 
+              src="/logoALOSHIPP.png" 
+              alt="AloShipp Logo" 
+              className="h-28 w-auto drop-shadow-sm" 
+            />
+          </div>
+          <h1 className="hidden">AloShipp</h1>
+          <p className="text-sm text-slate-500 mt-1 font-medium">Ứng dụng dành cho Tài Xế</p>
         </div>
-        <h1 className="text-3xl font-bold text-slate-800">AloShipp</h1>
-        <p className="text-blue-200 mt-2">Ứng dụng dành cho Tài Xế</p>
-      </div>
 
-      {/* Form */}
-      <div className="-mt-6 flex-1 p-4 pb-8 sm:p-6">
-        <div className="mx-auto max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl">
-          <h2 className="text-xl font-bold text-slate-800 mb-6 text-center">Đăng Nhập</h2>
+        {error && (
+          <div className="mb-6 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
+            {error}
+          </div>
+        )}
 
-          {error && (
-            <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 py-3 rounded-xl mb-4 text-sm">
-              {error}
-            </div>
+        {/* Nút đăng nhập Zalo */}
+        <button
+          type="button"
+          onClick={handleZaloLogin}
+          disabled={zaloLoading}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold py-3 px-4 rounded-xl mb-4 flex items-center justify-center gap-3 transition-colors active:scale-95 shadow-md"
+        >
+          {zaloLoading ? (
+            <>
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Đang kết nối Zalo...
+            </>
+          ) : (
+            <>
+              <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="24" fill="#0068FF"/>
+                <path d="M24 10C15.178 10 8 16.4 8 24c0 5.14 2.8 9.68 7 12.3V33l7.1-4c1.5.4 3 .6 4.9.6 8.82 0 16-6.4 16-14S32.82 10 24 10z" fill="#fff"/>
+              </svg>
+              Đăng nhập bằng Zalo
+            </>
           )}
+        </button>
 
-          {/* Nút đăng nhập Zalo */}
-          <button
-            type="button"
-            onClick={handleZaloLogin}
-            disabled={zaloLoading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold py-3 px-4 rounded-xl mb-4 flex items-center justify-center gap-3 transition-colors active:scale-95"
-          >
-            {zaloLoading ? (
-              <>
-                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Đang kết nối Zalo...
-              </>
-            ) : (
-              <>
-                <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
-                  <circle cx="24" cy="24" r="24" fill="#0068FF"/>
-                  <path d="M24 10C15.178 10 8 16.4 8 24c0 5.14 2.8 9.68 7 12.3V33l7.1-4c1.5.4 3 .6 4.9.6 8.82 0 16-6.4 16-14S32.82 10 24 10z" fill="#fff"/>
-                </svg>
-                Đăng nhập bằng Zalo
-              </>
-            )}
-          </button>
+        {/* Phân cách */}
+        <div className="flex items-center gap-3 my-6">
+          <div className="flex-1 h-px bg-slate-200"></div>
+          <span className="text-slate-400 text-sm">hoặc</span>
+          <div className="flex-1 h-px bg-slate-200"></div>
+        </div>
 
-          {/* Phân cách */}
-          <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-slate-600"></div>
-            <span className="text-slate-500 text-sm">hoặc</span>
-            <div className="flex-1 h-px bg-slate-600"></div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Số điện thoại</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="Nhập số điện thoại"
+              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-slate-50"
+              autoComplete="tel"
+              required
+            />
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">Số điện thoại</label>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Mật khẩu</label>
+            <div className="relative">
               <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="Nhập số điện thoại"
-                className="input-field"
-                autoComplete="tel"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Nhập mật khẩu"
+                className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all pr-12 bg-slate-50"
+                autoComplete="current-password"
+                required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
             </div>
+          </div>
 
-            <div>
-              <label className="block text-slate-300 text-sm font-medium mb-2">Mật khẩu</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu"
-                  className="input-field pr-12"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500"
-                >
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </button>
-              </div>
-            </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3.5 mt-2 rounded-xl text-white font-semibold flex justify-center items-center shadow-md active:scale-95 transition-all ${
+              loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Đang đăng nhập...
+              </span>
+            ) : 'Đăng Nhập'}
+          </button>
+        </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary mt-2"
-            >
-              {loading ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Đang đăng nhập...
-                </span>
-              ) : 'Đăng Nhập'}
-            </button>
-          </form>
-        </div>
-
-        <p className="text-center text-slate-500 text-sm mt-6">
-          Liên hệ quản lý nếu chưa có tài khoản
+        <p className="mt-8 text-center text-sm text-slate-500">
+          Chưa có tài khoản?{' '}
+          <a href="tel:0827758062" className="text-blue-600 font-semibold hover:underline">
+            Liên hệ quản lý
+          </a>
         </p>
       </div>
     </div>
