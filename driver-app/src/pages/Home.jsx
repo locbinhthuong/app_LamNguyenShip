@@ -592,7 +592,7 @@ export default function Home() {
         <div className="flex items-center justify-between gap-2">
           {/* Cụm trái: Logo rút gọn + Tên Tài xế */}
           <div className="flex items-center gap-2">
-            <span className="text-xl sm:text-2xl">🚚</span>
+            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="w-20 h-auto object-contain drop-shadow-md scale-125 mr-1" />
             <div 
               onClick={() => setEditModal(true)}
               className="flex items-center gap-2 bg-white/10 p-1 pr-3 rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-95 group"

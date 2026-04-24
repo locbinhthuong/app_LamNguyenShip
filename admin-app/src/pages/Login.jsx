@@ -94,10 +94,10 @@ export default function Login() {
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 py-8 sm:py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
-            <span className="text-3xl">🚚</span>
+          <div className="mx-auto mb-4 flex items-center justify-center">
+            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-28 w-auto object-contain drop-shadow-sm scale-125" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-800">LamNguyenShip</h1>
+          <h1 className="hidden text-2xl font-bold text-slate-800">AloShipp</h1>
           <p className="text-slate-500 mt-1">Quản trị hệ thống</p>
         </div>
 

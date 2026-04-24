@@ -33,9 +33,9 @@ const CustomerLayout = () => {
 
       {/* DESKTOP SIDEBAR TRÁI */}
       <div className="hidden md:flex flex-col w-[280px] bg-white border-r border-gray-200 shadow-2xl z-50 h-[100dvh] relative">
-        <div className="p-6 flex items-center gap-3 border-b border-gray-100 bg-gradient-to-br from-blue-50/50 to-white">
-          <img src="/logoALOSHIPP.png" alt="Logo" className="w-12 h-12 rounded-xl shadow-sm border border-gray-100" />
-          <span className="font-black text-2xl text-blue-600 tracking-tight">AloShipp</span>
+        <div className="p-6 flex items-center justify-center border-b border-gray-100 bg-gradient-to-br from-blue-50/50 to-white">
+          <img src="/logoALOSHIPP.png" alt="Logo" className="w-32 h-auto drop-shadow-sm scale-110 object-contain" />
+          <span className="font-black text-2xl text-blue-600 tracking-tight hidden">AloShipp</span>
         </div>
         
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
