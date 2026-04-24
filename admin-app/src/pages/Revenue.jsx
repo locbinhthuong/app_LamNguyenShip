@@ -55,50 +55,58 @@ export default function Revenue() {
         </button>
       </div>
 
-      {/* 4 THẺ THỐNG KÊ DOANH THU */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* 4 THẺ THỐNG KÊ DOANH THU (GỘP CHUNG MỘT KHUNG) */}
+      <div className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm divide-y divide-slate-100">
         {/* DOANH THU NGÀY */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-blue-50 to-white p-6 border border-blue-100">
-          <div className="absolute -right-4 -top-4 text-blue-500/10 h-24 w-24">
+        <div className="relative overflow-hidden p-5 flex items-center justify-between">
+          <div>
+             <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest relative z-10">Trong Ngày</h3>
+             <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.dailyRevenue)}</p>
+          </div>
+          <div className="text-blue-500/10 h-16 w-16 relative z-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest relative z-10">Trong Ngày</h3>
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-slate-800 relative z-10">{formatCurrency(stats.dailyRevenue)}</p>
         </div>
 
         {/* DOANH THU TUẦN */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-sky-50 to-white p-6 border border-sky-100">
-          <div className="absolute -right-4 -top-4 text-sky-500/10 h-24 w-24">
+        <div className="relative overflow-hidden p-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-sky-600 uppercase tracking-widest relative z-10">Trong Tuần</h3>
+            <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.weeklyRevenue)}</p>
+          </div>
+          <div className="text-sky-500/10 h-16 w-16 relative z-0">
              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <h3 className="text-sm font-bold text-sky-600 uppercase tracking-widest relative z-10">Trong Tuần</h3>
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-slate-800 relative z-10">{formatCurrency(stats.weeklyRevenue)}</p>
         </div>
 
         {/* DOANH THU THÁNG */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-cyan-50 to-white p-6 border border-cyan-100">
-          <div className="absolute -right-4 -top-4 text-cyan-500/10 h-24 w-24">
+        <div className="relative overflow-hidden p-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-xs font-bold text-cyan-600 uppercase tracking-widest relative z-10">Trong Tháng</h3>
+            <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.monthlyRevenue)}</p>
+          </div>
+          <div className="text-cyan-500/10 h-16 w-16 relative z-0">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
             </svg>
           </div>
-          <h3 className="text-sm font-bold text-cyan-600 uppercase tracking-widest relative z-10">Trong Tháng</h3>
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-slate-800 relative z-10">{formatCurrency(stats.monthlyRevenue)}</p>
         </div>
 
         {/* TỔNG DOANH THU */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-white p-6 border border-amber-100">
-          <div className="absolute -right-4 -top-4 text-amber-500/10 h-24 w-24">
+        <div className="relative overflow-hidden p-5 flex items-center justify-between bg-amber-50/30">
+          <div>
+            <h3 className="text-xs font-bold text-amber-600 uppercase tracking-widest relative z-10">Tổng Doanh Thu Cước</h3>
+            <p className="mt-1 text-2xl font-black text-slate-800 relative z-10">{formatCurrency(stats.totalRevenue)}</p>
+          </div>
+          <div className="text-amber-500/10 h-16 w-16 relative z-0">
              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <h3 className="text-sm font-bold text-amber-600 uppercase tracking-widest relative z-10">Tổng Doanh Thu Cước</h3>
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-slate-800 relative z-10">{formatCurrency(stats.totalRevenue)}</p>
         </div>
       </div>
 
@@ -106,76 +114,12 @@ export default function Revenue() {
       <div className="flex-1 rounded-2xl bg-white border-slate-200 shadow flex flex-col overflow-hidden">
         <div className="border-b border-blue-100 p-4 sm:p-5 bg-gradient-to-r from-blue-50 to-white">
           <h2 className="text-lg sm:text-xl font-bold text-blue-800 flex items-center gap-2">
-            <span>🧾</span> Bảng Công Nợ Tài Xế <span className="text-sm font-normal text-blue-600 bg-blue-100/50 px-3 py-1 rounded-full whitespace-nowrap hidden sm:inline-block border border-blue-200">Trích nộp phí nền tảng 15%</span>
+            <span>🧾</span> Bảng Doanh Thu Chi Tiết
           </h2>
-        </div>
-        
-        {/* MOBILE VIEW BẢNG CÔNG NỢ */}
-        <div className="grid grid-cols-1 gap-4 p-4 lg:hidden">
-            {drivers.length === 0 ? (
-                <div className="py-8 text-center text-slate-500 italic">Chưa có tài xế nào hoàn thành đơn hàng.</div>
-            ) : (
-                drivers.map(d => (
-                    <div key={d.driverId} className="bg-white border text-sm border-slate-200 rounded-xl p-4 flex flex-col gap-3">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div>
-                                <p className="font-bold text-slate-800 text-lg">{d.name || 'Không tên'}</p>
-                                <p className="text-xs text-slate-500">📞 {d.phone || 'N/A'}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-xs font-bold text-blue-500 uppercase">Thu 15% Hôm Nay</p>
-                                <p className="text-xl font-black text-blue-600 ">{formatCurrency(d.debt || 0)}</p>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 text-center bg-slate-50 rounded-lg p-3">
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Đơn Hoàn Thành</p>
-                                <p className="text-base font-bold text-slate-700">{d.totalOrders || 0}</p>
-                            </div>
-                            <div>
-                                <p className="text-[10px] text-slate-400 font-bold uppercase mb-1">Tổng Cước (100%)</p>
-                                <p className="text-base font-bold text-emerald-600">{formatCurrency(d.totalFee || 0)}</p>
-                            </div>
-                        </div>
-
-                        <button 
-                            onClick={() => setExpandedRow(expandedRow === d.driverId ? null : d.driverId)}
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-                        >
-                            {expandedRow === d.driverId ? 'Thu Gọn Chi Tiết 🔼' : 'Xem Chi Tiết 🔽'}
-                        </button>
-
-                        {expandedRow === d.driverId && (
-                            <div className="grid grid-cols-2 gap-3 mt-1 pt-3 border-t border-slate-100">
-                                <div className="bg-white rounded-xl p-3 border border-blue-100 col-span-2 relative overflow-hidden">
-                                  <p className="text-[10px] font-bold text-blue-500 uppercase mb-1 relative z-10">Trong Ngày</p>
-                                  <div className="flex items-center justify-between relative z-10">
-                                    <p className="text-xl font-black text-slate-800">{formatCurrency(d.todayFee)}</p>
-                                    <p className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{d.todayOrders || 0} đơn</p>
-                                  </div>
-                                </div>
-                                
-                                <div className="bg-gray-50 rounded-xl p-3 border border-slate-100 shadow-inner">
-                                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Tuần Này</p>
-                                  <p className="text-sm font-bold text-slate-800">{formatCurrency(d.weekFee)}</p>
-                                  <p className="text-[10px] text-slate-500 mt-0.5">{d.weekOrders || 0} đơn</p>
-                                </div>
-
-                                <div className="bg-gray-50 rounded-xl p-3 border border-slate-100 shadow-inner">
-                                  <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Tháng Này</p>
-                                  <p className="text-sm font-bold text-slate-800">{formatCurrency(d.monthFee)}</p>
-                                  <p className="text-[10px] text-slate-500 mt-0.5">{d.monthOrders || 0} đơn</p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                ))
-            )}
         </div>
 
         {/* DESKTOP VIEW BẢNG DOANH THU HOẠT ĐỘNG */}
-        <div className="hidden lg:block flex-1 overflow-x-auto">
+        <div className="flex-1 overflow-x-auto">
           {/* Header filter (Mô phỏng như hình) */}
           <div className="border-b border-slate-200 p-4 bg-white flex items-center gap-3">
              <span className="font-bold text-slate-700">Bộ lọc hoạt động</span>
