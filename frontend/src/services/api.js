@@ -37,6 +37,11 @@ export const getCustomerProfile = async () => {
   return response.data;
 };
 
+export const updateFcmToken = async (token) => {
+  const response = await api.post('/auth/fcm-token', { token });
+  return response.data;
+};
+
 // ==================== ORDER API ====================
 export const createOrder = async (orderData) => {
   const response = await api.post('/orders/customer', orderData);

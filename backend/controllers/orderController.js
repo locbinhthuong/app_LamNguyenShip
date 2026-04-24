@@ -1,9 +1,12 @@
 const Order = require('../models/Order');
 const Driver = require('../models/Driver');
+const Admin = require('../models/Admin');
+const User = require('../models/User');
 const { validationResult } = require('express-validator');
 const { emitNewOrder, emitOrderAccepted, emitOrderPickedUp, emitOrderDelivering, emitOrderCompleted, emitOrderCancelled } = require('../sockets/index');
 const { startOfTodayVietnam } = require('../utils/todayVietnam');
 const DebtTransaction = require('../models/DebtTransaction');
+const { sendNotification, sendMultipleNotifications } = require('../utils/notification');
 
 const orderController = {
   // GET /api/orders - Lấy danh sách đơn hàng
@@ -275,6 +278,20 @@ const orderController = {
         emitNewOrder(req.io, payload);
       }
 
+      // --- Bắn Push Notification cho Admin ---
+      try {
+        const admins = await Admin.find({ fcmToken: { $exists: true, $ne: null } });
+        const tokens = admins.map(a => a.fcmToken).filter(t => t);
+        if (tokens.length > 0) {
+          const title = '🔔 Có đơn đặt xe mới!';
+          const body = `Khách hàng ${order.customerName || 'ẩn danh'} vừa tạo đơn ${order.serviceType || 'mới'}.`;
+          await sendMultipleNotifications(tokens, title, body, { url: '/orders' });
+        }
+      } catch (err) {
+        console.error('Error sending push to admin:', err);
+      }
+      // ---------------------------------------
+
       console.log(`[Order] Created (Customer App): ${order._id} by ${req.customer.phone}`);
 
       res.status(201).json({
@@ -423,7 +440,11 @@ const orderController = {
       if (items !== undefined) orderToUpdate.items = items;
       if (note !== undefined) orderToUpdate.note = note;
       if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
-      if (deliveryFee !== undefined) orderToUpdate.deliveryFee = deliveryFee;
+      let isDeliveryFeeChanged = false;
+      if (deliveryFee !== undefined) {
+        if (orderToUpdate.deliveryFee !== deliveryFee && deliveryFee > 0) isDeliveryFeeChanged = true;
+        orderToUpdate.deliveryFee = deliveryFee;
+      }
       if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
@@ -451,6 +472,20 @@ const orderController = {
       }
 
       await orderToUpdate.save();
+
+      // Gửi push notification cho khách hàng nếu có báo giá mới
+      if (isDeliveryFeeChanged && orderToUpdate.customerId) {
+        try {
+          const user = await User.findById(orderToUpdate.customerId);
+          if (user && user.fcmToken) {
+            const title = '💰 Đơn hàng đã được báo giá!';
+            const body = `Đơn hàng ${orderToUpdate.serviceType} của bạn đã có phí: ${deliveryFee.toLocaleString('vi-VN')}đ.`;
+            await sendNotification(user.fcmToken, title, body, { url: `/customer/order/${orderToUpdate._id}` });
+          }
+        } catch (err) {
+          console.error('Lỗi gửi push cho khách hàng:', err);
+        }
+      }
 
       // Load gắp thông tin tài xế để socket báo chuẩn chữ
       if (didAdminForceAssign) {

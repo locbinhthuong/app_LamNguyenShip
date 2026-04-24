@@ -1,11 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Clock, Bell, User } from 'lucide-react';
+import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
+import { updateFcmToken } from '../services/api';
 
 const CustomerLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = !!localStorage.getItem('customerToken');
+
+  useEffect(() => {
+    const initFirebase = async () => {
+      if (isAuthenticated) {
+        const token = await requestFirebaseToken();
+        if (token) {
+          try {
+            await updateFcmToken(token);
+            console.log('Cập nhật FCM Token Customer thành công.');
+          } catch (error) {
+            console.error('Lỗi cập nhật FCM Token Customer:', error);
+          }
+        }
+      }
+    };
+
+    initFirebase();
+
+    const unsubscribe = setupForegroundListener((payload) => {
+      const title = payload.notification?.title || 'Thông báo';
+      const body = payload.notification?.body || '';
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/logoALOSHIPP.png' });
+      }
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [isAuthenticated]);
 
   const navItems = [
     { name: 'Trang chủ', path: '/', icon: <Search size={22} /> },

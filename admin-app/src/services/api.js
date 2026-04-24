@@ -60,6 +60,11 @@ export const getAdminProfile = async () => {
   return response.data;
 };
 
+export const updateFcmToken = async (token) => {
+  const response = await api.post('/api/auth/fcm-token', { token });
+  return response.data;
+};
+
 // ==================== ORDERS ====================
 /** Trả về { orders, pagination } — cùng kiểu unwrap như getDashboardStats, tránh nhầm cấp .data */
 export const getOrders = async (params) => {

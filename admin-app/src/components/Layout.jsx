@@ -3,6 +3,8 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminSocket } from '../hooks/useAdminSocket';
 import DebtApprovalModal from './DebtApprovalModal';
+import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
+import { updateFcmToken } from '../services/api';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
@@ -21,6 +23,36 @@ export default function Layout() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
+
+  useEffect(() => {
+    const initFirebase = async () => {
+      if (admin) {
+        const token = await requestFirebaseToken();
+        if (token) {
+          try {
+            await updateFcmToken(token);
+            console.log('Cập nhật FCM Token Admin thành công.');
+          } catch (error) {
+            console.error('Lỗi cập nhật FCM Token Admin:', error);
+          }
+        }
+      }
+    };
+
+    initFirebase();
+
+    const unsubscribe = setupForegroundListener((payload) => {
+      const title = payload.notification?.title || 'Thông báo';
+      const body = payload.notification?.body || '';
+      if (Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '/logoALOSHIPP.png' });
+      }
+    });
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [admin]);
 
   useEffect(() => {
     // Chặn tổng đài viên truy cập Dashboard và các trang không được phép
