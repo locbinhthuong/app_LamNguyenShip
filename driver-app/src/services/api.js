@@ -63,6 +63,11 @@ export const updateMyProfile = async (profileData) => {
   return response.data;
 };
 
+export const deleteMyAccount = async () => {
+  const response = await api.delete('/api/auth/driver/me');
+  return response.data;
+};
+
 export const uploadDriverAvatar = async (file) => {
   const formData = new FormData();
   formData.append('image', file);

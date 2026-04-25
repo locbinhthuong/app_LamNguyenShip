@@ -258,6 +258,41 @@ const authController = {
     }
   },
 
+  // DELETE /api/auth/driver/me - Yêu cầu xóa tài khoản tài xế
+  deleteDriverAccount: async (req, res) => {
+    try {
+      // Vì tránh lỗi khóa ngoại và giữ lại lịch sử đơn hàng, ta chỉ đổi trạng thái thành banned hoặc xoá thông tin cá nhân
+      const driver = await Driver.findByIdAndUpdate(
+        req.driver._id,
+        { 
+          status: 'banned', 
+          isOnline: false,
+          sessionToken: null,
+          fcmToken: '',
+          name: req.driver.name + ' (Đã xoá)'
+        },
+        { new: true }
+      );
+
+      if (req.io) {
+        req.io.to(`driver_${driver._id}`).emit('force_logout', { 
+          message: 'Tài khoản của bạn đã được xoá.' 
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Tài khoản đã được xoá thành công.'
+      });
+    } catch (error) {
+      console.error('Error deleteDriverAccount:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi yêu cầu xoá tài khoản'
+      });
+    }
+  },
+
   // PUT /api/auth/driver/status - Cập nhật trạng thái online/offline
   updateDriverStatus: async (req, res) => {
     try {
@@ -645,6 +680,28 @@ const authController = {
     } catch (error) {
        console.error('Error updateOwnCustomerProfile:', error);
        res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật thông tin' });
+    }
+  },
+
+  // DELETE /api/auth/customer/me
+  deleteCustomerAccount: async (req, res) => {
+    try {
+      await User.findByIdAndUpdate(req.customer._id, {
+        isActive: false,
+        name: req.customer.name + ' (Đã xoá)',
+        fcmToken: ''
+      });
+
+      res.status(200).json({
+        success: true,
+        message: 'Tài khoản đã được xoá thành công.'
+      });
+    } catch (error) {
+      console.error('Error deleteCustomerAccount:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi yêu cầu xoá tài khoản'
+      });
     }
   },
 

@@ -25,6 +25,9 @@ router.get('/driver/me', verifyToken, onlyDriver, authController.getDriverProfil
 // PUT /api/auth/driver/me
 router.put('/driver/me', verifyToken, onlyDriver, authController.updateOwnProfile);
 
+// DELETE /api/auth/driver/me
+router.delete('/driver/me', verifyToken, onlyDriver, authController.deleteDriverAccount);
+
 // PUT /api/auth/driver/status
 router.put('/driver/status', verifyToken, onlyDriver, authController.updateDriverStatus);
 
@@ -62,6 +65,9 @@ router.get('/customer/me', verifyToken, onlyCustomer, authController.getCustomer
 
 // PUT /api/auth/customer/me
 router.put('/customer/me', verifyToken, onlyCustomer, authController.updateOwnCustomerProfile);
+
+// DELETE /api/auth/customer/me
+router.delete('/customer/me', verifyToken, onlyCustomer, authController.deleteCustomerAccount);
 
 // POST /api/auth/fcm-token
 router.post('/fcm-token', verifyToken, authController.updateFcmToken);

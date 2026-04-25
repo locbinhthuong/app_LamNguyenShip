@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera } from 'lucide-react';
-import { api, uploadCustomerAvatar, getFullImageUrl } from '../../services/api';
+import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2 } from 'lucide-react';
+import { api, uploadCustomerAvatar, getFullImageUrl, deleteMyAccount } from '../../services/api';
 
 const CustomerProfile = () => {
   const navigate = useNavigate();
@@ -12,6 +12,9 @@ const CustomerProfile = () => {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchProfile = async () => {
     try {
@@ -88,6 +91,23 @@ const CustomerProfile = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      const res = await deleteMyAccount();
+      if (res.success) {
+        alert('Tài khoản của bạn đã được xoá thành công.');
+        handleLogout();
+      }
+    } catch (error) {
+      console.error('Lỗi khi xoá tài khoản:', error);
+      alert('Không thể thực hiện yêu cầu xoá tài khoản. Vui lòng thử lại sau.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden relative">
       {/* ẢNH BÌA & AVATAR */}
@@ -140,6 +160,14 @@ const CustomerProfile = () => {
         >
           <LogOut size={20} />
           ĐĂNG XUẤT TÀI KHOẢN
+        </button>
+
+        <button 
+          onClick={() => setShowDeleteConfirm(true)}
+          className="w-full bg-white mt-3 p-4 rounded-2xl text-red-600 font-bold border border-red-100 flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
+        >
+          <Trash2 size={20} />
+          YÊU CẦU XÓA TÀI KHOẢN
         </button>
       </div>
 
@@ -220,6 +248,37 @@ const CustomerProfile = () => {
                  </div>
               </form>
            </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Account Modal */}
+      {showDeleteConfirm && (
+        <div className="absolute inset-0 z-50 bg-black/60 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl animate-slideUp text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">⚠️</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Xóa tài khoản?</h3>
+            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              Bạn có chắc chắn muốn xóa tài khoản? Hành động này sẽ vô hiệu hóa tài khoản của bạn, và bạn sẽ <b>KHÔNG THỂ</b> đăng nhập hoặc đặt đơn hàng mới được nữa.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-50"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isDeleting ? <Loader2 size={18} className="animate-spin" /> : 'Đồng ý Xóa'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

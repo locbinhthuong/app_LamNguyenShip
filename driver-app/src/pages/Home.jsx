@@ -587,77 +587,84 @@ export default function Home() {
         </div>
       )}
 
-      {/* Header Siêu Gọn */}
-      <div className="shrink-0 bg-gradient-to-r from-blue-600 to-blue-800 p-2 sm:p-3 pt-[max(1rem,env(safe-area-inset-top))] shadow-md relative z-20">
+      {/* Header Siêu Gọn - Đã chuyển sang nền trắng */}
+      <div className="shrink-0 bg-white p-3 pt-[max(1rem,env(safe-area-inset-top))] relative z-20 shadow-sm border-b border-slate-100">
+        <div className="flex items-center justify-between mb-3">
+          {/* Logo rút gọn */}
+          <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-7 sm:h-8 w-auto object-contain" />
+          
+          {/* Đăng Xuất */}
+          <button
+            onClick={() => setLogoutModal(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200"
+          >
+            🚪
+          </button>
+        </div>
+
         <div className="flex items-center justify-between gap-2">
-          {/* Cụm trái: Logo rút gọn + Tên Tài xế */}
-          <div className="flex items-center gap-2">
-            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="w-20 h-auto object-contain  scale-125 mr-1" />
-            <div 
-              onClick={() => setEditModal(true)}
-              className="flex items-center gap-2 bg-white/10 p-1 pr-3 rounded-full cursor-pointer hover:bg-white/20 transition-all active:scale-95 group"
-            >
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white/50 relative">
-                {driver?.avatar ? (
-                  <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-sm font-bold text-blue-500">
-                    {driver?.name?.charAt(0).toUpperCase() || '👤'}
-                  </span>
-                )}
-              </div>
-              <div>
-                <p className="text-xs font-bold text-white leading-tight truncate max-w-[100px] sm:max-w-[150px]">{driver?.name || 'Tài xế'}</p>
-                <p className="text-[9px] text-blue-200 mt-0.5">{driver?.driverCode || 'Xem'}</p>
-              </div>
+          {/* Tên Tài xế */}
+          <div 
+            onClick={() => setEditModal(true)}
+            className="flex items-center gap-2.5 bg-slate-50 p-1.5 pr-4 rounded-full cursor-pointer hover:bg-slate-100 transition-all border border-slate-200 shadow-sm flex-1 max-w-[200px]"
+          >
+            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white relative shadow-sm shrink-0">
+              {driver?.avatar ? (
+                <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-sm font-bold text-blue-500">
+                  {driver?.name?.charAt(0).toUpperCase() || '👤'}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-col justify-center overflow-hidden">
+              <p className="text-[13px] font-bold text-slate-800 leading-none truncate w-full">{driver?.name || 'Tài xế'}</p>
+              <p className="text-[10px] text-slate-500 mt-1 leading-none truncate w-full">{driver?.driverCode || 'Xem hồ sơ'}</p>
             </div>
           </div>
 
-          {/* Cụm phải: Nút Gộp Online + GPS + Đăng Xuất */}
-          <div className="flex shrink-0 gap-1.5 items-center">
+          {/* Nút Trạng Thái Online/Offline */}
+          <div className="flex shrink-0">
             <button
               type="button"
               onClick={toggleOnline}
               disabled={isToggling}
-              className={`rounded-full px-3 py-1.5 text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1.5 min-w-[110px] justify-center ${
+              className={`rounded-full px-4 py-2 text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ${
                 driver?.isOnline 
-                  ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-400' 
-                     : gpsStatus === 'FINDING' ? 'bg-yellow-500 text-slate-900 border border-yellow-400 animate-pulse'
-                     : 'bg-red-500 text-white') 
-                  : 'bg-slate-600 text-slate-300'
+                  ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-600' 
+                     : gpsStatus === 'FINDING' ? 'bg-yellow-400 text-yellow-900 border border-yellow-500 animate-pulse'
+                     : 'bg-red-500 text-white border border-red-600') 
+                  : 'bg-slate-800 text-white border border-slate-900 shadow-md'
               } ${isToggling ? 'opacity-70 cursor-wait' : ''}`}
             >
               {driver?.isOnline ? (
                 <>
-                  {gpsStatus === 'TRACKING' ? '🟢 Online (GPS Tốt)' : gpsStatus === 'FINDING' ? '⏳ Đang dò GPS...' : '🔴 Lỗi Vị trí'}
+                  {gpsStatus === 'TRACKING' ? '🟢 Đang Online' : gpsStatus === 'FINDING' ? '⏳ Đang dò...' : '🔴 Lỗi GPS'}
                 </>
               ) : '⚫ Mở Nhận Đơn'}
-            </button>
-            <button
-              onClick={() => setLogoutModal(true)}
-              className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 text-xs"
-            >
-              🚪
             </button>
           </div>
         </div>
       </div>
 
-      <div className="shrink-0 w-full bg-gradient-to-b from-blue-700 to-blue-600 p-2 pb-3 shadow-inner relative z-10 flex justify-center">
-
-        {/* Cặp Thống kê Doanh Số Ngày Thay Vì Đơn Cũ */}
-        <div className="mt-2 grid grid-cols-2 gap-3 w-full max-w-sm px-2">
-          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 backdrop-blur-sm">
-            <p className="text-[11px] opacity-80 uppercase font-semibold tracking-wider mb-1 text-blue-100">Đã Hoàn Thành</p>
-            <p className="text-xl sm:text-2xl font-black ">{dailyStats.orders}</p>
-            <p className="text-[9px] mt-0.5 opacity-60">hôm nay</p>
+      {/* Cặp Thống kê Doanh Số Ngày Thay Vì Đơn Cũ */}
+      <div className="shrink-0 w-full bg-white px-3 pb-3 relative z-10 flex justify-center border-b border-slate-200">
+        <div className="grid grid-cols-2 gap-3 w-full max-w-sm mt-1">
+          <div className="rounded-2xl bg-blue-50/50 p-2.5 text-center border border-blue-200 shadow-sm flex flex-col justify-center">
+            <p className="text-[10px] font-bold tracking-wider mb-0.5 text-slate-500">ĐÃ HOÀN THÀNH</p>
+            <div className="flex items-baseline justify-center gap-1">
+              <p className="text-xl font-black text-blue-600">{dailyStats.orders}</p>
+              <p className="text-[9px] text-slate-400 font-medium">hôm nay</p>
+            </div>
           </div>
-          <div className="rounded-xl bg-white/20 p-2 sm:p-3 text-center text-white border border-white/10 backdrop-blur-sm">
-            <p className="text-[11px] opacity-80 uppercase font-semibold tracking-wider mb-1 text-blue-100">Thu Nhập Tạm Tính</p>
-            <p className="text-xl sm:text-2xl font-black text-green-300 ">
-               {dailyStats.fee.toLocaleString()}<span className="text-xs ml-0.5 opacity-80">đ</span>
-            </p>
-            <p className="text-[9px] mt-0.5 opacity-60">chưa trừ 15%</p>
+          <div className="rounded-2xl bg-green-50/50 p-2.5 text-center border border-green-200 shadow-sm flex flex-col justify-center">
+            <p className="text-[10px] font-bold tracking-wider mb-0.5 text-slate-500">THU NHẬP (TẠM)</p>
+            <div className="flex items-baseline justify-center gap-0.5">
+              <p className="text-xl font-black text-green-600">
+                 {dailyStats.fee.toLocaleString()}
+              </p>
+              <p className="text-[9px] text-green-600/80 font-bold">đ</p>
+            </div>
           </div>
         </div>
       </div>

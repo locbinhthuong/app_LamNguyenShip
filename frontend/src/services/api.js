@@ -37,6 +37,11 @@ export const getCustomerProfile = async () => {
   return response.data;
 };
 
+export const deleteMyAccount = async () => {
+  const response = await api.delete('/auth/customer/me');
+  return response.data;
+};
+
 export const updateFcmToken = async (token) => {
   const response = await api.post('/auth/fcm-token', { token });
   return response.data;

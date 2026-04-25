@@ -47,5 +47,15 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>AloShipp Driver cần quyền truy cập vị trí của bạn kể cả khi ứng dụng chạy ngầm để có thể nhận đơn hàng gần nhất và chia sẻ lộ trình giao hàng trực tiếp cho khách hàng.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>AloShipp Driver cần quyền vị trí để xác định quãng đường và gợi ý đơn hàng xung quanh bạn.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
 </dict>
 </plist>

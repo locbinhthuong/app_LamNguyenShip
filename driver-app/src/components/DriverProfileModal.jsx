@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { getActiveAnnouncements, uploadDriverAvatar, getFullImageUrl } from '../services/api';
+import { getActiveAnnouncements, uploadDriverAvatar, getFullImageUrl, deleteMyAccount } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -11,6 +12,10 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
   const [showTerms, setShowTerms] = useState(false);
   const [termsData, setTermsData] = useState([]);
   const [loadingTerms, setLoadingTerms] = useState(false);
+
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { logout } = useAuth();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -100,6 +105,23 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      setIsDeleting(true);
+      const res = await deleteMyAccount();
+      if (res.success) {
+        alert('Tài khoản của bạn đã được đánh dấu xoá thành công.');
+        logout();
+      }
+    } catch (error) {
+      console.error('Lỗi khi xoá tài khoản:', error);
+      alert('Không thể thực hiện yêu cầu xoá tài khoản. Vui lòng thử lại sau.');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
   const VEHICLE_EMOJI = {
     motorcycle: '🏍️ Xe máy',
     bike: '🚲 Xe đạp',
@@ -166,6 +188,12 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               className="w-full mt-3 py-3.5 rounded-xl font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors border-2 border-transparent hover:border-purple-200 flex items-center justify-center gap-2"
             >
               📜 Quy định & Điều khoản
+            </button>
+            <button 
+              onClick={() => setShowDeleteConfirm(true)}
+              className="w-full mt-3 py-3.5 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors border-2 border-transparent hover:border-red-200 flex items-center justify-center gap-2"
+            >
+              🗑️ Yêu cầu Xoá tài khoản
             </button>
           </div>
         ) : (
@@ -315,6 +343,41 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Account Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-slideUp text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-3xl">⚠️</span>
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Xoá tài khoản?</h3>
+            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+              Bạn có chắc chắn muốn xoá tài khoản? Hành động này sẽ vô hiệu hoá tài khoản của bạn, và bạn sẽ <b>KHÔNG THỂ</b> nhận đơn hàng mới hay tiếp tục sử dụng ứng dụng.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={handleDeleteAccount}
+                disabled={isDeleting}
+                className="flex-1 py-3 rounded-xl font-bold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-lg shadow-red-500/30 flex items-center justify-center disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  'Đồng ý Xoá'
+                )}
+              </button>
             </div>
           </div>
         </div>
