@@ -57,5 +57,9 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>AloShipp Driver cần quyền truy cập Camera để bạn có thể chụp ảnh đại diện trực tiếp.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AloShipp Driver cần quyền truy cập Thư viện ảnh để bạn có thể chọn ảnh đại diện cho hồ sơ của mình.</string>
 </dict>
 </plist>

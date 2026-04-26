@@ -5,7 +5,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue } from '../services/api';
 import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass } from 'lucide-react';
-import { api } from '../services/api';
+import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 const BackgroundGeolocation = registerPlugin("BackgroundGeolocation");

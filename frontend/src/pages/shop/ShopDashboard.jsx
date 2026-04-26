@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon, Bike, ShoppingCart, Headset, Newspaper, Gift } from 'lucide-react';
 import { api, getActiveAnnouncements } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
+import AnnouncementSlider from '../../components/AnnouncementSlider';
 
 const ShopDashboard = () => {
   const navigate = useNavigate();
@@ -271,70 +272,24 @@ const ShopDashboard = () => {
         )}
 
         {/* SECTION KHUYẾN MÃI */}
-        {promotions.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="font-bold text-gray-800 text-lg">Khuyến mãi</h3>
-              <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
-              {promotions.map((ann, idx) => (
-                <div 
-                  key={ann._id} 
-                  onClick={() => setSelectedAnnouncement(ann)}
-                  className="w-48 md:w-64 bg-white rounded-2xl border border-red-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
-                >
-                  {ann.imageUrl ? (
-                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Khuyến mãi" />
-                  ) : ann.videoUrl ? (
-                    <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
-                  ) : (
-                    <div className="w-full h-40 bg-gradient-to-br from-red-500 to-orange-500 p-4 flex flex-col justify-center text-white relative overflow-hidden">
-                      <Gift size={32} className="opacity-30 absolute right-2 bottom-2" />
-                      <h4 className="font-black text-base line-clamp-2 relative z-10">{ann.title}</h4>
-                    </div>
-                  )}
-                  <div className="p-3">
-                    <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="px-0 sm:px-0">
+          <AnnouncementSlider 
+            title="Khuyến mãi" 
+            items={promotions} 
+            type="PROMO" 
+            onSelect={setSelectedAnnouncement} 
+          />
+        </div>
 
         {/* SECTION TIN TỨC */}
-        {news.length > 0 && (
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h3 className="font-bold text-gray-800 text-lg">Tin Tức</h3>
-              <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
-              {news.map((ann, idx) => (
-                <div 
-                  key={ann._id} 
-                  onClick={() => setSelectedAnnouncement(ann)}
-                  className="w-48 md:w-64 bg-white rounded-2xl border border-blue-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
-                >
-                  {ann.imageUrl ? (
-                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Tin tức" />
-                  ) : ann.videoUrl ? (
-                    <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
-                  ) : (
-                    <div className="w-full h-40 bg-gradient-to-br from-blue-500 to-indigo-500 p-4 flex flex-col justify-center text-white relative overflow-hidden">
-                      <Newspaper size={32} className="opacity-30 absolute right-2 bottom-2" />
-                      <h4 className="font-black text-base line-clamp-2 relative z-10">{ann.title}</h4>
-                    </div>
-                  )}
-                  <div className="p-3">
-                    <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="px-0 sm:px-0">
+          <AnnouncementSlider 
+            title="Tin Tức" 
+            items={news} 
+            type="NEWS" 
+            onSelect={setSelectedAnnouncement} 
+          />
+        </div>
 
         {/* MODAL XEM CHI TIẾT BẢNG TIN */}
         {selectedAnnouncement && (
