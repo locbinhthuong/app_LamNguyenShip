@@ -92,6 +92,9 @@ export default function Announcements() {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (form.type === 'BANNER' && file.type && !file.type.startsWith('image/')) {
+         return alert('Quảng Cáo chỉ hỗ trợ tải lên Hình Ảnh (không hỗ trợ Video)!');
+      }
       if (file.mimetype && !file.type.startsWith('image/') && !file.type.startsWith('video/')) {
          return alert('Chỉ hỗ trợ file Hình ảnh hoặc Video!');
       }
@@ -322,7 +325,7 @@ export default function Announcements() {
                <div className="border border-dashed border-blue-300 bg-blue-50 rounded-2xl p-6 text-center">
                   <input 
                     type="file" 
-                    accept="image/*,video/*"
+                    accept={form.type === 'BANNER' ? "image/*" : "image/*,video/*"}
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     className="hidden" 
@@ -354,8 +357,12 @@ export default function Announcements() {
                       className="cursor-pointer space-y-2 py-4"
                     >
                       <div className="text-4xl">📸</div>
-                      <h4 className="font-bold text-blue-600">Bấm vào đây để đính kèm Ảnh / Video</h4>
-                      <p className="text-xs text-blue-400">Hỗ trợ JPG, PNG, MP4. Tối đa 50MB.</p>
+                      <h4 className="font-bold text-blue-600">
+                        {form.type === 'BANNER' ? 'Bấm vào đây để đính kèm Ảnh quảng cáo' : 'Bấm vào đây để đính kèm Ảnh / Video'}
+                      </h4>
+                      <p className="text-xs text-blue-400">
+                        {form.type === 'BANNER' ? 'Chỉ hỗ trợ JPG, PNG.' : 'Hỗ trợ JPG, PNG, MP4. Tối đa 50MB.'}
+                      </p>
                     </div>
                   )}
                </div>
