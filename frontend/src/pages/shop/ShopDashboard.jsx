@@ -237,18 +237,18 @@ const ShopDashboard = () => {
 
         {/* SLIDER BANNER TỪ ADMIN */}
         {banners.length > 0 && (
-          <div className="relative w-full rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-white group flex items-center justify-center">
+          <div className="relative w-full h-36 sm:h-44 rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-slate-50 group flex items-center justify-center">
             <div 
-              className="flex w-full transition-transform duration-500 ease-out items-center"
+              className="flex w-full h-full transition-transform duration-500 ease-out items-center"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
               {banners.map(banner => (
-                <div key={banner._id} className="w-full flex-shrink-0 relative">
+                <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-1">
                   {banner.imageUrl && (
-                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-auto block" />
+                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-contain" />
                   )}
                   {banner.videoUrl && (
-                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-auto block" autoPlay muted loop playsInline />
+                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-contain" autoPlay muted loop playsInline />
                   )}
                 </div>
               ))}

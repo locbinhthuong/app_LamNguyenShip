@@ -15,6 +15,8 @@ export default function Announcements() {
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreviewUrl, setMediaPreviewUrl] = useState(null);
   const [mediaType, setMediaType] = useState('image'); // 'image' hoặc 'video'
+  const [multipleFiles, setMultipleFiles] = useState([]);
+  const [multiplePreviewUrls, setMultiplePreviewUrls] = useState([]);
   const fileInputRef = useRef(null);
 
   const loadData = async () => {
@@ -35,6 +37,8 @@ export default function Announcements() {
     setForm({ type: 'NEWS', title: '', content: '', imageUrl: '', videoUrl: '', isActive: true });
     setMediaFile(null);
     setMediaPreviewUrl(null);
+    setMultipleFiles([]);
+    setMultiplePreviewUrls([]);
     setIsEditing(false);
     setCurrentId(null);
     setShowModal(true);
@@ -50,6 +54,8 @@ export default function Announcements() {
       isActive: item.isActive 
     });
     setMediaFile(null);
+    setMultipleFiles([]);
+    setMultiplePreviewUrls([]);
     
     // Ưu tiên hiển thị video nếu có, ngược lại hiển thị ảnh
     if (item.videoUrl) {
@@ -90,8 +96,22 @@ export default function Announcements() {
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    if (form.type === 'BANNER' && !isEditing) {
+      for (let file of files) {
+         if (file.type && !file.type.startsWith('image/')) {
+            return alert('Quảng Cáo chỉ hỗ trợ tải lên Hình Ảnh (không hỗ trợ Video)!');
+         }
+         if (file.size > 50 * 1024 * 1024) return alert('Một số file vượt quá dung lượng tối đa 50MB!');
+      }
+      setMultipleFiles(files);
+      setMultiplePreviewUrls(files.map(f => URL.createObjectURL(f)));
+      setMediaFile(null);
+      setMediaPreviewUrl(null);
+    } else {
+      const file = files[0];
       if (form.type === 'BANNER' && file.type && !file.type.startsWith('image/')) {
          return alert('Quảng Cáo chỉ hỗ trợ tải lên Hình Ảnh (không hỗ trợ Video)!');
       }
@@ -103,41 +123,56 @@ export default function Announcements() {
       setMediaFile(file);
       setMediaType(file.type.startsWith('video/') ? 'video' : 'image');
       setMediaPreviewUrl(URL.createObjectURL(file));
+      setMultipleFiles([]);
+      setMultiplePreviewUrls([]);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (form.type !== 'BANNER' && (!form.title || !form.content)) return alert('Vui lòng nhập Tiêu đề và Nội dung!');
-    if (form.type === 'BANNER' && !mediaFile && !mediaPreviewUrl) return alert('Bảng tin loại Quảng Cáo bắt buộc phải có Hình Ảnh hoặc Video!');
+    if (form.type === 'BANNER' && !mediaFile && !mediaPreviewUrl && multipleFiles.length === 0) return alert('Bảng tin loại Quảng Cáo bắt buộc phải có Hình Ảnh hoặc Video!');
     
     setIsUploading(true);
     try {
-      let finalImageUrl = form.imageUrl;
-      let finalVideoUrl = form.videoUrl;
-
-      // Nếu có file mới, tải lên trước
-      if (mediaFile) {
-        const upRes = await uploadMedia(mediaFile);
-        if (upRes.success) {
-          if (upRes.data.type === 'video') {
-            finalVideoUrl = upRes.data.url;
-            finalImageUrl = ''; // Thay thế hình bằng video
-          } else {
-            finalImageUrl = upRes.data.url;
-            finalVideoUrl = ''; // Thay thế video bằng hình
+      if (form.type === 'BANNER' && !isEditing && multipleFiles.length > 0) {
+        let successCount = 0;
+        for (let file of multipleFiles) {
+          const upRes = await uploadMedia(file);
+          if (upRes.success) {
+            const submitData = { ...form, imageUrl: upRes.data.url, videoUrl: '' };
+            await createAnnouncement(submitData);
+            successCount++;
           }
         }
-      }
-
-      const submitData = { ...form, imageUrl: finalImageUrl, videoUrl: finalVideoUrl };
-
-      if (isEditing) {
-        await updateAnnouncement(currentId, submitData);
-        alert('Đã cập nhật Bảng Tin!');
+        alert(`Đã đăng thành công ${successCount} Quảng Cáo!`);
       } else {
-        await createAnnouncement(submitData);
-        alert('Đã đăng Bảng Tin mới!');
+        let finalImageUrl = form.imageUrl;
+        let finalVideoUrl = form.videoUrl;
+
+        // Nếu có file mới, tải lên trước
+        if (mediaFile) {
+          const upRes = await uploadMedia(mediaFile);
+          if (upRes.success) {
+            if (upRes.data.type === 'video') {
+              finalVideoUrl = upRes.data.url;
+              finalImageUrl = ''; // Thay thế hình bằng video
+            } else {
+              finalImageUrl = upRes.data.url;
+              finalVideoUrl = ''; // Thay thế video bằng hình
+            }
+          }
+        }
+
+        const submitData = { ...form, imageUrl: finalImageUrl, videoUrl: finalVideoUrl };
+
+        if (isEditing) {
+          await updateAnnouncement(currentId, submitData);
+          alert('Đã cập nhật Bảng Tin!');
+        } else {
+          await createAnnouncement(submitData);
+          alert('Đã đăng Bảng Tin mới!');
+        }
       }
       
       setShowModal(false);
@@ -189,7 +224,7 @@ export default function Announcements() {
                  {ann.videoUrl ? (
                    <video src={getFullImageUrl(ann.videoUrl)} className="w-full h-full object-cover" controls muted />
                  ) : ann.imageUrl ? (
-                   <img src={getFullImageUrl(ann.imageUrl)} alt="News" className="w-full h-full object-cover" />
+                   <img src={getFullImageUrl(ann.imageUrl)} alt="News" className={`w-full h-full ${ann.type === 'BANNER' ? 'object-contain p-2' : 'object-cover'}`} />
                  ) : (
                    <span className="text-4xl">📰</span>
                  )}
@@ -325,13 +360,35 @@ export default function Announcements() {
                <div className="border border-dashed border-blue-300 bg-blue-50 rounded-2xl p-6 text-center">
                   <input 
                     type="file" 
+                    multiple={form.type === 'BANNER' && !isEditing}
                     accept={form.type === 'BANNER' ? "image/*" : "image/*,video/*"}
                     ref={fileInputRef}
                     onChange={handleFileChange}
                     className="hidden" 
                   />
                   
-                  {mediaPreviewUrl ? (
+                  {multipleFiles.length > 0 ? (
+                    <div className="flex flex-wrap gap-4 justify-center">
+                      {multiplePreviewUrls.map((url, i) => (
+                        <div key={i} className="relative inline-block w-24 h-24 rounded-xl overflow-hidden shadow-md">
+                          <img src={url} className="w-full h-full object-cover" alt="Preview" />
+                          <button 
+                            type="button" 
+                            onClick={() => {
+                              const newFiles = [...multipleFiles];
+                              newFiles.splice(i, 1);
+                              setMultipleFiles(newFiles);
+                              const newUrls = [...multiplePreviewUrls];
+                              newUrls.splice(i, 1);
+                              setMultiplePreviewUrls(newUrls);
+                              if(newFiles.length === 0 && fileInputRef.current) fileInputRef.current.value = "";
+                            }} 
+                            className="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs hover:bg-red-700 shadow"
+                          >✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : mediaPreviewUrl ? (
                     <div className="relative inline-block max-w-full rounded-xl overflow-hidden shadow-md">
                       {mediaType === 'video' ? (
                         <video src={mediaFile ? mediaPreviewUrl : getFullImageUrl(mediaPreviewUrl)} className="max-h-64 mx-auto" controls />
@@ -358,7 +415,7 @@ export default function Announcements() {
                     >
                       <div className="text-4xl">📸</div>
                       <h4 className="font-bold text-blue-600">
-                        {form.type === 'BANNER' ? 'Bấm vào đây để đính kèm Ảnh quảng cáo' : 'Bấm vào đây để đính kèm Ảnh / Video'}
+                        {form.type === 'BANNER' && !isEditing ? 'Bấm vào đây để chọn (có thể chọn nhiều ảnh cùng lúc)' : form.type === 'BANNER' ? 'Bấm vào đây để thay ảnh quảng cáo' : 'Bấm vào đây để đính kèm Ảnh / Video'}
                       </h4>
                       <p className="text-xs text-blue-400">
                         {form.type === 'BANNER' ? 'Chỉ hỗ trợ JPG, PNG.' : 'Hỗ trợ JPG, PNG, MP4. Tối đa 50MB.'}
