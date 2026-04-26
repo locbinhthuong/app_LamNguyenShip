@@ -588,62 +588,59 @@ export default function Home() {
       )}
 
       {/* Header Siêu Gọn - Đã chuyển sang nền trắng */}
-      <div className="shrink-0 bg-white p-3 pt-[max(1rem,env(safe-area-inset-top))] relative z-20 shadow-sm border-b border-slate-100">
-        <div className="flex items-center justify-between mb-3">
-          {/* Logo rút gọn */}
-          <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-7 sm:h-8 w-auto object-contain" />
+      <div className="shrink-0 bg-white px-3 py-2 pt-[max(0.75rem,env(safe-area-inset-top))] relative z-20 shadow-sm border-b border-slate-100 flex items-center justify-between gap-2">
+        {/* Logo rút gọn */}
+        <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-6 w-auto object-contain shrink-0 hidden sm:block" />
+        <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-5 w-auto object-contain shrink-0 sm:hidden" />
+        
+        {/* Tên Tài xế */}
+        <div 
+          onClick={() => setEditModal(true)}
+          className="flex items-center gap-1.5 bg-slate-50 p-1 pr-3 rounded-full cursor-pointer hover:bg-slate-100 transition-all border border-slate-200 shadow-sm flex-1 min-w-0 max-w-[150px] sm:max-w-[200px]"
+        >
+          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white relative shadow-sm shrink-0">
+            {driver?.avatar ? (
+              <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              <span className="text-[10px] sm:text-xs font-bold text-blue-500">
+                {driver?.name?.charAt(0).toUpperCase() || '👤'}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col justify-center overflow-hidden flex-1">
+            <p className="text-[10px] sm:text-[12px] font-bold text-slate-800 leading-tight truncate w-full">{driver?.name || 'Tài xế'}</p>
+            <p className="text-[9px] sm:text-[10px] text-slate-500 leading-tight truncate w-full">{driver?.driverCode || 'Hồ sơ'}</p>
+          </div>
+        </div>
+
+        {/* Nút Trạng Thái Online/Offline & Đăng xuất */}
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button
+            type="button"
+            onClick={toggleOnline}
+            disabled={isToggling}
+            className={`rounded-full px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-bold transition-all flex items-center shadow-sm ${
+              driver?.isOnline 
+                ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-600' 
+                   : gpsStatus === 'FINDING' ? 'bg-yellow-400 text-yellow-900 border border-yellow-500 animate-pulse'
+                   : 'bg-red-500 text-white border border-red-600') 
+                : 'bg-slate-800 text-white border border-slate-900 shadow-md'
+            } ${isToggling ? 'opacity-70 cursor-wait' : ''}`}
+          >
+            {driver?.isOnline ? (
+              <>
+                {gpsStatus === 'TRACKING' ? '🟢 Online' : gpsStatus === 'FINDING' ? '⏳ Đang dò...' : '🔴 Lỗi GPS'}
+              </>
+            ) : '⚫ Offline'}
+          </button>
           
           {/* Đăng Xuất */}
           <button
             onClick={() => setLogoutModal(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200"
+            className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200 shrink-0"
           >
-            🚪
+            <span className="text-sm">🚪</span>
           </button>
-        </div>
-
-        <div className="flex items-center justify-between gap-2">
-          {/* Tên Tài xế */}
-          <div 
-            onClick={() => setEditModal(true)}
-            className="flex items-center gap-2.5 bg-slate-50 p-1.5 pr-4 rounded-full cursor-pointer hover:bg-slate-100 transition-all border border-slate-200 shadow-sm flex-1 max-w-[200px]"
-          >
-            <div className="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white relative shadow-sm shrink-0">
-              {driver?.avatar ? (
-                <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-sm font-bold text-blue-500">
-                  {driver?.name?.charAt(0).toUpperCase() || '👤'}
-                </span>
-              )}
-            </div>
-            <div className="flex flex-col justify-center overflow-hidden">
-              <p className="text-[13px] font-bold text-slate-800 leading-none truncate w-full">{driver?.name || 'Tài xế'}</p>
-              <p className="text-[10px] text-slate-500 mt-1 leading-none truncate w-full">{driver?.driverCode || 'Xem hồ sơ'}</p>
-            </div>
-          </div>
-
-          {/* Nút Trạng Thái Online/Offline */}
-          <div className="flex shrink-0">
-            <button
-              type="button"
-              onClick={toggleOnline}
-              disabled={isToggling}
-              className={`rounded-full px-4 py-2 text-[11px] sm:text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm ${
-                driver?.isOnline 
-                  ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-600' 
-                     : gpsStatus === 'FINDING' ? 'bg-yellow-400 text-yellow-900 border border-yellow-500 animate-pulse'
-                     : 'bg-red-500 text-white border border-red-600') 
-                  : 'bg-slate-800 text-white border border-slate-900 shadow-md'
-              } ${isToggling ? 'opacity-70 cursor-wait' : ''}`}
-            >
-              {driver?.isOnline ? (
-                <>
-                  {gpsStatus === 'TRACKING' ? '🟢 Đang Online' : gpsStatus === 'FINDING' ? '⏳ Đang dò...' : '🔴 Lỗi GPS'}
-                </>
-              ) : '⚫ Mở Nhận Đơn'}
-            </button>
-          </div>
         </div>
       </div>
 
