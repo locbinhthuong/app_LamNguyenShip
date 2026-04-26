@@ -10,7 +10,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   }
 
   if (allowedRole && userRole !== allowedRole) {
-    return <Navigate to={userRole === 'SHOP' ? '/shop' : '/customer'} replace />;
+    return <Navigate to={userRole === 'SHOP' ? '/shop' : '/'} replace />;
   }
 
   return children;

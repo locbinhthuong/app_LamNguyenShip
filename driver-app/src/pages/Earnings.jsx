@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getDriverRevenue, requestDebtPayment, getMyDebtDetail, getMyWalletDetail, requestWithdraw } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CurrencyInput from '../components/CurrencyInput';
+import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins } from 'lucide-react';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
@@ -136,15 +137,15 @@ export default function Earnings() {
         <div className="flex bg-white/20 p-1 rounded-xl w-fit mx-auto mt-6 relative z-10">
            <button 
              onClick={() => setActiveTab('revenue')}
-             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'revenue' ? 'bg-white text-blue-600 shadow-md' : 'text-white/80 hover:text-white'}`}
+             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'revenue' ? 'bg-white text-blue-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
-             📈 Báo Cáo
+             <BarChart3 size={18} /> Báo Cáo
            </button>
            <button 
              onClick={() => setActiveTab('wallet')}
-             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'wallet' ? 'bg-white text-emerald-600 shadow-md' : 'text-white/80 hover:text-white'}`}
+             className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'wallet' ? 'bg-white text-emerald-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
-             🏦 Ví Điện Tử
+             <Building2 size={18} /> Ví Điện Tử
            </button>
         </div>
       </div>
@@ -222,8 +223,8 @@ export default function Earnings() {
             {/* Vùng Thanh Toán Nợ Chi Tiết (Nằm Dưới Cùng) */}
             <h2 className="text-slate-800 font-bold mb-3 px-1 text-sm uppercase tracking-wide">CÔNG NỢ CẦN THANH TOÁN</h2>
             {unpaidDays.length === 0 ? (
-               <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl text-center text-sky-700 font-semibold mb-6">
-                  Bạn không có công nợ cũ nào cần thanh toán! 🎉
+               <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl text-center text-sky-700 font-semibold mb-6 flex items-center justify-center gap-2">
+                  <CheckCircle2 size={20} /> Bạn không có công nợ cũ nào cần thanh toán!
                </div>
             ) : (
                unpaidDays.map((debt, i) => {
@@ -238,13 +239,13 @@ export default function Earnings() {
                        <p className="text-xl font-black text-red-600 ">{formatCurrency(debt.amount)}</p>
                      </div>
                      <div className="h-10 w-10 bg-gradient-to-br from-red-400 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
-                       🧾
+                       <Receipt size={20} />
                      </div>
                    </div>
                    
                    {isPending ? (
                       <div className="w-full bg-amber-100 text-amber-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 border border-amber-200">
-                        <span>⏳</span> Đang chờ Kế toán duyệt...
+                        <Clock size={18} /> Đang chờ Kế toán duyệt...
                       </div>
                    ) : (
                       <button 
@@ -254,7 +255,7 @@ export default function Earnings() {
                         }}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
                       >
-                        <span>📱</span> Chọn Thanh Toán Khung Này
+                        <Smartphone size={18} /> Chọn Thanh Toán Khung Này
                       </button>
                    )}
                  </div>
@@ -268,7 +269,7 @@ export default function Earnings() {
                 onClick={fetchEarnings} 
                 className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
               >
-                <span>🔄</span> Tải Lại Mới
+                <RefreshCw size={14} /> Tải Lại Mới
               </button>
             </div>
             {loading ? (
@@ -280,24 +281,24 @@ export default function Earnings() {
             ) : (
                 <div className="space-y-3 mb-6 max-h-80 overflow-y-auto pr-1">
                   {debtTransactions.map((dtx) => {
-                     let icon = '🟢';
+                     let icon = <CheckCircle2 size={16} />;
                      let title = 'Thanh Toán Vô Ví Nợ';
                      let colorClass = 'text-emerald-600';
                      let amountClass = dtx.amount > 0 ? 'text-red-500' : 'text-emerald-500';
                      let bgClass = 'bg-white';
 
                      if (dtx.type === 'PENALTY') {
-                        icon = '🔴';
+                        icon = <AlertCircle size={16} />;
                         title = 'Trừ tiền Nợ';
                         colorClass = 'text-red-600';
                      } else if (dtx.status === 'REJECTED') {
-                        icon = '❌';
+                        icon = <XCircle size={16} />;
                         title = 'Admin Từ Chối Nhận';
                         colorClass = 'text-red-600';
                         amountClass = 'text-slate-400 line-through';
                         bgClass = 'bg-red-50/70 border-red-200';
                      } else if (dtx.status === 'PENDING') {
-                        icon = '⏳';
+                        icon = <Clock size={16} />;
                         title = 'Đang Chờ Kế Toán Duyệt';
                         colorClass = 'text-amber-600';
                         amountClass = 'text-amber-600';
@@ -306,7 +307,7 @@ export default function Earnings() {
                      return (
                      <div key={dtx._id} className={`${bgClass} border text-sm border-slate-200 p-3 rounded-xl flex justify-between items-center`}>
                        <div>
-                          <p className={`font-semibold flex items-center gap-1 ${colorClass}`}>
+                          <p className={`font-semibold flex items-center gap-1.5 ${colorClass}`}>
                              <span>{icon}</span> {title}
                           </p>
                           <p className="text-slate-500 text-xs mt-0.5 pr-2" style={{ maxWidth: '200px', wordBreak: 'break-word' }}>{dtx.description}</p>
@@ -341,8 +342,8 @@ export default function Earnings() {
               </h2>
               
               {walletDetail.pendingAmount > 0 && (
-                <div className="bg-emerald-900/30 w-fit px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md mb-4 border border-emerald-400/20">
-                   ⏳ Đang chờ duyệt chi: {formatCurrency(walletDetail.pendingAmount)}
+                <div className="bg-emerald-900/30 w-fit px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md mb-4 border border-emerald-400/20 flex items-center gap-1.5">
+                   <Clock size={14} /> Đang chờ duyệt chi: {formatCurrency(walletDetail.pendingAmount)}
                 </div>
               )}
 
@@ -351,7 +352,7 @@ export default function Earnings() {
                 disabled={(walletDetail.availableBalance || 0) < 50000}
                 className="w-full bg-white text-emerald-600 hover:bg-emerald-50 font-black py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition-transform shadow-lg active:scale-[0.98] disabled:opacity-80 disabled:active:scale-100 disabled:pointer-events-none"
               >
-                <span>🚀</span> ĐẶT LỆNH RÚT TIỀN
+                <Rocket size={20} /> ĐẶT LỆNH RÚT TIỀN
               </button>
               {(walletDetail.availableBalance || 0) < 50000 && (
                  <p className="text-center text-[10px] text-emerald-100 mt-2">Cần tối thiểu 50,000đ để rút</p>
@@ -365,7 +366,7 @@ export default function Earnings() {
                onClick={fetchEarnings} 
                className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
              >
-               <span>🔄</span> Tải Lại Mới
+               <RefreshCw size={14} /> Tải Lại Mới
              </button>
            </div>
            {loading ? (
@@ -373,17 +374,17 @@ export default function Earnings() {
                   <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                 </div>
             ) : walletDetail.transactions.length === 0 ? (
-                <div className="bg-slate-50 p-6 rounded-2xl text-center text-slate-500 text-sm border-dashed border-2 border-slate-200">
-                  <p className="text-3xl mb-2 grayscale">📭</p>
+                <div className="bg-slate-50 p-6 rounded-2xl text-center text-slate-500 text-sm border-dashed border-2 border-slate-200 flex flex-col items-center">
+                  <Inbox size={48} strokeWidth={1} className="mb-3 text-slate-300" />
                   Chưa có lịch sử rút/nạp tiền nào
                 </div>
             ) : (
                 <div className="space-y-3 mb-6 pb-20 max-h-[500px] overflow-y-auto pr-1">
                   {walletDetail.transactions.map((wtx) => {
-                     let colorObj = { icon: '💰', color: 'text-emerald-600', bg: 'bg-emerald-50' };
-                     if (wtx.type === 'WITHDRAW_REQUEST') colorObj = { icon: '⏳', color: 'text-amber-600', bg: 'bg-amber-50' };
-                     if (wtx.type === 'WITHDRAW_REJECT') colorObj = { icon: '❌', color: 'text-red-600', bg: 'bg-red-50' };
-                     if (wtx.type === 'ADMIN_ADJUST' && wtx.amount < 0) colorObj = { icon: '📉', color: 'text-orange-600', bg: 'bg-orange-50' };
+                     let colorObj = { icon: <Wallet size={20}/>, color: 'text-emerald-600', bg: 'bg-emerald-50 text-emerald-600' };
+                     if (wtx.type === 'WITHDRAW_REQUEST') colorObj = { icon: <Clock size={20}/>, color: 'text-amber-600', bg: 'bg-amber-50 text-amber-600' };
+                     if (wtx.type === 'WITHDRAW_REJECT') colorObj = { icon: <XCircle size={20}/>, color: 'text-red-600', bg: 'bg-red-50 text-red-600' };
+                     if (wtx.type === 'ADMIN_ADJUST' && wtx.amount < 0) colorObj = { icon: <TrendingDown size={20}/>, color: 'text-orange-600', bg: 'bg-orange-50 text-orange-600' };
 
                      return (
                      <div key={wtx._id} className="bg-white border text-sm border-slate-200 p-3.5 rounded-2xl flex justify-between items-center">
@@ -409,20 +410,19 @@ export default function Earnings() {
       )}
       </div>
 
-      {/* Bottom Nav */}
       <div className="bottom-nav-safe">
-        <div className="mx-auto flex max-w-xl justify-around py-3">
+        <div className="mx-auto flex max-w-xl justify-around py-3 bg-white border-t border-slate-200">
           <Link to="/" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
-            <span className="text-xl">🏠</span>
+            <HomeIcon size={24} strokeWidth={1.5} />
             <span className="text-xs mt-1 font-medium">Trang chủ</span>
           </Link>
           <Link to="/my-orders" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
-            <span className="text-xl">📋</span>
+            <ClipboardList size={24} strokeWidth={1.5} />
             <span className="text-xs mt-1 font-medium">Đơn của tôi</span>
           </Link>
-          <Link to="/earnings" className="flex flex-col items-center text-blue-600">
-            <span className="text-xl">💰</span>
-            <span className="text-xs mt-1 font-medium">Thu nhập</span>
+          <Link to="/earnings" className="flex flex-col items-center text-slate-800">
+            <Wallet size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-bold">Thu nhập</span>
           </Link>
         </div>
       </div>
@@ -467,17 +467,16 @@ export default function Earnings() {
                  </div>
               </div>
 
-              {/* MỚI: Nút Báo Cáo Đã Chuyển Khoản */}
               <button
                 onClick={handleRequestPayment}
                 disabled={isRequesting}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/30 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
               >
                 {isRequesting ? (
-                  <span className="animate-spin text-xl">⏳</span>
+                  <span className="animate-spin text-xl"><RefreshCw size={20}/></span>
                 ) : (
                   <>
-                    <span className="text-lg">💸</span> TÔI ĐÃ CHUYỂN KHOẢN
+                    <HandCoins size={20} /> TÔI ĐÃ CHUYỂN KHOẢN
                   </>
                 )}
               </button>

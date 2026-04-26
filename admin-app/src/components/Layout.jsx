@@ -5,6 +5,7 @@ import { useAdminSocket } from '../hooks/useAdminSocket';
 import DebtApprovalModal from './DebtApprovalModal';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
 import { updateFcmToken } from '../services/api';
+import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset } from 'lucide-react';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
@@ -78,19 +79,19 @@ export default function Layout() {
   // Phân quyền hiển thị Menu
   const NAV_ITEMS = admin?.role === 'staff' 
     ? [
-        { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
-        { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
+        { to: '/orders',               icon: <Package size={20} />, label: 'Đơn hàng' },
+        { to: '/driver-map',           icon: <Map size={20} />, label: 'Bản đồ GPS' },
       ]
     : [
-        { to: '/',         end: true,  icon: '📊', label: 'Dashboard' },
-        { to: '/orders',               icon: '📦', label: 'Đơn hàng' },
-        { to: '/driver-map',           icon: '🗺️', label: 'Bản đồ GPS' },
-        ...(admin?.role === 'admin' ? [{ to: '/revenue', icon: '💰', label: 'Doanh thu' }] : []),
-        { to: '/finance',              icon: '🏦', label: 'Tài chính' },
-        { to: '/announcements',        icon: '📰', label: 'Bảng Tin' },
-        { to: '/drivers',              icon: '🚗', label: 'Tài xế' },
-        { to: '/customers',            icon: '👥', label: 'Khách hàng' },
-        ...(admin?.role === 'admin' ? [{ to: '/dispatchers', icon: '🎧', label: 'Tổng đài viên' }] : []),
+        { to: '/',         end: true,  icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
+        { to: '/orders',               icon: <Package size={20} />, label: 'Đơn hàng' },
+        { to: '/driver-map',           icon: <Map size={20} />, label: 'Bản đồ GPS' },
+        ...(admin?.role === 'admin' ? [{ to: '/revenue', icon: <DollarSign size={20} />, label: 'Doanh thu' }] : []),
+        { to: '/finance',              icon: <Landmark size={20} />, label: 'Tài chính' },
+        { to: '/announcements',        icon: <Newspaper size={20} />, label: 'Bảng Tin' },
+        { to: '/drivers',              icon: <Car size={20} />, label: 'Tài xế' },
+        { to: '/customers',            icon: <Users size={20} />, label: 'Khách hàng' },
+        ...(admin?.role === 'admin' ? [{ to: '/dispatchers', icon: <Headset size={20} />, label: 'Tổng đài viên' }] : []),
       ];
 
   return (
@@ -134,7 +135,7 @@ export default function Layout() {
               className={navClass}
               onClick={() => setSidebarOpen(false)}
             >
-              <span>{item.icon}</span>
+              <span className="opacity-80">{item.icon}</span>
               <span>{item.label}</span>
             </NavLink>
           ))}

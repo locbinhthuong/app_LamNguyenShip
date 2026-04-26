@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX } from 'lucide-react';
+import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX, Bike, ShoppingCart, Newspaper, Gift } from 'lucide-react';
 import LocationPicker from '../../components/LocationPicker';
 import { getActiveAnnouncements } from '../../services/api';
 
@@ -113,10 +113,10 @@ const CustomerDashboard = () => {
   };
 
   const services = [
-    { id: 'GIAO_HANG', name: 'Giao hàng', icon: '📦', color: 'bg-blue-100 text-blue-600' },
-    { id: 'DAT_XE', name: 'Đặt xe', icon: '🛵', color: 'bg-sky-100 text-sky-600' },
-    { id: 'MUA_HO', name: 'Mua hộ', icon: '🛒', color: 'bg-indigo-100 text-indigo-600' },
-    { id: 'DIEU_PHOI', name: 'Điều phối', icon: '🎧', color: 'bg-teal-100 text-teal-600' },
+    { id: 'GIAO_HANG', name: 'Giao hàng', icon: <Package size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
+    { id: 'DAT_XE', name: 'Đặt xe', icon: <Bike size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
+    { id: 'MUA_HO', name: 'Mua hộ', icon: <ShoppingCart size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
+    { id: 'DIEU_PHOI', name: 'Điều phối', icon: <Headset size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
   ];
 
   return (
@@ -161,25 +161,19 @@ const CustomerDashboard = () => {
 
       {/* DANH SÁCH DỊCH VỤ (GRID) */}
       <div className="px-4 mb-4">
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
-          <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-y-6 gap-x-2 md:gap-x-8 md:gap-y-8">
-            {services.map((svc) => (
-              <div 
-                key={svc.id} 
-                onClick={() => handleServiceClick(svc.id)}
-                className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform group"
-              >
-                {/* Vòng tròn Icon */}
-                <div className="w-[60px] h-[60px] md:w-[80px] md:h-[80px] rounded-full flex items-center justify-center text-3xl md:text-4xl border-2 border-white ring-1 ring-gray-100 group-hover:ring-blue-200 transition-all ${svc.color}">
-                  {svc.icon}
-                </div>
-                {/* Tên dịch vụ */}
-                <span className="text-[11px] md:text-sm font-semibold text-gray-700 text-center leading-tight w-full mt-1 md:mt-2">
-                  {svc.name}
-                </span>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {services.map((svc) => (
+            <div 
+              key={svc.id} 
+              onClick={() => handleServiceClick(svc.id)}
+              className={`flex flex-col items-center justify-center gap-3 py-5 rounded-2xl cursor-pointer active:scale-95 transition-all shadow-sm hover:shadow-md ${svc.color}`}
+            >
+              <div className="text-slate-600">
+                {svc.icon}
               </div>
-            ))}
-          </div>
+              <span className="text-[13px] font-bold text-slate-700">{svc.name}</span>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -260,23 +254,29 @@ const CustomerDashboard = () => {
             <h3 className="font-bold text-gray-800 text-lg">Tin Tức</h3>
             <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
+          <div className="flex flex-col gap-3">
             {news.map((ann, idx) => (
               <div 
                 key={ann._id} 
                 onClick={() => setSelectedAnnouncement(ann)}
-                className="w-40 md:w-56 bg-white rounded-2xl border border-blue-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
+                className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
               >
-                {ann.imageUrl ? (
-                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-36 object-cover bg-gray-100" alt="Tin tức" />
-                ) : (
-                  <div className="w-full h-36 bg-gradient-to-br from-blue-500 to-indigo-600 p-3 flex flex-col justify-center text-white relative">
-                    <span className="text-4xl absolute right-2 bottom-2 opacity-20">📰</span>
-                    <h4 className="font-black text-sm line-clamp-2">{ann.title}</h4>
-                  </div>
-                )}
-                <div className="p-3">
-                  <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                  {ann.imageUrl ? (
+                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-full object-cover" alt="Tin tức" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400">
+                      <Newspaper size={24} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0 pr-4 relative">
+                  <p className="font-bold text-slate-800 text-sm line-clamp-2 leading-relaxed group-hover:text-slate-600 transition-colors">
+                    {ann.title}
+                  </p>
+                  <span className="absolute right-2 bottom-2 opacity-10 text-slate-400">
+                    <Newspaper size={40} />
+                  </span>
                 </div>
               </div>
             ))}
@@ -312,9 +312,14 @@ const CustomerDashboard = () => {
                  <div className="w-full h-40 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
               )}
               <div className="p-5 pb-8">
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mb-1 block">
-                  {selectedAnnouncement.type === 'PROMO' ? '🎁 Khuyến Mãi' : '📰 Tin Tức'} • {new Date(selectedAnnouncement.createdAt).toLocaleDateString('vi-VN')}
-                </span>
+                <div className="flex items-center gap-2 mb-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  {selectedAnnouncement.type === 'PROMO' ? (
+                    <><Gift size={16} /> Khuyến Mãi</>
+                  ) : (
+                    <><Newspaper size={16} /> Tin Tức</>
+                  )} 
+                  • {new Date(selectedAnnouncement.createdAt).toLocaleDateString('vi-VN')}
+                </div>
                 <h2 className="text-xl font-bold text-gray-900 leading-snug mb-3">
                   {selectedAnnouncement.title}
                 </h2>

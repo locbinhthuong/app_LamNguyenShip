@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue } from '../services/api';
+import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag } from 'lucide-react';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor, registerPlugin } from '@capacitor/core';
@@ -18,21 +19,22 @@ const STATUS_CONFIG = {
 };
 
 const getServiceBadge = (order) => {
+  const baseClass = "bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-200 flex items-center gap-1 inline-flex";
   if (order.serviceType === 'DAT_XE') {
-    if (order.subServiceType === 'XE_OM') return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 CHỞ KHÁCH</span>;
-    if (order.subServiceType === 'LAI_HO_XE_MAY') return <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded text-[10px] font-bold border border-teal-200">🔑 LÁI HỘ XE MÁY</span>;
-    if (order.subServiceType === 'LAI_HO_OTO') return <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-bold border border-indigo-200">🚗 LÁI HỘ ÔTÔ</span>;
-    return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 ĐẶT XE</span>;
+    if (order.subServiceType === 'XE_OM') return <span className={baseClass}><Bike size={12}/> CHỞ KHÁCH</span>;
+    if (order.subServiceType === 'LAI_HO_XE_MAY') return <span className={baseClass}><Key size={12}/> LÁI HỘ XE MÁY</span>;
+    if (order.subServiceType === 'LAI_HO_OTO') return <span className={baseClass}><Car size={12}/> LÁI HỘ ÔTÔ</span>;
+    return <span className={baseClass}><Bike size={12}/> ĐẶT XE</span>;
   }
   if (order.serviceType === 'DIEU_PHOI') {
-    if (order.subServiceType === 'NAP_TIEN') return <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-[10px] font-bold border border-blue-200">🏦 NẠP TIỀN</span>;
-    if (order.subServiceType === 'RUT_TIEN') return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">💵 RÚT TIỀN</span>;
-    return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">🛠️ ĐIỀU PHỐI</span>;
+    if (order.subServiceType === 'NAP_TIEN') return <span className={baseClass}><Building2 size={12}/> NẠP TIỀN</span>;
+    if (order.subServiceType === 'RUT_TIEN') return <span className={baseClass}><Landmark size={12}/> RÚT TIỀN</span>;
+    return <span className={baseClass}><Wrench size={12}/> ĐIỀU PHỐI</span>;
   }
   if (order.serviceType === 'MUA_HO') {
-    return <span className="bg-lime-100 text-lime-700 px-2 py-0.5 rounded text-[10px] font-bold border border-lime-200">🛒 MUA HỘ</span>;
+    return <span className={baseClass}><ShoppingCart size={12}/> MUA HỘ</span>;
   }
-  return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">📦 GIAO HÀNG</span>;
+  return <span className={baseClass}><Package size={12}/> GIAO HÀNG</span>;
 };
 
 function OrderCard({ order, onAccept, loading }) {
@@ -56,7 +58,7 @@ function OrderCard({ order, onAccept, loading }) {
 
       <div className="space-y-2 mb-3">
         <div className="flex items-start gap-2">
-          <span className="text-green-400 mt-1">{order.serviceType === 'DAT_XE' ? '📍' : '📦'}</span>
+          <span className="text-slate-400 mt-1">{order.serviceType === 'DAT_XE' ? <MapPin size={16}/> : <Package size={16}/>}</span>
           <div className="flex-1">
             <p className="text-xs text-slate-500">{order.serviceType === 'DAT_XE' ? 'Điểm đón' : order.serviceType === 'DIEU_PHOI' ? 'Gặp mặt tại' : 'Lấy hàng'}</p>
             <p className="text-sm text-slate-800 font-medium line-clamp-2">{order.pickupAddress}</p>
@@ -64,7 +66,7 @@ function OrderCard({ order, onAccept, loading }) {
         </div>
         {order.serviceType !== 'DIEU_PHOI' && (
           <div className="flex items-start gap-2">
-            <span className="text-red-400 mt-1">🏁</span>
+            <span className="text-slate-400 mt-1"><CheckCircle2 size={16}/></span>
             <div className="flex-1">
               <p className="text-xs text-slate-500">{order.serviceType === 'DAT_XE' ? 'Điểm đến' : 'Giao hàng'}</p>
               <p className="text-sm text-slate-800 font-medium line-clamp-2">{order.deliveryAddress}</p>
@@ -89,8 +91,8 @@ function OrderCard({ order, onAccept, loading }) {
           💵 GIÁ CƯỚC: +{order.deliveryFee?.toLocaleString()}đ
         </span>
         {order.adminBonus > 0 && (
-          <span className="text-emerald-600 font-black text-xs w-full text-center tracking-wide bg-emerald-50 py-1 rounded-md">
-            🎁 THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ
+          <span className="text-slate-600 font-black text-xs w-full text-center tracking-wide flex items-center justify-center gap-1 bg-slate-50 py-1 rounded-md">
+            <Gift size={14}/> THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ
           </span>
         )}
         <button
@@ -112,11 +114,10 @@ function ActiveOrderCard({ order, onAction, loading }) {
     const getNextAction = () => {
     switch (order.status) {
       case 'ACCEPTED':
-        return { label: order.serviceType === 'DAT_XE' ? '🚙 Đã đón khách' : order.serviceType === 'MUA_HO' ? '🛒 Đã mua hàng' : '📦 Đã lấy hàng', action: 'pickup', color: 'btn-warning' };
+        return { label: order.serviceType === 'DAT_XE' ? 'Đã đón khách' : order.serviceType === 'MUA_HO' ? 'Đã mua hàng' : 'Đã lấy hàng', action: 'pickup', color: 'bg-slate-700 hover:bg-slate-600 text-white' };
       case 'PICKED_UP':
-        return { label: order.serviceType === 'DAT_XE' ? '✅ Đã trả khách' : '✅ Hoàn thành', action: 'complete', color: 'btn-success' };
       case 'DELIVERING':
-        return { label: order.serviceType === 'DAT_XE' ? '✅ Đã trả khách' : '✅ Hoàn thành', action: 'complete', color: 'btn-success' };
+        return { label: order.serviceType === 'DAT_XE' ? 'Đã trả khách' : 'Hoàn thành', action: 'complete', color: 'bg-slate-800 hover:bg-slate-700 text-white' };
       default:
         return null;
     }
@@ -153,8 +154,8 @@ function ActiveOrderCard({ order, onAction, loading }) {
       </div>
       
       {order.adminBonus > 0 && (
-        <div className="mb-2 bg-emerald-500/30 rounded-lg p-2 text-center border border-emerald-400/50">
-           <span className="text-white font-bold text-xs tracking-wide">🎁 ĐƯỢC THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ</span>
+        <div className="mb-2 bg-slate-800/20 rounded-lg p-2 text-center border border-slate-400/20 flex items-center justify-center gap-1">
+           <Gift size={14} className="text-white"/> <span className="text-white font-bold text-xs tracking-wide">ĐƯỢC THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ</span>
         </div>
       )}
 
@@ -758,8 +759,8 @@ export default function Home() {
                 ))}
               </>
             ) : (
-              <div className="text-center py-12 text-slate-400">
-                <p className="text-5xl mb-4">📦</p>
+              <div className="text-center py-12 text-slate-400 flex flex-col items-center">
+                <Package size={48} strokeWidth={1} className="mb-4 text-slate-300" />
                 <p className="font-medium text-slate-600">Chưa có đơn đang giao</p>
                 <p className="text-sm mt-1">Nhận đơn mới ở tab "Chờ nhận"</p>
               </div>
@@ -783,8 +784,8 @@ export default function Home() {
                        <span className="font-bold text-slate-600 text-xs">{order.orderCode || order._id.slice(-8).toUpperCase()}</span>
                        <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">{order.status === 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}</span>
                      </div>
-                     <p className="text-xs text-slate-500 truncate mb-1">📍 {order.pickupAddress}</p>
-                     <p className="text-xs text-slate-500 truncate mb-2">🏁 {order.deliveryAddress}</p>
+                     <p className="text-xs text-slate-500 truncate mb-1 flex items-center gap-1"><MapPin size={12}/> {order.pickupAddress}</p>
+                     <p className="text-xs text-slate-500 truncate mb-2 flex items-center gap-1"><Flag size={12}/> {order.deliveryAddress}</p>
                      <div className="flex justify-between items-center mt-2 border-t border-slate-300 pt-2">
                         <span className="text-slate-600 text-xs font-bold">Cước: {order.deliveryFee?.toLocaleString()}đ</span>
                         <span className="text-[10px] text-slate-500">{new Date(order.updatedAt || order.createdAt).toLocaleDateString('vi-VN')}</span>
@@ -796,8 +797,8 @@ export default function Home() {
                 </button>
               </>
             ) : (
-              <div className="text-center py-12 text-slate-400">
-                <p className="text-5xl mb-4">📋</p>
+              <div className="text-center py-12 text-slate-400 flex flex-col items-center">
+                <ClipboardList size={48} strokeWidth={1} className="mb-4 text-slate-300" />
                 <p className="font-medium text-slate-600">Chưa có lịch sử</p>
               </div>
             )}
@@ -809,16 +810,16 @@ export default function Home() {
       {/* Bottom Nav */}
       <div className="bottom-nav-safe">
         <div className="mx-auto flex max-w-xl justify-around py-3 bg-white border-t border-slate-200">
-          <Link to="/" className="flex flex-col items-center text-blue-600">
-            <span className="text-xl">🏠</span>
-            <span className="text-xs mt-1 font-medium">Trang chủ</span>
+          <Link to="/" className="flex flex-col items-center text-slate-800">
+            <HomeIcon size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-bold">Trang chủ</span>
           </Link>
           <Link to="/my-orders" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
-            <span className="text-xl">📋</span>
+            <ClipboardList size={24} strokeWidth={1.5} />
             <span className="text-xs mt-1 font-medium">Đơn của tôi</span>
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
-            <span className="text-xl">💰</span>
+            <Wallet size={24} strokeWidth={1.5} />
             <span className="text-xs mt-1 font-medium">Thu nhập</span>
           </Link>
         </div>

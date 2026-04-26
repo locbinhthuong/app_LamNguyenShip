@@ -18,6 +18,14 @@ import { useAuthSocket } from './hooks/useAuthSocket';
 
 import { useEffect } from 'react';
 
+const IndexRoute = () => {
+  const userRole = localStorage.getItem('customerRole');
+  if (userRole === 'SHOP') {
+    return <Navigate to="/shop" replace />;
+  }
+  return <CustomerDashboard />;
+};
+
 function App() {
   useAuthSocket();
 
@@ -36,8 +44,8 @@ function App() {
       <Routes>
         {/* Các màn hình con của Khách hàng (Được dính Footer Layout) */}
         <Route element={<CustomerLayout />}>
-          {/* Trang chủ mặc định là màn hình 4 dịch vụ (Cho phép Guest xem) */}
-          <Route path="/" element={<CustomerDashboard />} />
+          {/* Trang chủ mặc định là màn hình 4 dịch vụ (Cho phép Guest xem, nhưng SHOP thì chuyển qua /shop) */}
+          <Route path="/" element={<IndexRoute />} />
           
           <Route 
             path="/customer/activity" 

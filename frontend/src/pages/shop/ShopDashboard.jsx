@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon, Bike, ShoppingCart, Headset, Newspaper, Gift } from 'lucide-react';
 import { api, getActiveAnnouncements } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
@@ -188,7 +188,7 @@ const ShopDashboard = () => {
       >
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
           <div className="flex items-center gap-1 text-slate-500 mb-0.5">
-            <span className="text-xs font-medium bg-slate-100 px-2 py-0.5 rounded text-slate-600">📍 Toạ độ cửa hàng</span>
+            <span className="text-xs font-medium bg-slate-100 px-2 py-0.5 rounded text-slate-600 flex items-center gap-1"><MapPin size={12} /> Toạ độ cửa hàng</span>
             <ChevronRight size={14} className="text-slate-400" />
             {localStorage.getItem('savedShopLocation') && (
                <button 
@@ -235,6 +235,22 @@ const ShopDashboard = () => {
           <span className="font-extrabold text-lg tracking-wide">TẠO ĐƠN NGAY</span>
         </button>
 
+        {/* CÁC DỊCH VỤ */}
+        <div className="grid grid-cols-3 gap-3">
+          {services.map(svc => (
+            <div 
+              key={svc.id}
+              onClick={() => navigate(svc.id === 'delivery' ? '/shop/book' : '/shop')} 
+              className={`flex flex-col items-center justify-center gap-3 py-5 rounded-2xl cursor-pointer active:scale-95 transition-all shadow-sm hover:shadow-md ${svc.color}`}
+            >
+              <div className="text-slate-600">
+                {svc.icon}
+              </div>
+              <span className="text-[13px] font-bold text-slate-700">{svc.title}</span>
+            </div>
+          ))}
+        </div>
+
         {/* SLIDER BANNER TỪ ADMIN */}
         {banners.length > 0 && (
           <div className="relative w-full h-36 sm:h-44 rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-slate-50 group flex items-center justify-center">
@@ -275,24 +291,29 @@ const ShopDashboard = () => {
               <h3 className="font-bold text-gray-800 text-lg">Khuyến mãi</h3>
               <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex flex-col gap-3">
               {promotions.map((ann, idx) => (
                 <div 
                   key={ann._id} 
                   onClick={() => setSelectedAnnouncement(ann)}
-                  className="w-48 md:w-64 bg-white rounded-2xl border border-red-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
+                  className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
                 >
-                  {ann.imageUrl ? (
-                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Khuyến mãi" />
-                  ) : ann.videoUrl ? (
-                    <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
-                  ) : (
-                    <div className="w-full h-40 bg-gradient-to-br from-red-500 to-orange-500 p-4 flex flex-col justify-center text-white">
-                      <h4 className="font-black text-base line-clamp-2">{ann.title}</h4>
-                    </div>
-                  )}
-                  <div className="p-3">
-                    <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                    {ann.imageUrl ? (
+                      <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-full object-cover" alt="Khuyến mãi" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Gift size={24} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 pr-4 relative">
+                    <p className="font-bold text-slate-800 text-sm line-clamp-2 leading-relaxed group-hover:text-slate-600 transition-colors">
+                      {ann.title}
+                    </p>
+                    <span className="absolute right-2 bottom-2 opacity-10 text-slate-400">
+                      <Gift size={40} />
+                    </span>
                   </div>
                 </div>
               ))}
@@ -307,23 +328,29 @@ const ShopDashboard = () => {
               <h3 className="font-bold text-gray-800 text-lg">Tin Tức</h3>
               <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="flex flex-col gap-3">
               {news.map((ann, idx) => (
                 <div 
                   key={ann._id} 
                   onClick={() => setSelectedAnnouncement(ann)}
-                  className="w-40 md:w-56 bg-white rounded-2xl border border-blue-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
+                  className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
                 >
-                  {ann.imageUrl ? (
-                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-36 object-cover bg-gray-100" alt="Tin tức" />
-                  ) : (
-                    <div className="w-full h-36 bg-gradient-to-br from-blue-500 to-indigo-600 p-3 flex flex-col justify-center text-white relative">
-                      <span className="text-4xl absolute right-2 bottom-2 opacity-20">📰</span>
-                      <h4 className="font-black text-sm line-clamp-2">{ann.title}</h4>
-                    </div>
-                  )}
-                  <div className="p-3">
-                    <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                    {ann.imageUrl ? (
+                      <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-full object-cover" alt="Tin tức" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400">
+                        <Newspaper size={24} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 pr-4 relative">
+                    <p className="font-bold text-slate-800 text-sm line-clamp-2 leading-relaxed group-hover:text-slate-600 transition-colors">
+                      {ann.title}
+                    </p>
+                    <span className="absolute right-2 bottom-2 opacity-10 text-slate-400">
+                      <Newspaper size={40} />
+                    </span>
                   </div>
                 </div>
               ))}
@@ -347,9 +374,14 @@ const ShopDashboard = () => {
                    <div className="w-full h-40 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
                 )}
                 <div className="p-5 pb-8">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mb-1 block">
-                    {selectedAnnouncement.type === 'PROMO' ? '🎁 Khuyến Mãi' : '📰 Tin Tức'} • {new Date(selectedAnnouncement.createdAt).toLocaleDateString('vi-VN')}
-                  </span>
+                  <div className="flex items-center gap-2 mb-4 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                    {selectedAnnouncement.type === 'PROMO' ? (
+                      <><Gift size={16} /> Khuyến Mãi</>
+                    ) : (
+                      <><Newspaper size={16} /> Tin Tức</>
+                    )} 
+                    • {new Date(selectedAnnouncement.createdAt).toLocaleDateString('vi-VN')}
+                  </div>
                   <h2 className="text-xl font-bold text-gray-900 leading-snug mb-3">
                     {selectedAnnouncement.title}
                   </h2>
@@ -369,8 +401,6 @@ const ShopDashboard = () => {
             </div>
           </div>
         )}
-
-
 
         {/* DANH SÁCH ĐƠN HÀNG GẦN ĐÂY */}
         <div>

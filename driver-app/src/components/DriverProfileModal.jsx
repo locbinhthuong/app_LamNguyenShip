@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getActiveAnnouncements, uploadDriverAvatar, getFullImageUrl, deleteMyAccount } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { User, Phone, Bike, Car, Edit3, ScrollText, Trash2, Camera, Inbox, AlertTriangle } from 'lucide-react';
 
 export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -123,9 +124,9 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
   };
 
   const VEHICLE_EMOJI = {
-    motorcycle: '🏍️ Xe máy',
-    bike: '🚲 Xe đạp',
-    car: '🚗 Ô tô'
+    motorcycle: <><Bike size={16}/> Xe máy</>,
+    bike: <><Bike size={16}/> Xe đạp</>,
+    car: <><Car size={16}/> Ô tô</>
   };
 
   return (
@@ -148,7 +149,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
                   <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-4xl font-bold text-blue-500">
-                    {driver?.name?.charAt(0).toUpperCase() || '👤'}
+                    {driver?.name?.charAt(0).toUpperCase() || <User size={40} />}
                   </span>
                 )}
               </div>
@@ -160,17 +161,17 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
 
             <div className="space-y-4 mb-6 relative">
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-lg">📞</div>
+                <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600"><Phone size={20}/></div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium">Số điện thoại</p>
                   <p className="text-sm font-bold text-slate-800">{driver?.phone}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl">
-                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-lg">{driver?.vehicleType === 'car' ? '🚗' : '🏍️'}</div>
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">{driver?.vehicleType === 'car' ? <Car size={20}/> : <Bike size={20}/>}</div>
                 <div>
                   <p className="text-xs text-slate-500 font-medium">Phương tiện</p>
-                  <p className="text-sm font-bold text-slate-800">
+                  <p className="text-sm font-bold text-slate-800 flex items-center gap-1">
                     {VEHICLE_EMOJI[driver?.vehicleType]} {driver?.licensePlate && `- ${driver.licensePlate}`}
                   </p>
                 </div>
@@ -179,21 +180,21 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
 
             <button 
               onClick={() => setIsEditing(true)}
-              className="w-full py-3.5 rounded-xl font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors border-2 border-transparent hover:border-blue-200"
+              className="w-full py-3.5 rounded-xl font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors border-2 border-transparent hover:border-blue-200 flex items-center justify-center gap-2"
             >
-              ✏️ Chỉnh sửa hồ sơ
+              <Edit3 size={18} /> Chỉnh sửa hồ sơ
             </button>
             <button 
               onClick={handleShowTerms}
               className="w-full mt-3 py-3.5 rounded-xl font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors border-2 border-transparent hover:border-purple-200 flex items-center justify-center gap-2"
             >
-              📜 Quy định & Điều khoản
+              <ScrollText size={18} /> Quy định & Điều khoản
             </button>
             <button 
               onClick={() => setShowDeleteConfirm(true)}
               className="w-full mt-3 py-3.5 rounded-xl font-bold text-red-600 bg-red-50 hover:bg-red-100 transition-colors border-2 border-transparent hover:border-red-200 flex items-center justify-center gap-2"
             >
-              🗑️ Yêu cầu Xoá tài khoản
+              <Trash2 size={18} /> Yêu cầu Xoá tài khoản
             </button>
           </div>
         ) : (
@@ -210,11 +211,11 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
                   {avatarPreview ? (
                     <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
                   ) : (
-                    <span className="text-2xl text-slate-400">📷</span>
+                    <span className="text-2xl text-slate-400"><Camera size={24}/></span>
                   )}
                   {avatarPreview && (
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xl">
-                      📷
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xl text-white">
+                      <Camera size={24}/>
                     </div>
                   )}
                 </div>
@@ -303,7 +304,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl h-[80vh] sm:h-[80vh] flex flex-col overflow-hidden animate-slideUp">
             <div className="bg-purple-600 p-4 shrink-0 flex justify-between items-center text-white relative">
-              <h2 className="font-bold text-lg flex items-center gap-2">📜 Quy định & Điều khoản</h2>
+              <h2 className="font-bold text-lg flex items-center gap-2"><ScrollText size={20} /> Quy định & Điều khoản</h2>
               <button onClick={() => setShowTerms(false)} className="rounded-full bg-black/10 hover:bg-black/20 p-2 border-0 w-8 h-8 flex items-center justify-center transition-colors">
                 ✕
               </button>
@@ -316,7 +317,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
                 </div>
               ) : termsData.length === 0 ? (
                 <div className="flex flex-col justify-center items-center h-full text-slate-400">
-                  <span className="text-4xl mb-3">📭</span>
+                  <span className="mb-3"><Inbox size={48} strokeWidth={1} /></span>
                   <p className="font-medium">Chưa có điều khoản nào được đăng.</p>
                 </div>
               ) : (
@@ -352,8 +353,8 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
       {showDeleteConfirm && (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-slideUp text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <span className="text-3xl">⚠️</span>
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-600">
+              <span className="text-3xl"><AlertTriangle size={32} /></span>
             </div>
             <h3 className="text-xl font-bold text-slate-800 mb-2">Xoá tài khoản?</h3>
             <p className="text-sm text-slate-500 mb-6 leading-relaxed">

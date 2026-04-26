@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getMyOrders } from '../services/api';
+import { Package, Bike, Wrench, ShoppingCart, Zap, Calendar, Trophy, MapPin, ClipboardList, Home as HomeIcon, Wallet } from 'lucide-react';
 
 const STATUS_LABELS = {
   PENDING: 'Chờ nhận',
@@ -21,12 +22,13 @@ const STATUS_COLORS = {
 };
 
 const getServiceBadge = (type) => {
+  const baseClass = "bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold border border-slate-200 flex items-center gap-1 inline-flex";
   switch(type) {
-    case 'DAT_XE': return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded text-[10px] font-bold border border-emerald-200">🛵 CHỞ KHÁCH</span>;
-    case 'MUA_HO': return <span className="bg-lime-100 text-lime-700 px-2 py-0.5 rounded text-[10px] font-bold border border-lime-200">🛒 MUA HỘ</span>;
-    case 'DIEU_PHOI': return <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">🛠️ KÈM THỢ</span>;
+    case 'DAT_XE': return <span className={baseClass}><Bike size={12}/> CHỞ KHÁCH</span>;
+    case 'MUA_HO': return <span className={baseClass}><ShoppingCart size={12}/> MUA HỘ</span>;
+    case 'DIEU_PHOI': return <span className={baseClass}><Wrench size={12}/> KÈM THỢ</span>;
     case 'GIAO_HANG':
-    default: return <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-[10px] font-bold border border-orange-200">📦 GIAO HÀNG</span>;
+    default: return <span className={baseClass}><Package size={12}/> GIAO HÀNG</span>;
   }
 };
 
@@ -151,19 +153,19 @@ export default function MyOrders() {
         {/* Khung Thống Kê Nhập Liền / Gạch Ngang Mới */}
         <div className="bg-white rounded-2xl border border-slate-200 flex flex-col mb-4 overflow-hidden divide-y divide-slate-100">
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">⚡</span> Hôm Nay</span>
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Zap size={20} className="text-slate-400"/> Hôm Nay</span>
              <span className="text-lg font-black text-blue-600">{stats.day} Đơn</span>
           </div>
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">📅</span> Tuần Này</span>
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Calendar size={20} className="text-slate-400"/> Tuần Này</span>
              <span className="text-lg font-black text-blue-600">{stats.week} Đơn</span>
           </div>
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">🏆</span> Tháng Này</span>
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Trophy size={20} className="text-slate-400"/> Tháng Này</span>
              <span className="text-lg font-black text-blue-600">{stats.month} Đơn</span>
           </div>
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><span className="text-xl">📦</span> Năm Nay</span>
+             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Package size={20} className="text-slate-400"/> Năm Nay</span>
              <span className="text-lg font-black text-blue-600">{stats.year} Đơn</span>
           </div>
         </div>
@@ -196,8 +198,8 @@ export default function MyOrders() {
             <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-12 text-slate-500">
-            <p className="text-5xl mb-4">📋</p>
+          <div className="text-center py-12 text-slate-500 flex flex-col items-center">
+            <ClipboardList size={48} strokeWidth={1} className="mb-4 text-slate-300" />
             <p>Không có đơn hàng nào</p>
           </div>
         ) : (
@@ -216,7 +218,7 @@ export default function MyOrders() {
                   {STATUS_LABELS[order.status]}
                 </span>
               </div>
-              <p className="text-slate-500 text-sm mb-1">📍 {order.deliveryAddress?.slice(0, 50)}...</p>
+              <p className="text-slate-500 text-sm mb-1 flex items-center gap-1"><MapPin size={14}/> {order.deliveryAddress?.slice(0, 50)}...</p>
               <div className="flex justify-between items-center mt-2">
                 <span className="text-green-400 font-bold">+{order.deliveryFee?.toLocaleString()}đ</span>
                 <span className="text-slate-500 text-xs">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</span>
@@ -228,17 +230,17 @@ export default function MyOrders() {
 
       {/* Bottom Nav */}
       <div className="bottom-nav-safe">
-        <div className="mx-auto flex max-w-xl justify-around py-3">
-          <Link to="/" className="flex flex-col items-center text-slate-500">
-            <span className="text-xl">🏠</span>
-            <span className="text-xs mt-1">Trang chủ</span>
+        <div className="mx-auto flex max-w-xl justify-around py-3 bg-white border-t border-slate-200">
+          <Link to="/" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
+            <HomeIcon size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-medium">Trang chủ</span>
           </Link>
-          <Link to="/my-orders" className="flex flex-col items-center text-blue-400">
-            <span className="text-xl">📋</span>
-            <span className="text-xs mt-1">Đơn của tôi</span>
+          <Link to="/my-orders" className="flex flex-col items-center text-slate-800">
+            <ClipboardList size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-bold">Đơn của tôi</span>
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
-            <span className="text-xl">💰</span>
+            <Wallet size={24} strokeWidth={1.5} />
             <span className="text-xs mt-1 font-medium">Thu nhập</span>
           </Link>
         </div>
