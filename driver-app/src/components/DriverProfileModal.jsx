@@ -188,7 +188,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               onClick={handleShowTerms}
               className="w-full mt-3 py-3.5 rounded-xl font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors border-2 border-transparent hover:border-purple-200 flex items-center justify-center gap-2"
             >
-              <ScrollText size={18} /> Quy định & Điều khoản
+              <ScrollText size={18} /> Quy định & Chính sách bảo mật
             </button>
             <button 
               onClick={() => setShowDeleteConfirm(true)}
@@ -304,7 +304,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl h-[80vh] sm:h-[80vh] flex flex-col overflow-hidden animate-slideUp">
             <div className="bg-purple-600 p-4 shrink-0 flex justify-between items-center text-white relative">
-              <h2 className="font-bold text-lg flex items-center gap-2"><ScrollText size={20} /> Quy định & Điều khoản</h2>
+              <h2 className="font-bold text-lg flex items-center gap-2"><ScrollText size={20} /> Quy định & Chính sách bảo mật</h2>
               <button onClick={() => setShowTerms(false)} className="rounded-full bg-black/10 hover:bg-black/20 p-2 border-0 w-8 h-8 flex items-center justify-center transition-colors">
                 ✕
               </button>

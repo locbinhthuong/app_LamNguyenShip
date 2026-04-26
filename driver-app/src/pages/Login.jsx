@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { Capacitor } from '@capacitor/core';
 
 export default function Login() {
   const [phone, setPhone] = useState('');
@@ -11,6 +12,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
+  const isIOS = Capacitor.getPlatform() === 'ios';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -141,35 +143,39 @@ export default function Login() {
           </div>
         )}
 
-        {/* Nút đăng nhập Zalo */}
-        <button
-          type="button"
-          onClick={handleZaloLogin}
-          disabled={zaloLoading}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold py-3 px-4 rounded-xl mb-4 flex items-center justify-center gap-3 transition-colors active:scale-95 shadow-md"
-        >
-          {zaloLoading ? (
-            <>
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Đang kết nối Zalo...
-            </>
-          ) : (
-            <>
-              <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
-                <circle cx="24" cy="24" r="24" fill="#0068FF"/>
-                <path d="M24 10C15.178 10 8 16.4 8 24c0 5.14 2.8 9.68 7 12.3V33l7.1-4c1.5.4 3 .6 4.9.6 8.82 0 16-6.4 16-14S32.82 10 24 10z" fill="#fff"/>
-              </svg>
-              Đăng nhập bằng Zalo
-            </>
-          )}
-        </button>
+        {/* Nút đăng nhập Zalo (Ẩn trên iOS theo Guideline 4.8) */}
+        {!isIOS && (
+          <>
+            <button
+              type="button"
+              onClick={handleZaloLogin}
+              disabled={zaloLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold py-3 px-4 rounded-xl mb-4 flex items-center justify-center gap-3 transition-colors active:scale-95 shadow-md"
+            >
+              {zaloLoading ? (
+                <>
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Đang kết nối Zalo...
+                </>
+              ) : (
+                <>
+                  <svg width="24" height="24" viewBox="0 0 48 48" fill="none">
+                    <circle cx="24" cy="24" r="24" fill="#0068FF"/>
+                    <path d="M24 10C15.178 10 8 16.4 8 24c0 5.14 2.8 9.68 7 12.3V33l7.1-4c1.5.4 3 .6 4.9.6 8.82 0 16-6.4 16-14S32.82 10 24 10z" fill="#fff"/>
+                  </svg>
+                  Đăng nhập bằng Zalo
+                </>
+              )}
+            </button>
 
-        {/* Phân cách */}
-        <div className="flex items-center gap-3 my-6">
-          <div className="flex-1 h-px bg-slate-200"></div>
-          <span className="text-slate-400 text-sm">hoặc</span>
-          <div className="flex-1 h-px bg-slate-200"></div>
-        </div>
+            {/* Phân cách */}
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-slate-200"></div>
+              <span className="text-slate-400 text-sm">hoặc</span>
+              <div className="flex-1 h-px bg-slate-200"></div>
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
