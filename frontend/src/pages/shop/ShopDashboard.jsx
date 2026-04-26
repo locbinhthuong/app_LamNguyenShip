@@ -165,7 +165,7 @@ const ShopDashboard = () => {
       </div>
 
       {/* HEADER TỔNG QUAN */}
-      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-14 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-8 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative overflow-hidden">
         {/* Decorator bubbles */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-0 -left-10 w-32 h-32 bg-sky-400/20 rounded-full blur-2xl"></div>
@@ -196,7 +196,7 @@ const ShopDashboard = () => {
       </div>
 
       {/* BODY CONTENT */}
-      <div className="px-4 sm:px-6 -mt-8 relative z-20 space-y-6">
+      <div className="px-4 sm:px-6 pt-6 relative z-20 space-y-6">
 
         {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ (Gọn hơn) */}
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-2.5 flex items-center gap-2.5 relative overflow-hidden shadow-sm">
