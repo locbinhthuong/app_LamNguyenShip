@@ -165,10 +165,12 @@ const ShopDashboard = () => {
       </div>
 
       {/* HEADER TỔNG QUAN */}
-      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-8 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative overflow-hidden">
-        {/* Decorator bubbles */}
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute bottom-0 -left-10 w-32 h-32 bg-sky-400/20 rounded-full blur-2xl"></div>
+      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-10 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative">
+        {/* Decorator bubbles (Đã sửa lỗi bị cắt khung trên Safari bằng cách đưa vào một thẻ riêng) */}
+        <div className="absolute inset-0 overflow-hidden rounded-b-[40px] pointer-events-none">
+          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+          <div className="absolute bottom-0 -left-10 w-32 h-32 bg-sky-400/20 rounded-full blur-2xl"></div>
+        </div>
 
         <div className="flex justify-between items-center mb-6 relative z-10">
           <div>
@@ -248,20 +250,29 @@ const ShopDashboard = () => {
         </div>
 
         {/* THỐNG KÊ ĐƠN */}
-        <div className="bg-white rounded-3xl border border-slate-100 p-5 grid grid-cols-3 gap-4 relative overflow-hidden">
-          <div className="flex flex-col items-center text-center">
+        <div className="bg-white rounded-3xl border border-slate-100 p-5 grid grid-cols-3 gap-4 relative overflow-hidden shadow-sm">
+          <div 
+            onClick={() => navigate('/shop/activity')}
+            className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform"
+          >
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Clock size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.pending}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Chờ Xế</p>
           </div>
-          <div className="flex flex-col items-center text-center relative">
+          <div 
+            onClick={() => navigate('/shop/activity')}
+            className="flex flex-col items-center text-center relative cursor-pointer active:scale-95 transition-transform"
+          >
             <div className="absolute left-0 top-2 bottom-2 w-px bg-slate-100"></div>
             <div className="absolute right-0 top-2 bottom-2 w-px bg-slate-100"></div>
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Navigation size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.delivering}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Đang Giao</p>
           </div>
-          <div className="flex flex-col items-center text-center">
+          <div 
+            onClick={() => navigate('/shop/activity')}
+            className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform"
+          >
             <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mb-2"><PackageCheck size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.completedToday}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Hoàn Thành</p>
