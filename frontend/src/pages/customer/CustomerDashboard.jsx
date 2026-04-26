@@ -185,12 +185,12 @@ const CustomerDashboard = () => {
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
             >
               {banners.map(banner => (
-                <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-1">
+                <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-0">
                   {banner.imageUrl && (
-                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-contain" />
+                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-cover object-center" />
                   )}
                   {banner.videoUrl && (
-                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-contain" autoPlay muted loop playsInline />
+                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-cover object-center" autoPlay muted loop playsInline />
                   )}
                 </div>
               ))}
