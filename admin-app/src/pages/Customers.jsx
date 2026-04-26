@@ -122,6 +122,143 @@ const Customers = () => {
     c.phone?.includes(searchTerm)
   );
 
+  const regularCustomers = filteredCustomers.filter(c => c.role !== 'SHOP');
+  const shopCustomers = filteredCustomers.filter(c => c.role === 'SHOP');
+
+  const renderCustomerCards = (list) => (
+    <div className="space-y-4 lg:hidden">
+      {list.length === 0 ? (
+        <div className="py-10 text-center text-gray-500">Không có dữ liệu.</div>
+      ) : (
+        list.map(customer => (
+          <div key={customer._id} className="bg-white border text-sm border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 shrink-0 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden border border-gray-200">
+                {customer.avatar ? (
+                  <img src={getFullImageUrl(customer.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  customer.name?.charAt(0).toUpperCase()
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-gray-800 text-base truncate">{customer.name}</p>
+                <p className="text-gray-500 text-xs font-mono">{customer.phone}</p>
+              </div>
+              <div className="shrink-0 flex flex-col items-end gap-1.5">
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${customer.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                  {customer.isActive ? 'Đang HĐ' : 'Bị Khóa'}
+                </span>
+                <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-100">
+                  {customer.role === 'SHOP' ? 'SHOP / Đối tác' : 'KHÁCH'}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+              <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100">
+                <Calendar size={14} className="text-gray-400" />
+                Tham gia: {new Date(customer.createdAt).toLocaleDateString()}
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handleOpenModal(customer)}
+                  className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-semibold"
+                >
+                  <Edit2 size={14} /> Sửa
+                </button>
+                <button 
+                  onClick={() => handleDelete(customer._id, customer.name)}
+                  className="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-semibold"
+                >
+                  <Trash2 size={14} /> Xóa
+                </button>
+              </div>
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+
+  const renderCustomerTable = (list) => (
+    <div className="hidden lg:block overflow-x-auto">
+      <table className="w-full text-left border-collapse min-w-[700px]">
+        <thead>
+          <tr className="bg-gray-50 text-gray-500 text-sm border-b border-gray-100">
+            <th className="py-3 px-4 font-medium whitespace-nowrap">Khách Hàng</th>
+            <th className="py-3 px-4 font-medium whitespace-nowrap">Số Điện Thoại</th>
+            <th className="py-3 px-4 font-medium whitespace-nowrap">Vai Trò</th>
+            <th className="py-3 px-4 font-medium whitespace-nowrap">Ngày Tham Gia</th>
+            <th className="py-3 px-4 font-medium text-center whitespace-nowrap">Trạng Thái</th>
+            <th className="py-3 px-4 font-medium text-right whitespace-nowrap">Thao Tác</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {list.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="py-10 text-center text-gray-500">Không có dữ liệu.</td>
+            </tr>
+          ) : (
+            list.map(customer => (
+              <tr key={customer._id} className="hover:bg-gray-50 transition-colors">
+                <td className="py-3 px-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden border border-gray-200">
+                      {customer.avatar ? (
+                        <img src={getFullImageUrl(customer.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        customer.name?.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div>
+                        <p className="font-semibold text-gray-800">{customer.name}</p>
+                    </div>
+                  </div>
+                </td>
+                <td className="py-3 px-4 font-bold text-gray-700">{customer.phone}</td>
+                <td className="py-3 px-4">
+                  <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border border-emerald-100">
+                    {customer.role === 'SHOP' ? 'SHOP / ĐỐI TÁC' : 'KHÁCH HÀNG'}
+                  </span>
+                </td>
+                <td className="py-3 px-4 text-sm text-gray-500 whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar size={14} />
+                      {new Date(customer.createdAt).toLocaleDateString()}
+                    </div>
+                </td>
+                <td className="py-3 px-4 text-center">
+                  <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${customer.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {customer.isActive ? 'Đang hoạt động' : 'Bị Khóa'}
+                  </span>
+                </td>
+                <td className="py-3 px-4 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <button 
+                      onClick={() => handleOpenModal(customer)}
+                      className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Sửa"
+                    >
+                      <Edit2 size={18} />
+                    </button>
+                    <button 
+                      onClick={() => handleDelete(customer._id, customer.name)}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Xóa"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -157,137 +294,21 @@ const Customers = () => {
            </div>
         ) : (
           <>
-            {/* MOBILE VIEW (Cards) */}
-            <div className="space-y-4 lg:hidden">
-              {filteredCustomers.length === 0 ? (
-                <div className="py-10 text-center text-gray-500">Không tìm thấy khách hàng nào.</div>
-              ) : (
-                filteredCustomers.map(customer => (
-                  <div key={customer._id} className="bg-white border text-sm border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 shrink-0 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden border border-gray-200">
-                        {customer.avatar ? (
-                          <img src={getFullImageUrl(customer.avatar)} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                          customer.name?.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-800 text-base truncate">{customer.name}</p>
-                        <p className="text-gray-500 text-xs font-mono">{customer.phone}</p>
-                      </div>
-                      <div className="shrink-0 flex flex-col items-end gap-1.5">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${customer.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {customer.isActive ? 'Đang HĐ' : 'Bị Khóa'}
-                        </span>
-                        <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-100">
-                          {customer.role === 'SHOP' ? 'SHOP / Đối tác' : 'KHÁCH'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
-                      <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100">
-                        <Calendar size={14} className="text-gray-400" />
-                        Tham gia: {new Date(customer.createdAt).toLocaleDateString()}
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => handleOpenModal(customer)}
-                          className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-semibold"
-                        >
-                          <Edit2 size={14} /> Sửa
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(customer._id, customer.name)}
-                          className="p-1.5 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 font-semibold"
-                        >
-                          <Trash2 size={14} /> Xóa
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              )}
+            <div className="mb-8">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 px-2 flex items-center gap-2">
+                <Users className="text-blue-600" /> Khách Cá Nhân ({regularCustomers.length})
+              </h2>
+              {renderCustomerCards(regularCustomers)}
+              {renderCustomerTable(regularCustomers)}
             </div>
 
-            {/* DESKTOP VIEW (Table) */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[700px]">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 text-sm border-b border-gray-100">
-                  <th className="py-3 px-4 font-medium whitespace-nowrap">Khách Hàng</th>
-                  <th className="py-3 px-4 font-medium whitespace-nowrap">Số Điện Thoại</th>
-                  <th className="py-3 px-4 font-medium whitespace-nowrap">Vai Trò</th>
-                  <th className="py-3 px-4 font-medium whitespace-nowrap">Ngày Tham Gia</th>
-                  <th className="py-3 px-4 font-medium text-center whitespace-nowrap">Trạng Thái</th>
-                  <th className="py-3 px-4 font-medium text-right whitespace-nowrap">Thao Tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {filteredCustomers.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="py-10 text-center text-gray-500">Không tìm thấy khách hàng nào.</td>
-                  </tr>
-                ) : (
-                  filteredCustomers.map(customer => (
-                    <tr key={customer._id} className="hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center font-bold overflow-hidden border border-gray-200">
-                            {customer.avatar ? (
-                              <img src={getFullImageUrl(customer.avatar)} alt="Avatar" className="w-full h-full object-cover" />
-                            ) : (
-                              customer.name?.charAt(0).toUpperCase()
-                            )}
-                          </div>
-                          <div>
-                             <p className="font-semibold text-gray-800">{customer.name}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 font-bold text-gray-700">{customer.phone}</td>
-                      <td className="py-3 px-4">
-                        <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border border-emerald-100">
-                          {customer.role === 'SHOP' ? 'SHOP / ĐỐI TÁC' : 'KHÁCH HÀNG'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-sm text-gray-500 whitespace-nowrap">
-                         <div className="flex items-center gap-1.5">
-                            <Calendar size={14} />
-                            {new Date(customer.createdAt).toLocaleDateString()}
-                         </div>
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${customer.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {customer.isActive ? 'Đang hoạt động' : 'Bị Khóa'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => handleOpenModal(customer)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Sửa"
-                          >
-                            <Edit2 size={18} />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(customer._id, customer.name)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Xóa"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-4 px-2 flex items-center gap-2">
+                <span className="text-emerald-600">🏪</span> Chủ Cửa Hàng ({shopCustomers.length})
+              </h2>
+              {renderCustomerCards(shopCustomers)}
+              {renderCustomerTable(shopCustomers)}
+            </div>
           </>
         )}
       </div>
