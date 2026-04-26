@@ -180,7 +180,7 @@ const CustomerDashboard = () => {
       {/* SLIDER BANNER TỪ ADMIN */}
       {banners.length > 0 && (
         <div className="px-4 mb-6">
-          <div className="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-slate-50 group flex items-center justify-center">
+          <div className="relative w-full h-48 sm:h-60 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-slate-50 group flex items-center justify-center">
             <div 
               className="flex w-full h-full transition-transform duration-500 ease-out items-center"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
