@@ -78,14 +78,20 @@ const CustomerDashboard = () => {
     fetchAnnouncements();
   }, []);
 
-  // Tự động trượt Bảng Tin mỗi 5 giây
+  // Dữ liệu Slider Hình Ảnh
+  const slides = [
+    { id: 1, img: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?q=80&w=1000&auto=format&fit=crop', title: 'Giao hàng siêu tốc' },
+    { id: 2, img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop', title: 'Dễ dàng tiện lợi' },
+    { id: 3, img: 'https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?q=80&w=1000&auto=format&fit=crop', title: 'An toàn tuyệt đối' }
+  ];
+
+  // Tự động trượt Slider mỗi 3 giây
   useEffect(() => {
-    if (announcements.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % announcements.length);
-    }, 5000);
+      setCurrentSlide(prev => (prev + 1) % slides.length);
+    }, 3000);
     return () => clearInterval(interval);
-  }, [announcements]);
+  }, []);
 
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
@@ -147,6 +153,36 @@ const CustomerDashboard = () => {
             <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
               Vui lòng chạm vào thanh <strong>"📍 Kéo ghim"</strong> ở trên cùng để kiểm tra và định vị chính xác vị trí của bạn trên bản đồ giúp tài xế tìm đến nhanh hơn nhé!
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* SLIDER BANNER BẰNG HÌNH ẢNH */}
+      <div className="px-4 mb-4">
+        <div className="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white group">
+          <div 
+            className="flex w-full h-full transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {slides.map(slide => (
+              <div key={slide.id} className="w-full h-full flex-shrink-0 relative">
+                <img src={slide.img} alt={slide.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute bottom-4 left-4 text-white">
+                  <h3 className="font-bold text-lg drop-shadow-md">{slide.title}</h3>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Nút điều hướng Slider */}
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+            {slides.map((_, index) => (
+              <button 
+                key={index} 
+                onClick={() => setCurrentSlide(index)}
+                className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white shadow' : 'w-1.5 bg-white/50'}`}
+              />
+            ))}
           </div>
         </div>
       </div>

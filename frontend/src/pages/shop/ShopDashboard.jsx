@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon } from 'lucide-react';
-import { api } from '../../services/api';
+import { api, getActiveAnnouncements } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
 const ShopDashboard = () => {
@@ -17,7 +17,14 @@ const ShopDashboard = () => {
   const [address, setAddress] = useState('Đang lấy vị trí...');
   const [locationDetails, setLocationDetails] = useState(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  
+  // Banner & Tin tức
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [announcements, setAnnouncements] = useState([]);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+
+  const promotions = announcements.filter(a => a.type === 'PROMO');
+  const news = announcements.filter(a => a.type === 'NEWS');
 
   const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
   
@@ -25,11 +32,11 @@ const ShopDashboard = () => {
   const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
   const defaultLocation = customerData.defaultLocation;
 
-  // Dữ liệu Slider
+  // Dữ liệu Slider Hình Ảnh
   const slides = [
-    { id: 1, title: 'AloShipp đồng hành cùng Shop', subtitle: 'Giao hỏa tốc - Nhận tiền ngay', bg: 'from-blue-500 to-sky-400' },
-    { id: 2, title: 'Ưu đãi cực sốc tháng này', subtitle: 'Hoàn tiền lên đến 50.000đ/đơn', bg: 'from-orange-500 to-amber-400' },
-    { id: 3, title: 'Quản lý doanh thu dễ dàng', subtitle: 'Theo dõi dòng tiền tự động 24/7', bg: 'from-emerald-500 to-teal-400' }
+    { id: 1, img: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?q=80&w=1000&auto=format&fit=crop', title: 'Giao hàng siêu tốc' },
+    { id: 2, img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop', title: 'Quản lý dễ dàng' },
+    { id: 3, img: 'https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?q=80&w=1000&auto=format&fit=crop', title: 'Đối tác tin cậy' }
   ];
 
   const calculateStatsAndSet = (newOrders) => {
@@ -49,6 +56,7 @@ const ShopDashboard = () => {
 
   useEffect(() => {
     fetchOrders();
+    fetchAnnouncements();
 
     const handleRefresh = (e) => {
       const updatedOrder = e.detail;
@@ -144,6 +152,17 @@ const ShopDashboard = () => {
     }
   };
 
+  const fetchAnnouncements = async () => {
+    try {
+      const res = await getActiveAnnouncements();
+      if (res.success) {
+        setAnnouncements(res.data || []);
+      }
+    } catch (err) {
+      console.error('Lỗi lấy bảng tin', err);
+    }
+  };
+
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
     localStorage.setItem('savedShopLocation', JSON.stringify(loc));
@@ -220,16 +239,19 @@ const ShopDashboard = () => {
           <span className="font-extrabold text-lg tracking-wide">TẠO ĐƠN NGAY</span>
         </button>
 
-        {/* SLIDER BANNER */}
-        <div className="relative w-full h-32 rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-white group">
+        {/* SLIDER BANNER BẰNG HÌNH ẢNH */}
+        <div className="relative w-full h-36 sm:h-44 rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-white group">
           <div 
             className="flex w-full h-full transition-transform duration-500 ease-out"
             style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
             {slides.map(slide => (
-              <div key={slide.id} className={`w-full h-full flex-shrink-0 flex flex-col justify-center px-6 bg-gradient-to-r ${slide.bg} text-white`}>
-                <h3 className="font-bold text-lg mb-1">{slide.title}</h3>
-                <p className="text-sm font-medium opacity-90">{slide.subtitle}</p>
+              <div key={slide.id} className="w-full h-full flex-shrink-0 relative">
+                <img src={slide.img} alt={slide.title} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                <div className="absolute bottom-4 left-4 text-white">
+                  <h3 className="font-bold text-lg drop-shadow-md">{slide.title}</h3>
+                </div>
               </div>
             ))}
           </div>
@@ -239,41 +261,115 @@ const ShopDashboard = () => {
               <button 
                 key={index} 
                 onClick={() => setCurrentSlide(index)}
-                className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`}
+                className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white shadow' : 'w-1.5 bg-white/50'}`}
               />
             ))}
           </div>
         </div>
 
-        {/* THỐNG KÊ ĐƠN */}
-        <div className="bg-white rounded-3xl border border-slate-100 p-5 grid grid-cols-3 gap-4 relative overflow-hidden shadow-sm">
-          <div 
-            onClick={() => navigate('/shop/activity')}
-            className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform"
-          >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Clock size={20} /></div>
-            <p className="text-xl font-black text-slate-800 leading-none">{stats.pending}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Chờ Xế</p>
+        {/* SECTION KHUYẾN MÃI */}
+        {promotions.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="font-bold text-gray-800 text-lg">Khuyến mãi</h3>
+              <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              {promotions.map((ann, idx) => (
+                <div 
+                  key={ann._id} 
+                  onClick={() => setSelectedAnnouncement(ann)}
+                  className="w-48 md:w-64 bg-white rounded-2xl border border-red-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
+                >
+                  {ann.imageUrl ? (
+                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Khuyến mãi" />
+                  ) : ann.videoUrl ? (
+                    <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
+                  ) : (
+                    <div className="w-full h-40 bg-gradient-to-br from-red-500 to-orange-500 p-4 flex flex-col justify-center text-white">
+                      <h4 className="font-black text-base line-clamp-2">{ann.title}</h4>
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div 
-            onClick={() => navigate('/shop/activity')}
-            className="flex flex-col items-center text-center relative cursor-pointer active:scale-95 transition-transform"
-          >
-            <div className="absolute left-0 top-2 bottom-2 w-px bg-slate-100"></div>
-            <div className="absolute right-0 top-2 bottom-2 w-px bg-slate-100"></div>
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Navigation size={20} /></div>
-            <p className="text-xl font-black text-slate-800 leading-none">{stats.delivering}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Đang Giao</p>
+        )}
+
+        {/* SECTION TIN TỨC */}
+        {news.length > 0 && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-3 px-1">
+              <h3 className="font-bold text-gray-800 text-lg">Tin Tức</h3>
+              <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
+            </div>
+            <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+              {news.map((ann, idx) => (
+                <div 
+                  key={ann._id} 
+                  onClick={() => setSelectedAnnouncement(ann)}
+                  className="w-40 md:w-56 bg-white rounded-2xl border border-blue-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
+                >
+                  {ann.imageUrl ? (
+                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-36 object-cover bg-gray-100" alt="Tin tức" />
+                  ) : (
+                    <div className="w-full h-36 bg-gradient-to-br from-blue-500 to-indigo-600 p-3 flex flex-col justify-center text-white relative">
+                      <span className="text-4xl absolute right-2 bottom-2 opacity-20">📰</span>
+                      <h4 className="font-black text-sm line-clamp-2">{ann.title}</h4>
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-          <div 
-            onClick={() => navigate('/shop/activity')}
-            className="flex flex-col items-center text-center cursor-pointer active:scale-95 transition-transform"
-          >
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mb-2"><PackageCheck size={20} /></div>
-            <p className="text-xl font-black text-slate-800 leading-none">{stats.completedToday}</p>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Hoàn Thành</p>
+        )}
+
+        {/* MODAL XEM CHI TIẾT BẢNG TIN */}
+        {selectedAnnouncement && (
+          <div className="fixed inset-0 z-[100] bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setSelectedAnnouncement(null)}>
+            <div className="bg-white rounded-3xl w-full max-w-sm max-h-[85vh] overflow-hidden flex flex-col shadow-2xl relative" onClick={e => e.stopPropagation()}>
+              <div className="absolute top-3 right-3 z-10 bg-white/50 backdrop-blur rounded-full p-2 cursor-pointer shadow" onClick={() => setSelectedAnnouncement(null)}>
+                 ✕
+              </div>
+              <div className="overflow-y-auto w-full flex-1">
+                {selectedAnnouncement.videoUrl ? (
+                   <video src={`https://api.aloshipp.com${selectedAnnouncement.videoUrl}`} className="w-full bg-black max-h-[300px]" controls playsInline autoPlay />
+                ) : selectedAnnouncement.imageUrl ? (
+                   <img src={`https://api.aloshipp.com${selectedAnnouncement.imageUrl}`} className="w-full object-cover max-h-[300px]" alt="Chi tiết" />
+                ) : (
+                   <div className="w-full h-40 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
+                )}
+                <div className="p-5 pb-8">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wide mb-1 block">
+                    {selectedAnnouncement.type === 'PROMO' ? '🎁 Khuyến Mãi' : '📰 Tin Tức'} • {new Date(selectedAnnouncement.createdAt).toLocaleDateString('vi-VN')}
+                  </span>
+                  <h2 className="text-xl font-bold text-gray-900 leading-snug mb-3">
+                    {selectedAnnouncement.title}
+                  </h2>
+                  <div className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                    {selectedAnnouncement.content}
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 border-t border-gray-100 bg-gray-50 flex gap-3">
+                <button 
+                  onClick={() => setSelectedAnnouncement(null)}
+                  className="flex-1 py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-600/30 active:scale-95 transition-transform"
+                >
+                  Đã Rõ
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+
 
         {/* DANH SÁCH ĐƠN HÀNG GẦN ĐÂY */}
         <div>
