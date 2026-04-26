@@ -192,7 +192,8 @@ export default function ShopProfile() {
       {/* Location Picker */}
       {showLocationPicker && (
         <LocationPicker
-          onLocationSelect={handleLocationUpdate}
+          isOpen={showLocationPicker}
+          onSelect={handleLocationUpdate}
           onClose={() => setShowLocationPicker(false)}
         />
       )}
