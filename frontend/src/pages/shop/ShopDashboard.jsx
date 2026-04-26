@@ -249,13 +249,22 @@ const ShopDashboard = () => {
         {/* DANH SÁCH ĐƠN HÀNG GẦN ĐÂY */}
         <div>
           <div className="flex items-center justify-between mb-4 px-1">
-            <h3 className="font-extrabold text-slate-800 text-lg">Đơn hàng mới nhất</h3>
-            <span className="text-xs text-blue-600 font-bold active:scale-95 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-full">Xem tất cả</span>
+            <h3 className="font-extrabold text-slate-800 text-lg">Lịch sử đơn hàng gần nhất</h3>
+            <span 
+              onClick={() => navigate('/shop/activity')}
+              className="text-xs text-blue-600 font-bold active:scale-95 cursor-pointer bg-blue-50 px-3 py-1.5 rounded-full"
+            >
+              Xem tất cả
+            </span>
           </div>
 
           <div className="space-y-3">
             {orders.slice(0, 5).map(order => (
-              <div key={order._id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-blue-200 transition-colors shadow-sm">
+              <div 
+                key={order._id} 
+                onClick={() => navigate(`/shop/order/${order._id}`)}
+                className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-blue-200 transition-colors shadow-sm cursor-pointer active:scale-[0.98]"
+              >
                 <div className="flex-1 overflow-hidden pr-3">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold">{new Date(order.createdAt).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</span>

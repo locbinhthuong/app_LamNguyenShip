@@ -192,7 +192,7 @@ const ShopActivity = () => {
             <div className="text-center text-gray-500 mt-10 flex flex-col items-center">
               <span className="text-4xl mb-3">📭</span>
               <p>Không có đơn đang xử lý.</p>
-              <button onClick={() => navigate('/')} className="mt-4 bg-blue-100 text-blue-600 px-4 py-2 rounded-full font-bold">Đặt đơn mới</button>
+              <button onClick={() => navigate('/shop/book')} className="mt-4 bg-blue-100 text-blue-600 px-4 py-2 rounded-full font-bold">Đặt đơn mới</button>
             </div>
           ) : (
             pendingOrders.map(renderOrder)
