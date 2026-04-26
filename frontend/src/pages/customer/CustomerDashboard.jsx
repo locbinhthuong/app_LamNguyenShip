@@ -120,7 +120,7 @@ const CustomerDashboard = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-20 relative font-sans w-full max-w-7xl mx-auto">
+    <div className="flex flex-col min-h-screen bg-gray-50 pb-20 relative font-sans w-full max-w-xl mx-auto border-x border-gray-100 shadow-sm">
       
       {/* HEADER: Địa điểm của tôi */}
       <div 
@@ -254,29 +254,25 @@ const CustomerDashboard = () => {
             <h3 className="font-bold text-gray-800 text-lg">Tin Tức</h3>
             <span className="text-blue-600 text-sm font-medium cursor-pointer">Xem tất cả</span>
           </div>
-          <div className="flex flex-col gap-3">
+          <div className="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-4 px-4">
             {news.map((ann, idx) => (
               <div 
                 key={ann._id} 
                 onClick={() => setSelectedAnnouncement(ann)}
-                className="flex items-center gap-3 bg-white p-3 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                className="w-48 md:w-64 bg-white rounded-2xl border border-blue-100 flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95"
               >
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                  {ann.imageUrl ? (
-                    <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-full object-cover" alt="Tin tức" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                      <Newspaper size={24} />
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0 pr-4 relative">
-                  <p className="font-bold text-slate-800 text-sm line-clamp-2 leading-relaxed group-hover:text-slate-600 transition-colors">
-                    {ann.title}
-                  </p>
-                  <span className="absolute right-2 bottom-2 opacity-10 text-slate-400">
-                    <Newspaper size={40} />
-                  </span>
+                {ann.imageUrl ? (
+                  <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt="Tin tức" />
+                ) : ann.videoUrl ? (
+                  <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
+                ) : (
+                  <div className="w-full h-40 bg-gradient-to-br from-blue-500 to-indigo-500 p-4 flex flex-col justify-center text-white relative overflow-hidden">
+                    <Newspaper size={32} className="opacity-30 absolute right-2 bottom-2" />
+                    <h4 className="font-black text-base line-clamp-2 relative z-10">{ann.title}</h4>
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="font-bold text-[13px] text-gray-800 line-clamp-2 leading-tight">{ann.title}</p>
                 </div>
               </div>
             ))}
