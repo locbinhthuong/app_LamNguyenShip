@@ -236,17 +236,17 @@ const ShopDashboard = () => {
         </button>
 
         {/* CÁC DỊCH VỤ */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           {services.map(svc => (
             <div 
               key={svc.id}
               onClick={() => navigate(svc.id === 'delivery' ? '/shop/book' : '/shop')} 
-              className={`flex flex-col items-center justify-center gap-3 py-5 rounded-2xl cursor-pointer active:scale-95 transition-all shadow-sm hover:shadow-md ${svc.color}`}
+              className={`flex flex-col items-center justify-start gap-2 py-3 rounded-2xl cursor-pointer active:scale-95 transition-all shadow-sm hover:shadow-md ${svc.color}`}
             >
-              <div className="text-slate-600">
+              <div className="text-slate-600 scale-90 sm:scale-100">
                 {svc.icon}
               </div>
-              <span className="text-[13px] font-bold text-slate-700">{svc.title}</span>
+              <span className="text-[10px] sm:text-[13px] font-bold text-slate-700 text-center leading-tight px-1">{svc.title}</span>
             </div>
           ))}
         </div>

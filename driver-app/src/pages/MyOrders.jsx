@@ -153,19 +153,19 @@ export default function MyOrders() {
         {/* Khung Thống Kê Nhập Liền / Gạch Ngang Mới */}
         <div className="bg-white rounded-2xl border border-slate-200 flex flex-col mb-4 overflow-hidden divide-y divide-slate-100">
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Zap size={20} className="text-slate-400"/> Hôm Nay</span>
+             <span className="text-sm font-bold text-slate-500">Hôm Nay</span>
              <span className="text-lg font-black text-blue-600">{stats.day} Đơn</span>
           </div>
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Calendar size={20} className="text-slate-400"/> Tuần Này</span>
+             <span className="text-sm font-bold text-slate-500">Tuần Này</span>
              <span className="text-lg font-black text-blue-600">{stats.week} Đơn</span>
           </div>
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Trophy size={20} className="text-slate-400"/> Tháng Này</span>
+             <span className="text-sm font-bold text-slate-500">Tháng Này</span>
              <span className="text-lg font-black text-blue-600">{stats.month} Đơn</span>
           </div>
           <div className="flex justify-between items-center p-4 hover:bg-slate-50 transition-colors">
-             <span className="text-sm font-bold text-slate-500 flex items-center gap-2"><Package size={20} className="text-slate-400"/> Năm Nay</span>
+             <span className="text-sm font-bold text-slate-500">Năm Nay</span>
              <span className="text-lg font-black text-blue-600">{stats.year} Đơn</span>
           </div>
         </div>

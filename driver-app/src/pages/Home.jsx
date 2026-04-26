@@ -4,8 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue } from '../services/api';
-import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag } from 'lucide-react';
-import api from '../services/api';
+import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass } from 'lucide-react';
+import { api } from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 const BackgroundGeolocation = registerPlugin("BackgroundGeolocation");
@@ -672,29 +672,29 @@ export default function Home() {
         <button
           type="button"
           onClick={() => { setFilter('available'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
-          className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
+          className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'available' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
         >
-          📥 Chờ nhận ({availableOrders.length})
+          <Inbox size={16} /> Chờ nhận ({availableOrders.length})
         </button>
         <button
           type="button"
           onClick={() => { setFilter('active'); scrollRef.current?.scrollTo({ left: window.innerWidth, behavior: 'smooth' }); }}
-          className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
+          className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'active' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
         >
-          🚚 Đang giao ({myActiveOrders.length})
+          <Truck size={16} /> Đang giao ({myActiveOrders.length})
         </button>
         <button
           type="button"
           onClick={() => { setFilter('history'); scrollRef.current?.scrollTo({ left: window.innerWidth * 2, behavior: 'smooth' }); }}
-          className={`flex-1 py-3 text-xs font-bold transition-all sm:text-sm ${
+          className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'history' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
         >
-          📋 Lịch sử
+          <ClipboardList size={16} /> Lịch sử
         </button>
       </div>
 
@@ -719,12 +719,12 @@ export default function Home() {
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : !driver?.isOnline ? (
-              <div className="text-center py-12 bg-slate-100 rounded-2xl mt-4 border border-slate-200">
-                <p className="text-5xl mb-3 grayscale opacity-80">😴</p>
+              <div className="text-center py-12 bg-slate-100 rounded-2xl mt-4 border border-slate-200 flex flex-col items-center">
+                <Moon size={48} strokeWidth={1} className="mb-3 text-slate-400" />
                 <p className="font-black text-slate-700 text-lg uppercase tracking-wide">Bạn đang Nghỉ / Offline</p>
                 <p className="text-sm mt-2 text-slate-500 max-w-[250px] mx-auto">
                   Không thể nhìn thấy đơn hàng khi đang Offline.<br/><br/>
-                  Hãy bật nút <b className="text-slate-800 bg-slate-200 px-2 py-1 rounded">⚫ Mở Nhận Đơn</b> phía trên để tiếp tục Cày cuốc!
+                  Hãy bật nút <b className="text-slate-800 bg-slate-200 px-2 py-1 rounded">Mở Nhận Đơn</b> phía trên để tiếp tục Cày cuốc!
                 </p>
               </div>
             ) : availableOrders.length > 0 ? (
@@ -735,8 +735,8 @@ export default function Home() {
                 ))}
               </>
             ) : (
-              <div className="text-center py-12 text-slate-400">
-                <p className="text-5xl mb-4">⏳</p>
+              <div className="text-center py-12 text-slate-400 flex flex-col items-center">
+                <Hourglass size={48} strokeWidth={1} className="mb-4 text-slate-300" />
                 <p className="font-medium text-slate-600">Không có đơn hàng nào</p>
                 <p className="text-sm mt-1">Đơn mới sẽ xuất hiện tại đây</p>
               </div>
