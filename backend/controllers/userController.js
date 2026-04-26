@@ -5,7 +5,7 @@ const userController = {
   // Quản lý Khách Hàng cho Admin
   getUsers: async (req, res) => {
     try {
-      const users = await User.find({ role: 'CUSTOMER' }).sort({ createdAt: -1 }).select('-password');
+      const users = await User.find({ role: { $in: ['CUSTOMER', 'SHOP'] } }).sort({ createdAt: -1 }).select('-password');
       res.json({ success: true, data: users });
     } catch (error) {
       console.error(error);
