@@ -13,9 +13,76 @@
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
       #root { min-height: 100vh; }
+      /* Splash Screen CSS */
+      #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #f97316;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 999999;
+        transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+      }
+      #splash-screen.fade-out {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .splash-logo-container {
+        width: 120px;
+        height: 120px;
+        background-color: white;
+        border-radius: 28px;
+        padding: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        animation: pulse-logo 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .splash-logo-container img {
+        width: 100%;
+        height: auto;
+      }
+      @keyframes pulse-logo {
+        0%, 100% { transform: scale(1); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        50% { transform: scale(1.05); box-shadow: 0 15px 40px rgba(249,115,22,0.5); }
+      }
+      .splash-text {
+        color: white;
+        margin-top: 24px;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: 1px;
+      }
+      .splash-loader {
+        margin-top: 20px;
+        width: 40px;
+        height: 40px;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+      }
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
     </style>
   </head>
   <body>
+    <!-- Splash Screen -->
+    <div id="splash-screen">
+      <div class="splash-logo-container">
+        <img src="/logoALOSHIPP.png" alt="AloShipp Admin" />
+      </div>
+      <div class="splash-text">ALOSHIPP ADMIN</div>
+      <div class="splash-loader"></div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

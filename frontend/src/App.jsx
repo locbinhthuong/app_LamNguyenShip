@@ -12,8 +12,20 @@ import CustomerNotifications from './pages/customer/CustomerNotifications';
 import OrderDetail from './pages/customer/OrderDetail';
 import { useAuthSocket } from './hooks/useAuthSocket';
 
+import { useEffect } from 'react';
+
 function App() {
   useAuthSocket();
+
+  useEffect(() => {
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) {
+      setTimeout(() => {
+        splashScreen.classList.add('fade-out');
+        setTimeout(() => splashScreen.remove(), 500);
+      }, 500);
+    }
+  }, []);
 
   return (
     <div className="h-[100dvh] bg-gray-50 flex flex-col font-sans overflow-hidden relative">

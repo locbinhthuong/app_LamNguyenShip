@@ -22,7 +22,19 @@ const PrivateRoute = ({ children }) => {
   return children;
 };
 
+import { useEffect } from 'react';
+
 export default function App() {
+  useEffect(() => {
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) {
+      setTimeout(() => {
+        splashScreen.classList.add('fade-out');
+        setTimeout(() => splashScreen.remove(), 500);
+      }, 500);
+    }
+  }, []);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
