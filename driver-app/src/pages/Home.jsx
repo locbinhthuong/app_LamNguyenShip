@@ -588,17 +588,17 @@ export default function Home() {
       )}
 
       {/* Header Siêu Gọn - Đã chuyển sang nền trắng */}
-      <div className="shrink-0 bg-white px-3 py-2 pt-[max(0.75rem,env(safe-area-inset-top))] relative z-20 shadow-sm border-b border-slate-100 flex items-center justify-between gap-2">
+      <div className="shrink-0 bg-white px-3 py-3 pt-[max(1rem,env(safe-area-inset-top))] relative z-20 shadow-sm border-b border-slate-100 flex items-center justify-between gap-2">
         {/* Logo rút gọn */}
-        <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-6 w-auto object-contain shrink-0 hidden sm:block" />
-        <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-5 w-auto object-contain shrink-0 sm:hidden" />
+        <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-7 w-auto object-contain shrink-0 hidden sm:block" />
+        <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-6 w-auto object-contain shrink-0 sm:hidden" />
         
         {/* Tên Tài xế */}
         <div 
           onClick={() => setEditModal(true)}
-          className="flex items-center gap-1.5 bg-slate-50 p-1 pr-3 rounded-full cursor-pointer hover:bg-slate-100 transition-all border border-slate-200 shadow-sm flex-1 min-w-0 max-w-[150px] sm:max-w-[200px]"
+          className="flex items-center gap-1.5 bg-slate-50 p-1 pr-3 rounded-full cursor-pointer hover:bg-slate-100 transition-all border border-slate-200 shadow-sm flex-1 min-w-0 max-w-[160px] sm:max-w-[200px]"
         >
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white relative shadow-sm shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white relative shadow-sm shrink-0">
             {driver?.avatar ? (
               <img src={getFullImageUrl(driver.avatar)} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
@@ -645,22 +645,22 @@ export default function Home() {
       </div>
 
       {/* Cặp Thống kê Doanh Số Ngày Thay Vì Đơn Cũ */}
-      <div className="shrink-0 w-full bg-white px-3 pb-3 relative z-10 flex justify-center border-b border-slate-200">
-        <div className="grid grid-cols-2 gap-3 w-full max-w-sm mt-1">
-          <div className="rounded-2xl bg-blue-50/50 p-2.5 text-center border border-blue-200 shadow-sm flex flex-col justify-center">
-            <p className="text-[10px] font-bold tracking-wider mb-0.5 text-slate-500">ĐÃ HOÀN THÀNH</p>
+      <div className="shrink-0 w-full bg-white px-3 pb-2 relative z-10 flex justify-center border-b border-slate-200">
+        <div className="grid grid-cols-2 gap-2 w-full max-w-sm mt-0.5">
+          <div className="rounded-xl bg-blue-50/50 p-1.5 text-center border border-blue-200 shadow-sm flex flex-col justify-center">
+            <p className="text-[9px] font-bold tracking-wider mb-0.5 text-slate-500">ĐÃ HOÀN THÀNH</p>
             <div className="flex items-baseline justify-center gap-1">
-              <p className="text-xl font-black text-blue-600">{dailyStats.orders}</p>
-              <p className="text-[9px] text-slate-400 font-medium">hôm nay</p>
+              <p className="text-lg font-black text-blue-600">{dailyStats.orders}</p>
+              <p className="text-[8px] text-slate-400 font-medium">hôm nay</p>
             </div>
           </div>
-          <div className="rounded-2xl bg-green-50/50 p-2.5 text-center border border-green-200 shadow-sm flex flex-col justify-center">
-            <p className="text-[10px] font-bold tracking-wider mb-0.5 text-slate-500">THU NHẬP (TẠM)</p>
+          <div className="rounded-xl bg-green-50/50 p-1.5 text-center border border-green-200 shadow-sm flex flex-col justify-center">
+            <p className="text-[9px] font-bold tracking-wider mb-0.5 text-slate-500">THU NHẬP (TẠM)</p>
             <div className="flex items-baseline justify-center gap-0.5">
-              <p className="text-xl font-black text-green-600">
+              <p className="text-lg font-black text-green-600">
                  {dailyStats.fee.toLocaleString()}
               </p>
-              <p className="text-[9px] text-green-600/80 font-bold">đ</p>
+              <p className="text-[8px] text-green-600/80 font-bold">đ</p>
             </div>
           </div>
         </div>
