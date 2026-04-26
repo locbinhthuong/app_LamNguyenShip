@@ -106,8 +106,8 @@ export default function Announcements() {
          }
          if (file.size > 50 * 1024 * 1024) return alert('Một số file vượt quá dung lượng tối đa 50MB!');
       }
-      setMultipleFiles(files);
-      setMultiplePreviewUrls(files.map(f => URL.createObjectURL(f)));
+      setMultipleFiles(prev => [...prev, ...files]);
+      setMultiplePreviewUrls(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
       setMediaFile(null);
       setMediaPreviewUrl(null);
     } else {
@@ -387,6 +387,15 @@ export default function Announcements() {
                           >✕</button>
                         </div>
                       ))}
+                      
+                      {/* Nút Thêm Ảnh Nữa */}
+                      <div 
+                        onClick={() => fileInputRef.current?.click()}
+                        className="w-24 h-24 rounded-xl border-2 border-dashed border-blue-400 bg-blue-50 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors shadow-sm"
+                      >
+                        <span className="text-2xl mb-1">➕</span>
+                        <span className="text-[10px] font-bold text-blue-600">Thêm ảnh</span>
+                      </div>
                     </div>
                   ) : mediaPreviewUrl ? (
                     <div className="relative inline-block max-w-full rounded-xl overflow-hidden shadow-md">
