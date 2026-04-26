@@ -1,5 +1,8 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
+import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDKtfeIjHhYNJAbuw0G8sLQzRh83GDijMg",
@@ -23,40 +26,83 @@ if (typeof window !== 'undefined' && 'Notification' in window) {
 }
 
 export const requestFirebaseToken = async () => {
-  if (!messaging) {
-    console.error("LỖI_HỀ_THỐNG: Trình duyệt chặn Firebase Messaging.");
-    return null;
-  }
-  
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      try {
-        const currentToken = await getToken(messaging, {
-          vapidKey: "BJFyR5tb1wUHs920cM9Kj-AXcN1jnXJ8QaGC4wcboezCYW9pWbUytVMUum7r9VloT0eoMl_evcFhdIM-iOwMu-4"
-        });
-        if (currentToken) return currentToken;
-        else {
-          console.error("LỖI_TOKEN: Firebase trả về rỗng.");
-          return null;
-        }
-      } catch (err) {
-        console.error("LỖI_GET_TOKEN: " + err.message);
+  if (Capacitor.isNativePlatform()) {
+    try {
+      // 1. Đăng ký nhận push từ HĐH
+      let permStatus = await PushNotifications.checkPermissions();
+      if (permStatus.receive === 'prompt') {
+        permStatus = await PushNotifications.requestPermissions();
+      }
+      
+      if (permStatus.receive !== 'granted') {
+        console.warn("LỖI_QUYỀN NATIVE: Người dùng từ chối quyền push");
         return null;
       }
-    } else {
-      console.warn("LỖI_QUYỀN: Người dùng từ chối quyền push: " + permission);
+      
+      // Bắt HĐH nối mạng với APNs/FCM
+      await PushNotifications.register();
+      
+      // 2. Lấy FCM Token thực sự từ SDK Firebase Native
+      const { token } = await FirebaseMessaging.getToken();
+      return token;
+    } catch (err) {
+      console.error("LỖI NATIVE PUSH: ", err);
       return null;
     }
-  } catch (error) {
-    console.error('LỖI_NGOẠI_LỆ: catch request: ' + error.message);
-    return null;
+  } else {
+    // ---- Môi trường WEB / PWA ----
+    if (!messaging) {
+      console.error("LỖI_HỆ_THỐNG: Trình duyệt chặn Firebase Messaging.");
+      return null;
+    }
+    
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        try {
+          const currentToken = await getToken(messaging, {
+            vapidKey: "BJFyR5tb1wUHs920cM9Kj-AXcN1jnXJ8QaGC4wcboezCYW9pWbUytVMUum7r9VloT0eoMl_evcFhdIM-iOwMu-4"
+          });
+          if (currentToken) return currentToken;
+          else {
+            console.error("LỖI_TOKEN: Firebase trả về rỗng.");
+            return null;
+          }
+        } catch (err) {
+          console.error("LỖI_GET_TOKEN: " + err.message);
+          return null;
+        }
+      } else {
+        console.warn("LỖI_QUYỀN: Người dùng từ chối quyền push: " + permission);
+        return null;
+      }
+    } catch (error) {
+      console.error('LỖI_NGOẠI_LỆ: catch request: ' + error.message);
+      return null;
+    }
   }
 };
 
 export const setupForegroundListener = (callback) => {
-  if (!messaging) return null;
-  return onMessage(messaging, (payload) => {
-    callback(payload);
-  });
+  if (Capacitor.isNativePlatform()) {
+    const listener = FirebaseMessaging.addListener('notificationReceived', (event) => {
+      // Format lại giống payload của Web để App.jsx xử lý chung 1 code
+      const payload = {
+        notification: {
+          title: event.notification.title,
+          body: event.notification.body
+        },
+        data: event.notification.data
+      };
+      callback(payload);
+    });
+    return () => {
+      listener.then(l => l.remove());
+    };
+  } else {
+    if (!messaging) return null;
+    return onMessage(messaging, (payload) => {
+      callback(payload);
+    });
+  }
 };

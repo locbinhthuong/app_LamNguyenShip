@@ -9,9 +9,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor-firebase/messaging": "^7.5.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/ios": "^7.0.0",
     "@capacitor/local-notifications": "^7.0.0",
+    "@capacitor/push-notifications": "^7.0.6",
     "axios": "^1.7.7",
     "firebase": "^12.11.0",
     "lucide-react": "^1.11.0",
