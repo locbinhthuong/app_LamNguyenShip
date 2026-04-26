@@ -651,12 +651,13 @@ const authController = {
   // PUT /api/auth/customer/me
   updateOwnCustomerProfile: async (req, res) => {
     try {
-      const { name, phone, password, avatar, shopAddress, defaultLocation } = req.body;
+      const { name, phone, password, avatar, shopAddress, defaultLocation, shopName } = req.body;
       const updateData = {};
       if (name) updateData.name = name;
       if (avatar !== undefined) updateData.avatar = avatar;
       if (shopAddress !== undefined) updateData.shopAddress = shopAddress;
       if (defaultLocation !== undefined) updateData.defaultLocation = defaultLocation;
+      if (shopName !== undefined) updateData.shopName = shopName;
 
       if (phone && phone !== req.customer.phone) {
          // Check if phone already exists

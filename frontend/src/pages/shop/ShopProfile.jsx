@@ -6,10 +6,15 @@ import LocationPicker from '../../components/LocationPicker';
 
 export default function ShopProfile() {
   const navigate = useNavigate();
-  const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
-  const shopPhone = localStorage.getItem('shopPhone') || 'Chưa cập nhật';
-  const [shopAddress, setShopAddress] = useState(localStorage.getItem('shopAddress') || 'Chưa cập nhật');
+  const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
+  
+  const [shopName, setShopName] = useState(customerData.shopName || localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn');
+  const [shopPhone, setShopPhone] = useState(customerData.phone || localStorage.getItem('shopPhone') || 'Chưa cập nhật');
+  const [shopAddress, setShopAddress] = useState(customerData.shopAddress || localStorage.getItem('shopAddress') || 'Chưa cập nhật');
+  
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({ shopName: '', phone: '' });
   const [loading, setLoading] = useState(false);
 
   const handleLogout = () => {
@@ -19,10 +24,58 @@ export default function ShopProfile() {
     }
   };
 
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (window.confirm('CẢNH BÁO: Việc yêu cầu xoá tài khoản sẽ xoá vĩnh viễn mọi dữ liệu giao dịch của bạn trên hệ thống. Bạn có chắc chắn muốn yêu cầu xoá không?')) {
-      alert('Yêu cầu xoá tài khoản đã được gửi đến ban quản trị. Tài khoản của bạn sẽ bị xoá vĩnh viễn trong vòng 7 ngày làm việc.');
+      try {
+        setLoading(true);
+        const res = await api.delete('/auth/customer/me');
+        if (res.data.success) {
+          alert('Tài khoản đã được vô hiệu hóa. Chuyển hướng về trang chủ.');
+          localStorage.clear();
+          navigate('/');
+        }
+      } catch (error) {
+        alert('Có lỗi xảy ra khi xóa tài khoản.');
+      } finally {
+        setLoading(false);
+      }
     }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!editForm.shopName || !editForm.phone) {
+      return alert('Vui lòng nhập đầy đủ Tên cửa hàng và Số điện thoại');
+    }
+    try {
+      setLoading(true);
+      const res = await api.put('/auth/customer/me', {
+        shopName: editForm.shopName,
+        phone: editForm.phone
+      });
+      if (res.data.success) {
+        const updatedUser = res.data.data;
+        const currentData = JSON.parse(localStorage.getItem('customerData') || '{}');
+        const newData = { ...currentData, ...updatedUser };
+        localStorage.setItem('customerData', JSON.stringify(newData));
+        localStorage.setItem('shopName', updatedUser.shopName);
+        localStorage.setItem('shopPhone', updatedUser.phone);
+        
+        setShopName(updatedUser.shopName);
+        setShopPhone(updatedUser.phone);
+        setShowEditModal(false);
+        alert('Cập nhật thông tin thành công!');
+      }
+    } catch (error) {
+      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openEditModal = () => {
+    setEditForm({ shopName, phone: shopPhone });
+    setShowEditModal(true);
   };
 
   const handleLocationUpdate = async (loc) => {
@@ -85,7 +138,7 @@ export default function ShopProfile() {
         <div>
           <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider mb-3 px-1">Cài đặt Cửa hàng</h3>
           <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
-            <button onClick={() => alert('Tính năng Cập nhật thông tin đang được phát triển!')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+            <button onClick={openEditModal} disabled={loading} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                   <User size={18} />
@@ -136,11 +189,60 @@ export default function ShopProfile() {
 
       </div>
       
+      {/* Location Picker */}
       {showLocationPicker && (
         <LocationPicker
           onLocationSelect={handleLocationUpdate}
           onClose={() => setShowLocationPicker(false)}
         />
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 sm:items-center">
+          <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl p-6 pb-10 sm:pb-6 animate-slideUp">
+            <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">Cập nhật thông tin</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1 ml-1">Tên cửa hàng</label>
+                <input
+                  type="text"
+                  value={editForm.shopName}
+                  onChange={(e) => setEditForm({ ...editForm, shopName: e.target.value })}
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-blue-500 transition-all font-medium"
+                  placeholder="Vd: Tạp hóa Tâm"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1 ml-1">Số điện thoại</label>
+                <input
+                  type="tel"
+                  value={editForm.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-blue-500 transition-all font-medium font-mono"
+                  placeholder="09..."
+                />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold"
+                >
+                  Huỷ
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-md shadow-blue-200 flex items-center justify-center gap-2"
+                >
+                  {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                  Lưu thay đổi
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
