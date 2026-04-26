@@ -36,8 +36,17 @@ function AppContent() {
   const sourceNodeRef = useRef(null);
   const intervalRef = useRef(null);
 
-  // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay)
+  // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay) và Tắt Splash Screen
   useEffect(() => {
+    // Ẩn Splash Screen sau khi React đã mount
+    const splashScreen = document.getElementById('splash-screen');
+    if (splashScreen) {
+      setTimeout(() => {
+        splashScreen.classList.add('fade-out');
+        setTimeout(() => splashScreen.remove(), 500); // Chờ CSS fade-out 0.5s rồi xoá node
+      }, 500); // Giữ tối thiểu 0.5s để người dùng kịp nhìn thấy hiệu ứng
+    }
+
     const initAudio = async () => {
       try {
         if (!audioCtxRef.current) {
