@@ -12,6 +12,7 @@ import CustomerNotifications from './pages/customer/CustomerNotifications';
 import OrderDetail from './pages/customer/OrderDetail';
 import ShopBookingFlow from './pages/shop/ShopBookingFlow';
 import ShopProfile from './pages/shop/ShopProfile';
+import ShopActivity from './pages/shop/ShopActivity';
 import { useAuthSocket } from './hooks/useAuthSocket';
 
 import { useEffect } from 'react';
@@ -105,6 +106,22 @@ function App() {
           element={
             <ProtectedRoute allowedRole="SHOP">
               <ShopProfile />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/shop/activity" 
+          element={
+            <ProtectedRoute allowedRole="SHOP">
+              <ShopActivity />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/shop/order/:id" 
+          element={
+            <ProtectedRoute allowedRole="SHOP">
+              <OrderDetail />
             </ProtectedRoute>
           } 
         />
