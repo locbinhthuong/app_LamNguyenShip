@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, Settings, UserX, User, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
+import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { api } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
@@ -21,7 +21,7 @@ const ShopDashboard = () => {
 
   const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
 
-  // Dữ liệu Slider giả lập
+  // Dữ liệu Slider
   const slides = [
     { id: 1, title: 'AloShipp đồng hành cùng Shop', subtitle: 'Giao hỏa tốc - Nhận tiền ngay', bg: 'from-blue-500 to-sky-400' },
     { id: 2, title: 'Ưu đãi cực sốc tháng này', subtitle: 'Hoàn tiền lên đến 50.000đ/đơn', bg: 'from-orange-500 to-amber-400' },
@@ -80,7 +80,6 @@ const ShopDashboard = () => {
     window.addEventListener('refresh_orders_data', handleRefresh);
     window.addEventListener('order_deleted_event', handleDeleted);
     
-    // Auto-play slider
     const slideInterval = setInterval(() => {
       setCurrentSlide(prev => (prev + 1) % slides.length);
     }, 3000);
@@ -157,12 +156,12 @@ const ShopDashboard = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans pb-24 relative">
+    <div className="w-full max-w-5xl mx-auto flex flex-col min-h-screen bg-slate-50 font-sans pb-24 relative shadow-sm md:border-x border-slate-100 overflow-x-hidden">
       
       {/* HEADER: Kéo ghim toạ độ Shop */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white px-4 py-3 sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50"
+        className="bg-white px-4 py-3 sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50 border-b border-slate-100"
       >
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
           <div className="flex items-center gap-1 text-slate-500 mb-0.5">
@@ -179,7 +178,7 @@ const ShopDashboard = () => {
       </div>
 
       {/* HEADER TỔNG QUAN */}
-      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-12 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-14 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative overflow-hidden">
         {/* Decorator bubbles */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-0 -left-10 w-32 h-32 bg-sky-400/20 rounded-full blur-2xl"></div>
@@ -189,7 +188,7 @@ const ShopDashboard = () => {
             <p className="text-blue-100 text-sm font-medium tracking-wide uppercase mb-1">Bảng điều khiển</p>
             <h1 className="text-2xl font-extrabold line-clamp-1">{shopName}</h1>
           </div>
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-sm border border-white/30">
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-sm border border-white/30 shrink-0">
             {shopName.charAt(0).toUpperCase()}
           </div>
         </div>
@@ -200,14 +199,28 @@ const ShopDashboard = () => {
             <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-1.5 opacity-90">Tiền COD Thu Hôm Nay</p>
             <h2 className="text-3xl font-black tracking-tight">{stats.codCollectedToday.toLocaleString('vi-VN')} đ</h2>
           </div>
-          <div className="w-14 h-14 bg-gradient-to-tr from-sky-400 to-blue-400 rounded-full flex items-center justify-center shadow-lg border border-white/20">
+          <div className="w-14 h-14 bg-gradient-to-tr from-sky-400 to-blue-400 rounded-full flex items-center justify-center shadow-lg border border-white/20 shrink-0">
             <DollarSign size={28} className="text-white" />
           </div>
         </div>
       </div>
 
       {/* BODY CONTENT */}
-      <div className="px-6 -mt-8 relative z-20 space-y-6">
+      <div className="px-4 sm:px-6 -mt-8 relative z-20 space-y-6">
+
+        {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ (KHÔI PHỤC LẠI BỊ LỖI MẤT TRƯỚC ĐÓ) */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-3 relative overflow-hidden shadow-sm">
+          <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+          <div className="mt-0.5 text-blue-500 animate-bounce">
+            <MapPin size={20} />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
+            <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
+              Shop vui lòng bấm vào thanh <strong>"📍 Toạ độ cửa hàng"</strong> ở trên cùng để cập nhật định vị chính xác trước nhé!
+            </p>
+          </div>
+        </div>
 
         {/* NÚT TẠO ĐƠN SIÊU TỐC */}
         <button 
@@ -248,19 +261,19 @@ const ShopDashboard = () => {
         {/* THỐNG KÊ ĐƠN */}
         <div className="bg-white rounded-3xl border border-slate-100 p-5 grid grid-cols-3 gap-4 relative overflow-hidden">
           <div className="flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Clock size={20} /></div>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Clock size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.pending}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Chờ Xế</p>
           </div>
           <div className="flex flex-col items-center text-center relative">
             <div className="absolute left-0 top-2 bottom-2 w-px bg-slate-100"></div>
             <div className="absolute right-0 top-2 bottom-2 w-px bg-slate-100"></div>
-            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Navigation size={20} /></div>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Navigation size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.delivering}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Đang Giao</p>
           </div>
           <div className="flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mb-2"><PackageCheck size={20} /></div>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500 mb-2"><PackageCheck size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.completedToday}</p>
             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Hoàn Thành</p>
           </div>
