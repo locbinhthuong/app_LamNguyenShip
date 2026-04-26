@@ -12,26 +12,51 @@ export default function ShopBookingFlow() {
   const [shopPhone, setShopPhone] = useState('');
 
   useEffect(() => {
-    // Tải vị trí và SĐT của Shop từ LocalStorage
+    // Tải dữ liệu Customer (Shop) từ LocalStorage
+    const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
+    let loc = null;
+
     const savedLoc = localStorage.getItem('savedShopLocation');
     if (savedLoc) {
-      setDefaultLocation(JSON.parse(savedLoc));
+      loc = JSON.parse(savedLoc);
+    } else if (customerData.defaultLocation && customerData.defaultLocation.lat) {
+      loc = customerData.defaultLocation;
     } else {
       const savedAddress = localStorage.getItem('shopAddress');
       if (savedAddress) {
-        setDefaultLocation({ address: savedAddress, lat: null, lng: null });
+        loc = { address: savedAddress, lat: null, lng: null };
       }
     }
+    setDefaultLocation(loc);
     
-    const phone = localStorage.getItem('shopPhone') || '';
+    const phone = customerData.phone || localStorage.getItem('shopPhone') || '';
     setShopPhone(phone);
   }, []);
 
   const handleBookingSubmit = async (payload) => {
     if (isSubmittingRef.current) return;
     
+    // Tự động gán thông tin Mặc định của Cửa hàng nếu người dùng để trống
+    const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
+    if (!payload.senderPhone) {
+      payload.senderPhone = shopPhone || customerData.phone || '';
+    }
+    if (!payload.pickupAddress) {
+      const savedLoc = localStorage.getItem('savedShopLocation');
+      if (savedLoc) {
+        const loc = JSON.parse(savedLoc);
+        payload.pickupAddress = loc.address;
+        if (loc.lat) payload.pickupCoordinates = { lat: loc.lat, lng: loc.lng };
+      } else if (customerData.defaultLocation && customerData.defaultLocation.lat) {
+        payload.pickupAddress = customerData.defaultLocation.address;
+        payload.pickupCoordinates = { lat: customerData.defaultLocation.lat, lng: customerData.defaultLocation.lng };
+      } else {
+        payload.pickupAddress = localStorage.getItem('shopAddress') || '';
+      }
+    }
+
     if (!payload.pickupAddress || !payload.senderPhone) {
-      return alert('Vui lòng nhập đầy đủ Địa chỉ và SĐT lấy hàng (Cửa hàng).');
+      return alert('Vui lòng cung cấp Địa chỉ và SĐT lấy hàng hoặc Cài đặt định vị gốc trong trang Thông tin.');
     }
 
     if (!payload.receiverName || !payload.receiverPhone || !payload.deliveryAddress) {

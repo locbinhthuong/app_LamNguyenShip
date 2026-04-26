@@ -14,12 +14,16 @@ const ShopDashboard = () => {
     codCollectedToday: 0
   });
 
-  const [address, setAddress] = useState('Chưa xác định toạ độ shop');
+  const [address, setAddress] = useState('Đang lấy vị trí...');
   const [locationDetails, setLocationDetails] = useState(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
+  
+  // Lấy định vị gốc của Shop từ customerData
+  const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
+  const defaultLocation = customerData.defaultLocation;
 
   // Dữ liệu Slider
   const slides = [
@@ -98,6 +102,10 @@ const ShopDashboard = () => {
       setLocationDetails(loc);
       const shortAddress = loc.address.split(',').slice(0, 3).join(', ');
       setAddress(shortAddress);
+    } else if (defaultLocation && defaultLocation.lat) {
+      setLocationDetails(defaultLocation);
+      const shortAddress = defaultLocation.address.split(',').slice(0, 3).join(', ');
+      setAddress(shortAddress);
     } else {
       if ('geolocation' in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -110,17 +118,18 @@ const ShopDashboard = () => {
               if (data && data.display_name) {
                 const locData = { lat, lng, address: data.display_name };
                 setLocationDetails(locData);
-                localStorage.setItem('savedShopLocation', JSON.stringify(locData));
                 const shortAddress = data.display_name.split(',').slice(0, 3).join(', ');
                 setAddress(shortAddress);
               }
             } catch (err) {}
           },
-          (err) => {}, { enableHighAccuracy: true, timeout: 5000 }
+          (err) => { setAddress('Chưa xác định toạ độ'); }, { enableHighAccuracy: true, timeout: 5000 }
         );
+      } else {
+        setAddress('Chưa xác định toạ độ');
       }
     }
-  }, []);
+  }, []); // Bỏ dependency defaultLocation để tránh loop, defaultLocation chỉ lấy lúc mount
 
   const fetchOrders = async () => {
     try {
@@ -142,6 +151,18 @@ const ShopDashboard = () => {
     setAddress(shortAddress);
   };
 
+  const handleResetLocation = (e) => {
+    e.stopPropagation();
+    localStorage.removeItem('savedShopLocation');
+    if (defaultLocation && defaultLocation.lat) {
+      setLocationDetails(defaultLocation);
+      const shortAddress = defaultLocation.address.split(',').slice(0, 3).join(', ');
+      setAddress(shortAddress);
+    } else {
+      alert('Bạn chưa cài đặt Định vị gốc trong mục Tài khoản!');
+    }
+  };
+
   return (
     <div className="w-full flex flex-col min-h-screen bg-slate-50 font-sans pb-24 relative overflow-x-hidden">
       
@@ -153,14 +174,22 @@ const ShopDashboard = () => {
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
           <div className="flex items-center gap-1 text-slate-500 mb-0.5">
             <span className="text-xs font-medium bg-slate-100 px-2 py-0.5 rounded text-slate-600">📍 Toạ độ cửa hàng</span>
-            <ChevronRight size={14} />
+            <ChevronRight size={14} className="text-slate-400" />
+            {localStorage.getItem('savedShopLocation') && (
+               <button 
+                 onClick={handleResetLocation}
+                 className="ml-2 text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold active:scale-95 transition-transform"
+               >
+                 Khôi phục gốc
+               </button>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold text-slate-800 line-clamp-1 truncate block">{address}</span>
-            <div className="bg-blue-100 text-blue-600 p-1 rounded">
-              <span className="text-[10px] uppercase font-bold tracking-wider">Chọn</span>
-            </div>
-          </div>
+          <p className="text-slate-800 font-bold text-[15px] truncate pr-2">
+            {address}
+          </p>
+        </div>
+        <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+          <MapPin className="text-blue-600" size={20} />
         </div>
       </div>
 

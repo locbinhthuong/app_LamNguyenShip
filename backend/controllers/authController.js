@@ -507,7 +507,7 @@ const authController = {
   // POST /api/auth/customer/register
   registerCustomer: async (req, res) => {
     try {
-      const { name, phone, password, role, shopName, shopAddress } = req.body;
+      const { name, phone, password, role, shopName, shopAddress, defaultLocation } = req.body;
 
       // Check phone exists
       const existingUser = await User.findOne({ phone });
@@ -530,7 +530,8 @@ const authController = {
         password: hashedPassword,
         role: userRole,
         shopName: userRole === 'SHOP' ? shopName : null,
-        shopAddress: userRole === 'SHOP' ? shopAddress : null
+        shopAddress: userRole === 'SHOP' ? shopAddress : null,
+        defaultLocation: userRole === 'SHOP' ? defaultLocation : undefined
       });
 
       await user.save();
@@ -553,7 +554,8 @@ const authController = {
             phone: user.phone,
             role: user.role,
             shopName: user.shopName,
-            shopAddress: user.shopAddress
+            shopAddress: user.shopAddress,
+            defaultLocation: user.defaultLocation
           }
         }
       });
@@ -615,7 +617,8 @@ const authController = {
             phone: user.phone,
             role: user.role,
             shopName: user.shopName,
-            shopAddress: user.shopAddress
+            shopAddress: user.shopAddress,
+            defaultLocation: user.defaultLocation
           }
         }
       });
@@ -648,10 +651,12 @@ const authController = {
   // PUT /api/auth/customer/me
   updateOwnCustomerProfile: async (req, res) => {
     try {
-      const { name, phone, password, avatar } = req.body;
+      const { name, phone, password, avatar, shopAddress, defaultLocation } = req.body;
       const updateData = {};
       if (name) updateData.name = name;
       if (avatar !== undefined) updateData.avatar = avatar;
+      if (shopAddress !== undefined) updateData.shopAddress = shopAddress;
+      if (defaultLocation !== undefined) updateData.defaultLocation = defaultLocation;
 
       if (phone && phone !== req.customer.phone) {
          // Check if phone already exists

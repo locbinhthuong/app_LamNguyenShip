@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { MapPin } from 'lucide-react';
 import { registerCustomer } from '../services/api';
+import LocationPicker from '../components/LocationPicker';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -9,8 +11,11 @@ const Register = () => {
     password: '',
     role: 'CUSTOMER',
     shopName: '',
-    shopAddress: ''
+    shopName: '',
+    shopAddress: '',
+    defaultLocation: null
   });
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -126,15 +131,22 @@ const Register = () => {
                   placeholder="Tên shop/quán ăn (Vd: Quán Ốc 99)"
                 />
               </div>
-              <div>
+              <div className="relative">
                 <input
                   type="text"
                   name="shopAddress"
                   value={formData.shopAddress}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none text-sm"
+                  className="w-full pl-3 pr-24 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none text-sm"
                   placeholder="Địa chỉ quán cố định lấy hàng"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowLocationPicker(true)}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-blue-200 active:scale-95 transition-all"
+                >
+                  <MapPin size={14} /> Bản đồ
+                </button>
               </div>
             </div>
           )}
@@ -191,6 +203,20 @@ const Register = () => {
           </Link>
         </p>
       </div>
+
+      {showLocationPicker && (
+        <LocationPicker
+          onLocationSelect={(loc) => {
+            setFormData({
+              ...formData,
+              shopAddress: loc.address,
+              defaultLocation: loc
+            });
+            setShowLocationPicker(false);
+          }}
+          onClose={() => setShowLocationPicker(false)}
+        />
+      )}
     </div>
   );
 };
