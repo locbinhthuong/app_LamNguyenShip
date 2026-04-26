@@ -143,7 +143,7 @@ const ShopDashboard = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col min-h-screen bg-slate-50 font-sans pb-24 relative shadow-sm md:border-x border-slate-100 overflow-x-hidden">
+    <div className="w-full flex flex-col min-h-screen bg-slate-50 font-sans pb-24 relative overflow-x-hidden">
       
       {/* HEADER: Kéo ghim toạ độ Shop */}
       <div 
@@ -160,39 +160,6 @@ const ShopDashboard = () => {
             <div className="bg-blue-100 text-blue-600 p-1 rounded">
               <span className="text-[10px] uppercase font-bold tracking-wider">Chọn</span>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* HEADER TỔNG QUAN */}
-      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-10 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative">
-        {/* Decorator bubbles (Đã sửa lỗi bị cắt khung trên Safari bằng cách đưa vào một thẻ riêng) */}
-        <div className="absolute inset-0 overflow-hidden rounded-b-[40px] pointer-events-none">
-          <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-          <div className="absolute bottom-0 -left-10 w-32 h-32 bg-sky-400/20 rounded-full blur-2xl"></div>
-        </div>
-
-        <div className="flex justify-between items-center mb-6 relative z-10">
-          <div>
-            <p className="text-blue-100 text-sm font-medium tracking-wide uppercase mb-1">Bảng điều khiển</p>
-            <h1 className="text-2xl font-extrabold line-clamp-1">{shopName}</h1>
-          </div>
-          <button 
-            onClick={() => navigate('/shop/profile')}
-            className="w-10 h-10 bg-white/20 hover:bg-white/30 active:scale-95 transition-all rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-sm border border-white/30 shrink-0"
-          >
-            {shopName.charAt(0).toUpperCase()}
-          </button>
-        </div>
-
-        {/* THẺ TỔNG COD (Gọn hơn) */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex items-center justify-between relative z-10 shadow-inner">
-          <div>
-            <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-90">Tiền COD Thu Hôm Nay</p>
-            <h2 className="text-2xl font-black tracking-tight">{stats.codCollectedToday.toLocaleString('vi-VN')} đ</h2>
-          </div>
-          <div className="w-11 h-11 bg-gradient-to-tr from-sky-400 to-blue-400 rounded-full flex items-center justify-center shadow-lg border border-white/20 shrink-0">
-            <DollarSign size={22} className="text-white" />
           </div>
         </div>
       </div>

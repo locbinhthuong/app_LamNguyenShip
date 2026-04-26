@@ -7,6 +7,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BookingFlow from './pages/customer/BookingFlow';
 import ActivityList from './pages/customer/ActivityList';
 import CustomerLayout from './components/CustomerLayout';
+import ShopLayout from './components/ShopLayout';
 import CustomerProfile from './pages/customer/CustomerProfile';
 import CustomerNotifications from './pages/customer/CustomerNotifications';
 import OrderDetail from './pages/customer/OrderDetail';
@@ -84,36 +85,40 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Cửa Hàng (Shop) - Bắt buộc Đăng nhập */}
-        <Route 
-          path="/shop/*" 
-          element={
+        {/* Cửa Hàng (Shop) */}
+        <Route element={<ShopLayout />}>
+          <Route path="/shop" element={
             <ProtectedRoute allowedRole="SHOP">
               <ShopDashboard />
             </ProtectedRoute>
-          } 
-        />
+          } />
+          <Route path="/shop/activity" element={
+            <ProtectedRoute allowedRole="SHOP">
+              <ShopActivity />
+            </ProtectedRoute>
+          } />
+          <Route path="/shop/notifications" element={
+            <ProtectedRoute allowedRole="SHOP">
+              <CustomerNotifications />
+            </ProtectedRoute>
+          } />
+          <Route path="/shop/profile" element={
+            <ProtectedRoute allowedRole="SHOP">
+              <ShopProfile />
+            </ProtectedRoute>
+          } />
+          <Route path="/shop/order/:id" element={
+            <ProtectedRoute allowedRole="SHOP">
+              <OrderDetail />
+            </ProtectedRoute>
+          } />
+        </Route>
+
         <Route 
           path="/shop/book" 
           element={
             <ProtectedRoute allowedRole="SHOP">
               <ShopBookingFlow />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/shop/profile" 
-          element={
-            <ProtectedRoute allowedRole="SHOP">
-              <ShopProfile />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/shop/activity" 
-          element={
-            <ProtectedRoute allowedRole="SHOP">
-              <ShopActivity />
             </ProtectedRoute>
           } 
         />

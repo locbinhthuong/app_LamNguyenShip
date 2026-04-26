@@ -146,12 +146,9 @@ const ShopActivity = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen w-full max-w-5xl mx-auto md:border-x border-gray-100 bg-gray-50 font-sans overflow-hidden shadow-sm">
-      <div className="shrink-0 bg-white px-4 py-3 relative z-40 flex items-center justify-between border-b border-gray-100 shadow-sm">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
-          <ArrowLeft size={22} />
-        </button>
-        <span className="font-bold text-gray-800 text-lg flex-1 text-center pr-8">Hoạt động đơn hàng</span>
+    <div className="flex flex-col min-h-screen w-full bg-gray-50 font-sans overflow-hidden">
+      <div className="shrink-0 bg-white px-4 py-3 relative z-40 flex items-center justify-center border-b border-gray-100 shadow-sm">
+        <span className="font-bold text-gray-800 text-lg">Hoạt động đơn hàng</span>
       </div>
       
       {/* Tabs */}
