@@ -135,19 +135,6 @@ const ShopDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
-    if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
-      localStorage.clear();
-      navigate('/login');
-    }
-  };
-
-  const handleDeleteAccount = () => {
-    if (window.confirm('CẢNH BÁO: Việc yêu cầu xoá tài khoản sẽ xoá vĩnh viễn mọi dữ liệu giao dịch của bạn trên hệ thống. Bạn có chắc chắn muốn yêu cầu xoá không?')) {
-      alert('Yêu cầu xoá tài khoản đã được gửi đến ban quản trị. Tài khoản của bạn sẽ bị xoá vĩnh viễn trong vòng 7 ngày làm việc.');
-    }
-  };
-
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
     localStorage.setItem('savedShopLocation', JSON.stringify(loc));
@@ -188,19 +175,22 @@ const ShopDashboard = () => {
             <p className="text-blue-100 text-sm font-medium tracking-wide uppercase mb-1">Bảng điều khiển</p>
             <h1 className="text-2xl font-extrabold line-clamp-1">{shopName}</h1>
           </div>
-          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-sm border border-white/30 shrink-0">
+          <button 
+            onClick={() => navigate('/shop/profile')}
+            className="w-10 h-10 bg-white/20 hover:bg-white/30 active:scale-95 transition-all rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-sm border border-white/30 shrink-0"
+          >
             {shopName.charAt(0).toUpperCase()}
-          </div>
+          </button>
         </div>
 
-        {/* THẺ TỔNG COD */}
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl p-5 flex items-center justify-between relative z-10 shadow-inner">
+        {/* THẺ TỔNG COD (Gọn hơn) */}
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex items-center justify-between relative z-10 shadow-inner">
           <div>
-            <p className="text-blue-100 text-xs font-bold uppercase tracking-widest mb-1.5 opacity-90">Tiền COD Thu Hôm Nay</p>
-            <h2 className="text-3xl font-black tracking-tight">{stats.codCollectedToday.toLocaleString('vi-VN')} đ</h2>
+            <p className="text-blue-100 text-[10px] font-bold uppercase tracking-widest mb-1 opacity-90">Tiền COD Thu Hôm Nay</p>
+            <h2 className="text-2xl font-black tracking-tight">{stats.codCollectedToday.toLocaleString('vi-VN')} đ</h2>
           </div>
-          <div className="w-14 h-14 bg-gradient-to-tr from-sky-400 to-blue-400 rounded-full flex items-center justify-center shadow-lg border border-white/20 shrink-0">
-            <DollarSign size={28} className="text-white" />
+          <div className="w-11 h-11 bg-gradient-to-tr from-sky-400 to-blue-400 rounded-full flex items-center justify-center shadow-lg border border-white/20 shrink-0">
+            <DollarSign size={22} className="text-white" />
           </div>
         </div>
       </div>
@@ -208,16 +198,15 @@ const ShopDashboard = () => {
       {/* BODY CONTENT */}
       <div className="px-4 sm:px-6 -mt-8 relative z-20 space-y-6">
 
-        {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ (KHÔI PHỤC LẠI BỊ LỖI MẤT TRƯỚC ĐÓ) */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-3 relative overflow-hidden shadow-sm">
+        {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ (Gọn hơn) */}
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-2.5 flex items-center gap-2.5 relative overflow-hidden shadow-sm">
           <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-          <div className="mt-0.5 text-blue-500 animate-bounce">
-            <MapPin size={20} />
+          <div className="text-blue-500 animate-bounce">
+            <MapPin size={18} />
           </div>
-          <div>
-            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
-            <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
-              Shop vui lòng bấm vào thanh <strong>"📍 Toạ độ cửa hàng"</strong> ở trên cùng để cập nhật định vị chính xác trước nhé!
+          <div className="flex-1">
+            <p className="text-[11px] text-blue-800 leading-snug font-medium">
+              Vui lòng bấm vào <strong>"📍 Toạ độ cửa hàng"</strong> ở trên cùng để cập nhật định vị chuẩn xác trước khi lên đơn!
             </p>
           </div>
         </div>
@@ -310,49 +299,6 @@ const ShopDashboard = () => {
                 <p className="text-slate-400 text-xs mt-1">Bấm "Tạo Đơn Ngay" để bắt đầu</p>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* THÔNG TIN CỬA HÀNG / QUẢN LÝ TÀI KHOẢN */}
-        <div className="mt-8 mb-4">
-          <h3 className="font-extrabold text-slate-800 text-lg mb-4 px-1">Cài đặt Cửa hàng</h3>
-          <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
-            <button onClick={() => alert('Tính năng Cập nhật thông tin đang được phát triển!')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                  <User size={18} />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-slate-800 text-sm">Cập nhật thông tin</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Tên, Số điện thoại, Địa chỉ</p>
-                </div>
-              </div>
-              <ChevronRightIcon size={18} className="text-slate-300" />
-            </button>
-            
-            <button onClick={handleDeleteAccount} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
-                  <UserX size={18} />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-red-600 text-sm">Yêu cầu xoá tài khoản</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Xoá vĩnh viễn dữ liệu cửa hàng</p>
-                </div>
-              </div>
-              <ChevronRightIcon size={18} className="text-slate-300" />
-            </button>
-
-            <button onClick={handleLogout} className="w-full p-4 flex items-center justify-between active:bg-slate-50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
-                  <LogOut size={18} />
-                </div>
-                <div className="text-left">
-                  <p className="font-bold text-slate-800 text-sm">Đăng xuất</p>
-                </div>
-              </div>
-            </button>
           </div>
         </div>
 

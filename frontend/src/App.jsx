@@ -11,6 +11,7 @@ import CustomerProfile from './pages/customer/CustomerProfile';
 import CustomerNotifications from './pages/customer/CustomerNotifications';
 import OrderDetail from './pages/customer/OrderDetail';
 import ShopBookingFlow from './pages/shop/ShopBookingFlow';
+import ShopProfile from './pages/shop/ShopProfile';
 import { useAuthSocket } from './hooks/useAuthSocket';
 
 import { useEffect } from 'react';
@@ -96,6 +97,14 @@ function App() {
           element={
             <ProtectedRoute allowedRole="SHOP">
               <ShopBookingFlow />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/shop/profile" 
+          element={
+            <ProtectedRoute allowedRole="SHOP">
+              <ShopProfile />
             </ProtectedRoute>
           } 
         />
