@@ -17,6 +17,7 @@ const CustomerDashboard = () => {
 
   const promotions = announcements.filter(a => a.type === 'PROMO');
   const news = announcements.filter(a => a.type === 'NEWS');
+  const banners = announcements.filter(a => a.type === 'BANNER');
 
   useEffect(() => {
     // Ưu tiên đọc từ sessionStorage (vị trí tạm thời trong phiên làm việc)
@@ -78,20 +79,14 @@ const CustomerDashboard = () => {
     fetchAnnouncements();
   }, []);
 
-  // Dữ liệu Slider Hình Ảnh
-  const slides = [
-    { id: 1, img: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?q=80&w=1000&auto=format&fit=crop', title: 'Giao hàng siêu tốc' },
-    { id: 2, img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop', title: 'Dễ dàng tiện lợi' },
-    { id: 3, img: 'https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?q=80&w=1000&auto=format&fit=crop', title: 'An toàn tuyệt đối' }
-  ];
-
   // Tự động trượt Slider mỗi 3 giây
   useEffect(() => {
+    if (banners.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % slides.length);
+      setCurrentSlide(prev => (prev + 1) % banners.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [banners.length]);
 
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
@@ -157,39 +152,9 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* SLIDER BANNER BẰNG HÌNH ẢNH */}
-      <div className="px-4 mb-4">
-        <div className="relative w-full h-36 sm:h-44 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white group">
-          <div 
-            className="flex w-full h-full transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-          >
-            {slides.map(slide => (
-              <div key={slide.id} className="w-full h-full flex-shrink-0 relative">
-                <img src={slide.img} alt={slide.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="font-bold text-lg drop-shadow-md">{slide.title}</h3>
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* Nút điều hướng Slider */}
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
-            {slides.map((_, index) => (
-              <button 
-                key={index} 
-                onClick={() => setCurrentSlide(index)}
-                className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white shadow' : 'w-1.5 bg-white/50'}`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* DANH SÁCH DỊCH VỤ (GRID) */}
       <div className="px-4 mb-4">
-        <div className="bg-white rounded-2xl p-4 border border-gray-100">
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <div className="grid grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-y-6 gap-x-2 md:gap-x-8 md:gap-y-8">
             {services.map((svc) => (
               <div 
@@ -210,6 +175,41 @@ const CustomerDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* SLIDER BANNER TỪ ADMIN */}
+      {banners.length > 0 && (
+        <div className="px-4 mb-6">
+          <div className="relative w-full rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-white group flex items-center justify-center">
+            <div 
+              className="flex w-full transition-transform duration-500 ease-out items-center"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {banners.map(banner => (
+                <div key={banner._id} className="w-full flex-shrink-0 relative">
+                  {banner.imageUrl && (
+                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-auto block" />
+                  )}
+                  {banner.videoUrl && (
+                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-auto block" autoPlay muted loop playsInline />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Nút điều hướng Slider */}
+            {banners.length > 1 && (
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+                {banners.map((_, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setCurrentSlide(index)}
+                    className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white shadow' : 'w-1.5 bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* SECTION KHUYẾN MÃI */}
       {promotions.length > 0 && (

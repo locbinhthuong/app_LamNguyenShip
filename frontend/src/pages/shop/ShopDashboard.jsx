@@ -25,6 +25,7 @@ const ShopDashboard = () => {
 
   const promotions = announcements.filter(a => a.type === 'PROMO');
   const news = announcements.filter(a => a.type === 'NEWS');
+  const banners = announcements.filter(a => a.type === 'BANNER');
 
   const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
   
@@ -32,12 +33,7 @@ const ShopDashboard = () => {
   const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
   const defaultLocation = customerData.defaultLocation;
 
-  // Dữ liệu Slider Hình Ảnh
-  const slides = [
-    { id: 1, img: 'https://images.unsplash.com/photo-1580674285054-bed31e145f59?q=80&w=1000&auto=format&fit=crop', title: 'Giao hàng siêu tốc' },
-    { id: 2, img: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=1000&auto=format&fit=crop', title: 'Quản lý dễ dàng' },
-    { id: 3, img: 'https://images.unsplash.com/photo-1566576721346-d4a3b4eaeb55?q=80&w=1000&auto=format&fit=crop', title: 'Đối tác tin cậy' }
-  ];
+
 
   const calculateStatsAndSet = (newOrders) => {
     const today = new Date().toDateString();
@@ -93,7 +89,7 @@ const ShopDashboard = () => {
     window.addEventListener('order_deleted_event', handleDeleted);
     
     const slideInterval = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % slides.length);
+      setCurrentSlide(prev => (prev + 1) % (banners.length || 1));
     }, 3000);
 
     return () => {
@@ -101,7 +97,7 @@ const ShopDashboard = () => {
       window.removeEventListener('order_deleted_event', handleDeleted);
       clearInterval(slideInterval);
     };
-  }, [slides.length]);
+  }, [banners.length]);
 
   useEffect(() => {
     const saved = localStorage.getItem('savedShopLocation');
@@ -239,33 +235,38 @@ const ShopDashboard = () => {
           <span className="font-extrabold text-lg tracking-wide">TẠO ĐƠN NGAY</span>
         </button>
 
-        {/* SLIDER BANNER BẰNG HÌNH ẢNH */}
-        <div className="relative w-full h-36 sm:h-44 rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-white group">
-          <div 
-            className="flex w-full h-full transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-          >
-            {slides.map(slide => (
-              <div key={slide.id} className="w-full h-full flex-shrink-0 relative">
-                <img src={slide.img} alt={slide.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h3 className="font-bold text-lg drop-shadow-md">{slide.title}</h3>
+        {/* SLIDER BANNER TỪ ADMIN */}
+        {banners.length > 0 && (
+          <div className="relative w-full rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-white group flex items-center justify-center">
+            <div 
+              className="flex w-full transition-transform duration-500 ease-out items-center"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {banners.map(banner => (
+                <div key={banner._id} className="w-full flex-shrink-0 relative">
+                  {banner.imageUrl && (
+                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-auto block" />
+                  )}
+                  {banner.videoUrl && (
+                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-auto block" autoPlay muted loop playsInline />
+                  )}
                 </div>
+              ))}
+            </div>
+            {/* Nút điều hướng Slider */}
+            {banners.length > 1 && (
+              <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+                {banners.map((_, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setCurrentSlide(index)}
+                    className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white shadow' : 'w-1.5 bg-white/50'}`}
+                  />
+                ))}
               </div>
-            ))}
+            )}
           </div>
-          {/* Nút điều hướng Slider */}
-          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
-            {slides.map((_, index) => (
-              <button 
-                key={index} 
-                onClick={() => setCurrentSlide(index)}
-                className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white shadow' : 'w-1.5 bg-white/50'}`}
-              />
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* SECTION KHUYẾN MÃI */}
         {promotions.length > 0 && (

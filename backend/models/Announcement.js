@@ -3,17 +3,17 @@ const mongoose = require('mongoose');
 const announcementSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['PROMO', 'NEWS', 'NOTIFICATION', 'TERMS_DRIVER'],
+    enum: ['PROMO', 'NEWS', 'NOTIFICATION', 'TERMS_DRIVER', 'BANNER'],
     default: 'NOTIFICATION'
   },
   title: {
     type: String,
-    required: true,
+    required: function() { return this.type !== 'BANNER'; },
     trim: true
   },
   content: {
     type: String,
-    required: true
+    required: function() { return this.type !== 'BANNER'; }
   },
   imageUrl: {
     type: String,

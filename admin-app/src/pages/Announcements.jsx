@@ -105,7 +105,8 @@ export default function Announcements() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title || !form.content) return alert('Vui lòng nhập Tiêu đề và Nội dung!');
+    if (form.type !== 'BANNER' && (!form.title || !form.content)) return alert('Vui lòng nhập Tiêu đề và Nội dung!');
+    if (form.type === 'BANNER' && !mediaFile && !mediaPreviewUrl) return alert('Bảng tin loại Quảng Cáo bắt buộc phải có Hình Ảnh hoặc Video!');
     
     setIsUploading(true);
     try {
@@ -210,6 +211,11 @@ export default function Announcements() {
                      <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 ĐIỀU KHOẢN T.XẾ</span>
                    </div>
                  )}
+                 {ann.type === 'BANNER' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-pink-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">🌟 QUẢNG CÁO</span>
+                   </div>
+                 )}
                  
                  <div className="absolute top-2 right-2 flex gap-2 z-20">
                    <button 
@@ -277,32 +283,40 @@ export default function Announcements() {
                         <input type="radio" name="type" value="TERMS_DRIVER" checked={form.type === 'TERMS_DRIVER'} onChange={(e) => setForm({...form, type: 'TERMS_DRIVER'})} className="hidden" />
                         📜 Điều Khoản
                      </label>
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'BANNER' ? 'bg-pink-50 border-pink-500 text-pink-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="BANNER" checked={form.type === 'BANNER'} onChange={(e) => setForm({...form, type: 'BANNER', title: 'Quảng Cáo', content: 'Hình ảnh quảng cáo'})} className="hidden" />
+                        🌟 Quảng Cáo
+                     </label>
                   </div>
                </div>
 
-               {/* Tiêu đề & Nội dung */}
-               <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Tiêu Đề (Title) <span className="text-red-500">*</span></label>
-                  <input 
-                    required autoFocus
-                    type="text" 
-                    value={form.title} 
-                    onChange={e => setForm({...form, title: e.target.value})}
-                    placeholder="Mừng đại lễ freeship 100%..." 
-                    className="w-full border border-slate-300 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all font-medium"
-                  />
-               </div>
-               
-               <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-1">Nội Dung Chi Tiết <span className="text-red-500">*</span></label>
-                  <textarea 
-                    required rows="4"
-                    value={form.content} 
-                    onChange={e => setForm({...form, content: e.target.value})}
-                    placeholder="Khách iu nhanh tay đặt hàng..." 
-                    className="w-full border border-slate-300 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
-                  ></textarea>
-               </div>
+               {/* Tiêu đề & Nội dung (Ẩn nếu là Quảng Cáo) */}
+               {form.type !== 'BANNER' && (
+                 <>
+                   <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">Tiêu Đề (Title) <span className="text-red-500">*</span></label>
+                      <input 
+                        required autoFocus
+                        type="text" 
+                        value={form.title} 
+                        onChange={e => setForm({...form, title: e.target.value})}
+                        placeholder="Mừng đại lễ freeship 100%..." 
+                        className="w-full border border-slate-300 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all font-medium"
+                      />
+                   </div>
+                   
+                   <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">Nội Dung Chi Tiết <span className="text-red-500">*</span></label>
+                      <textarea 
+                        required rows="4"
+                        value={form.content} 
+                        onChange={e => setForm({...form, content: e.target.value})}
+                        placeholder="Khách iu nhanh tay đặt hàng..." 
+                        className="w-full border border-slate-300 rounded-xl p-3 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                      ></textarea>
+                   </div>
+                 </>
+               )}
 
                {/* Chèn Media */}
                <div className="border border-dashed border-blue-300 bg-blue-50 rounded-2xl p-6 text-center">
