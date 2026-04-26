@@ -31,7 +31,7 @@ export default function App() {
       setTimeout(() => {
         splashScreen.classList.add('fade-out');
         setTimeout(() => splashScreen.remove(), 500);
-      }, 500);
+      }, 1500);
     }
   }, []);
 

@@ -10,6 +10,7 @@ import CustomerLayout from './components/CustomerLayout';
 import CustomerProfile from './pages/customer/CustomerProfile';
 import CustomerNotifications from './pages/customer/CustomerNotifications';
 import OrderDetail from './pages/customer/OrderDetail';
+import ShopBookingFlow from './pages/shop/ShopBookingFlow';
 import { useAuthSocket } from './hooks/useAuthSocket';
 
 import { useEffect } from 'react';
@@ -23,7 +24,7 @@ function App() {
       setTimeout(() => {
         splashScreen.classList.add('fade-out');
         setTimeout(() => splashScreen.remove(), 500);
-      }, 500);
+      }, 1500);
     }
   }, []);
 
@@ -87,6 +88,14 @@ function App() {
           element={
             <ProtectedRoute allowedRole="SHOP">
               <ShopDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/shop/book" 
+          element={
+            <ProtectedRoute allowedRole="SHOP">
+              <ShopBookingFlow />
             </ProtectedRoute>
           } 
         />

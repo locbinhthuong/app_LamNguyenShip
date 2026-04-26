@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight } from 'lucide-react';
+import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, Settings, UserX, User, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react';
 import { api } from '../../services/api';
-import ShopCreateOrderModal from '../../components/ShopCreateOrderModal';
 import LocationPicker from '../../components/LocationPicker';
 
 const ShopDashboard = () => {
   const navigate = useNavigate();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
     pending: 0,
@@ -19,8 +17,16 @@ const ShopDashboard = () => {
   const [address, setAddress] = useState('Chưa xác định toạ độ shop');
   const [locationDetails, setLocationDetails] = useState(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
+
+  // Dữ liệu Slider giả lập
+  const slides = [
+    { id: 1, title: 'AloShipp đồng hành cùng Shop', subtitle: 'Giao hỏa tốc - Nhận tiền ngay', bg: 'from-blue-500 to-sky-400' },
+    { id: 2, title: 'Ưu đãi cực sốc tháng này', subtitle: 'Hoàn tiền lên đến 50.000đ/đơn', bg: 'from-orange-500 to-amber-400' },
+    { id: 3, title: 'Quản lý doanh thu dễ dàng', subtitle: 'Theo dõi dòng tiền tự động 24/7', bg: 'from-emerald-500 to-teal-400' }
+  ];
 
   const calculateStatsAndSet = (newOrders) => {
     const today = new Date().toDateString();
@@ -73,11 +79,18 @@ const ShopDashboard = () => {
 
     window.addEventListener('refresh_orders_data', handleRefresh);
     window.addEventListener('order_deleted_event', handleDeleted);
+    
+    // Auto-play slider
+    const slideInterval = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % slides.length);
+    }, 3000);
+
     return () => {
       window.removeEventListener('refresh_orders_data', handleRefresh);
       window.removeEventListener('order_deleted_event', handleDeleted);
+      clearInterval(slideInterval);
     };
-  }, []);
+  }, [slides.length]);
 
   useEffect(() => {
     const saved = localStorage.getItem('savedShopLocation');
@@ -124,8 +137,16 @@ const ShopDashboard = () => {
   };
 
   const handleLogout = () => {
-    localStorage.clear();
-    navigate('/login');
+    if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+      localStorage.clear();
+      navigate('/login');
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    if (window.confirm('CẢNH BÁO: Việc yêu cầu xoá tài khoản sẽ xoá vĩnh viễn mọi dữ liệu giao dịch của bạn trên hệ thống. Bạn có chắc chắn muốn yêu cầu xoá không?')) {
+      alert('Yêu cầu xoá tài khoản đã được gửi đến ban quản trị. Tài khoản của bạn sẽ bị xoá vĩnh viễn trong vòng 7 ngày làm việc.');
+    }
   };
 
   const handleLocationSelect = (loc) => {
@@ -158,19 +179,19 @@ const ShopDashboard = () => {
       </div>
 
       {/* HEADER TỔNG QUAN */}
-      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-10 pb-12 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative overflow-hidden">
+      <div className="bg-gradient-to-br from-blue-500 via-blue-600 to-sky-600 rounded-b-[40px] px-6 pt-8 pb-12 text-white shadow-[0_10px_30px_rgba(59,130,246,0.3)] relative overflow-hidden">
         {/* Decorator bubbles */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
         <div className="absolute bottom-0 -left-10 w-32 h-32 bg-sky-400/20 rounded-full blur-2xl"></div>
 
-        <div className="flex justify-between items-center mb-8 relative z-10">
+        <div className="flex justify-between items-center mb-6 relative z-10">
           <div>
             <p className="text-blue-100 text-sm font-medium tracking-wide uppercase mb-1">Bảng điều khiển</p>
             <h1 className="text-2xl font-extrabold line-clamp-1">{shopName}</h1>
           </div>
-          <button onClick={handleLogout} className="p-2.5 bg-white/10 hover:bg-white/20 rounded-full active:scale-95 transition-all outline-none">
-            <LogOut size={20} />
-          </button>
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-sm border border-white/30">
+            {shopName.charAt(0).toUpperCase()}
+          </div>
         </div>
 
         {/* THẺ TỔNG COD */}
@@ -186,26 +207,12 @@ const ShopDashboard = () => {
       </div>
 
       {/* BODY CONTENT */}
-      <div className="px-6 -mt-8 relative z-20">
-        
-        {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-3 relative overflow-hidden mb-6">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-          <div className="mt-0.5 text-blue-500 animate-bounce">
-            <MapPin size={20} />
-          </div>
-          <div>
-            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
-            <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
-              Shop vui lòng bấm vào thanh <strong>"📍 Toạ độ cửa hàng"</strong> ở trên cùng để cập nhật định vị chính xác trước khi lên đơn nhé!
-            </p>
-          </div>
-        </div>
+      <div className="px-6 -mt-8 relative z-20 space-y-6">
 
         {/* NÚT TẠO ĐƠN SIÊU TỐC */}
         <button 
-          onClick={() => setIsModalOpen(true)}
-          className="w-full bg-white text-blue-600 rounded-3xl p-4 flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-blue-50 active:scale-[0.98] transition-all group mb-6 hover:shadow-[0_15px_40px_rgba(59,130,246,0.15)]"
+          onClick={() => navigate('/shop/book')}
+          className="w-full bg-white text-blue-600 rounded-3xl p-4 flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-blue-50 active:scale-[0.98] transition-all group hover:shadow-[0_15px_40px_rgba(59,130,246,0.15)]"
         >
           <div className="bg-blue-50 p-2 rounded-full group-hover:bg-blue-100 group-hover:scale-110 transition-all">
             <PlusCircle size={24} className="text-blue-600" />
@@ -213,8 +220,33 @@ const ShopDashboard = () => {
           <span className="font-extrabold text-lg tracking-wide">TẠO ĐƠN NGAY</span>
         </button>
 
+        {/* SLIDER BANNER */}
+        <div className="relative w-full h-32 rounded-3xl overflow-hidden shadow-sm border border-slate-100 bg-white group">
+          <div 
+            className="flex w-full h-full transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {slides.map(slide => (
+              <div key={slide.id} className={`w-full h-full flex-shrink-0 flex flex-col justify-center px-6 bg-gradient-to-r ${slide.bg} text-white`}>
+                <h3 className="font-bold text-lg mb-1">{slide.title}</h3>
+                <p className="text-sm font-medium opacity-90">{slide.subtitle}</p>
+              </div>
+            ))}
+          </div>
+          {/* Nút điều hướng Slider */}
+          <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5 z-10">
+            {slides.map((_, index) => (
+              <button 
+                key={index} 
+                onClick={() => setCurrentSlide(index)}
+                className={`h-1.5 rounded-full transition-all ${currentSlide === index ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`}
+              />
+            ))}
+          </div>
+        </div>
+
         {/* THỐNG KÊ ĐƠN */}
-        <div className="bg-white rounded-3xl border border-slate-100 p-5 grid grid-cols-3 gap-4 mb-6 relative overflow-hidden">
+        <div className="bg-white rounded-3xl border border-slate-100 p-5 grid grid-cols-3 gap-4 relative overflow-hidden">
           <div className="flex flex-col items-center text-center">
             <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 mb-2"><Clock size={20} /></div>
             <p className="text-xl font-black text-slate-800 leading-none">{stats.pending}</p>
@@ -243,7 +275,7 @@ const ShopDashboard = () => {
 
           <div className="space-y-3">
             {orders.slice(0, 5).map(order => (
-              <div key={order._id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-blue-200 transition-colors">
+              <div key={order._id} className="bg-white p-4 rounded-2xl border border-slate-100 flex items-center justify-between hover:border-blue-200 transition-colors shadow-sm">
                 <div className="flex-1 overflow-hidden pr-3">
                   <div className="flex items-center gap-2 mb-1.5">
                     <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold">{new Date(order.createdAt).toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'})}</span>
@@ -262,20 +294,56 @@ const ShopDashboard = () => {
                   <PackageX size={24} className="text-slate-300" />
                 </div>
                 <p className="text-slate-400 text-sm font-medium">Chưa có đơn hàng nào</p>
-                <p className="text-slate-400 text-xs mt-1">Bấm "Tạo Đơn Giao Hàng" để bắt đầu</p>
+                <p className="text-slate-400 text-xs mt-1">Bấm "Tạo Đơn Ngay" để bắt đầu</p>
               </div>
             )}
           </div>
         </div>
 
+        {/* THÔNG TIN CỬA HÀNG / QUẢN LÝ TÀI KHOẢN */}
+        <div className="mt-8 mb-4">
+          <h3 className="font-extrabold text-slate-800 text-lg mb-4 px-1">Cài đặt Cửa hàng</h3>
+          <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
+            <button onClick={() => alert('Tính năng Cập nhật thông tin đang được phát triển!')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <User size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 text-sm">Cập nhật thông tin</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Tên, Số điện thoại, Địa chỉ</p>
+                </div>
+              </div>
+              <ChevronRightIcon size={18} className="text-slate-300" />
+            </button>
+            
+            <button onClick={handleDeleteAccount} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                  <UserX size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-red-600 text-sm">Yêu cầu xoá tài khoản</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Xoá vĩnh viễn dữ liệu cửa hàng</p>
+                </div>
+              </div>
+              <ChevronRightIcon size={18} className="text-slate-300" />
+            </button>
+
+            <button onClick={handleLogout} className="w-full p-4 flex items-center justify-between active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                  <LogOut size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 text-sm">Đăng xuất</p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
       </div>
-      
-      {/* MODAL TẠO ĐƠN SHOP */}
-      <ShopCreateOrderModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchOrders}
-      />
 
       {/* OVERLAY CHỌN BẢN ĐỒ */}
       {showLocationPicker && (
