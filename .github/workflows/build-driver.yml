@@ -100,6 +100,9 @@ jobs:
       - name: Update project for signing
         working-directory: ./driver-app/ios/App
         run: |
+          sed -i '' 's/CODE_SIGN_STYLE = Automatic;/CODE_SIGN_STYLE = Manual; PROVISIONING_PROFILE_SPECIFIER = "AloShipp Driver Distribution"; DEVELOPMENT_TEAM = HXQ67H38MZ;/g' App.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGN_IDENTITY = "iPhone Developer";/CODE_SIGN_IDENTITY = "Apple Distribution";/g' App.xcodeproj/project.pbxproj
+
           cat <<EOF > ExportOptions.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -127,7 +130,7 @@ jobs:
       - name: Build and Export iOS App
         working-directory: ./driver-app/ios/App
         run: |
-          xcodebuild -project App.xcodeproj -scheme App -configuration Release archive -archivePath $RUNNER_TEMP/App.xcarchive CODE_SIGN_STYLE="Manual" PROVISIONING_PROFILE_SPECIFIER="AloShipp Driver Distribution" CODE_SIGN_IDENTITY="Apple Distribution" DEVELOPMENT_TEAM="HXQ67H38MZ"
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release archive -archivePath $RUNNER_TEMP/App.xcarchive
           xcodebuild -exportArchive -archivePath $RUNNER_TEMP/App.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $RUNNER_TEMP/export
           
       - name: Upload IPA
