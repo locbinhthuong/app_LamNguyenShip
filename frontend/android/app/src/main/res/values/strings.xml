@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name"> AloShipp</string>
+    <string name="title_activity_main"> AloShipp</string>
+    <string name="package_name">vn.lamnguyenship.customer</string>
+    <string name="custom_url_scheme">vn.lamnguyenship.customer</string>
+</resources>
