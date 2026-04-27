@@ -127,8 +127,7 @@ jobs:
       - name: Build and Export iOS App
         working-directory: ./driver-app/ios/App
         run: |
-          pod install
-          xcodebuild -workspace App.xcworkspace -scheme App -configuration Release archive -archivePath $RUNNER_TEMP/App.xcarchive CODE_SIGN_STYLE="Manual" PROVISIONING_PROFILE_SPECIFIER="AloShipp Driver Distribution" CODE_SIGN_IDENTITY="Apple Distribution"
+          xcodebuild -project App.xcodeproj -scheme App -configuration Release archive -archivePath $RUNNER_TEMP/App.xcarchive CODE_SIGN_STYLE="Manual" PROVISIONING_PROFILE_SPECIFIER="AloShipp Driver Distribution" CODE_SIGN_IDENTITY="Apple Distribution"
           xcodebuild -exportArchive -archivePath $RUNNER_TEMP/App.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $RUNNER_TEMP/export
           
       - name: Upload IPA
