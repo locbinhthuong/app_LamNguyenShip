@@ -150,7 +150,7 @@ const CustomerProfile = () => {
            <ChevronRight size={18} className="text-gray-400" />
         </div>
         <div className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
-           <span className="font-semibold text-gray-800">Các Điều Khoản App</span>
+           <span className="font-semibold text-gray-800">Quy định & Chính sách bảo mật</span>
            <ChevronRight size={18} className="text-gray-400" />
         </div>
 

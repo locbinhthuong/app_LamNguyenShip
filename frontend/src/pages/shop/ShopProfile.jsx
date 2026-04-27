@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, UserX, LogOut, Store, MapPin } from 'lucide-react';
+import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck } from 'lucide-react';
 import { api } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
@@ -162,6 +162,18 @@ export default function ShopProfile() {
               </div>
             </button>
             
+            <button className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 text-sm">Quy định & Chính sách bảo mật</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Các điều khoản khi dùng App</p>
+                </div>
+              </div>
+            </button>
+
             <button onClick={handleDeleteAccount} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center text-red-600">
