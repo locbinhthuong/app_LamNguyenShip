@@ -136,14 +136,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                   }} 
                   className="w-full rounded-lg border border-purple-300 p-2.5 text-sm bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none font-medium relative z-10 appearance-none"
                >
-                  <option value="|">-- Đơn tự do (Mặc định) --</option>
-                  <option value="|15">-- Đơn tự do (Chiết khấu 15%) --</option>
-                  <option value="|20">-- Đơn tự do (Chiết khấu 20%) --</option>
+                  <option value="|">-- Đơn tự do (Mặc định - Tất cả tài xế) --</option>
+                  <option value="|15">-- Đơn tự do (Chỉ dành cho Tài xế 15%) --</option>
+                  <option value="|20">-- Đơn tự do (Chỉ dành cho Tài xế 20%) --</option>
                   {drivers.sort((a,b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)).map(d => (
-                    <optgroup key={d._id} label={`${d.isOnline ? '🟢 [ONLINE]' : '🔴 [OFFLINE]'} - ${d.name} (${d.phone})`}>
-                      <option value={`${d._id}|15`}>Gán cho {d.name} (Chiết khấu 15%)</option>
-                      <option value={`${d._id}|20`}>Gán cho {d.name} (Chiết khấu 20%)</option>
-                    </optgroup>
+                    <option key={d._id} value={`${d._id}|`}>
+                      {d.isOnline ? '🟢 [ONLINE]' : '🔴 [OFFLINE]'} - {d.name} ({d.phone})
+                    </option>
                   ))}
                </select>
                <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">

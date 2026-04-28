@@ -73,7 +73,16 @@ const orderController = {
   // GET /api/orders/available - Lấy đơn hàng available cho driver
   getAvailableOrders: async (req, res) => {
     try {
-      const orders = await Order.find({ status: 'PENDING' })
+      const driver = await Driver.findById(req.driver._id);
+      const driverRate = driver.commissionRate || 15;
+
+      const orders = await Order.find({ 
+        status: 'PENDING',
+        $or: [
+          { commissionRate: null },
+          { commissionRate: driverRate }
+        ]
+      })
         .populate('createdBy', 'name')
         .sort({ createdAt: -1 })
         .lean();

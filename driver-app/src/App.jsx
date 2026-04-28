@@ -230,6 +230,12 @@ function AppContent() {
       const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated', 'force_assigned'];
       forwardEvents.forEach(event => {
         socketRef.current.on(event, (data) => {
+          if (event === 'new_order') {
+            const driverRate = driver.commissionRate || 15;
+            if (data && data.commissionRate != null && data.commissionRate !== driverRate) {
+              return; // Bỏ qua đơn hàng không khớp chiết khấu
+            }
+          }
           window.dispatchEvent(new CustomEvent(`driver_${event}`, { detail: data }));
         });
       });

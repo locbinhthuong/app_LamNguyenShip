@@ -142,6 +142,11 @@ export const resetDriverPassword = async (id, newPassword) => {
   return response.data;
 };
 
+export const forceOfflineDriver = async (id) => {
+  const response = await api.put(`/api/drivers/${id}/force-offline`);
+  return response.data;
+};
+
 export const deleteDriver = async (id) => {
   const response = await api.delete(`/api/drivers/${id}`);
   return response.data;

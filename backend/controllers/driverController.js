@@ -161,6 +161,41 @@ const driverController = {
     }
   },
 
+  // PUT /api/drivers/:id/force-offline - Ép tài xế Offline (Admin)
+  forceOffline: async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const driver = await Driver.findByIdAndUpdate(
+        id,
+        { isOnline: false, location: null },
+        { new: true }
+      ).select('-password');
+
+      if (!driver) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy tài xế' });
+      }
+
+      // Phát sự kiện Socket cho tất cả Admin cập nhật map/list
+      if (req.io) {
+        req.io.to('admins').emit('driver_status_change', {
+          driverId: driver._id,
+          isOnline: false,
+          location: null
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Đã tắt trạng thái hoạt động của tài xế',
+        data: driver
+      });
+    } catch (error) {
+      console.error('Error forceOffline:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
   // PUT /api/drivers/:id/reset-password - Reset mật khẩu (Admin)
   resetPassword: async (req, res) => {
     try {

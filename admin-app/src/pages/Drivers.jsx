@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { getDrivers, deleteDriver, resetDriverPassword } from '../services/api';
+import { getDrivers, deleteDriver, resetDriverPassword, forceOfflineDriver } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import PromptModal from '../components/PromptModal';
 
@@ -93,6 +93,17 @@ export default function Drivers() {
       await load();
     } catch (err) {
       alert('Không thể xóa tài xế');
+    }
+  };
+
+  const handleForceOffline = async (id, name) => {
+    if (!window.confirm(`Bạn có chắc muốn TẮT trạng thái hoạt động (Ép Offline) tài xế "${name}" không?`)) return;
+    try {
+      await forceOfflineDriver(id);
+      // Socket sẽ tự cập nhật lại danh sách nhưng load luôn cho chắc
+      await load();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -213,25 +224,33 @@ export default function Drivers() {
                   <p className="text-[10px] text-slate-500">Mã TX</p>
                 </div>
               </div>
-              <div className="flex gap-2 mt-3">
+              <div className="flex flex-wrap gap-2 mt-3">
                 <Link
                   to={`/drivers/${driver._id}`}
-                  className="flex-1 rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-bold text-blue-600 text-center transition-all hover:bg-blue-600/20"
+                  className="flex-1 rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-bold text-blue-600 text-center transition-all hover:bg-blue-600/20 whitespace-nowrap"
                 >
                   👁️ Chi tiết
                 </Link>
                 
+                {driver.isOnline && (
+                  <button
+                    onClick={() => handleForceOffline(driver._id, driver.name)}
+                    className="flex-1 rounded-xl bg-orange-500/10 px-3 py-2 text-xs font-bold text-orange-600 transition-all hover:bg-orange-500/20 whitespace-nowrap"
+                  >
+                    📴 Tắt Định Vị
+                  </button>
+                )}
                 
                 <button
                   onClick={() => requestResetPassword(driver._id, driver.name)}
-                  className="flex-1 rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-400 transition-all hover:bg-blue-500/20"
+                  className="flex-1 rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-400 transition-all hover:bg-blue-500/20 whitespace-nowrap"
                 >
                   🔑 Reset
                 </button>
                 {admin?.role === 'admin' && (
                   <button
                     onClick={() => requestDelete(driver._id, driver.name)}
-                    className="flex-1 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-bold text-red-400 transition-all hover:bg-red-500/20"
+                    className="flex-1 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-bold text-red-400 transition-all hover:bg-red-500/20 whitespace-nowrap"
                   >
                     🗑️ Xóa
                   </button>
@@ -284,8 +303,16 @@ export default function Drivers() {
                     </td>
                     <td className="table-td font-bold text-green-400">{driver.stats?.completedOrders || 0}</td>
                     <td className="table-td">
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 flex-wrap">
                           
+                          {driver.isOnline && (
+                            <button
+                              onClick={() => handleForceOffline(driver._id, driver.name)}
+                              className="rounded-lg px-3 py-1.5 text-xs font-semibold text-orange-600 hover:bg-orange-50 transition-colors"
+                            >
+                              📴 Tắt Định Vị
+                            </button>
+                          )}
                           
                           <button
                             onClick={() => requestResetPassword(driver._id, driver.name)}
