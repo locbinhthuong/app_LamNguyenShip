@@ -136,10 +136,10 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
       
       let query = { isOnline: true, status: 'active', fcmToken: { $ne: '' } };
       if (order.commissionRate != null) {
-         if (order.commissionRate === 15) {
+         if (Number(order.commissionRate) === 15) {
             query.$or = [{ commissionRate: 15 }, { commissionRate: null }, { commissionRate: { $exists: false } }];
          } else {
-            query.commissionRate = order.commissionRate;
+            query.commissionRate = Number(order.commissionRate);
          }
       }
       

@@ -74,12 +74,13 @@ const orderController = {
   getAvailableOrders: async (req, res) => {
     try {
       const driver = await Driver.findById(req.driver._id);
-      const driverRate = driver.commissionRate || 15;
+      const driverRate = driver.commissionRate ? Number(driver.commissionRate) : 15;
 
       const orders = await Order.find({ 
         status: 'PENDING',
         $or: [
           { commissionRate: null },
+          { commissionRate: { $exists: false } },
           { commissionRate: driverRate }
         ]
       })

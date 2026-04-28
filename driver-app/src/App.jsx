@@ -249,7 +249,7 @@ function AppContent() {
         socketRef.current.on(event, (data) => {
           if (event === 'new_order') {
             const driverRate = driver.commissionRate || 15;
-            if (data && data.commissionRate != null && data.commissionRate !== driverRate) {
+            if (data && data.commissionRate != null && Number(data.commissionRate) !== Number(driverRate)) {
               return; // Bỏ qua đơn hàng không khớp chiết khấu
             }
           }

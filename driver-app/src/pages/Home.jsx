@@ -502,7 +502,7 @@ export default function Home() {
       const driverRate = driver?.commissionRate || 15;
       
       if (updatedOrder.status === 'PENDING') {
-         if (updatedOrder.commissionRate != null && updatedOrder.commissionRate !== driverRate) {
+         if (updatedOrder.commissionRate != null && Number(updatedOrder.commissionRate) !== Number(driverRate)) {
              setAvailableOrders(prev => prev.filter(o => o._id !== updatedOrder._id));
          } else {
              setAvailableOrders(prev => {
