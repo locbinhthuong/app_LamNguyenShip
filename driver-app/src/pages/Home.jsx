@@ -495,10 +495,30 @@ export default function Home() {
       loadData();
     };
 
+    const handleOrderUpdated = (e) => {
+      const updatedOrder = e.detail;
+      if (!updatedOrder) return;
+      
+      const driverRate = driver?.commissionRate || 15;
+      
+      if (updatedOrder.status === 'PENDING') {
+         if (updatedOrder.commissionRate != null && updatedOrder.commissionRate !== driverRate) {
+             setAvailableOrders(prev => prev.filter(o => o._id !== updatedOrder._id));
+         } else {
+             setAvailableOrders(prev => {
+                const exists = prev.find(o => o._id === updatedOrder._id);
+                if (exists) return prev.map(o => o._id === updatedOrder._id ? updatedOrder : o);
+                return [updatedOrder, ...prev];
+             });
+         }
+      }
+    };
+
     window.addEventListener('driver_new_order', handleNewOrder);
     window.addEventListener('driver_order_accepted', handleOrderAccepted);
     window.addEventListener('driver_order_cancelled', handleOrderLost);
     window.addEventListener('driver_order_deleted_event', handleOrderLost);
+    window.addEventListener('driver_order_updated', handleOrderUpdated);
     window.addEventListener('driver_order_picked_up', loadData);
     window.addEventListener('driver_order_delivering', loadData);
     window.addEventListener('driver_order_completed', loadData);
@@ -509,11 +529,12 @@ export default function Home() {
       window.removeEventListener('driver_order_accepted', handleOrderAccepted);
       window.removeEventListener('driver_order_cancelled', handleOrderLost);
       window.removeEventListener('driver_order_deleted_event', handleOrderLost);
+      window.removeEventListener('driver_order_updated', handleOrderUpdated);
       window.removeEventListener('driver_order_picked_up', loadData);
       window.removeEventListener('driver_order_delivering', loadData);
       window.removeEventListener('driver_order_completed', loadData);
     };
-  }, [loadData]);
+  }, [loadData, driver]);
 
   const handleAccept = async () => {
     if (!confirmAcceptOrder) return;
