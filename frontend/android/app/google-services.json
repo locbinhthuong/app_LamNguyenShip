@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "479618310997",
+    "project_id": "aloshipp",
+    "storage_bucket": "aloshipp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:479618310997:android:41fa3a2ff4db49e4ab05dc",
+        "android_client_info": {
+          "package_name": "vn.lamnguyenship.customer"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCu8MGkm9vbj6NUo5dPPCndIOZ3FstGEpo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:479618310997:android:84425afdf679c537ab05dc",
+        "android_client_info": {
+          "package_name": "vn.lamnguyenship.driver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCu8MGkm9vbj6NUo5dPPCndIOZ3FstGEpo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

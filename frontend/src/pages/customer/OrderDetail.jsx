@@ -127,7 +127,7 @@ export default function OrderDetail() {
   return (
     <div className="flex flex-col flex-1 w-full bg-slate-50 overflow-hidden">
       {/* Header */}
-      <div className="shrink-0 bg-white px-4 py-3 z-40 flex items-center gap-3">
+      <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center gap-3">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
           <ArrowLeft size={22} />
         </button>

@@ -118,7 +118,7 @@ const CustomerProfile = () => {
            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 40%)' }}></div>
         </div>
 
-        <h1 className="absolute top-8 left-6 text-xl font-bold mb-4 text-white">Hồ sơ khách hàng</h1>
+        <h1 className="absolute left-6 text-xl font-bold mb-4 text-white" style={{ top: 'max(env(safe-area-inset-top), 24px)' }}>Hồ sơ khách hàng</h1>
         
         {/* Thông tin phía dưới ảnh bìa */}
         <div className="absolute bottom-4 left-6 right-6 flex items-end gap-4 z-10">

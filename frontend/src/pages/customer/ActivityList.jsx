@@ -152,7 +152,7 @@ const ActivityList = () => {
       </div>
       
       {/* Tabs */}
-      <div className="shrink-0 sticky top-0 z-30 flex bg-white border-b border-gray-200 pt-[env(safe-area-inset-top)]">
+      <div className="shrink-0 sticky top-0 z-30 flex bg-white border-b border-gray-200 safe-pt">
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'pending' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
           onClick={() => { setFilter('pending'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}

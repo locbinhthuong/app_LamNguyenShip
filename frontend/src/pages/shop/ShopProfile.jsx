@@ -110,7 +110,7 @@ export default function ShopProfile() {
     <div className="w-full flex flex-col min-h-screen bg-slate-50 font-sans pb-24 shadow-sm overflow-x-hidden relative">
       
       {/* HEADER */}
-      <div className="shrink-0 bg-white px-4 py-3 z-40 flex items-center justify-between shadow-sm border-b border-slate-100">
+      <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center justify-between shadow-sm border-b border-slate-100">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
           <ArrowLeft size={22} />
         </button>

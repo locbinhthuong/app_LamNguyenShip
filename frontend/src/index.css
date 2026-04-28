@@ -68,6 +68,10 @@
 }
 
 @layer utilities {
+  .safe-pt {
+    padding-top: max(env(safe-area-inset-top), 1rem);
+  }
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }

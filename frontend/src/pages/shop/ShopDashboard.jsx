@@ -185,7 +185,7 @@ const ShopDashboard = () => {
       {/* HEADER: Kéo ghim toạ độ Shop */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white px-4 pb-3 pt-[max(env(safe-area-inset-top),12px)] sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50 border-b border-slate-100"
+        className="bg-white px-4 pb-3 safe-pt sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50 border-b border-slate-100"
       >
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
           <div className="flex items-center gap-1 text-slate-500 mb-0.5">
