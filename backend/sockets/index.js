@@ -133,7 +133,17 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
     // Bắn Push Firebase
     try {
       const Driver = require('../models/Driver');
-      const drivers = await Driver.find({ isOnline: true, status: 'active', fcmToken: { $ne: '' } });
+      
+      let query = { isOnline: true, status: 'active', fcmToken: { $ne: '' } };
+      if (order.commissionRate != null) {
+         if (order.commissionRate === 15) {
+            query.$or = [{ commissionRate: 15 }, { commissionRate: null }, { commissionRate: { $exists: false } }];
+         } else {
+            query.commissionRate = order.commissionRate;
+         }
+      }
+      
+      const drivers = await Driver.find(query);
       const tokens = drivers.map(d => d.fcmToken);
       
       console.log(`[FCM-DEBUG] Phát nổ Đơn mới: TÌM THẤY ${tokens.length} TÀI XẾ hợp lệ để Gửi Push.`);

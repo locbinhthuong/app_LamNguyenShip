@@ -125,7 +125,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                </label>
                <select 
                   name="assignOption" 
-                  value={`${formData.forceAssignDriverId || ''}|${formData.commissionRate || ''}`} 
+                  value={formData.forceAssignDriverId ? `${formData.forceAssignDriverId}|` : `|${formData.commissionRate == null ? '' : formData.commissionRate}`}
                   onChange={(e) => {
                      const [driverId, rate] = e.target.value.split('|');
                      setFormData(prev => ({
