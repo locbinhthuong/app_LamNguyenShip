@@ -96,7 +96,7 @@ export default function ShopBookingFlow() {
   return (
     <div className="flex flex-col flex-1 w-full max-w-5xl mx-auto bg-gray-50 font-sans overflow-hidden md:border-x border-gray-100 md:shadow-sm">
       {/* HEADER */}
-      <div className="shrink-0 bg-white px-4 py-3 z-40 flex items-center justify-between shadow-sm">
+      <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center justify-between shadow-sm">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">
           <ArrowLeft size={22} />
         </button>

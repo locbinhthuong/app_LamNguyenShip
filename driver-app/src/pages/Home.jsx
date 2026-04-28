@@ -615,7 +615,7 @@ export default function Home() {
     <div className="h-[100dvh] flex flex-col bg-slate-50 overflow-hidden relative">
       {/* Toast */}
       {showToast && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
+        <div className={`fixed safe-top left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
           showToast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
         }`}>
           {showToast.message}

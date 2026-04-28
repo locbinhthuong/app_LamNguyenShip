@@ -68,12 +68,16 @@
 }
 
 @layer utilities {
+  .safe-top {
+    top: max(env(safe-area-inset-top), 1rem) !important;
+  }
+
   .safe-pt {
-    padding-top: max(env(safe-area-inset-top), 1rem);
+    padding-top: max(env(safe-area-inset-top), 1rem) !important;
   }
 
   .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom) !important;
   }
   
   /* Hide scrollbar for Chrome, Safari and Opera */

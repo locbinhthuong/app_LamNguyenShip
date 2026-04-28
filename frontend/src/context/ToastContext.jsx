@@ -45,7 +45,7 @@ export const ToastProvider = ({ children }) => {
       
       {/* Toast UI */}
       {toast && (
-        <div className="fixed safe-pt left-0 right-0 z-[9999] px-4 flex justify-center w-full max-w-md mx-auto pointer-events-none animate-[slideDown_0.3s_ease-out]">
+        <div className="fixed top-0 safe-pt left-0 right-0 z-[9999] px-4 flex justify-center w-full max-w-md mx-auto pointer-events-none animate-[slideDown_0.3s_ease-out]">
           <div className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-lg border ${bgColors[toast.type]} w-full backdrop-blur-sm bg-opacity-95`}>
             <div className="shrink-0 mt-0.5 animate-bounce">{icons[toast.type]}</div>
             <div className="flex-1 min-w-0">
