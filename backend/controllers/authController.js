@@ -732,6 +732,11 @@ const authController = {
       else if (role === 'admin') userModel = Admin;
       else userModel = User;
 
+      // Xoá token này khỏi tất cả người dùng khác để tránh gửi nhầm thông báo khi 1 thiết bị đăng nhập nhiều tài khoản
+      await Driver.updateMany({ fcmToken: token, _id: { $ne: role === 'driver' ? id : null } }, { fcmToken: '' });
+      await Admin.updateMany({ fcmToken: token, _id: { $ne: role === 'admin' ? id : null } }, { fcmToken: '' });
+      await User.updateMany({ fcmToken: token, _id: { $ne: role === 'customer' || role === 'shop' ? id : null } }, { fcmToken: '' });
+
       await userModel.findByIdAndUpdate(id, { fcmToken: token });
       console.log(`[FCM-DEBUG] Token PUSH lưu thành công cho ${role} ${id}. Độ dài Token: ${token?.length}`);
 
