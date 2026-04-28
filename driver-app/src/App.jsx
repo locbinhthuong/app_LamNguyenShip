@@ -191,6 +191,23 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    // Tắt chuông khi bấm vào Local Notification hoặc FCM Notification (App đang chạy ngầm)
+    if (Capacitor.isNativePlatform()) {
+      import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
+        LocalNotifications.addListener('localNotificationActionPerformed', () => {
+          window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+        });
+      }).catch(console.error);
+
+      import('@capacitor-firebase/messaging').then(({ FirebaseMessaging }) => {
+        FirebaseMessaging.addListener('notificationActionPerformed', () => {
+          window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+        });
+      }).catch(console.error);
+    }
+  }, []);
+
+  useEffect(() => {
     if (driver) {
       // Bật Màng Lọc Cảnh Báo Khẩn (Firebase Push)
       const setupPush = async () => {

@@ -224,10 +224,10 @@ export default function Drivers() {
                   <p className="text-[10px] text-slate-500">Mã TX</p>
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 mt-3">
+              <div className="grid grid-cols-2 gap-2 mt-3">
                 <Link
                   to={`/drivers/${driver._id}`}
-                  className="flex-1 rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-bold text-blue-600 text-center transition-all hover:bg-blue-600/20 whitespace-nowrap"
+                  className="rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-bold text-blue-600 text-center transition-all hover:bg-blue-600/20"
                 >
                   👁️ Chi tiết
                 </Link>
@@ -235,7 +235,7 @@ export default function Drivers() {
                 {driver.isOnline && (
                   <button
                     onClick={() => handleForceOffline(driver._id, driver.name)}
-                    className="flex-1 rounded-xl bg-orange-500/10 px-3 py-2 text-xs font-bold text-orange-600 transition-all hover:bg-orange-500/20 whitespace-nowrap"
+                    className="rounded-xl bg-orange-500/10 px-3 py-2 text-xs font-bold text-orange-600 transition-all hover:bg-orange-500/20"
                   >
                     📴 Tắt Định Vị
                   </button>
@@ -243,14 +243,15 @@ export default function Drivers() {
                 
                 <button
                   onClick={() => requestResetPassword(driver._id, driver.name)}
-                  className="flex-1 rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-400 transition-all hover:bg-blue-500/20 whitespace-nowrap"
+                  className="rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-400 transition-all hover:bg-blue-500/20"
                 >
                   🔑 Reset
                 </button>
+                
                 {admin?.role === 'admin' && (
                   <button
                     onClick={() => requestDelete(driver._id, driver.name)}
-                    className="flex-1 rounded-xl bg-red-500/10 px-3 py-2 text-xs font-bold text-red-400 transition-all hover:bg-red-500/20 whitespace-nowrap"
+                    className="rounded-xl bg-red-500/10 px-3 py-2 text-xs font-bold text-red-400 transition-all hover:bg-red-500/20"
                   >
                     🗑️ Xóa
                   </button>
