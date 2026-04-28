@@ -126,7 +126,7 @@ const CustomerDashboard = () => {
       {/* HEADER: Địa điểm của tôi */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white px-4 py-3 sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50"
+        className="bg-white px-4 pb-3 pt-[max(env(safe-area-inset-top),12px)] sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50"
       >
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
           <div className="flex items-center gap-1 text-gray-500 mb-0.5">

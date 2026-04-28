@@ -58,7 +58,7 @@ const CustomerNotifications = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 pb-20 font-sans relative">
-      <div className="bg-white px-4 py-3 sticky top-0 z-40 flex items-center justify-center">
+      <div className="bg-white px-4 pb-3 pt-[max(env(safe-area-inset-top),12px)] sticky top-0 z-40 flex items-center justify-center">
         <span className="font-bold text-gray-800 text-lg">Thông báo</span>
       </div>
 
