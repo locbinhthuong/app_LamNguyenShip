@@ -236,7 +236,17 @@ export default function ShopProfile() {
                   placeholder="09..."
                 />
               </div>
-              <div className="flex gap-3 pt-4">
+              <div className="border-t border-slate-100 mt-2 pt-4">
+                <label className="block text-sm font-semibold text-slate-700 mb-1 ml-1">Mật khẩu mới (Tùy chọn)</label>
+                <input
+                  type="password"
+                  value={editForm.password || ''}
+                  onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                  className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-blue-500 transition-all font-medium"
+                  placeholder="Để trống nếu không muốn đổi"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}

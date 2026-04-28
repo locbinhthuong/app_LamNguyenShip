@@ -1035,6 +1035,35 @@ const orderController = {
         message: 'Lỗi server'
       });
     }
+  },
+
+  // DELETE /api/orders/cleanup - Xoá đơn hàng cũ (Admin)
+  deleteOldOrders: async (req, res) => {
+    try {
+      const { monthsAgo } = req.body;
+      const months = parseInt(monthsAgo);
+      if (![1, 3, 6].includes(months)) {
+        return res.status(400).json({ success: false, message: 'Số tháng không hợp lệ (Chỉ chấp nhận 1, 3, 6).' });
+      }
+
+      const cutoffDate = new Date();
+      cutoffDate.setMonth(cutoffDate.getMonth() - months);
+
+      // Chỉ xoá đơn COMPLETED hoặc CANCELLED
+      const result = await Order.deleteMany({
+        createdAt: { $lt: cutoffDate },
+        status: { $in: ['COMPLETED', 'CANCELLED'] }
+      });
+
+      res.status(200).json({
+        success: true,
+        message: `Đã dọn dẹp thành công ${result.deletedCount} đơn hàng từ ${months} tháng trước.`,
+        deletedCount: result.deletedCount
+      });
+    } catch (error) {
+      console.error('Error deleteOldOrders:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi xoá dữ liệu cũ' });
+    }
   }
 };
 

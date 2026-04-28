@@ -22,7 +22,10 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
     name: '',
     vehicleType: 'motorcycle',
     licensePlate: '',
-    avatar: ''
+    avatar: '',
+    cccd: '',
+    gplx: '',
+    password: ''
   });
 
   useEffect(() => {
@@ -31,7 +34,10 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
         name: driver.name || '',
         vehicleType: driver.vehicleType || 'motorcycle',
         licensePlate: driver.licensePlate || '',
-        avatar: driver.avatar || ''
+        avatar: driver.avatar || '',
+        cccd: driver.cccd || '',
+        gplx: driver.gplx || '',
+        password: ''
       });
       setAvatarPreview(driver.avatar || null);
       setAvatarFile(null);
@@ -273,7 +279,43 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
                 />
               </div>
 
-              <div className="pt-4 flex gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Số Căn Cước Công Dân (CCCD)</label>
+                <input 
+                  type="text" 
+                  name="cccd" 
+                  value={formData.cccd} 
+                  onChange={handleChange} 
+                  placeholder="Nhập 12 số CCCD"
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Số Giấy Phép Lái Xe (GPLX)</label>
+                <input 
+                  type="text" 
+                  name="gplx" 
+                  value={formData.gplx} 
+                  onChange={handleChange} 
+                  placeholder="Nhập số GPLX"
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+                />
+              </div>
+
+              <div className="border-t border-slate-200 my-4 pt-4">
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Mật khẩu mới (Tùy chọn)</label>
+                <input 
+                  type="password" 
+                  name="password" 
+                  value={formData.password} 
+                  onChange={handleChange} 
+                  placeholder="Để trống nếu không muốn đổi"
+                  className="w-full rounded-xl border border-slate-300 p-3 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20" 
+                />
+              </div>
+
+              <div className="pt-2 flex gap-3">
                 <button 
                   type="button" 
                   onClick={() => setIsEditing(false)} 

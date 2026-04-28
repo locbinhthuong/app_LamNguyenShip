@@ -191,6 +191,7 @@ export default function Home() {
   // GPS Tracking States
   const [gpsStatus, setGpsStatus] = useState('OFF'); // OFF | FINDING | TRACKING | ERROR
   const watchIdRef = useRef(null);
+  const lastLocationEmitRef = useRef(0); // Bộ đếm thời gian gửi GPS
   const [isToggling, setIsToggling] = useState(false); // Ngăn chống spam nút
 
   // WAKELOCK (Chống tắt màn hình)
@@ -310,10 +311,15 @@ export default function Home() {
         setGpsStatus('TRACKING');
         requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
         if (window.driverSocket && window.driverSocket.connected) {
-          window.driverSocket.emit('update_location', {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          });
+          const now = Date.now();
+          // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
+          if (now - lastLocationEmitRef.current >= 6000) {
+            window.driverSocket.emit('update_location', {
+              lat: pos.coords.latitude,
+              lng: pos.coords.longitude
+            });
+            lastLocationEmitRef.current = now;
+          }
         }
       },
       (err) => {
@@ -443,17 +449,24 @@ export default function Home() {
     // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
     const interval = setInterval(loadData, 30000);
 
-    const handleNewOrder = () => {
+    const handleNewOrder = (e) => {
        loadData();
        // Global Alarm in App.jsx tự động lo khoản chuông
        
        if (Capacitor.isNativePlatform() && document.visibilityState !== 'visible') {
+          const order = e?.detail;
+          let bodyText = "🔔 CÓ ĐƠN HÀNG MỚI! Bấm vào đây để xem và giật đơn ngay!";
+          if (order && order.pickupAddress) {
+              const fee = order.deliveryFee ? order.deliveryFee.toLocaleString() + 'đ' : 'Thỏa thuận';
+              bodyText = `📍 Từ: ${order.pickupAddress}\n💵 Phí: ${fee}\nBấm để nhận ngay!`;
+          }
+
           import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
             LocalNotifications.schedule({
               notifications: [
                 {
-                  title: "HỆ THỐNG ĐIỀU PHỐI",
-                  body: "🔔 CÓ ĐƠN HÀNG MỚI! Bấm vào đây để xem và giật đơn ngay!",
+                  title: "📱 CÓ ĐƠN HÀNG MỚI!",
+                  body: bodyText,
                   id: Math.floor(Math.random() * 1000000),
                   schedule: { at: new Date(Date.now() + 100) },
                   sound: "default",

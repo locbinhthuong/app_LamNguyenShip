@@ -98,6 +98,11 @@ export const cancelOrder = async (id, reason) => {
   return response.data;
 };
 
+export const cleanupOldOrders = async (monthsAgo) => {
+  const response = await api.delete('/api/orders/cleanup', { data: { monthsAgo } });
+  return response.data;
+};
+
 export const deleteOrder = async (id) => {
   const response = await api.delete(`/api/orders/${id}`);
   return response.data;

@@ -222,12 +222,18 @@ const authController = {
   // PUT /api/auth/driver/me - Cập nhật thông tin tài xế
   updateOwnProfile: async (req, res) => {
     try {
-      const { name, vehicleType, licensePlate, avatar } = req.body;
+      const { name, vehicleType, licensePlate, avatar, cccd, gplx, password } = req.body;
       const updateData = {};
       if (name) updateData.name = name;
       if (vehicleType) updateData.vehicleType = vehicleType;
       if (licensePlate !== undefined) updateData.licensePlate = licensePlate;
       if (avatar !== undefined) updateData.avatar = avatar;
+      if (cccd !== undefined) updateData.cccd = cccd;
+      if (gplx !== undefined) updateData.gplx = gplx;
+
+      if (password) {
+        updateData.password = await bcrypt.hash(password, 10);
+      }
 
       const driver = await Driver.findByIdAndUpdate(
         req.driver._id,

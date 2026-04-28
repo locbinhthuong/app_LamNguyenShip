@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getDashboardStats, API_BASE_URL } from '../services/api';
+import { getDashboardStats, cleanupOldOrders, API_BASE_URL } from '../services/api';
 import { startOfTodayVietnam } from '../utils/todayVietnam';
 
 const STATUS_COLORS = {
@@ -25,6 +25,10 @@ export default function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(null);
+
+  // Trạng thái cho Dọn dẹp dữ liệu
+  const [cleanupMonths, setCleanupMonths] = useState(6);
+  const [isCleaning, setIsCleaning] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -89,6 +93,23 @@ export default function Dashboard() {
 
   const o = stats?.orders || {};
   const t = stats?.today || {};
+
+  const handleCleanup = async () => {
+    if (!window.confirm(`⚠️ CẢNH BÁO NGUY HIỂM\n\nBạn có chắc chắn muốn xoá vĩnh viễn các đơn hàng đã hoàn thành và đã huỷ từ ${cleanupMonths} tháng trước?\n\nHành động này KHÔNG THỂ KHÔI PHỤC và sẽ làm mất lịch sử tra cứu của các đơn hàng này.`)) {
+      return;
+    }
+
+    try {
+      setIsCleaning(true);
+      const res = await cleanupOldOrders(cleanupMonths);
+      alert(`✅ Thành công!\n\n${res.message}`);
+      load(); // Tải lại thống kê
+    } catch (err) {
+      alert(`❌ Lỗi: ${err.response?.data?.message || err.message || 'Không thể xoá dữ liệu'}`);
+    } finally {
+      setIsCleaning(false);
+    }
+  };
 
   return (
     <div className="p-4 pb-8 sm:p-6">
@@ -250,6 +271,37 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Dọn dẹp dữ liệu */}
+      <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div>
+            <h2 className="flex items-center gap-1.5 font-bold text-red-700">
+              <span>🧹</span> Bảo trì & Dọn dẹp dữ liệu
+            </h2>
+            <p className="text-xs text-red-600/80 mt-1">Xoá vĩnh viễn các đơn hàng cũ (đã giao/huỷ) để giảm tải cho máy chủ. Không thể khôi phục!</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={cleanupMonths}
+              onChange={(e) => setCleanupMonths(Number(e.target.value))}
+              className="rounded-xl border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 outline-none focus:border-red-500"
+              disabled={isCleaning}
+            >
+              <option value={6}>Trang thái: Cũ hơn 6 tháng</option>
+              <option value={3}>Trang thái: Cũ hơn 3 tháng</option>
+              <option value={1}>Trang thái: Cũ hơn 1 tháng</option>
+            </select>
+            <button
+              onClick={handleCleanup}
+              disabled={isCleaning}
+              className="rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center min-w-[100px]"
+            >
+              {isCleaning ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> : 'Xoá ngay'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -40,6 +40,16 @@ const driverSchema = new mongoose.Schema({
     trim: true,
     default: null
   },
+  cccd: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  gplx: {
+    type: String,
+    trim: true,
+    default: null
+  },
   status: {
     type: String,
     enum: ['active', 'inactive', 'banned'],

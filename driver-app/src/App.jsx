@@ -266,7 +266,7 @@ function AppContent() {
         isError={true}
       />
       {pushMessage && (
-        <div className="fixed top-2 left-2 right-2 z-[9999] animate-[slideDown_0.3s_ease-out] flex justify-center pointer-events-none">
+        <div className="fixed top-2 left-2 right-2 z-[9999] animate-[slideDown_0.3s_ease-out] flex justify-center pointer-events-none mt-[max(10px,env(safe-area-inset-top))]">
           <div 
             onClick={() => {
               window.dispatchEvent(new CustomEvent('stop_alarm_event'));

@@ -45,6 +45,9 @@ router.put('/:id', verifyToken, onlyAdmin, orderController.updateOrder);
 // POST /api/orders/:id/cancel - Hủy đơn
 router.post('/:id/cancel', verifyToken, anyAuthenticatedUser, orderController.cancelOrder);
 
+// DELETE /api/orders/cleanup - Xóa đơn hàng cũ (Admin)
+router.delete('/cleanup', verifyToken, onlyAdmin, orderController.deleteOldOrders);
+
 // DELETE /api/orders/:id - Xóa đơn hàng (Admin)
 router.delete('/:id', verifyToken, onlyAdmin, orderController.deleteOrder);
 
