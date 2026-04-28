@@ -47,5 +47,19 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>AloShipp cần quyền truy cập vị trí của bạn để có thể lấy tọa độ nhận hàng, giao hàng và theo dõi lộ trình tài xế.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>AloShipp cần quyền vị trí để xác định địa chỉ chính xác của bạn khi đặt đơn hàng.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>remote-notification</string>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>AloShipp cần quyền truy cập Camera để bạn có thể chụp ảnh đại diện hoặc ảnh hàng hóa.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>AloShipp cần quyền truy cập Thư viện ảnh để bạn có thể chọn ảnh đại diện cho hồ sơ của mình.</string>
 </dict>
 </plist>
