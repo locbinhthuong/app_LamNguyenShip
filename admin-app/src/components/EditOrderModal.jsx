@@ -24,7 +24,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     note: '',
     packageDescription: '',
     adminBonus: 0,
-    forceAssignDriverId: ''
+    forceAssignDriverId: '',
+    commissionRate: null
   });
 
   useEffect(() => {
@@ -64,7 +65,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         note: order.note || '',
         packageDescription: order.packageDetails?.description || '',
         adminBonus: order.adminBonus || 0,
-        forceAssignDriverId: order.assignedTo?._id || order.assignedTo || ''
+        forceAssignDriverId: order.assignedTo?._id || order.assignedTo || '',
+        commissionRate: order.commissionRate || null
       });
     }
   }, [order]);
@@ -122,16 +124,26 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                  👨‍✈️ ĐIỀU PHỐI / GÁN TÀI XẾ MỚI
                </label>
                <select 
-                  name="forceAssignDriverId" 
-                  value={formData.forceAssignDriverId} 
-                  onChange={handleChange} 
+                  name="assignOption" 
+                  value={`${formData.forceAssignDriverId || ''}|${formData.commissionRate || ''}`} 
+                  onChange={(e) => {
+                     const [driverId, rate] = e.target.value.split('|');
+                     setFormData(prev => ({
+                       ...prev, 
+                       forceAssignDriverId: driverId, 
+                       commissionRate: rate ? Number(rate) : null
+                     }));
+                  }} 
                   className="w-full rounded-lg border border-purple-300 p-2.5 text-sm bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none font-medium relative z-10 appearance-none"
                >
-                  <option value="">-- Đơn tự do (Tài xế tự giành) --</option>
+                  <option value="|">-- Đơn tự do (Mặc định) --</option>
+                  <option value="|15">-- Đơn tự do (Chiết khấu 15%) --</option>
+                  <option value="|20">-- Đơn tự do (Chiết khấu 20%) --</option>
                   {drivers.sort((a,b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)).map(d => (
-                    <option key={d._id} value={d._id}>
-                      {d.isOnline ? '🟢 [ONLINE]' : '🔴 [OFFLINE]'} - {d.name} ({d.phone})
-                    </option>
+                    <optgroup key={d._id} label={`${d.isOnline ? '🟢 [ONLINE]' : '🔴 [OFFLINE]'} - ${d.name} (${d.phone})`}>
+                      <option value={`${d._id}|15`}>Gán cho {d.name} (Chiết khấu 15%)</option>
+                      <option value={`${d._id}|20`}>Gán cho {d.name} (Chiết khấu 20%)</option>
+                    </optgroup>
                   ))}
                </select>
                <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">

@@ -170,6 +170,12 @@ const orderSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  commissionRate: {
+    type: Number,
+    default: null,
+    min: 0,
+    max: 100
+  },
 
   // Đánh giá
   rating: {

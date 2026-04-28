@@ -334,7 +334,8 @@ const orderController = {
         packageDescription, // Chi tiết Hàng hóa / Mua hộ
         vehicleClass, // Cập nhật loại xe nếu cần
         bankName, bankAccount, bankAccountName, transactionAmount, // Nạp Rút
-        forceAssignDriverId // Cờ Admin cướp quyền Gán đơn
+        forceAssignDriverId, // Cờ Admin cướp quyền Gán đơn
+        commissionRate // Tỉ lệ chiết khấu riêng
       } = req.body;
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
@@ -446,6 +447,7 @@ const orderController = {
         orderToUpdate.deliveryFee = deliveryFee;
       }
       if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
+      if (commissionRate !== undefined) orderToUpdate.commissionRate = commissionRate;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
       if (bulkyFee !== undefined || packageDescription !== undefined) {
@@ -718,7 +720,7 @@ const orderController = {
       // LOGIC CỘNG CÔNG NỢ TỰ ĐỘNG KHI HOÀN THÀNH ĐƠN
       // Tiền nợ = Tổng Phí Giao Hàng * Phần Trăm Chiết Khấu Hiện Tại Của Tài Xế
       const deliveryFee = order.deliveryFee || 0;
-      const commissionRate = driver.commissionRate || 15;
+      const commissionRate = order.commissionRate != null ? order.commissionRate : (driver.commissionRate || 15);
       const debtAmount = Math.round(deliveryFee * (commissionRate / 100));
 
       if (debtAmount > 0) {
