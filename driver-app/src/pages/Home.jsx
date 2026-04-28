@@ -623,7 +623,7 @@ export default function Home() {
       )}
 
       {/* Header Siêu Gọn - Đã chuyển sang nền trắng */}
-      <div className="shrink-0 bg-white px-3 py-3.5 pt-[max(1rem,env(safe-area-inset-top))] relative z-20 shadow-sm border-b border-slate-100 flex items-center justify-between gap-2">
+      <div className="shrink-0 bg-white px-3 py-3.5 safe-pt relative z-20 shadow-sm border-b border-slate-100 flex items-center justify-between gap-2">
         {/* Logo rút gọn */}
         <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-8 w-auto object-contain shrink-0 hidden sm:block" />
         <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-7 w-auto object-contain shrink-0 sm:hidden" />

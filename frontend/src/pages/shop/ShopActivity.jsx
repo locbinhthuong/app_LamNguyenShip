@@ -147,12 +147,12 @@ const ShopActivity = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-gray-50 font-sans overflow-hidden">
-      <div className="shrink-0 bg-white px-4 py-3 relative z-40 flex items-center justify-center border-b border-gray-100 shadow-sm">
+      <div className="shrink-0 bg-white px-4 py-3 safe-pt relative z-40 flex items-center justify-center border-b border-gray-100 shadow-sm">
         <span className="font-bold text-gray-800 text-lg">Hoạt động đơn hàng</span>
       </div>
       
       {/* Tabs */}
-      <div className="shrink-0 sticky top-0 z-30 flex bg-white border-b border-gray-200 safe-pt">
+      <div className="shrink-0 sticky top-0 z-30 flex bg-white border-b border-gray-200">
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'pending' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
           onClick={() => { setFilter('pending'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}

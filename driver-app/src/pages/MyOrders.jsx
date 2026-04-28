@@ -116,7 +116,7 @@ export default function MyOrders() {
   return (
     <div className="min-h-screen bg-slate-50 pb-24 sm:pb-28">
       {/* Header */}
-      <div className="bg-white p-4 pt-[max(2.5rem,env(safe-area-inset-top))]">
+      <div className="bg-white p-4 safe-pt">
         <div className="flex items-center gap-3 mb-3">
           <Link to="/" className="text-slate-800 text-xl font-bold p-1 rounded-full bg-slate-100 hover:bg-slate-200 w-8 h-8 flex items-center justify-center transition-colors">←</Link>
           <h1 className="text-xl font-black text-slate-800 tracking-tight">Thống Kê Đơn Hàng</h1>

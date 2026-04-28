@@ -122,7 +122,7 @@ export default function Earnings() {
   return (
     <div className="min-h-screen bg-white pb-24 sm:pb-28">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-sky-400 p-6 pt-[max(3rem,env(safe-area-inset-top))] text-center shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-500 to-sky-400 p-6 safe-pt text-center shadow-lg relative overflow-hidden">
         <div className="absolute -right-4 -top-8 text-sky-300/30 h-32 w-32">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />

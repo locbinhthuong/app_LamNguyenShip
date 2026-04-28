@@ -197,7 +197,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
   return (
     <div className="fixed inset-0 z-[999] bg-white flex flex-col font-sans">
       {/* MAP HEADER */}
-      <div className="h-14 bg-white flex items-center px-4 relative z-[1000] border-b border-gray-100">
+      <div className="bg-white py-3 px-4 safe-pt relative z-[1000] border-b border-gray-100">
         <button onClick={onClose} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">
           <X size={24} />
         </button>

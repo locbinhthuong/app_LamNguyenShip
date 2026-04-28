@@ -163,7 +163,7 @@ export default function OrderDetail() {
       )}
 
       {/* Header */}
-      <div className="bg-white p-4 pt-[max(2rem,env(safe-area-inset-top))]">
+      <div className="bg-white p-4 safe-pt">
         <div className="mb-4 flex flex-wrap items-start gap-3">
           <button type="button" onClick={() => navigate(-1)} className="shrink-0 text-slate-800 p-1 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
             <ArrowLeft size={20} />
