@@ -173,7 +173,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
 }
 
 export default function Home() {
-  const { driver, setOnline, logout } = useAuth();
+  const { driver, setOnline, logout, loadProfile } = useAuth();
   const navigate = useNavigate();
   const [availableOrders, setAvailableOrders] = useState([]);
   const [myActiveOrders, setMyActiveOrders] = useState([]);
@@ -605,7 +605,7 @@ export default function Home() {
       await updateMyProfile(data);
       showNotification('Cập nhật hồ sơ thành công!');
       setEditModal(false);
-      setTimeout(() => window.location.reload(), 1500);
+      setTimeout(() => loadProfile(), 500);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Lỗi cập nhật', 'error');
     }
