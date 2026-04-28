@@ -39,10 +39,12 @@ const getMotorbikeIcon = (activeOrderCount, status, avatar) => {
 export default function DriverMap() {
   const [loading, setLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(0);
+  const [showDrivers, setShowDrivers] = useState(true);
   
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef({});
+  const showDriversRef = useRef(true);
   
   // Lưu trữ state cho map để render marker (Ref để tránh re-render bản đồ liên tục)
   const dataRef = useRef({
@@ -56,6 +58,15 @@ export default function DriverMap() {
     const { drivers, orders } = dataRef.current;
     
     setOnlineCount(Object.keys(drivers).length);
+
+    if (!showDriversRef.current) {
+        // Xóa tất cả marker nếu đang ẩn
+        Object.keys(markersRef.current).forEach(id => {
+            mapInstance.current.removeLayer(markersRef.current[id]);
+            delete markersRef.current[id];
+        });
+        return;
+    }
 
     // Xóa marker nếu driver đã offline hoặc bị mất khỏi danh sách
     Object.keys(markersRef.current).forEach(id => {
@@ -282,8 +293,21 @@ export default function DriverMap() {
     <div className="flex flex-col h-full w-full p-4 sm:p-6" style={{ minHeight: 'calc(100vh - 3.5rem)' }}>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">🗺️ Bản Đồ Theo Dõi Tài Xế</h1>
-        <div className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-400">
-          🟢 Đang gửi vị trí: {onlineCount}
+        <div className="flex gap-2">
+            <button
+                onClick={() => {
+                    const nextVal = !showDrivers;
+                    setShowDrivers(nextVal);
+                    showDriversRef.current = nextVal;
+                    updateMapMarkers();
+                }}
+                className={`rounded-lg px-4 py-2 text-sm font-bold shadow-sm transition-colors ${showDrivers ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
+            >
+                {showDrivers ? '👁️ Ẩn Tài Xế' : '👁️‍🗨️ Hiện Tài Xế'}
+            </button>
+            <div className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-500 shadow-sm">
+              🟢 Đang gửi vị trí: {onlineCount}
+            </div>
         </div>
       </div>
       
