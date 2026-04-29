@@ -44,7 +44,11 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
           "apns-priority": "10"
         },
         payload: {
-          aps: { sound: "default" }
+          aps: { 
+            alert: { title, body },
+            sound: "default",
+            badge: 1
+          }
         }
       },
       token: fcmToken
@@ -93,7 +97,11 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
           "apns-priority": "10"
         },
         payload: {
-          aps: { sound: "default" }
+          aps: { 
+            alert: { title, body },
+            sound: "default",
+            badge: 1
+          }
         }
       },
       tokens: validTokens
