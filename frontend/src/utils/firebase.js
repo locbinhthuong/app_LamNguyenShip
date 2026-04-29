@@ -38,16 +38,36 @@ export const requestFirebaseToken = async () => {
         console.warn("LỖI_QUYỀN NATIVE: Người dùng từ chối quyền push");
         return null;
       }
+      return new Promise((resolve) => {
+        // Lắng nghe sự kiện đăng ký thành công từ APNs
+        PushNotifications.addListener('registration', async (apnsToken) => {
+          try {
+            // Khi APNs đã trả về token, AppDelegate đã map nó sang Firebase.
+            // Đợi thêm 500ms cho chắc ăn rồi lấy FCM token
+            await new Promise(r => setTimeout(r, 500));
+            const { token } = await FirebaseMessaging.getToken();
+            resolve(token);
+          } catch (err) {
+            console.error("Lỗi lấy FCM token sau khi có APNs:", err);
+            resolve(null);
+          }
+        });
+
+        // Lắng nghe lỗi APNs
+        PushNotifications.addListener('registrationError', (error) => {
+          console.error("Lỗi APNs:", error);
+          resolve(null);
+        });
+
+        // Xin Apple cấp Token
+        PushNotifications.register();
+        
+        // Cầu chì an toàn: Nếu Apple không trả lời sau 10 giây thì bỏ qua để không treo App
+        setTimeout(() => {
+          resolve(null);
+        }, 10000);
+      });
       
-      // Bắt HĐH nối mạng với APNs/FCM
-      await PushNotifications.register();
-      
-      // Chờ 2 giây để đảm bảo AppDelegate nhận được APNs token và map sang Firebase
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // 2. Lấy FCM Token thực sự từ SDK Firebase Native
-      const { token } = await FirebaseMessaging.getToken();
-      return token;
     } catch (err) {
       console.error("LỖI NATIVE PUSH: ", err);
       return null;
