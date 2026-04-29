@@ -42,6 +42,9 @@ export const requestFirebaseToken = async () => {
       // Bắt HĐH nối mạng với APNs/FCM
       await PushNotifications.register();
       
+      // Chờ 2 giây để đảm bảo AppDelegate nhận được APNs token và map sang Firebase
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       // 2. Lấy FCM Token thực sự từ SDK Firebase Native
       const { token } = await FirebaseMessaging.getToken();
       return token;
