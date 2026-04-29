@@ -39,16 +39,19 @@ export const requestFirebaseToken = async () => {
         return null;
       }
       return new Promise((resolve) => {
+        let timeoutId;
         // Lắng nghe sự kiện đăng ký thành công từ APNs
         PushNotifications.addListener('registration', async (apnsToken) => {
           try {
+            if (timeoutId) clearTimeout(timeoutId);
             // Khi APNs đã trả về token, AppDelegate đã map nó sang Firebase.
             // Đợi thêm 500ms cho chắc ăn rồi lấy FCM token
             await new Promise(r => setTimeout(r, 500));
             const { token } = await FirebaseMessaging.getToken();
-            alert('LẤY TOKEN THÀNH CÔNG!\nCột Token đã có mã!'); // DEBUG
+            alert('BƯỚC 1: LẤY MÃ THÀNH CÔNG TỪ APPLE!\nChuẩn bị gửi lên máy chủ...'); // DEBUG
             resolve(token);
           } catch (err) {
+            if (timeoutId) clearTimeout(timeoutId);
             console.error("Lỗi lấy FCM token sau khi có APNs:", err);
             alert('LỖI FIREBASE TỪ CHỐI MÃ:\n' + JSON.stringify(err));
             resolve(null);
@@ -57,6 +60,7 @@ export const requestFirebaseToken = async () => {
 
         // Lắng nghe lỗi APNs
         PushNotifications.addListener('registrationError', (error) => {
+          if (timeoutId) clearTimeout(timeoutId);
           console.error("Lỗi APNs:", error);
           alert('LỖI APPLE (APNs) KHÔNG CẤP MÃ:\n' + JSON.stringify(error));
           resolve(null);
@@ -66,7 +70,7 @@ export const requestFirebaseToken = async () => {
         PushNotifications.register();
         
         // Cầu chì an toàn: Nếu Apple không trả lời sau 10 giây thì bỏ qua để không treo App
-        setTimeout(() => {
+        timeoutId = setTimeout(() => {
           alert('LỖI QUÁ THỜI GIAN:\nApple không thèm trả lời sau 10 giây! (Không kích hoạt được APNs)');
           resolve(null);
         }, 10000);
