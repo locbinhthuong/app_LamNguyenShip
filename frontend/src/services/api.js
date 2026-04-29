@@ -119,8 +119,11 @@ export const getFullImageUrl = (path) => {
   let API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
   
   if (API_URL.endsWith('/api')) {
-    API_URL = API_URL.replace('/api', '');
+    API_URL = API_URL.replace(/\/api\/?$/, '');
   }
   
-  return `${API_URL}${path.startsWith('/') ? '' : '/'}${path}`;
+  const baseUrl = API_URL.replace(/\/+$/, '');
+  const cleanPath = path.replace(/^\/+/, '');
+  
+  return `${baseUrl}/${cleanPath}`;
 };
