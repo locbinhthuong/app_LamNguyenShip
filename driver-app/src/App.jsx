@@ -64,20 +64,25 @@ function AppContent() {
           const decoded = await audioCtxRef.current.decodeAudioData(arrayBuffer);
           audioBufferRef.current = decoded;
         }
-        if (audioCtxRef.current.state === 'suspended') {
-          audioCtxRef.current.resume();
-        }
-      } catch (e) {
-        console.error("Lỗi buffer mp3:", e);
+      } catch (err) {
+        console.error("Audio init error:", err);
       }
     };
     
-    document.addEventListener('click', initAudio, { once: true });
-    document.addEventListener('touchstart', initAudio, { once: true });
+    const resumeAudioContext = () => {
+      initAudio();
+      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume();
+      }
+    };
+
+    // Đánh thức Audio Context ở mọi lần chạm tay vào màn hình
+    document.addEventListener('touchstart', resumeAudioContext, { passive: true });
+    document.addEventListener('click', resumeAudioContext, { passive: true });
     
     return () => {
-      document.removeEventListener('click', initAudio);
-      document.removeEventListener('touchstart', initAudio);
+      document.removeEventListener('touchstart', resumeAudioContext);
+      document.removeEventListener('click', resumeAudioContext);
     };
   }, []);
 
