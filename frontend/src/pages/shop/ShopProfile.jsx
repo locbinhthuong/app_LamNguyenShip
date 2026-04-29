@@ -7,12 +7,12 @@ import LocationPicker from '../../components/LocationPicker';
 export default function ShopProfile() {
   const navigate = useNavigate();
   const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
-  
+
   const [shopName, setShopName] = useState(customerData.shopName || localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn');
   const [shopPhone, setShopPhone] = useState(customerData.phone || localStorage.getItem('shopPhone') || 'Chưa cập nhật');
   const [shopAddress, setShopAddress] = useState(customerData.shopAddress || localStorage.getItem('shopAddress') || 'Chưa cập nhật');
   const [shopAvatar, setShopAvatar] = useState(customerData.avatar || localStorage.getItem('shopAvatar') || '');
-  
+
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({ shopName: '', phone: '', avatar: '' });
@@ -87,9 +87,9 @@ export default function ShopProfile() {
         localStorage.setItem('shopName', updatedUser.shopName);
         localStorage.setItem('shopPhone', updatedUser.phone);
         if (updatedUser.avatar) {
-           localStorage.setItem('shopAvatar', updatedUser.avatar);
+          localStorage.setItem('shopAvatar', updatedUser.avatar);
         }
-        
+
         setShopName(updatedUser.shopName);
         setShopPhone(updatedUser.phone);
         setShopAvatar(updatedUser.avatar || '');
@@ -119,13 +119,13 @@ export default function ShopProfile() {
       });
       if (res.data.success) {
         localStorage.setItem('shopAddress', loc.address);
-        
+
         // Update customerData in localStorage
         const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
         customerData.defaultLocation = loc;
         customerData.shopAddress = loc.address;
         localStorage.setItem('customerData', JSON.stringify(customerData));
-        
+
         setShopAddress(loc.address);
         alert('Cập nhật định vị cửa hàng thành công!');
       }
@@ -140,7 +140,7 @@ export default function ShopProfile() {
 
   return (
     <div className="w-full flex flex-col min-h-screen bg-slate-50 font-sans pb-24 shadow-sm overflow-x-hidden relative">
-      
+
       {/* HEADER */}
       <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center justify-between shadow-sm border-b border-slate-100">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
@@ -153,14 +153,14 @@ export default function ShopProfile() {
 
       {/* BODY CONTENT */}
       <div className="p-4 sm:p-6 space-y-6">
-        
+
         {/* SHOP INFO CARD */}
         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-2 border-slate-100 overflow-hidden relative">
             {shopAvatar ? (
-               <img src={getFullImageUrl(shopAvatar)} alt="Avatar" className="w-full h-full object-cover" />
+              <img src={getFullImageUrl(shopAvatar)} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-               <Store size={32} />
+              <Store size={32} />
             )}
           </div>
           <div className="flex-1">
@@ -197,7 +197,7 @@ export default function ShopProfile() {
                 </div>
               </div>
             </button>
-            
+
             <button className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
@@ -236,7 +236,7 @@ export default function ShopProfile() {
         </div>
 
       </div>
-      
+
       {/* Location Picker */}
       {showLocationPicker && (
         <LocationPicker
@@ -304,7 +304,6 @@ export default function ShopProfile() {
                   className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 outline-none focus:bg-white focus:border-blue-500 transition-all font-medium"
                   placeholder="Để trống nếu không muốn đổi"
                 />
-              </div>
               </div>
             </form>
             <div className="flex gap-3 pt-4 shrink-0 border-t border-slate-100">
