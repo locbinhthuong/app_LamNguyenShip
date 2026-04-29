@@ -1,0 +1,100 @@
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.7970390Z     cd /Users/runner/work/app_LamNguyenShip/app_LamNguyenShip/frontend/ios/App
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.7971860Z     /usr/bin/touch -c /Users/runner/Library/Developer/Xcode/DerivedData/App-broistuctmcxfsfxyamhvokfexom/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.8074180Z 
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9143840Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'third-party-IsAppEncrypted' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9246340Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'nanopb' from project 'nanopb')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9349870Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleUtilities-UserDefaults' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9452230Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleUtilities-Reachability' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9558060Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleUtilities-Network' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9661470Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleUtilities-NSData' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9766550Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleUtilities-Logger' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9837480Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleUtilities-Environment' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:31.9957180Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleUtilities-AppDelegateSwizzler' from project 'GoogleUtilities')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0060620Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'GoogleDataTransport' from project 'GoogleDataTransport')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0249210Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'FirebaseMessaging' from project 'Firebase')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0337280Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'FirebaseInstallations' from project 'Firebase')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0371330Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'FirebaseCoreInternal' from project 'Firebase')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0475390Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'FirebaseCore' from project 'Firebase')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0579790Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'Firebase' from project 'Firebase')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0684030Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'FBLPromises' from project 'Promises')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0781480Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'PushNotificationsPlugin' from project 'CapacitorPushNotifications')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0853630Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'FirebaseMessagingPlugin' from project 'CapacitorFirebaseMessaging')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.0959070Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-Owholemodule, expected -Onone (in target 'CapApp-SPM' from project 'CapApp-SPM')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.1037120Z note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'App' from project 'App')
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.1125960Z ** ARCHIVE SUCCEEDED **
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:32.1209840Z 
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:35.2193930Z 2026-04-28 21:08:35.215 xcodebuild[34964:92682] [MT] IDEDistribution: -[IDEDistributionLogging _createLoggingBundleAtPath:]: Created bundle at path "/var/folders/tb/y368xp_x10s3ty1b_mtl5mxr0000gn/T/App_2026-04-28_21-08-35.205.xcdistributionlogs".
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:35.5226230Z 2026-04-28 21:08:35.522 xcodebuild[34964:92682] [MT] IDEDistribution: Command line name "app-store" is deprecated. Use "app-store-connect" instead.
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.3567980Z Exported App to: /Users/runner/work/_temp/export
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.3666130Z ** EXPORT SUCCEEDED **
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.3770660Z 
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4320550Z ##[group]Run actions/upload-artifact@v4
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4320880Z with:
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4321150Z   name: Customer-App-iOS-IPA
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4321460Z   path: /Users/runner/work/_temp/export/*.ipa
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4321790Z   retention-days: 7
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4322020Z   if-no-files-found: warn
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4322320Z   compression-level: 6
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4322560Z   overwrite: false
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4322840Z   include-hidden-files: false
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:37.4323100Z ##[endgroup]
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:38.3455170Z With the provided path, there will be 1 file uploaded
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:38.3458870Z Artifact name is valid!
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:38.3466590Z Root directory input is valid!
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:38.6082570Z Beginning upload of artifact content to blob storage
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.0960460Z Uploaded bytes 5548188
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.1194460Z Finished uploading artifact content to blob storage!
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.1203020Z SHA256 digest of uploaded artifact zip is ff3d6ec8cdc3a5cfd38aa67dfc931c0aaefe883b64b31cb94b79a60e7b33efd3
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.1206810Z Finalizing artifact upload
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2405380Z Artifact Customer-App-iOS-IPA.zip successfully finalized. Artifact ID 6694786330
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2434220Z Artifact Customer-App-iOS-IPA has been successfully uploaded! Final size is 5548188 bytes. Artifact ID is 6694786330
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2442510Z Artifact download URL: https://github.com/locbinhthuong/app_LamNguyenShip/actions/runs/25077616112/artifacts/6694786330
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2613800Z ##[group]Run mkdir -p ~/.appstoreconnect/private_keys
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2618330Z [36;1mmkdir -p ~/.appstoreconnect/private_keys[0m
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2620570Z [36;1mecho -n "$APP_STORE_CONNECT_API_KEY_P8_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8[0m
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2623240Z [36;1m[0m
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2624140Z [36;1mIPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -n 1)[0m
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2625260Z [36;1m[0m
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2626810Z [36;1mecho "Uploading $IPA_PATH to App Store Connect..."[0m
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.2629810Z [36;1mxcrun altool --upload-app -f "$IPA_PATH" -t ios --apiKey "$APP_STORE_CONNECT_API_KEY_KEY_ID" --apiIssuer "$APP_STORE_CONNECT_API_KEY_ISSUER_ID"[0m
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.5816210Z shell: /bin/bash -e {0}
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.5816600Z env:
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.5817250Z   APP_STORE_CONNECT_API_KEY_ISSUER_ID: ***
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.5817820Z   APP_STORE_CONNECT_API_KEY_KEY_ID: ***
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.5820030Z   APP_STORE_CONNECT_API_KEY_P8_BASE64: ***
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.5820330Z ##[endgroup]
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:39.6767820Z Uploading /Users/runner/work/_temp/export/App.ipa to App Store Connect...
+Build iOS App	UNKNOWN STEP	2026-04-28T21:08:42.4524240Z Running altool at path '/Applications/Xcode_16.4.app/Contents/SharedFrameworks/ContentDeliveryServices.framework/Frameworks/AppStoreService.framework/Support/altool'...
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:11.8628920Z 2026-04-28 21:09:11.861 ERROR: [altool.600000C381C0] [ContentDelivery.Uploader.600000C381C0] Validation failed (409) Redundant Binary Upload. You've already uploaded a build with build number '13' for version number '1.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: dc2a4ac3-e5c7-4a2a-b8bc-2981a64b212f)
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5069440Z 2026-04-28 21:09:22.507  INFO: [altool.600000C381C0] [ContentDelivery.Uploader.600000C381C0] 
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5113350Z =======================================
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5153320Z UPLOAD FAILED with 1 error, 0 warnings, 0 messages
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5169220Z =======================================
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5172270Z 2026-04-28 21:09:22.508 ERROR: [altool.600000C381C0] Error uploading '/Users/runner/work/_temp/export/App.ipa'.
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5175830Z 2026-04-28 21:09:22.508 ERROR: [altool.600000C381C0] Validation failed Redundant Binary Upload. You've already uploaded a build with build number '13' for version number '1.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: dc2a4ac3-e5c7-4a2a-b8bc-2981a64b212f) (409)
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5178490Z  {
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5179600Z     NSLocalizedDescription = "Validation failed";
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5182000Z     NSLocalizedFailureReason = "Redundant Binary Upload. You've already uploaded a build with build number '13' for version number '1.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4). (ID: dc2a4ac3-e5c7-4a2a-b8bc-2981a64b212f)";
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5189040Z     NSUnderlyingError = "Error Domain=IrisAPI Code=-19241 \"Validation failed\" UserInfo={status=409, detail=Redundant Binary Upload. You've already uploaded a build with build number '13' for version number '1.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4)., id=dc2a4ac3-e5c7-4a2a-b8bc-2981a64b212f, code=STATE_ERROR.VALIDATION_ERROR, title=Validation failed, NSLocalizedFailureReason=Redundant Binary Upload. You've already uploaded a build with build number '13' for version number '1.0'. Make sure you increment the build string before you upload your app to App Store Connect. Learn more in Xcode Help (http://help.apple.com/xcode/mac/current/#/devba7f53ad4)., NSLocalizedDescription=Validation failed}";
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5192430Z     "iris-code" = "STATE_ERROR.VALIDATION_ERROR";
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5192790Z }
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5273210Z ##[error]Process completed with exit code 1.
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.5458850Z Post job cleanup.
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.7932820Z [command]/opt/homebrew/bin/git version
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.8334780Z git version 2.54.0
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.8848150Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/6d376c13-b2ea-40f0-a328-1814f60829ac/.gitconfig'
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.8950120Z Temporarily overriding HOME='/Users/runner/work/_temp/6d376c13-b2ea-40f0-a328-1814f60829ac' before making global git config changes
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.9051930Z Adding repository directory to the temporary git global config as a safe directory
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.9154410Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/app_LamNguyenShip/app_LamNguyenShip
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.9470980Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:22.9780790Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.0148650Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.0183860Z http.https://github.com/.extraheader
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.0255300Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.0301230Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.1239480Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.1269150Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.2388280Z Cleaning up orphan processes
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.4528440Z Terminate orphan process: pid (31998) (ibtoold)
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.5090370Z Terminate orphan process: pid (31969) (ibtoold)
+Build iOS App	UNKNOWN STEP	2026-04-28T21:09:23.8102960Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4. Actions will be forced to run with Node.js 24 by default starting June 2nd, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
