@@ -171,7 +171,11 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
   }, [mapCenter, isDragging]);
 
   // Về vị trí GPS hiện tại
-  const locateMe = () => {
+  const locateMe = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -182,7 +186,11 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     }
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     // Trả về toạ độ và tên đường cho App
     onSelect({
       lat: mapCenter[0],
@@ -287,11 +295,14 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
         </div>
 
         {/* NÚT VỀ VỊ TRÍ CỦA TÔI */}
-        <button 
-          type="button"
-          onClick={locateMe}
-          className="absolute bottom-16 right-4 z-[2000] bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
-        >
+          <button 
+            type="button"
+            onClick={(e) => {
+              if (e) { e.preventDefault(); e.stopPropagation(); }
+              locateMe(e);
+            }} 
+            className="absolute bottom-16 right-4 z-[2000] bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
+          >
           <Target size={24} />
         </button>
       </div>
@@ -313,6 +324,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
         </div>
         
         <button 
+          type="button"
           onClick={handleConfirm}
           disabled={isLoadingAddress}
           className={`w-full py-4 text-center rounded-2xl font-bold text-white shadow-xl transition-all ${
