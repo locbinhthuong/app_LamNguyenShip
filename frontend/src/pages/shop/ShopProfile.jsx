@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck } from 'lucide-react';
-import { api } from '../../services/api';
+import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera } from 'lucide-react';
+import { api, getFullImageUrl, uploadCustomerAvatar } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function ShopProfile() {
@@ -11,10 +11,13 @@ export default function ShopProfile() {
   const [shopName, setShopName] = useState(customerData.shopName || localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn');
   const [shopPhone, setShopPhone] = useState(customerData.phone || localStorage.getItem('shopPhone') || 'Chưa cập nhật');
   const [shopAddress, setShopAddress] = useState(customerData.shopAddress || localStorage.getItem('shopAddress') || 'Chưa cập nhật');
+  const [shopAvatar, setShopAvatar] = useState(customerData.avatar || localStorage.getItem('shopAvatar') || '');
   
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({ shopName: '', phone: '' });
+  const [editForm, setEditForm] = useState({ shopName: '', phone: '', avatar: '' });
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const handleLogout = () => {
@@ -42,6 +45,14 @@ export default function ShopProfile() {
     }
   };
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+      setAvatarPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editForm.shopName || !editForm.phone) {
@@ -49,9 +60,24 @@ export default function ShopProfile() {
     }
     try {
       setLoading(true);
+      let finalAvatarUrl = editForm.avatar;
+      if (avatarFile) {
+        try {
+          const result = await uploadCustomerAvatar(avatarFile);
+          if (result.data.success) {
+            finalAvatarUrl = result.data.data.url;
+          }
+        } catch (err) {
+          alert("Lỗi upload ảnh, vui lòng thử lại sau!");
+          setLoading(false);
+          return;
+        }
+      }
+
       const res = await api.put('/auth/customer/me', {
         shopName: editForm.shopName,
-        phone: editForm.phone
+        phone: editForm.phone,
+        avatar: finalAvatarUrl
       });
       if (res.data.success) {
         const updatedUser = res.data.data;
@@ -60,9 +86,13 @@ export default function ShopProfile() {
         localStorage.setItem('customerData', JSON.stringify(newData));
         localStorage.setItem('shopName', updatedUser.shopName);
         localStorage.setItem('shopPhone', updatedUser.phone);
+        if (updatedUser.avatar) {
+           localStorage.setItem('shopAvatar', updatedUser.avatar);
+        }
         
         setShopName(updatedUser.shopName);
         setShopPhone(updatedUser.phone);
+        setShopAvatar(updatedUser.avatar || '');
         setShowEditModal(false);
         alert('Cập nhật thông tin thành công!');
       }
@@ -74,7 +104,9 @@ export default function ShopProfile() {
   };
 
   const openEditModal = () => {
-    setEditForm({ shopName, phone: shopPhone });
+    setEditForm({ shopName, phone: shopPhone, avatar: shopAvatar });
+    setAvatarPreview(shopAvatar || null);
+    setAvatarFile(null);
     setShowEditModal(true);
   };
 
@@ -124,8 +156,12 @@ export default function ShopProfile() {
         
         {/* SHOP INFO CARD */}
         <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-            <Store size={32} />
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-2 border-slate-100 overflow-hidden relative">
+            {shopAvatar ? (
+               <img src={getFullImageUrl(shopAvatar)} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+               <Store size={32} />
+            )}
           </div>
           <div className="flex-1">
             <h2 className="text-xl font-extrabold text-slate-800 line-clamp-1">{shopName}</h2>
@@ -212,10 +248,33 @@ export default function ShopProfile() {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/60 sm:items-center">
-          <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl p-6 pb-10 sm:pb-6 animate-slideUp">
-            <h3 className="text-xl font-bold text-slate-800 mb-6 text-center">Cập nhật thông tin</h3>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
+        <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 sm:items-center p-0">
+          <div className="flex-1 w-full" onClick={() => setShowEditModal(false)}></div>
+          <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl p-6 pb-8 animate-slideUp flex flex-col max-h-[85vh]">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+            <h3 className="text-xl font-bold text-slate-800 mb-6 text-center shrink-0">Cập nhật thông tin</h3>
+            <form onSubmit={handleEditSubmit} className="space-y-4 overflow-y-auto pb-4 px-1">
+              
+              <div className="flex flex-col items-center mb-4">
+                 <div className="relative w-24 h-24 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group">
+                   {avatarPreview ? (
+                     <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                   ) : (
+                     <Store size={40} className="text-gray-300" />
+                   )}
+                   
+                   <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                     <Camera size={24} className="text-white mb-1" />
+                     <span className="text-[10px] font-bold text-white uppercase">Đổi ảnh</span>
+                     <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                   </label>
+                   
+                   <div className="absolute bottom-1 right-1 bg-blue-600 p-1.5 rounded-full border-2 border-white md:hidden pointer-events-none">
+                      <Camera size={12} className="text-white" />
+                   </div>
+                 </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1 ml-1">Tên cửa hàng</label>
                 <input

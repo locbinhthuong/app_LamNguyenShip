@@ -487,7 +487,8 @@ const orderController = {
             const { sendNotification } = require('../utils/notification');
             const title = '💰 Đơn hàng đã được báo giá!';
             const body = `Đơn hàng ${orderToUpdate.serviceType} của bạn đã có phí: ${deliveryFee.toLocaleString('vi-VN')}đ.`;
-            await sendNotification(user.fcmToken, title, body, { url: `/customer/order/${orderToUpdate._id}` });
+            const notifUrl = user.role === 'SHOP' ? `/shop/order/${orderToUpdate._id}` : `/customer/order/${orderToUpdate._id}`;
+            await sendNotification(user.fcmToken, title, body, { url: notifUrl });
           }
         } catch (err) {
           console.error('Lỗi gửi push cho khách hàng:', err);

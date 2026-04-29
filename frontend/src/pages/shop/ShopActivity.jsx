@@ -25,23 +25,7 @@ const ShopActivity = () => {
     fetchOrders();
 
     const handleRefresh = (e) => {
-      const updatedOrder = e.detail;
-      if (updatedOrder && updatedOrder._id) {
-        setOrders(prev => {
-          let exists = false;
-          const newList = prev.map(o => {
-            if (o._id === updatedOrder._id) {
-              exists = true;
-              return updatedOrder;
-            }
-            return o;
-          });
-          if (!exists) newList.unshift(updatedOrder);
-          return newList;
-        });
-      } else {
-        fetchOrders();
-      }
+      fetchOrders();
     };
 
     const handleDeleted = (e) => {
