@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera } from 'lucide-react';
 import { api, getFullImageUrl, uploadCustomerAvatar } from '../../services/api';
@@ -247,7 +248,7 @@ export default function ShopProfile() {
       )}
 
       {/* Edit Modal */}
-      {showEditModal && (
+      {showEditModal && createPortal(
         <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 sm:items-center p-0">
           <div className="flex-1 w-full" onClick={() => setShowEditModal(false)}></div>
           <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl animate-slideUp flex flex-col max-h-[85vh] sm:max-h-[90vh] overflow-hidden">
@@ -328,7 +329,8 @@ export default function ShopProfile() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

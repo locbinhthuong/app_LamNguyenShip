@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2 } from 'lucide-react';
 import { api, uploadCustomerAvatar, getFullImageUrl, deleteMyAccount } from '../../services/api';
@@ -171,8 +172,9 @@ const CustomerProfile = () => {
         </button>
       </div>
 
-      {showEdit && (
-        <div className="absolute inset-0 z-50 bg-black/60 flex flex-col justify-end animate-fadeIn">
+      {/* Edit Modal */}
+      {showEdit && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/60 flex flex-col justify-end animate-fadeIn">
            {/* Nhấn ra ngoài để đóng modal */}
            <div className="flex-1" onClick={() => setShowEdit(false)}></div>
            
@@ -249,7 +251,8 @@ const CustomerProfile = () => {
                 </button>
               </div>
            </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Confirm Delete Account Modal */}
