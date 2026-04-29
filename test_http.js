@@ -1,0 +1,1 @@
+const https = require('https'); https.get('https://api.aloshipp.com/api/health', (res) =, res.statusCode)); https.get('https://api.aloshipp.com/uploads/dummy.jpg', (res) = root:', res.statusCode)); https.get('https://api.aloshipp.com/api/uploads/dummy.jpg', (res) = uploads:', res.statusCode));  

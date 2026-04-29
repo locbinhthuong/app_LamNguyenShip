@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, CheckCircle, Speaker } from 'lucide-react';
-import { getActiveAnnouncements } from '../../services/api';
+import { getActiveAnnouncements, getFullImageUrl } from '../../services/api';
 
 const CustomerNotifications = () => {
   // Hardcode vài thông báo giả lập cho đẹp
@@ -73,14 +73,14 @@ const CustomerNotifications = () => {
                  <div className="flex justify-between items-start mb-1">
                    <h3 className={`text-sm line-clamp-2 ${noti.read ? 'font-semibold text-gray-600' : 'font-bold text-gray-800'}`}>{noti.title}</h3>
                  </div>
-                 <p className="text-xs text-gray-500 leading-relaxed mb-2 whitespace-pre-wrap line-clamp-4">{noti.message}</p>
+                 <p className="text-xs text-gray-500 leading-relaxed mb-2 whitespace-pre-wrap">{noti.message}</p>
                  
                  {/* Nếu có đính kèm ảnh thì hiển thị thu nhỏ */}
                  {noti.imageUrl && !noti.videoUrl && (
-                   <img src={`https://api.aloshipp.com${noti.imageUrl}`} alt="đính kèm" className="w-full h-32 object-cover rounded-lg mb-2 border border-blue-100" />
+                   <img src={getFullImageUrl(noti.imageUrl)} alt="đính kèm" className="w-full h-auto max-h-48 object-contain rounded-lg mb-2 border border-blue-50 bg-gray-50/50 p-1" />
                  )}
                  {noti.videoUrl && (
-                   <video src={`https://api.aloshipp.com${noti.videoUrl}`} className="w-full h-32 object-cover rounded-lg mb-2 border border-blue-100" muted autoPlay playsInline loop></video>
+                   <video src={getFullImageUrl(noti.videoUrl)} className="w-full h-auto max-h-48 object-contain rounded-lg mb-2 border border-blue-50 bg-black" muted autoPlay playsInline loop controls></video>
                  )}
 
                  <span className="text-[10px] text-gray-400 font-medium">{noti.time}</span>

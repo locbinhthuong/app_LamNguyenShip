@@ -176,15 +176,15 @@ const CustomerProfile = () => {
            {/* Nhấn ra ngoài để đóng modal */}
            <div className="flex-1" onClick={() => setShowEdit(false)}></div>
            
-           <div className="w-full bg-white rounded-t-3xl p-5 shadow-2xl animate-slideUp relative flex flex-col max-h-[85%]">
-              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 rounded-full"></div>
+           <div className="w-full bg-white rounded-t-3xl p-5 pb-safe shadow-2xl animate-slideUp relative flex flex-col max-h-[85vh]">
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-12 h-1.5 bg-gray-200 rounded-full shrink-0"></div>
               
               <div className="flex justify-between items-center mb-6 mt-4 shrink-0">
                 <h3 className="text-lg font-bold text-gray-800">Cập nhật thông tin</h3>
                 <button onClick={() => setShowEdit(false)} className="bg-gray-100 p-2 rounded-full text-gray-600 active:scale-90 transition-transform"><X size={16} /></button>
               </div>
               
-              <form onSubmit={handleUpdateProfile} className="space-y-5 overflow-y-auto pb-4">
+              <form id="editCustomerForm" onSubmit={handleUpdateProfile} className="space-y-5 flex-1 overflow-y-auto min-h-0 pb-4 px-1">
                  
                  {/* Upload Avatar Khu vực */}
                  <div className="flex flex-col items-center mb-6">
@@ -236,17 +236,17 @@ const CustomerProfile = () => {
                       onChange={e => setEditForm({...editForm, password: e.target.value})}
                     />
                  </div>
-                 
-                 <div className="pt-2">
-                   <button 
-                    disabled={loading}
-                    type="submit" 
-                    className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 active:bg-blue-700 active:scale-[0.98] transition-all"
-                   >
-                      {loading && <Loader2 size={18} className="animate-spin" />} LƯU LẠI
-                   </button>
-                 </div>
               </form>
+              <div className="pt-4 shrink-0 border-t border-gray-100">
+                <button 
+                 form="editCustomerForm"
+                 disabled={loading}
+                 type="submit" 
+                 className="w-full bg-blue-600 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 active:bg-blue-700 active:scale-[0.98] transition-all"
+                >
+                   {loading && <Loader2 size={18} className="animate-spin" />} LƯU LẠI
+                </button>
+              </div>
            </div>
         </div>
       )}

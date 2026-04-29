@@ -16,11 +16,9 @@ const CustomerLayout = () => {
         if (token) {
           try {
             await updateFcmToken(token);
-            alert('BƯỚC 2: GHI DANH VÀO MÁY CHỦ THÀNH CÔNG!\nXin chúc mừng, bây giờ bạn vuốt tắt App đi và test báo giá!');
             console.log('Cập nhật FCM Token Customer thành công.');
           } catch (error) {
             console.error('Lỗi cập nhật FCM Token Customer:', error);
-            alert('BƯỚC 2 LỖI (KHÔNG GỬI ĐƯỢC LÊN MÁY CHỦ):\n' + (error?.response?.data?.message || error.message));
           }
         }
       }

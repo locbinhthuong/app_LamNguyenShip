@@ -250,10 +250,10 @@ export default function ShopProfile() {
       {showEditModal && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 sm:items-center p-0">
           <div className="flex-1 w-full" onClick={() => setShowEditModal(false)}></div>
-          <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl p-6 pb-8 animate-slideUp flex flex-col max-h-[85vh]">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+          <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl p-6 pb-safe animate-slideUp flex flex-col max-h-[85vh]">
+            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 shrink-0"></div>
             <h3 className="text-xl font-bold text-slate-800 mb-6 text-center shrink-0">Cập nhật thông tin</h3>
-            <form onSubmit={handleEditSubmit} className="space-y-4 overflow-y-auto pb-4 px-1">
+            <form id="editShopForm" onSubmit={handleEditSubmit} className="space-y-4 flex-1 overflow-y-auto min-h-0 pb-4 px-1">
               
               <div className="flex flex-col items-center mb-4">
                  <div className="relative w-24 h-24 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group">
@@ -305,24 +305,26 @@ export default function ShopProfile() {
                   placeholder="Để trống nếu không muốn đổi"
                 />
               </div>
-              <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold"
-                >
-                  Huỷ
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-md shadow-blue-200 flex items-center justify-center gap-2"
-                >
-                  {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-                  Lưu thay đổi
-                </button>
               </div>
             </form>
+            <div className="flex gap-3 pt-4 shrink-0 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-bold active:scale-95 transition-transform"
+              >
+                Huỷ
+              </button>
+              <button
+                form="editShopForm"
+                type="submit"
+                disabled={loading}
+                className="flex-1 py-3.5 bg-blue-600 text-white rounded-2xl font-bold shadow-md shadow-blue-200 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+              >
+                {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+                Lưu thay đổi
+              </button>
+            </div>
           </div>
         </div>
       )}
