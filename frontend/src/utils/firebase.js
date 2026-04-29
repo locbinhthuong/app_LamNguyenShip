@@ -46,9 +46,11 @@ export const requestFirebaseToken = async () => {
             // Đợi thêm 500ms cho chắc ăn rồi lấy FCM token
             await new Promise(r => setTimeout(r, 500));
             const { token } = await FirebaseMessaging.getToken();
+            // alert('FCM Token OK: ' + token.substring(0, 10)); // DEBUG
             resolve(token);
           } catch (err) {
             console.error("Lỗi lấy FCM token sau khi có APNs:", err);
+            alert('Lỗi Firebase: ' + JSON.stringify(err));
             resolve(null);
           }
         });
@@ -56,6 +58,7 @@ export const requestFirebaseToken = async () => {
         // Lắng nghe lỗi APNs
         PushNotifications.addListener('registrationError', (error) => {
           console.error("Lỗi APNs:", error);
+          alert('Lỗi APNs: ' + JSON.stringify(error));
           resolve(null);
         });
 
@@ -64,12 +67,14 @@ export const requestFirebaseToken = async () => {
         
         // Cầu chì an toàn: Nếu Apple không trả lời sau 10 giây thì bỏ qua để không treo App
         setTimeout(() => {
+          // alert('Quá 10 giây không nhận được mã Apple!');
           resolve(null);
         }, 10000);
       });
       
     } catch (err) {
       console.error("LỖI NATIVE PUSH: ", err);
+      alert('Lỗi Native Push: ' + JSON.stringify(err));
       return null;
     }
   } else {
