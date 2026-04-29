@@ -36,6 +36,11 @@ function AppContent() {
   const sourceNodeRef = useRef(null);
   const intervalRef = useRef(null);
 
+  const driverRef = useRef(driver);
+  useEffect(() => {
+    driverRef.current = driver;
+  }, [driver]);
+
   // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay) và Tắt Splash Screen
   useEffect(() => {
     // Ẩn Splash Screen sau khi React đã mount
@@ -122,6 +127,8 @@ function AppContent() {
     
     let lastNewOrderTime = 0;
     const handleNewOrderEvent = (e) => {
+       if (!driverRef.current?.isOnline) return; // BỎ QUA NẾU ĐANG OFFLINE
+
        const order = e.detail;
        if (order) {
            setPushMessage({ 

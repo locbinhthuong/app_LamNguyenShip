@@ -450,6 +450,8 @@ export default function Home() {
     const interval = setInterval(loadData, 30000);
 
     const handleNewOrder = (e) => {
+       if (!driver?.isOnline) return; // BỎ QUA NẾU ĐANG OFFLINE
+       
        loadData();
        // Global Alarm in App.jsx tự động lo khoản chuông
        
