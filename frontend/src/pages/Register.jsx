@@ -11,7 +11,6 @@ const Register = () => {
     password: '',
     role: 'CUSTOMER',
     shopName: '',
-    shopName: '',
     shopAddress: '',
     defaultLocation: null
   });

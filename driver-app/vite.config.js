@@ -15,6 +15,16 @@ export default defineConfig({
         drop_console: true,
         drop_debugger: true
       }
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          capacitor: ['@capacitor/core', '@capacitor/push-notifications', '@capacitor-firebase/messaging'],
+          firebase: ['firebase/app', 'firebase/messaging'],
+          ui: ['lucide-react']
+        }
+      }
     }
   }
 });
