@@ -250,10 +250,13 @@ export default function ShopProfile() {
       {showEditModal && (
         <div className="fixed inset-0 z-[100] flex flex-col justify-end bg-black/60 sm:items-center p-0">
           <div className="flex-1 w-full" onClick={() => setShowEditModal(false)}></div>
-          <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl p-6 pb-safe animate-slideUp flex flex-col max-h-[85vh]">
-            <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 shrink-0"></div>
-            <h3 className="text-xl font-bold text-slate-800 mb-6 text-center shrink-0">Cập nhật thông tin</h3>
-            <form id="editShopForm" onSubmit={handleEditSubmit} className="space-y-4 flex-1 overflow-y-auto min-h-0 pb-4 px-1">
+          <div className="w-full max-w-md bg-white rounded-t-[32px] sm:rounded-3xl animate-slideUp flex flex-col max-h-[85vh] sm:max-h-[90vh] overflow-hidden">
+            <div className="pt-6 pb-2 px-6 shrink-0 bg-white z-10">
+               <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4"></div>
+               <h3 className="text-xl font-bold text-slate-800 text-center">Cập nhật thông tin</h3>
+            </div>
+            
+            <form id="editShopForm" onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               
               <div className="flex flex-col items-center mb-4">
                  <div className="relative w-24 h-24 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group">
@@ -306,7 +309,7 @@ export default function ShopProfile() {
                 />
               </div>
             </form>
-            <div className="flex gap-3 pt-4 shrink-0 border-t border-slate-100">
+            <div className="flex gap-3 px-6 py-4 pb-safe shrink-0 bg-white border-t border-slate-100 z-10">
               <button
                 type="button"
                 onClick={() => setShowEditModal(false)}

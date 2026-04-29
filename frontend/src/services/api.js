@@ -118,10 +118,7 @@ export const getFullImageUrl = (path) => {
   if (path.startsWith('http') || path.startsWith('blob:')) return path;
   let API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
   
-  // Nếu url bắt đầu bằng /uploads thì ghép với gốc API_URL để luôn đi qua Nginx /api/
-  if (API_URL.endsWith('/api') && path.startsWith('/uploads')) {
-    return `${API_URL.replace('/api', '')}/api${path}`;
-  } else if (API_URL.endsWith('/api')) {
+  if (API_URL.endsWith('/api')) {
     API_URL = API_URL.replace('/api', '');
   }
   
