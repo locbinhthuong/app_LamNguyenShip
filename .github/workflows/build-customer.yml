@@ -34,17 +34,23 @@ jobs:
           distribution: 'zulu'
           java-version: '21'
 
-      - name: Build AAB
+      - name: Build AAB and APK
         working-directory: ./frontend/android
         run: |
           chmod +x gradlew
-          ./gradlew bundleRelease
+          ./gradlew bundleRelease assembleRelease
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
           name: Customer-App-Android-AAB
           path: frontend/android/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Customer-App-Android-APK
+          path: frontend/android/app/build/outputs/apk/release/app-release.apk
 
   build-ios:
     name: Build iOS App
