@@ -232,6 +232,11 @@ export const deleteDriverDebt = async (txId) => {
   return response.data;
 };
 
+export const bulkDeleteDriverDebt = async (txIds) => {
+  const response = await api.post('/api/debts/tx/bulk-delete', { txIds });
+  return response.data;
+};
+
 export const updateDriverDebt = async (txId, amount, description) => {
   const response = await api.put(`/api/debts/tx/${txId}`, { amount, description });
   return response.data;
@@ -255,6 +260,11 @@ export const processWithdrawAdmin = async (txId, action, rejectReason) => {
 
 export const deleteWalletTxAdmin = async (txId) => {
   const response = await api.delete(`/api/wallets/admin/tx/${txId}`);
+  return response.data;
+};
+
+export const bulkDeleteWalletTxAdmin = async (txIds) => {
+  const response = await api.post('/api/wallets/admin/tx/bulk-delete', { txIds });
   return response.data;
 };
 

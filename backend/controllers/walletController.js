@@ -213,6 +213,26 @@ const walletController = {
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi báo xoá' });
     }
+  },
+
+  bulkDeleteWalletTx: async (req, res) => {
+    try {
+      const { txIds } = req.body;
+      if (!txIds || !Array.isArray(txIds) || txIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'Danh sách ID không hợp lệ' });
+      }
+
+      await WalletTransaction.deleteMany({ _id: { $in: txIds } });
+
+      // Phát sự kiện cập nhật ví để các Driver load lại dữ liệu
+      if (req.io) {
+        req.io.emit('wallet_updated', {}); // Gửi chung cho tất cả nếu có ảnh hưởng
+      }
+
+      res.status(200).json({ success: true, message: `Đã xóa thành công ${txIds.length} lịch sử giao dịch` });
+    } catch (e) {
+      res.status(500).json({ success: false, message: 'Lỗi server khi xóa hàng loạt' });
+    }
   }
 };
 

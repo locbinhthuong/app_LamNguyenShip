@@ -19,5 +19,6 @@ router.put('/driver/:driverId/daily-debt', debtController.adjustDailyDebt);
 router.post('/driver/:driverId/reset', debtController.resetDebt);
 router.put('/tx/:txId', debtController.updateDebt);
 router.delete('/tx/:txId', debtController.deleteDebt);
+router.post('/tx/bulk-delete', debtController.bulkDeleteDebtTx);
 
 module.exports = router;

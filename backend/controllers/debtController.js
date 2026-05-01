@@ -246,6 +246,27 @@ const debtController = {
     }
   },
 
+  // Xóa nhiều giao dịch nợ cùng lúc (Chỉ xoá Log)
+  bulkDeleteDebtTx: async (req, res) => {
+    try {
+      const { txIds } = req.body;
+      if (!txIds || !Array.isArray(txIds) || txIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'Danh sách ID không hợp lệ' });
+      }
+
+      await DebtTransaction.deleteMany({ _id: { $in: txIds } });
+
+      // Cập nhật giao diện nếu cần
+      if (req.io) {
+        req.io.emit('debt_updated', {}); 
+      }
+
+      res.status(200).json({ success: true, message: `Đã xóa thành công ${txIds.length} lịch sử giao dịch` });
+    } catch (e) {
+      res.status(500).json({ success: false, message: 'Lỗi server khi xóa hàng loạt' });
+    }
+  },
+
   // (DRIVER) Gửi yêu cầu kiểm duyệt thanh toán QR cho Admin
   requestPayment: async (req, res) => {
     try {

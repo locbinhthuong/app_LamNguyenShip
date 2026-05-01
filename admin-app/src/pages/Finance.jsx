@@ -16,6 +16,9 @@ export default function Finance() {
   const [debtModal, setDebtModal] = useState({ isOpen: false, driverId: null });
   const [walletModal, setWalletModal] = useState({ isOpen: false, driverId: null });
 
+  const [selectedDebts, setSelectedDebts] = useState([]);
+  const [selectedWallets, setSelectedWallets] = useState([]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -107,6 +110,43 @@ export default function Finance() {
     }
   };
 
+  const toggleDebtSelection = (id) => setSelectedDebts(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+  const toggleWalletSelection = (id) => setSelectedWallets(prev => prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]);
+  
+  const toggleAllDebts = () => {
+    if (selectedDebts.length === data.recentDebts.length && data.recentDebts.length > 0) setSelectedDebts([]);
+    else setSelectedDebts(data.recentDebts.map(tx => tx._id));
+  };
+  
+  const toggleAllWallets = () => {
+    if (selectedWallets.length === data.recentWallets.length && data.recentWallets.length > 0) setSelectedWallets([]);
+    else setSelectedWallets(data.recentWallets.map(tx => tx._id));
+  };
+
+  const handleBulkDeleteDebts = async () => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${selectedDebts.length} lịch sử nợ đã chọn? (Hành động này CHỈ XÓA LOG LỊCH SỬ và KHÔNG TÁC ĐỘNG ĐẾN TỔNG NỢ hiện tại của tài xế)`)) return;
+    try {
+      await api.post('/api/debts/tx/bulk-delete', { txIds: selectedDebts });
+      alert('Đã xóa lịch sử nợ thành công!');
+      setSelectedDebts([]);
+      fetchData();
+    } catch (e) {
+      alert('Lỗi khi xoá lịch sử nợ hàng loạt.');
+    }
+  };
+
+  const handleBulkDeleteWallets = async () => {
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa ${selectedWallets.length} lịch sử ví đã chọn? (Hành động này CHỈ XÓA LOG LỊCH SỬ và KHÔNG HOÀN TIỀN vào ví tài xế)`)) return;
+    try {
+      await api.post('/api/wallets/admin/tx/bulk-delete', { txIds: selectedWallets });
+      alert('Đã xóa lịch sử ví thành công!');
+      setSelectedWallets([]);
+      fetchData();
+    } catch (e) {
+      alert('Lỗi khi xoá lịch sử ví hàng loạt.');
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
       <div className="flex justify-between items-end mb-8">
@@ -187,15 +227,25 @@ export default function Finance() {
                 </div>
              )}
 
-             <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
-                <span className="w-2 h-6 bg-slate-300 rounded-full"></span> Lịch sử Giao dịch Nợ gần nhất
-             </h2>
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-12 mb-4 gap-3">
+               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-slate-300 rounded-full"></span> Lịch sử Giao dịch Nợ gần nhất
+               </h2>
+               {selectedDebts.length > 0 && (
+                 <button onClick={handleBulkDeleteDebts} className="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-4 rounded-lg text-sm shadow-md transition-colors flex items-center gap-2">
+                   🗑 Xóa {selectedDebts.length} mục đã chọn
+                 </button>
+               )}
+             </div>
              
              {/* Lịch sử Nợ: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden">
                 {data.recentDebts.map(tx => (
-                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-2">
-                      <div className="flex justify-between items-start">
+                   <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-2 relative">
+                      <div className="absolute top-3 right-3 z-10">
+                        <input type="checkbox" className="w-5 h-5 accent-red-500 cursor-pointer" checked={selectedDebts.includes(tx._id)} onChange={() => toggleDebtSelection(tx._id)} />
+                      </div>
+                      <div className="flex justify-between items-start pr-8">
                          <div className="font-bold text-slate-800 truncate">{tx.driverId?.name}</div>
                          <div className={`font-black ${tx.amount > 0 ? 'text-red-500' : 'text-green-500'}`}>
                             {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} đ
@@ -222,6 +272,9 @@ export default function Finance() {
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
+                      <th className="px-4 py-3 font-semibold w-10 text-center">
+                         <input type="checkbox" className="w-4 h-4 accent-red-500 cursor-pointer" checked={selectedDebts.length > 0 && selectedDebts.length === data.recentDebts.length} onChange={toggleAllDebts} />
+                      </th>
                       <th className="px-4 py-3 font-semibold w-40">Tài xế</th>
                       <th className="px-4 py-3 font-semibold w-40">Trạng thái</th>
                       <th className="px-4 py-3 font-semibold text-right w-32">Số tiền</th>
@@ -232,7 +285,10 @@ export default function Finance() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {data.recentDebts.map(tx => (
-                      <tr key={tx._id} className="hover:bg-slate-50">
+                      <tr key={tx._id} className={`hover:bg-slate-50 ${selectedDebts.includes(tx._id) ? 'bg-red-50/50' : ''}`}>
+                         <td className="px-4 py-3 text-center">
+                            <input type="checkbox" className="w-4 h-4 accent-red-500 cursor-pointer" checked={selectedDebts.includes(tx._id)} onChange={() => toggleDebtSelection(tx._id)} />
+                         </td>
                          <td className="px-4 py-3 font-medium text-slate-700">{tx.driverId?.name}</td>
                          <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded text-xs font-bold ${tx.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -376,15 +432,25 @@ export default function Finance() {
                 </div>
              )}
 
-             <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
-                <span className="w-2 h-6 bg-slate-300 rounded-full"></span> Lịch sử Xử lý Rút Ví gần nhất
-             </h2>
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-12 mb-4 gap-3">
+               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-slate-300 rounded-full"></span> Lịch sử Xử lý Rút Ví gần nhất
+               </h2>
+               {selectedWallets.length > 0 && (
+                 <button onClick={handleBulkDeleteWallets} className="bg-red-500 hover:bg-red-600 text-white font-bold py-1.5 px-4 rounded-lg text-sm shadow-md transition-colors flex items-center gap-2">
+                   🗑 Xóa {selectedWallets.length} mục đã chọn
+                 </button>
+               )}
+             </div>
              
              {/* Lịch sử Rút ví: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden">
                 {data.recentWallets.map(tx => (
                    <div key={tx._id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-2 relative overflow-hidden">
-                      <div className="flex justify-between items-start">
+                      <div className="absolute top-3 right-3 z-10">
+                        <input type="checkbox" className="w-5 h-5 accent-red-500 cursor-pointer" checked={selectedWallets.includes(tx._id)} onChange={() => toggleWalletSelection(tx._id)} />
+                      </div>
+                      <div className="flex justify-between items-start pr-8">
                          <div className="font-bold text-slate-800 truncate">{tx.driverId?.name}</div>
                          <div className={`font-black ${tx.amount > 0 ? 'text-green-500' : 'text-slate-600'}`}>
                             {Math.abs(tx.amount).toLocaleString()} đ
@@ -411,6 +477,9 @@ export default function Finance() {
                 <table className="w-full text-left text-sm whitespace-nowrap">
                   <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
+                      <th className="px-4 py-3 font-semibold w-10 text-center">
+                         <input type="checkbox" className="w-4 h-4 accent-red-500 cursor-pointer" checked={selectedWallets.length > 0 && selectedWallets.length === data.recentWallets.length} onChange={toggleAllWallets} />
+                      </th>
                       <th className="px-4 py-3 font-semibold w-40">Tài xế</th>
                       <th className="px-4 py-3 font-semibold w-40">Trạng thái</th>
                       <th className="px-4 py-3 font-semibold text-right w-32">Số tiền</th>
@@ -421,7 +490,10 @@ export default function Finance() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {data.recentWallets.map(tx => (
-                      <tr key={tx._id} className="hover:bg-slate-50">
+                      <tr key={tx._id} className={`hover:bg-slate-50 ${selectedWallets.includes(tx._id) ? 'bg-red-50/50' : ''}`}>
+                         <td className="px-4 py-3 text-center">
+                            <input type="checkbox" className="w-4 h-4 accent-red-500 cursor-pointer" checked={selectedWallets.includes(tx._id)} onChange={() => toggleWalletSelection(tx._id)} />
+                         </td>
                          <td className="px-4 py-3 font-medium text-slate-700">{tx.driverId?.name}</td>
                          <td className="px-4 py-3">
                             <span className={`px-2 py-1 rounded text-xs font-bold ${tx.status === 'SUCCESS' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

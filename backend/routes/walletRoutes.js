@@ -18,5 +18,6 @@ router.post('/admin/:driverId/adjust', walletController.adminAdjustWallet); // N
 
 router.post('/admin/tx/:txId/process', walletController.processWithdraw); // Duyệt/Từ chối lệnh Pending
 router.delete('/admin/tx/:txId', walletController.deleteWalletTx); // Xóa cứng lệnh do lỗi
+router.post('/admin/tx/bulk-delete', walletController.bulkDeleteWalletTx); // Xóa nhiều lịch sử ví cùng lúc
 
 module.exports = router;
