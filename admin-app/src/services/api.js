@@ -147,6 +147,11 @@ export const resetDriverPassword = async (id, newPassword) => {
   return response.data;
 };
 
+export const resetDriverBalances = async (id) => {
+  const response = await api.put(`/api/drivers/${id}/reset-balances`);
+  return response.data;
+};
+
 export const forceOfflineDriver = async (id) => {
   const response = await api.put(`/api/drivers/${id}/force-offline`);
   return response.data;

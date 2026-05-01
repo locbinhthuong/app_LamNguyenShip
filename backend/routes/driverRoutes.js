@@ -26,6 +26,9 @@ router.put('/:id', driverController.updateDriver);
 // PUT /api/drivers/:id/reset-password - Reset mật khẩu
 router.put('/:id/reset-password', driverController.resetPassword);
 
+// PUT /api/drivers/:id/reset-balances - Reset ví và nợ
+router.put('/:id/reset-balances', driverController.resetBalances);
+
 // PUT /api/drivers/:id/force-offline - Tắt định vị tài xế
 router.put('/:id/force-offline', driverController.forceOffline);
 

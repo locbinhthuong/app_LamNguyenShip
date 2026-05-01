@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { getDrivers, deleteDriver, resetDriverPassword, forceOfflineDriver } from '../services/api';
+import { getDrivers, deleteDriver, resetDriverPassword, forceOfflineDriver, resetDriverBalances } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import PromptModal from '../components/PromptModal';
 
@@ -102,6 +102,17 @@ export default function Drivers() {
       await forceOfflineDriver(id);
       // Socket sẽ tự cập nhật lại danh sách nhưng load luôn cho chắc
       await load();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleResetBalances = async (id, name) => {
+    if (!window.confirm(`Bạn có chắc muốn Xóa sạch Công Nợ & Ví Điện Tử của tài xế "${name}" về MỐC 0 không?`)) return;
+    try {
+      await resetDriverBalances(id);
+      await load();
+      alert(`Đã reset thành công cho tài xế "${name}"!`);
     } catch (err) {
       alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
@@ -245,7 +256,14 @@ export default function Drivers() {
                   onClick={() => requestResetPassword(driver._id, driver.name)}
                   className="rounded-xl bg-blue-500/10 px-3 py-2 text-xs font-bold text-blue-400 transition-all hover:bg-blue-500/20"
                 >
-                  🔑 Reset
+                  🔑 Reset Pass
+                </button>
+
+                <button
+                  onClick={() => handleResetBalances(driver._id, driver.name)}
+                  className="rounded-xl bg-purple-500/10 px-3 py-2 text-xs font-bold text-purple-600 transition-all hover:bg-purple-500/20"
+                >
+                  💳 Xóa Nợ/Ví
                 </button>
                 
                 {admin?.role === 'admin' && (
@@ -321,6 +339,13 @@ export default function Drivers() {
                         >
                           🔑 Reset Pass
                         </button>
+                        
+                        <button
+                            onClick={() => handleResetBalances(driver._id, driver.name)}
+                            className="rounded-lg px-3 py-1.5 text-xs font-semibold text-purple-600 hover:bg-purple-50 transition-colors"
+                          >
+                            💳 Xóa Nợ/Ví
+                          </button>
                         <Link to={`/drivers/${driver._id}`}
                           className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-600 hover:bg-blue-100 transition-colors"
                         >

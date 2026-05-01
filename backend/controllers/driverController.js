@@ -1,5 +1,8 @@
 const bcrypt = require('bcryptjs');
 const Driver = require('../models/Driver');
+const DebtTransaction = require('../models/DebtTransaction');
+const WalletTransaction = require('../models/WalletTransaction');
+const { emitToDriver } = require('../sockets/index');
 
 const driverController = {
   // GET /api/drivers - Lấy danh sách tài xế (Admin)
@@ -223,6 +226,68 @@ const driverController = {
         success: false,
         message: 'Lỗi server khi reset mật khẩu'
       });
+    }
+  },
+
+  // PUT /api/drivers/:id/reset-balances - Reset Công Nợ & Ví Điện Tử về 0 (Admin)
+  resetBalances: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const adminId = req.admin._id;
+
+      const driver = await Driver.findById(id);
+      if (!driver) return res.status(404).json({ success: false, message: 'Tài xế không tồn tại' });
+
+      // Reset Wallet
+      const walletBalance = driver.walletBalance || 0;
+      if (walletBalance !== 0) {
+        const type = walletBalance > 0 ? 'ADMIN_ADJUST' : 'DEPOSIT'; 
+        const amountToZero = -walletBalance;
+        const wTx = new WalletTransaction({
+          driverId: id,
+          type: type,
+          amount: amountToZero,
+          status: 'SUCCESS',
+          description: 'Xóa Sạch Ví Điện Tử / Reset Mốc 0',
+          createdByAdminId: adminId
+        });
+        await wTx.save();
+      }
+
+      // Reset Debt
+      const debtValue = driver.walletDebt || 0;
+      if (debtValue !== 0) {
+        const type = debtValue > 0 ? 'PAYMENT' : 'PENALTY';
+        const dTx = new DebtTransaction({
+          driverId: id,
+          type: type,
+          amount: -debtValue,
+          description: 'Xóa Sạch Nợ Tự Động / Thủ công Reset Mốc 0',
+          createdByAdminId: adminId
+        });
+        await dTx.save();
+      }
+
+      // Update Driver
+      const updatedDriver = await Driver.findByIdAndUpdate(
+        id, 
+        { walletBalance: 0, walletDebt: 0 }, 
+        { new: true }
+      ).select('-password');
+
+      if (req.io) {
+        emitToDriver(req.io, id, 'wallet_updated', { balance: 0 });
+        emitToDriver(req.io, id, 'debt_updated', { debt: 0 });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Đã đưa Công Nợ và Ví Điện Tử về MỐC 0!',
+        data: updatedDriver
+      });
+    } catch (error) {
+      console.error('Error resetBalances:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi reset ví và nợ' });
     }
   },
 
