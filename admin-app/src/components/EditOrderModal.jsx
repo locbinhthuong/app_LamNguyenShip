@@ -25,7 +25,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     packageDescription: '',
     adminBonus: 0,
     forceAssignDriverId: '',
-    commissionRate: null
+    commissionRate: null,
+    scheduledPublishAt: ''
   });
 
   useEffect(() => {
@@ -66,7 +67,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         packageDescription: order.packageDetails?.description || '',
         adminBonus: order.adminBonus || 0,
         forceAssignDriverId: order.assignedTo?._id || order.assignedTo || '',
-        commissionRate: order.commissionRate || null
+        commissionRate: order.commissionRate || null,
+        scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''
       });
     }
   }, [order]);
@@ -83,6 +85,10 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (formData.scheduledPublishAt && formData.deliveryFee === 0) {
+       const confirmSchedule = window.confirm('Thông tin đơn có vẻ chưa đầy đủ (Cước xe đang là 0đ). Bạn có chắc chắn muốn Hẹn Giờ Lên Đơn không? \n\n(Bạn có thể sửa lại thông tin trước hoặc sau khi đơn được treo lên)');
+       if (!confirmSchedule) return;
+    }
     onSave(order._id, formData);
   };
 
@@ -309,6 +315,20 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               <input type="text" name="vehicleClass" value={formData.vehicleClass || ''} onChange={handleChange} className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 font-bold focus:border-purple-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-purple-100" placeholder="Chỉ áp dụng Xe ôm hoặc Lái hộ" />
             </div>
           )}
+
+          <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-200">
+            <label className="block text-xs font-bold text-indigo-700 mb-1 flex items-center gap-1">⏰ HẸN GIỜ TREO ĐƠN TỰ ĐỘNG</label>
+            <input 
+              type="datetime-local" 
+              name="scheduledPublishAt" 
+              value={formData.scheduledPublishAt} 
+              onChange={handleChange} 
+              className="w-full rounded-lg border border-indigo-300 p-2 text-sm bg-white font-bold text-indigo-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+            />
+            <p className="text-[10px] text-indigo-500 mt-1 font-medium italic">
+              * Hệ thống sẽ ngầm đếm ngược và tự động đẩy đơn cho Tài xế khi đến đúng giờ hẹn. Đơn này không bị dính cảnh báo "5 phút chưa xử lý".
+            </p>
+          </div>
 
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Ghi chú</label>

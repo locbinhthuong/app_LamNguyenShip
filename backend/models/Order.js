@@ -148,6 +148,12 @@ const orderSchema = new mongoose.Schema({
     ref: 'Admin',
     default: null // Đã đổi thành null vì Khách hàng từ Customer App cũng có thể tạo đơn
   },
+  
+  // Lịch hẹn giờ tự động đẩy đơn cho Tài xế
+  scheduledPublishAt: {
+    type: Date,
+    default: null
+  },
 
   // Thông tin thanh toán
   codAmount: {

@@ -212,6 +212,36 @@ mongoose.connect(MONGO_URI)
 ║                                                      ║
 ╚══════════════════════════════════════════════════════╝
       `);
+
+      // ==================== CRON: HẸN GIỜ LÊN ĐƠN ====================
+      const Order = require('./models/Order');
+      const { emitNewOrder } = require('./sockets/index');
+      setInterval(async () => {
+        try {
+          const now = new Date();
+          // Tìm các đơn đang lưu nháp (DRAFT) có giờ hẹn <= hiện tại
+          const ordersToPublish = await Order.find({
+            status: 'DRAFT',
+            scheduledPublishAt: { $lte: now, $ne: null }
+          });
+
+          if (ordersToPublish.length > 0) {
+            for (const order of ordersToPublish) {
+              order.status = 'PENDING';
+              order.scheduledPublishAt = null; // Đã chạy xong thì xóa lịch
+              await order.save();
+              
+              // Emit cho tài xế
+              const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+              emitNewOrder(io, payload, false);
+              console.log(`[Cron] Tự động treo đơn hẹn giờ thành công: ${order._id}`);
+            }
+          }
+        } catch (error) {
+          console.error('[Cron] Lỗi hẹn giờ lên đơn:', error);
+        }
+      }, 60 * 1000); // 1 phút quét 1 lần
+
     });
   })
   .catch((error) => {

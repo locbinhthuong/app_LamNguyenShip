@@ -123,7 +123,14 @@ export const useAdminSocket = () => {
             const list = res.orders || [];
             const now = Date.now();
             // Nếu có đơn nào tồn tại quá 5 phút
-            const hasPendingTooLong = list.some(o => (now - new Date(o.createdAt).getTime()) > 5 * 60 * 1000);
+            const hasPendingTooLong = list.some(o => {
+                if (o.scheduledPublishAt) {
+                    const scheduledTime = new Date(o.scheduledPublishAt).getTime();
+                    if (scheduledTime > now) return false; // Bỏ qua đơn đang chờ giờ hẹn
+                    return (now - scheduledTime) > 5 * 60 * 1000;
+                }
+                return (now - new Date(o.createdAt).getTime()) > 5 * 60 * 1000;
+            });
             
             if (hasPendingTooLong) {
                 playAdminAlarm('DRAFT_PENDING');

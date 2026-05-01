@@ -345,7 +345,8 @@ const orderController = {
         vehicleClass, // Cập nhật loại xe nếu cần
         bankName, bankAccount, bankAccountName, transactionAmount, // Nạp Rút
         forceAssignDriverId, // Cờ Admin cướp quyền Gán đơn
-        commissionRate // Tỉ lệ chiết khấu riêng
+        commissionRate, // Tỉ lệ chiết khấu riêng
+        scheduledPublishAt // Hẹn giờ lên đơn
       } = req.body;
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
@@ -395,6 +396,7 @@ const orderController = {
       }
       if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
       if (commissionRate !== undefined) orderToUpdate.commissionRate = commissionRate;
+      if (scheduledPublishAt !== undefined) orderToUpdate.scheduledPublishAt = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
       if (bulkyFee !== undefined || packageDescription !== undefined) {
