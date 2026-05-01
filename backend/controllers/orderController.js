@@ -16,7 +16,13 @@ const orderController = {
 
       let query = {};
 
-      if (status) {
+      if (status === 'SCHEDULED') {
+        query.status = 'DRAFT';
+        query.scheduledPublishAt = { $ne: null };
+      } else if (status === 'DRAFT') {
+        query.status = 'DRAFT';
+        query.$or = [{ scheduledPublishAt: null }, { scheduledPublishAt: { $exists: false } }];
+      } else if (status) {
         const statuses = status.split(',').map(s => s.trim().toUpperCase());
         query.status = statuses.length === 1 ? statuses[0] : { $in: statuses };
       }

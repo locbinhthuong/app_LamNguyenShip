@@ -52,6 +52,7 @@ export default function Orders() {
   const tabs = [
     { key: '', label: 'Tất cả' },
     { key: 'DRAFT', label: 'Chờ báo giá', color: 'purple' },
+    { key: 'SCHEDULED', label: 'Đơn hẹn giờ', color: 'indigo' },
     { key: 'PENDING', label: 'Chờ tài xế', color: 'yellow' },
     { key: 'ACCEPTED', label: 'Đã nhận', color: 'blue' },
     { key: 'PICKED_UP,DELIVERING', label: 'Đang giao', color: 'orange' },
@@ -427,8 +428,8 @@ export default function Orders() {
                     </td>
                     <td className="table-td">
                       <div className="flex flex-col items-start gap-1">
-                        <span className={`rounded-full px-2 py-1 text-xs font-bold text-slate-800 ${STATUS_COLORS[order.status]}`}>
-                          {STATUS_LABELS[order.status] || order.status}
+                        <span className={`rounded-full px-2 py-1 text-xs font-bold ${order.status === 'DRAFT' && order.scheduledPublishAt ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : `text-slate-800 ${STATUS_COLORS[order.status]}`}`}>
+                          {order.status === 'DRAFT' && order.scheduledPublishAt ? `⏳ Hẹn: ${formatTime(order.scheduledPublishAt)}` : (STATUS_LABELS[order.status] || order.status)}
                         </span>
                         {order.status === 'PENDING' && order.cancelReason && (
                           <div className="text-[10px] bg-red-500/20 text-red-400 rounded py-0.5 px-1.5 font-medium border border-red-500/30 max-w-[120px] truncate" title={order.cancelReason}>
