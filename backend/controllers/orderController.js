@@ -1054,27 +1054,38 @@ const orderController = {
     }
   },
 
-  // DELETE /api/orders/cleanup - Xoá đơn hàng cũ (Admin)
+  // DELETE /api/orders/cleanup - Xoá đơn hàng theo mốc ngày (Admin)
   deleteOldOrders: async (req, res) => {
     try {
-      const { monthsAgo } = req.body;
-      const months = parseInt(monthsAgo);
-      if (![1, 3, 6].includes(months)) {
-        return res.status(400).json({ success: false, message: 'Số tháng không hợp lệ (Chỉ chấp nhận 1, 3, 6).' });
+      const { startDate, endDate } = req.body;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ success: false, message: 'Vui lòng chọn Từ ngày và Đến ngày hợp lệ.' });
       }
 
-      const cutoffDate = new Date();
-      cutoffDate.setMonth(cutoffDate.getMonth() - months);
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
 
-      // Chỉ xoá đơn COMPLETED hoặc CANCELLED
+      if (start > end) {
+        return res.status(400).json({ success: false, message: 'Từ ngày không thể lớn hơn Đến ngày.' });
+      }
+
+      // Chỉ xoá đơn COMPLETED hoặc CANCELLED trong khoảng thời gian đã chọn
       const result = await Order.deleteMany({
-        createdAt: { $lt: cutoffDate },
+        createdAt: { $gte: start, $lte: end },
         status: { $in: ['COMPLETED', 'CANCELLED'] }
       });
 
+      if (req.io && result.deletedCount > 0) {
+        req.io.emit('refresh_orders_data');
+      }
+
       res.status(200).json({
         success: true,
-        message: `Đã dọn dẹp thành công ${result.deletedCount} đơn hàng từ ${months} tháng trước.`,
+        message: `Đã dọn dẹp thành công ${result.deletedCount} đơn hàng trong khoảng thời gian đã chọn.`,
         deletedCount: result.deletedCount
       });
     } catch (error) {

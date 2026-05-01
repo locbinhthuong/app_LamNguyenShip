@@ -43,7 +43,8 @@ export default function Orders() {
   const [confirmModal, setConfirmModal] = useState({ isOpen: false });
   const [cancelModal, setCancelModal] = useState({ isOpen: false, order: null });
   const [cleanupModal, setCleanupModal] = useState(false);
-  const [cleanupMonths, setCleanupMonths] = useState(6);
+  const [cleanupStartDate, setCleanupStartDate] = useState('');
+  const [cleanupEndDate, setCleanupEndDate] = useState('');
   const [globalSearch, setGlobalSearch] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
   const [selectedOrders, setSelectedOrders] = useState([]);
@@ -186,9 +187,14 @@ export default function Orders() {
   };
 
   const handleCleanup = async () => {
+    if (!cleanupStartDate || !cleanupEndDate) {
+      alert('Vui lòng chọn Từ ngày và Đến ngày');
+      return;
+    }
+    
     try {
       setLoading(true);
-      const res = await cleanupOldOrders(cleanupMonths);
+      const res = await cleanupOldOrders(cleanupStartDate, cleanupEndDate);
       alert(res.message);
       setCleanupModal(false);
       await load(1);
@@ -523,17 +529,25 @@ export default function Orders() {
             <p className="text-sm text-slate-600 mb-4">
               Xóa các đơn hàng <span className="font-bold text-red-600">Đã Hoàn Tất</span> hoặc <span className="font-bold text-red-600">Đã Hủy</span> để giảm tải máy chủ. Không thể khôi phục!
             </p>
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-slate-700 mb-1">Thời gian giữ lại:</label>
-              <select 
-                value={cleanupMonths} 
-                onChange={(e) => setCleanupMonths(Number(e.target.value))}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
-              >
-                <option value={1}>1 tháng trước</option>
-                <option value={3}>3 tháng trước</option>
-                <option value={6}>6 tháng trước</option>
-              </select>
+            <div className="mb-6 flex gap-3">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Từ ngày:</label>
+                <input 
+                  type="date"
+                  value={cleanupStartDate} 
+                  onChange={(e) => setCleanupStartDate(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Đến ngày:</label>
+                <input 
+                  type="date"
+                  value={cleanupEndDate} 
+                  onChange={(e) => setCleanupEndDate(e.target.value)}
+                  className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+                />
+              </div>
             </div>
             <div className="flex gap-3 justify-end">
               <button 
