@@ -203,13 +203,8 @@ const walletController = {
       const { txId } = req.params;
       const tx = await WalletTransaction.findById(txId);
       if (!tx) return res.status(404).json({ success: false, message: 'Không tồn tại' });
-
-      // Nếu đơn rút thành công hoặc giao dịch thành công mới có cộng/trừ walletBalance.
-      // Cần reverse
-      if (tx.status === 'SUCCESS' && tx.type !== 'WITHDRAW_REJECT') { // REJECT không đổi balance
-        await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletBalance: -tx.amount } });
-      }
       
+      // CHỈ XÓA DỮ LIỆU LỊCH SỬ (LOG), KHÔNG HOÀN LẠI TIỀN VÀO VÍ
       await WalletTransaction.findByIdAndDelete(txId);
       
       if (req.io) emitToDriver(req.io, tx.driverId, 'wallet_updated', {});

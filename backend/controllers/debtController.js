@@ -229,24 +229,18 @@ const debtController = {
     }
   },
 
-  // Xoá 1 giao dịch nợ bất kỳ
+  // Xoá 1 giao dịch nợ bất kỳ (Chỉ xoá Log, không hoàn tiền)
   deleteDebt: async (req, res) => {
     try {
       const { txId } = req.params;
       const tx = await DebtTransaction.findById(txId);
       if (!tx) return res.status(404).json({ success: false, message: 'Giao dịch không tồn tại' });
-
-      // Nếu xoá giao dịch, hoàn lại khoản tiền đó vào ví nợ
-      // Vd xóa phạt 20k (+20k) => trừ đi 20k khỏi nợ
-      // Xóa nạp -20k (-20k) => cộng lại 20k vào nợ
-      const amountToReverse = -tx.amount; 
       
-      await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: amountToReverse } });
       await DebtTransaction.findByIdAndDelete(txId);
 
       if (req.io) emitToDriver(req.io, tx.driverId, 'debt_updated', {});
 
-      res.status(200).json({ success: true, message: 'Đã xóa giao dịch và hoàn tất cộng trừ nợ' });
+      res.status(200).json({ success: true, message: 'Đã xóa lịch sử giao dịch thành công' });
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server xóa nợ' });
     }
