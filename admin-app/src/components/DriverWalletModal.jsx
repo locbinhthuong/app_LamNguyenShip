@@ -76,7 +76,7 @@ export default function DriverWalletModal({ driverId, isOpen, onClose }) {
   };
 
   const handleDeleteHistory = async (txId) => {
-    if (!window.confirm('Xóa giao dịch ví CÓ THỂ LÀM LỆCH TỔNG TIỀN VÍ.\nBạn có chắc muốn xóa và hoàn tiền không?')) return;
+    if (!window.confirm('Hành động này CHỈ XÓA LOG LỊCH SỬ và KHÔNG TÁC ĐỘNG ĐẾN TỔNG TIỀN VÍ hiện tại của tài xế.\nBạn có chắc muốn xóa không?')) return;
     try {
        await deleteWalletTxAdmin(txId);
        alert('Xóa thành công!');

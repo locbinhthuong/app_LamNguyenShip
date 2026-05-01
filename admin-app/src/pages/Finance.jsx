@@ -86,7 +86,7 @@ export default function Finance() {
   };
 
   const handleDeleteWalletTx = async (txId) => {
-    if (!window.confirm('Xóa giao dịch này có thể làm lệch tổng tiền ví / bị sai đối soát.\nBạn có chắc chắn muốn xóa?')) return;
+    if (!window.confirm('Hành động này CHỈ XÓA LOG LỊCH SỬ và KHÔNG HOÀN TIỀN vào ví tài xế.\nBạn có chắc chắn muốn xóa?')) return;
     try {
       await api.delete(`/api/wallets/admin/tx/${txId}`);
       alert('Xóa thành công!');
@@ -97,7 +97,7 @@ export default function Finance() {
   };
 
   const handleDeleteDebtTx = async (txId) => {
-    if (!window.confirm('Xóa giao dịch này có thể làm lệch tổng nợ / bị sai đối soát.\nBạn có chắc chắn muốn xóa?')) return;
+    if (!window.confirm('Hành động này CHỈ XÓA LOG LỊCH SỬ và KHÔNG TÁC ĐỘNG ĐẾN TỔNG NỢ hiện tại của tài xế.\nBạn có chắc chắn muốn xóa?')) return;
     try {
       await api.delete(`/api/debts/tx/${txId}`);
       alert('Xóa thành công!');

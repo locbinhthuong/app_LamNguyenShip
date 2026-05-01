@@ -66,7 +66,7 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
   };
 
   const handleDelete = async (txId) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa giao dịch này? Nợ sẽ được hoàn lại!')) return;
+    if (!window.confirm('Hành động này CHỈ XÓA LOG LỊCH SỬ và KHÔNG TÁC ĐỘNG ĐẾN TỔNG NỢ hiện tại của tài xế.\nBạn có chắc muốn xóa không?')) return;
     try {
        await deleteDriverDebt(txId);
        alert('Xóa thành công!');
