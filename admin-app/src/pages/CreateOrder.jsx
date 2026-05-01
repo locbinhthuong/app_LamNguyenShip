@@ -15,7 +15,8 @@ export default function CreateOrder() {
     note: '',
     codAmount: '',
     deliveryFee: '',
-    adminBonus: ''
+    adminBonus: '',
+    scheduledPublishAt: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -123,6 +124,11 @@ export default function CreateOrder() {
       return;
     }
 
+    if (form.scheduledPublishAt && (!form.deliveryFee || parseInt(form.deliveryFee) === 0)) {
+       const confirmSchedule = window.confirm('Thông tin đơn có vẻ chưa đầy đủ (Cước xe đang là 0đ). Bạn có chắc chắn muốn Hẹn Giờ Lên Đơn không? \n\n(Bạn có thể sửa lại thông tin trước hoặc sau khi đơn được treo lên)');
+       if (!confirmSchedule) return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -138,7 +144,8 @@ export default function CreateOrder() {
         note: form.note,
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
         deliveryFee: form.deliveryFee ? parseInt(form.deliveryFee) : 0,
-        adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0
+        adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0,
+        scheduledPublishAt: form.scheduledPublishAt || undefined
       });
       alert('Tạo đơn hàng thành công!');
       navigate('/orders');
@@ -159,7 +166,7 @@ export default function CreateOrder() {
           <span>🤖 Dán Nhanh Đơn Zalo / Facebook</span>
           <button 
             type="button" 
-            onClick={() => { setSmartText(''); setForm({ customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '' }); }}
+            onClick={() => { setSmartText(''); setForm({ customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '' }); }}
             className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
           >
             🔄 Tạo Mới Lại
@@ -297,6 +304,20 @@ export default function CreateOrder() {
                 className="input-field border-emerald-200 bg-emerald-50 focus:border-emerald-500 focus:bg-white text-emerald-700"
               />
             </div>
+          </div>
+
+          <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-200">
+            <label className="block text-xs font-bold text-indigo-700 mb-1 flex items-center gap-1">⏰ HẸN GIỜ TREO ĐƠN TỰ ĐỘNG</label>
+            <input 
+              type="datetime-local" 
+              name="scheduledPublishAt" 
+              value={form.scheduledPublishAt} 
+              onChange={handleChange} 
+              className="w-full rounded-lg border border-indigo-300 p-2 text-sm bg-white font-bold text-indigo-800 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100" 
+            />
+            <p className="text-[10px] text-indigo-500 mt-1 font-medium italic">
+              * Khi hẹn giờ, đơn sẽ nằm ở mục "Đơn hẹn giờ" (DRAFT) và hệ thống sẽ tự động đẩy lên cho tài xế đúng giờ hẹn. Đơn hẹn giờ sẽ bỏ qua cảnh báo 5 phút.
+            </p>
           </div>
 
           <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row">

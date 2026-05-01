@@ -203,7 +203,7 @@ const orderController = {
         });
       }
 
-      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates } = req.body;
+      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, scheduledPublishAt } = req.body;
 
       const order = new Order({
         customerName,
@@ -218,7 +218,8 @@ const orderController = {
         adminBonus: adminBonus || 0,
         pickupCoordinates,
         deliveryCoordinates,
-        status: 'PENDING',
+        status: scheduledPublishAt ? 'DRAFT' : 'PENDING',
+        scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : null,
         createdBy: req.admin._id,
         ipAddress: req.ip
       });
@@ -226,7 +227,7 @@ const orderController = {
       await order.save();
 
       // Emit socket — plain object để createdAt luôn có trong JSON (Mongoose doc đôi khi serialize lệch)
-      if (req.io) {
+      if (req.io && !scheduledPublishAt) {
         const payload = typeof order.toObject === 'function'
           ? order.toObject({ virtuals: true })
           : order;
