@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getDriverRevenue, requestDebtPayment, getMyDebtDetail, getMyWalletDetail, requestWithdraw } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CurrencyInput from '../components/CurrencyInput';
-import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins } from 'lucide-react';
+import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, Eye, EyeOff } from 'lucide-react';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
@@ -21,6 +21,7 @@ export default function Earnings() {
     recentOrders: []
   });
   const [activeTab, setActiveTab] = useState('revenue'); // 'revenue' | 'wallet'
+  const [showBalance, setShowBalance] = useState(false);
   
   // States cho Công Nợ Chi Tiết
   const [debtTransactions, setDebtTransactions] = useState([]);
@@ -88,13 +89,13 @@ export default function Earnings() {
       setIsRequesting(true);
       const res = await requestWithdraw(withdrawForm.amount, withdrawForm.bankName, withdrawForm.accountNumber, withdrawForm.accountName);
       if (res.success) {
-        alert('Đã gửi Lệnh Rút Tiền thành công! Vui lòng chờ Admin duyệt vào sáng mai.');
+        alert('Đã gửi Yêu Cầu Thanh Toán thành công! Vui lòng chờ Admin duyệt vào sáng mai.');
         setShowWithdrawModal(false);
         setWithdrawForm({ amount: '', bankName: '', accountNumber: '', accountName: '' });
         fetchEarnings(); // Refresh
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Lỗi gửi yêu cầu rút tiền');
+      alert(error.response?.data?.message || 'Lỗi gửi yêu cầu thanh toán');
     } finally {
       setIsRequesting(false);
     }
@@ -128,9 +129,14 @@ export default function Earnings() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h1 className="text-sm font-bold text-white uppercase tracking-widest relative z-10 ">Doanh Thu Của Mì Hôm Nay</h1>
+        <div className="flex items-center justify-center gap-2 relative z-10">
+          <h1 className="text-sm font-bold text-white uppercase tracking-widest ">THỐNG KÊ HIỆU SUẤT HÔM NAY</h1>
+          <button onClick={() => setShowBalance(!showBalance)} className="p-1 rounded-full hover:bg-white/20 text-white transition-colors">
+            {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+          </button>
+        </div>
         <p className="mt-1 text-4xl font-black text-white relative z-10 ">
-          {formatCurrency(stats.dailyFee)}
+          {showBalance ? formatCurrency(stats.dailyFee) : '******'}
         </p>
 
         {/* TABS SWITCHER */}
@@ -145,7 +151,7 @@ export default function Earnings() {
              onClick={() => setActiveTab('wallet')}
              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'wallet' ? 'bg-white text-emerald-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
-             <Building2 size={18} /> Ví Điện Tử
+             <Building2 size={18} /> Tài Khoản Đối Tác
            </button>
         </div>
       </div>
@@ -205,18 +211,18 @@ export default function Earnings() {
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4">
             <p className="text-xs text-blue-600 mb-1 font-semibold">Tuần này</p>
-            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.weeklyFee)}</p>
+            <p className="text-lg font-bold text-blue-800">{showBalance ? formatCurrency(stats.weeklyFee) : '******'}</p>
           </div>
           <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4">
             <p className="text-xs text-blue-600 mb-1 font-semibold">Tháng này</p>
-            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.monthlyFee)}</p>
+            <p className="text-lg font-bold text-blue-800">{showBalance ? formatCurrency(stats.monthlyFee) : '******'}</p>
           </div>
         </div>
         
         {/* Thu Nhập Cả Tháng */}
         <div className="rounded-2xl bg-blue-100 border border-blue-200 p-4 mb-8 text-center shadow-md">
           <p className="text-xs text-blue-600 font-semibold mb-1">Tổng Tích Lũy Từ Trước Đến Nay</p>
-          <p className="text-2xl font-black text-blue-700  shadow-blue-500/20">{formatCurrency(stats.totalFee)}</p>
+          <p className="text-2xl font-black text-blue-700  shadow-blue-500/20">{showBalance ? formatCurrency(stats.totalFee) : '******'}</p>
         </div>
 
 
@@ -236,7 +242,7 @@ export default function Earnings() {
                        <p className="text-xs text-slate-500 mb-1 font-semibold flex items-center gap-1">
                          <span>Công Nợ Ngày: {new Date(debt.date).toLocaleDateString('vi-VN')}</span>
                        </p>
-                       <p className="text-xl font-black text-red-600 ">{formatCurrency(debt.amount)}</p>
+                       <p className="text-xl font-black text-red-600 ">{showBalance ? formatCurrency(debt.amount) : '******'}</p>
                      </div>
                      <div className="h-10 w-10 bg-gradient-to-br from-red-400 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
                        <Receipt size={20} />
@@ -264,7 +270,7 @@ export default function Earnings() {
 
             {/* Chi tiết từng ngày - Lịch sử cấn nợ (Công nợ theo dòng thời gian) */}
             <div className="flex justify-between items-center mt-6 mb-3 px-1">
-              <h2 className="text-slate-800 font-bold">Lịch Sử Cấn Nợ / Nạp Rút Sổ Đen</h2>
+              <h2 className="text-slate-800 font-bold">Lịch Sử Đối Soát Chiết Khấu</h2>
               <button 
                 onClick={fetchEarnings} 
                 className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
@@ -326,19 +332,24 @@ export default function Earnings() {
         </div>
         )}
 
-      {/* ===================== TAB 2: VÍ RÚT TIỀN (WALLET) ===================== */}
+      {/* ===================== TAB 2: QUỸ ĐỐI TÁC (WALLET) ===================== */}
       {activeTab === 'wallet' && (
         <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-           {/* Card Ví Tiền */}
+           {/* Card Quỹ */}
            <div className="rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-400 p-6 mb-6 shadow-xl relative overflow-hidden text-white">
               <div className="absolute right-0 top-0 opacity-10">
                  <svg width="150" height="150" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 7H4A2 2 0 002 9V19A2 2 0 004 21H20A2 2 0 0022 19V9A2 2 0 0020 7ZM20 19H4V13H20V19ZM20 11H4V9H20V11Z" />
                  </svg>
               </div>
-              <p className="text-emerald-100 font-medium text-sm mb-1 uppercase tracking-wider relative z-10">Số Dư Hoàn COD / Thưởng</p>
+              <div className="flex items-center justify-between relative z-10 mb-1">
+                <p className="text-emerald-100 font-medium text-sm uppercase tracking-wider">Số Dư Khả Dụng</p>
+                <button onClick={() => setShowBalance(!showBalance)} className="p-1 rounded-full hover:bg-emerald-600/30 text-emerald-100 transition-colors">
+                  {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+                </button>
+              </div>
               <h2 className="text-4xl font-black mb-4 relative z-10 ">
-                 {formatCurrency(walletDetail.availableBalance || 0)}
+                 {showBalance ? formatCurrency(walletDetail.availableBalance || 0) : '******'}
               </h2>
               
               {walletDetail.pendingAmount > 0 && (
@@ -352,16 +363,16 @@ export default function Earnings() {
                 disabled={(walletDetail.availableBalance || 0) < 50000}
                 className="w-full bg-white text-emerald-600 hover:bg-emerald-50 font-black py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition-transform shadow-lg active:scale-[0.98] disabled:opacity-80 disabled:active:scale-100 disabled:pointer-events-none"
               >
-                <Rocket size={20} /> ĐẶT LỆNH RÚT TIỀN
+                <Rocket size={20} /> YÊU CẦU THANH TOÁN
               </button>
               {(walletDetail.availableBalance || 0) < 50000 && (
-                 <p className="text-center text-[10px] text-emerald-100 mt-2">Cần tối thiểu 50,000đ để rút</p>
+                 <p className="text-center text-[10px] text-emerald-100 mt-2">Cần đạt tối thiểu 50,000đ</p>
               )}
            </div>
 
            {/* Lịch Sử Giao Dịch Ví Điện Tử */}
            <div className="flex justify-between items-center mb-3 px-1">
-             <h2 className="text-slate-800 font-bold">Lịch sử Giao Dịch / Rút Tiền</h2>
+             <h2 className="text-slate-800 font-bold">Lịch Sử Giao Dịch Đối Tác</h2>
              <button 
                onClick={fetchEarnings} 
                className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
@@ -376,7 +387,7 @@ export default function Earnings() {
             ) : walletDetail.transactions.length === 0 ? (
                 <div className="bg-slate-50 p-6 rounded-2xl text-center text-slate-500 text-sm border-dashed border-2 border-slate-200 flex flex-col items-center">
                   <Inbox size={48} strokeWidth={1} className="mb-3 text-slate-300" />
-                  Chưa có lịch sử rút/nạp tiền nào
+                  Chưa có lịch sử giao dịch nào
                 </div>
             ) : (
                 <div className="space-y-3 mb-6 pb-20 max-h-[500px] overflow-y-auto pr-1">
@@ -392,7 +403,7 @@ export default function Earnings() {
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${colorObj.bg}`}>{colorObj.icon}</div>
                           <div>
                             <p className={`font-semibold line-clamp-1 ${colorObj.color}`}>
-                              {wtx.type === 'WITHDRAW_REQUEST' ? 'Yêu Cầu Rút' : (wtx.type === 'WITHDRAW_SUCCESS' ? 'Rút Tiền Thành Công' : wtx.description)}
+                              {wtx.type === 'WITHDRAW_REQUEST' ? 'Yêu Cầu Thanh Toán' : (wtx.type === 'WITHDRAW_SUCCESS' ? 'Thanh Toán Thành Công' : wtx.description)}
                             </p>
                             <p className="text-slate-400 text-[11px] mt-0.5">{new Date(wtx.createdAt).toLocaleString('vi-VN')}</p>
                           </div>
@@ -491,12 +502,12 @@ export default function Earnings() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
            <form onSubmit={handleWithdrawSubmit} className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
               <div className="bg-emerald-500 p-4 flex justify-between items-center text-white">
-                  <h3 className="font-bold text-lg">Yêu Cầu Rút Số Dư Ví</h3>
+                  <h3 className="font-bold text-lg">Yêu Cầu Thanh Toán</h3>
                   <button type="button" onClick={() => setShowWithdrawModal(false)} className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/30">✕</button>
               </div>
               <div className="p-6 space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-500 block mb-1">Số tiền rút (Tối đa {formatCurrency(walletDetail.availableBalance)})</label>
+                    <label className="text-xs font-bold text-slate-500 block mb-1">Số lượng quy đổi (Tối đa {formatCurrency(walletDetail.availableBalance)})</label>
                     <CurrencyInput 
                       name="amount"
                       required

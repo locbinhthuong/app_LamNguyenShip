@@ -207,7 +207,7 @@ export default function OrderDetail() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <p className="text-xs text-slate-500 font-bold uppercase">
-                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / LẤY TIỀN' : order.serviceType === 'MUA_HO' ? 'MUA HÀNG TẠI' : 'Lấy Hàng Tại'}
+                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / GIAO DỊCH' : order.serviceType === 'MUA_HO' ? 'MUA HÀNG TẠI' : 'Lấy Hàng Tại'}
                 </p>
                 <a 
                   href={`https://www.google.com/maps/search/?api=1&query=${order.pickupCoordinates?.lat && order.pickupCoordinates.lat !== 10.045 && order.pickupCoordinates.lat !== 10.050 ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
@@ -332,7 +332,7 @@ export default function OrderDetail() {
                  <div className="mb-4 bg-blue-50/50 p-4 rounded-xl border border-blue-200 relative overflow-hidden">
                    <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]"><Building2 size={80}/></div>
                    <div className="flex flex-col relative z-10 space-y-2">
-                     <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider border-b border-blue-100 pb-1">THÔNG TIN GIAO DỊCH TÀI CHÍNH:</span>
+                     <span className="text-[10px] text-blue-500 font-bold uppercase tracking-wider border-b border-blue-100 pb-1">THÔNG TIN GIAO DỊCH ĐỐI TÁC:</span>
                      <div className="font-medium text-xs text-slate-600 flex justify-between items-center pt-1"><span>Ngân Hàng:</span> <b className="text-blue-800 text-sm border border-blue-200 bg-white px-2 py-0.5 rounded">{order.financialDetails?.bankName || 'Chưa rõ'}</b></div>
                      <div className="font-medium text-xs text-slate-600 flex justify-between items-center"><span>Tài Khoản:</span> <b className="text-blue-800 text-lg tracking-wider font-black">{order.financialDetails?.bankAccount || 'Rỗng'}</b></div>
                      <div className="font-medium text-xs text-slate-600 flex justify-between items-center"><span>Chủ TK:</span> <b className="text-blue-800 text-sm uppercase">{order.financialDetails?.bankAccountName || 'Chưa rõ'}</b></div>
@@ -415,7 +415,7 @@ export default function OrderDetail() {
             {order.serviceType === 'MUA_HO' && (
               <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200">
                 <div className="absolute -right-3 -top-1 text-slate-100 opacity-50 group-hover:scale-110 transition-transform"><ShoppingCart size={80}/></div>
-                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Tiền hàng dự kiến</p>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Giá trị hàng hóa (Tạm ứng)</p>
                 <p className="text-orange-600 font-black text-xl sm:text-2xl  relative z-10">
                   {order.purchaseDetails?.estimatedTotal ? `${order.purchaseDetails.estimatedTotal.toLocaleString()}đ` : 'Thỏa thuận'}
                 </p>
@@ -436,7 +436,7 @@ export default function OrderDetail() {
                <div className={`rounded-xl p-3 flex flex-col justify-center border relative overflow-hidden group ${order.isExpectedKpi ? 'bg-slate-50 border-slate-200 border-dashed' : 'bg-slate-50 border-slate-200'}`}>
                  <div className={`absolute -right-3 -top-1 text-slate-200 opacity-50 group-hover:scale-110 transition-transform ${order.isExpectedKpi ? 'grayscale opacity-20' : ''}`}><Trophy size={80}/></div>
                  <p className={`${order.isExpectedKpi ? 'text-slate-500' : 'text-slate-600'} text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1`}>
-                   {order.isExpectedKpi ? 'DỰ KIẾN (NẾU HOÀN THÀNH)' : 'Thưởng năng suất (KPI)'}
+                   {order.isExpectedKpi ? 'DỰ KIẾN (NẾU HOÀN THÀNH)' : 'Thưởng hiệu suất đơn hàng'}
                  </p>
                  <p className={`${order.isExpectedKpi ? 'text-slate-600' : 'text-slate-800'} font-black text-xl sm:text-2xl  relative z-10`}>+{order.kpiBonus?.toLocaleString()}đ</p>
                </div>

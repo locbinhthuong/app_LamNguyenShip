@@ -92,7 +92,7 @@ function OrderCard({ order, onAccept, loading }) {
         </span>
         {order.adminBonus > 0 && (
           <span className="text-slate-600 font-black text-xs w-full text-center tracking-wide flex items-center justify-center gap-1 bg-slate-50 py-1 rounded-md">
-            <Gift size={14}/> THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ
+            <Gift size={14}/> THƯỞNG HIỆU SUẤT HOÀN THÀNH ĐƠN HÀNG: +{order.adminBonus?.toLocaleString()}đ
           </span>
         )}
         <button
@@ -155,7 +155,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
       
       {order.adminBonus > 0 && (
         <div className="mb-2 bg-slate-800/20 rounded-lg p-2 text-center border border-slate-400/20 flex items-center justify-center gap-1">
-           <Gift size={14} className="text-white"/> <span className="text-white font-bold text-xs tracking-wide">ĐƯỢC THƯỞNG VÍ: +{order.adminBonus?.toLocaleString()}đ</span>
+           <Gift size={14} className="text-white"/> <span className="text-white font-bold text-xs tracking-wide">THƯỞNG HIỆU SUẤT HOÀN THÀNH ĐƠN HÀNG: +{order.adminBonus?.toLocaleString()}đ</span>
         </div>
       )}
 
