@@ -1081,6 +1081,33 @@ const orderController = {
       console.error('Error deleteOldOrders:', error);
       res.status(500).json({ success: false, message: 'Lỗi server khi xoá dữ liệu cũ' });
     }
+  },
+
+  // POST /api/orders/bulk-delete - Xoá nhiều đơn hàng (Admin)
+  bulkDeleteOrders: async (req, res) => {
+    try {
+      const { orderIds } = req.body;
+      if (!Array.isArray(orderIds) || orderIds.length === 0) {
+        return res.status(400).json({ success: false, message: 'Danh sách đơn hàng không hợp lệ' });
+      }
+
+      const result = await Order.deleteMany({
+        _id: { $in: orderIds }
+      });
+
+      if (req.io) {
+        req.io.emit('refresh_orders_data');
+      }
+
+      res.status(200).json({
+        success: true,
+        message: `Đã xóa thành công ${result.deletedCount} đơn hàng.`,
+        deletedCount: result.deletedCount
+      });
+    } catch (error) {
+      console.error('Error bulkDeleteOrders:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi xoá nhiều đơn hàng' });
+    }
   }
 };
 

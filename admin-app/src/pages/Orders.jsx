@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getOrders, deleteOrder, updateOrder, cancelOrder, cleanupOldOrders } from '../services/api';
+import { getOrders, deleteOrder, updateOrder, cancelOrder, cleanupOldOrders, bulkDeleteOrders } from '../services/api';
 import EditOrderModal from '../components/EditOrderModal';
 import ConfirmModal from '../components/ConfirmModal';
 import CancelRecallModal from '../components/CancelRecallModal';
@@ -46,6 +46,7 @@ export default function Orders() {
   const [cleanupMonths, setCleanupMonths] = useState(6);
   const [globalSearch, setGlobalSearch] = useState('');
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
+  const [selectedOrders, setSelectedOrders] = useState([]);
 
   const tabs = [
     { key: '', label: 'Tất cả' },
@@ -65,6 +66,7 @@ export default function Orders() {
       
       const { orders: list, pagination: pageData } = await getOrders(params);
       setOrders(list);
+      setSelectedOrders([]); // Reset selection when loading new page
       if (pageData) setPagination(pageData);
     } catch (err) {
       console.error(err);
@@ -197,6 +199,68 @@ export default function Orders() {
     }
   };
 
+  const toggleSelectAll = () => {
+    if (selectedOrders.length === orders.length) {
+      setSelectedOrders([]);
+    } else {
+      setSelectedOrders(orders.map(o => o._id));
+    }
+  };
+
+  const toggleSelectOrder = (id) => {
+    if (selectedOrders.includes(id)) {
+      setSelectedOrders(selectedOrders.filter(orderId => orderId !== id));
+    } else {
+      setSelectedOrders([...selectedOrders, id]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    setConfirmModal({
+      isOpen: true,
+      type: 'bulk_delete',
+      data: selectedOrders,
+      title: `Xóa ${selectedOrders.length} đơn hàng?`,
+      message: `Hành động này sẽ xóa vĩnh viễn ${selectedOrders.length} đơn hàng đã chọn khỏi hệ thống. Bạn có chắc chắn không?`,
+      isDestructive: true
+    });
+  };
+
+  // Add bulk_delete case to handleConfirmAction
+  // Cần ghi đè lại handleConfirmAction
+  const enhancedHandleConfirmAction = async () => {
+    const { type, data } = confirmModal;
+    setConfirmModal({ isOpen: false });
+    
+    if (type === 'delete') {
+      try {
+        await deleteOrder(data);
+        await load(pagination.currentPage);
+      } catch (err) {
+        alert('Không thể xóa đơn hàng');
+      }
+    } else if (type === 'publish') {
+      try {
+        await updateOrder(data, { status: 'PENDING' });
+        await load(pagination.currentPage);
+      } catch (err) {
+        alert('Lỗi đẩy đơn lên chợ');
+      }
+    } else if (type === 'bulk_delete') {
+      try {
+        setLoading(true);
+        const res = await bulkDeleteOrders(data);
+        alert(res.message);
+        setSelectedOrders([]);
+        await load(pagination.currentPage);
+      } catch (err) {
+        alert('Không thể xóa hàng loạt đơn hàng');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const tabColorMap = {
     slate: 'text-slate-600',
     yellow: 'text-yellow-400',
@@ -230,6 +294,15 @@ export default function Orders() {
           </Link>
         </div>
       </div>
+      
+      {selectedOrders.length > 0 && (
+        <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <div className="text-sm font-medium">Đã chọn <span className="font-bold">{selectedOrders.length}</span> đơn hàng.</div>
+          <button onClick={handleBulkDelete} className="bg-red-600 text-white px-4 py-1.5 rounded text-sm font-bold shadow hover:bg-red-700 transition">
+            🗑️ Xóa các mục đã chọn
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="mb-5 flex gap-2 overflow-x-auto pb-1">
@@ -271,6 +344,14 @@ export default function Orders() {
             <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-slate-200">
+                  <th className="table-th w-10 text-center">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                      checked={orders.length > 0 && selectedOrders.length === orders.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th className="table-th">Mã</th>
                   <th className="table-th">Khách hàng</th>
                   <th className="table-th">Lộ trình / Địa chỉ giao</th>
@@ -283,7 +364,15 @@ export default function Orders() {
               </thead>
               <tbody>
                 {orders.map(order => (
-                  <tr key={order._id} className="hover:bg-blue-50/50">
+                  <tr key={order._id} className={`hover:bg-blue-50/50 ${selectedOrders.includes(order._id) ? 'bg-blue-50' : ''}`}>
+                    <td className="table-td text-center border-r border-slate-100">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        checked={selectedOrders.includes(order._id)}
+                        onChange={() => toggleSelectOrder(order._id)}
+                      />
+                    </td>
                     <td className="table-td text-left">
                       <p className="font-mono text-sm font-bold text-blue-600">{order.orderCode || order._id?.slice(-8).toUpperCase()}</p>
                       <div className="mt-1">
@@ -415,7 +504,7 @@ export default function Orders() {
         message={confirmModal.message}
         confirmText={confirmModal.confirmText}
         isDestructive={confirmModal.isDestructive}
-        onConfirm={handleConfirmAction}
+        onConfirm={enhancedHandleConfirmAction}
         onCancel={() => setConfirmModal({ isOpen: false })}
       />
 

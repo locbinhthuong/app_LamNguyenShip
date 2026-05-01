@@ -108,6 +108,11 @@ export const deleteOrder = async (id) => {
   return response.data;
 };
 
+export const bulkDeleteOrders = async (orderIds) => {
+  const response = await api.post('/api/orders/bulk-delete', { orderIds });
+  return response.data;
+};
+
 // ==================== DRIVERS ====================
 export const getDrivers = async (params) => {
   const response = await api.get('/api/drivers', { params });
