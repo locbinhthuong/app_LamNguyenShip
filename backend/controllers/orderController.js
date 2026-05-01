@@ -1079,6 +1079,19 @@ const orderController = {
         status: { $in: ['COMPLETED', 'CANCELLED'] }
       });
 
+      // Recount stats for all drivers
+      if (result.deletedCount > 0) {
+        const allDrivers = await Driver.find({}, '_id');
+        for (const drv of allDrivers) {
+          const completed = await Order.countDocuments({ assignedTo: drv._id, status: 'COMPLETED' });
+          const cancelled = await Order.countDocuments({ assignedTo: drv._id, status: 'CANCELLED' });
+          await Driver.findByIdAndUpdate(drv._id, {
+            'stats.completedOrders': completed,
+            'stats.cancelledOrders': cancelled
+          });
+        }
+      }
+
       if (req.io && result.deletedCount > 0) {
         req.io.emit('refresh_orders_data');
       }
@@ -1105,6 +1118,19 @@ const orderController = {
       const result = await Order.deleteMany({
         _id: { $in: orderIds }
       });
+
+      // Recount stats for all drivers
+      if (result.deletedCount > 0) {
+        const allDrivers = await Driver.find({}, '_id');
+        for (const drv of allDrivers) {
+          const completed = await Order.countDocuments({ assignedTo: drv._id, status: 'COMPLETED' });
+          const cancelled = await Order.countDocuments({ assignedTo: drv._id, status: 'CANCELLED' });
+          await Driver.findByIdAndUpdate(drv._id, {
+            'stats.completedOrders': completed,
+            'stats.cancelledOrders': cancelled
+          });
+        }
+      }
 
       if (req.io) {
         req.io.emit('refresh_orders_data');
