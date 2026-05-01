@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getOrders, deleteOrder, updateOrder, cancelOrder } from '../services/api';
+import { getOrders, deleteOrder, updateOrder, cancelOrder, cleanupOldOrders } from '../services/api';
 import EditOrderModal from '../components/EditOrderModal';
 import ConfirmModal from '../components/ConfirmModal';
 import CancelRecallModal from '../components/CancelRecallModal';
@@ -42,7 +42,10 @@ export default function Orders() {
   
   const [confirmModal, setConfirmModal] = useState({ isOpen: false });
   const [cancelModal, setCancelModal] = useState({ isOpen: false, order: null });
+  const [cleanupModal, setCleanupModal] = useState(false);
+  const [cleanupMonths, setCleanupMonths] = useState(6);
   const [globalSearch, setGlobalSearch] = useState('');
+  const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalItems: 0 });
 
   const tabs = [
     { key: '', label: 'Tất cả' },
@@ -54,14 +57,15 @@ export default function Orders() {
     { key: 'CANCELLED', label: 'Đã hủy', color: 'red' },
   ];
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (pageToLoad = 1) => {
     try {
-      const params = {};
+      const params = { page: pageToLoad, limit: 50 };
       if (filter) params.status = filter;
       if (globalSearch) params.search = globalSearch;
       
-      const { orders: list } = await getOrders(params);
+      const { orders: list, pagination: pageData } = await getOrders(params);
       setOrders(list);
+      if (pageData) setPagination(pageData);
     } catch (err) {
       console.error(err);
     } finally {
@@ -72,20 +76,33 @@ export default function Orders() {
   useEffect(() => {
     setLoading(true);
     const delayDebounceFn = setTimeout(() => {
-      load();
+      load(1);
     }, 600);
 
     return () => clearTimeout(delayDebounceFn);
   }, [load]);
 
   useEffect(() => {
-    const interval = setInterval(load, 30000); // Tăng lên 30s vì đã có Realtime
+    const interval = setInterval(() => {
+      // Dùng currentPage hiện tại thay vì reset về 1
+      setPagination(prev => {
+        load(prev.currentPage);
+        return prev;
+      });
+    }, 30000);
 
-    window.addEventListener('refresh_admin_orders', load);
+    const handleRefresh = () => {
+      setPagination(prev => {
+        load(prev.currentPage);
+        return prev;
+      });
+    };
+    
+    window.addEventListener('refresh_admin_orders', handleRefresh);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('refresh_admin_orders', load);
+      window.removeEventListener('refresh_admin_orders', handleRefresh);
     };
   }, [load]);
 
@@ -158,11 +175,25 @@ export default function Orders() {
     try {
       await updateOrder(id, updatedData);
       setEditingOrder(null);
-      await load();
+      await load(pagination.currentPage);
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       alert(`Lỗi sửa đơn: ${msg}`);
       console.error('Lỗi chi tiết:', err.response?.data || err);
+    }
+  };
+
+  const handleCleanup = async () => {
+    try {
+      setLoading(true);
+      const res = await cleanupOldOrders(cleanupMonths);
+      alert(res.message);
+      setCleanupModal(false);
+      await load(1);
+    } catch (err) {
+      alert(err.response?.data?.message || 'Lỗi dọn dẹp dữ liệu');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -180,7 +211,7 @@ export default function Orders() {
       {/* Header + Tabs + Search */}
       <div className="mb-5 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-lg font-bold text-slate-800 sm:text-2xl">📦 Quản lý Đơn hàng</h1>
-        <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto mt-2 sm:mt-0 items-center">
           <input 
             type="text" 
             placeholder="🔍 Tìm Mã đơn, Tên, Số điện thoại..." 
@@ -188,7 +219,13 @@ export default function Orders() {
             value={globalSearch}
             onChange={(e) => setGlobalSearch(e.target.value)}
           />
-          <Link to="/orders/create" className="btn-primary shrink-0 text-center text-sm font-bold sm:px-6 sm:text-base">
+          <button 
+            onClick={() => setCleanupModal(true)} 
+            className="bg-red-50 text-red-600 border border-red-200 rounded-lg px-3 py-1.5 text-sm font-bold hover:bg-red-100 transition-colors"
+          >
+            🧹 Dọn dẹp
+          </button>
+          <Link to="/orders/create" className="btn-primary shrink-0 text-center text-sm font-bold px-4 py-1.5 rounded-lg">
             + Tạo đơn
           </Link>
         </div>
@@ -333,6 +370,34 @@ export default function Orders() {
               </tbody>
             </table>
           </div>
+
+          {/* Phân trang */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-4">
+              <div className="text-sm text-slate-500 hidden sm:block">
+                Hiển thị <span className="font-bold">{orders.length}</span> / <span className="font-bold">{pagination.totalItems}</span> đơn hàng
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <button 
+                  disabled={pagination.currentPage <= 1}
+                  onClick={() => load(pagination.currentPage - 1)}
+                  className="px-4 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50"
+                >
+                  ← Trang trước
+                </button>
+                <div className="px-4 py-2 text-sm font-bold text-slate-800 bg-slate-100 rounded-lg">
+                  {pagination.currentPage} / {pagination.totalPages}
+                </div>
+                <button 
+                  disabled={pagination.currentPage >= pagination.totalPages}
+                  onClick={() => load(pagination.currentPage + 1)}
+                  className="px-4 py-2 text-sm font-bold text-slate-600 bg-white border border-slate-300 rounded-lg disabled:opacity-50 hover:bg-slate-50"
+                >
+                  Trang sau →
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -360,6 +425,44 @@ export default function Orders() {
         onClose={() => setCancelModal({ isOpen: false, order: null })}
         onAction={handleCancelAction}
       />
+
+      {/* Modal dọn dẹp dữ liệu */}
+      {cleanupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-800 mb-2">🧹 Dọn dẹp dữ liệu cũ</h3>
+            <p className="text-sm text-slate-600 mb-4">
+              Xóa các đơn hàng <span className="font-bold text-red-600">Đã Hoàn Tất</span> hoặc <span className="font-bold text-red-600">Đã Hủy</span> để giảm tải máy chủ. Không thể khôi phục!
+            </p>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-slate-700 mb-1">Thời gian giữ lại:</label>
+              <select 
+                value={cleanupMonths} 
+                onChange={(e) => setCleanupMonths(Number(e.target.value))}
+                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value={1}>1 tháng trước</option>
+                <option value={3}>3 tháng trước</option>
+                <option value={6}>6 tháng trước</option>
+              </select>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button 
+                onClick={() => setCleanupModal(false)}
+                className="px-4 py-2 text-sm font-bold text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={handleCleanup}
+                className="px-4 py-2 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700"
+              >
+                Tiến hành Xóa
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
