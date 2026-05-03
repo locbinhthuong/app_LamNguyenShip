@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2, Store, FileText, HelpCircle, QrCode, ScrollText, Inbox } from 'lucide-react';
-import { api, uploadShopAvatar, getFullImageUrl, deleteMyAccount, getActiveAnnouncements } from '../../services/api';
+import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera, FileText, HelpCircle, QrCode, X, Loader2, ScrollText, Inbox } from 'lucide-react';
+import { api, getFullImageUrl, uploadCustomerAvatar, getActiveAnnouncements } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function ShopProfile() {
