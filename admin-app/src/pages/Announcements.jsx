@@ -331,8 +331,9 @@ export default function Announcements() {
 
       {/* Modal Thêm/Sửa */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl relative my-8">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm">
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl relative">
             <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-2xl">
               <h2 className="text-xl font-bold text-slate-800">{isEditing ? 'Sửa Bảng Tin' : 'Đăng Bảng Tin Mới'}</h2>
               <button disabled={isUploading} onClick={() => setShowModal(false)} className="text-slate-400 hover:text-red-500 text-2xl leading-none">&times;</button>
@@ -565,6 +566,7 @@ export default function Announcements() {
                </div>
             </form>
           </div>
+         </div>
         </div>
       )}
     </div>
