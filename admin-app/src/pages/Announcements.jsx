@@ -244,14 +244,29 @@ export default function Announcements() {
                      <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">🔔 THÔNG BÁO</span>
                    </div>
                  )}
-                 {ann.type === 'TERMS_DRIVER' && (
+                 {ann.type === 'TERMS_DRIVER_USAGE' && (
                    <div className="absolute top-2 left-2 z-20">
-                     <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 Đ.KHOẢN T.XẾ</span>
+                     <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 Đ.KHOẢN SD (TX)</span>
                    </div>
                  )}
-                 {ann.type === 'TERMS_CUSTOMER' && (
+                 {ann.type === 'TERMS_DRIVER_PRIVACY' && (
                    <div className="absolute top-2 left-2 z-20">
-                     <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 Đ.KHOẢN KH</span>
+                     <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow">🔒 BẢO MẬT (TX)</span>
+                   </div>
+                 )}
+                 {ann.type === 'TERMS_CUSTOMER_USAGE' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 Đ.KHOẢN SD (KH)</span>
+                   </div>
+                 )}
+                 {ann.type === 'TERMS_CUSTOMER_PRIVACY' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow">🔒 BẢO MẬT (KH)</span>
+                   </div>
+                 )}
+                 {(ann.type === 'TERMS_DRIVER' || ann.type === 'TERMS_CUSTOMER') && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-gray-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">⚠️ BẢN CŨ</span>
                    </div>
                  )}
                  {ann.type === 'BANNER' && (
@@ -322,13 +337,21 @@ export default function Announcements() {
                         <input type="radio" name="type" value="NOTIFICATION" checked={form.type === 'NOTIFICATION'} onChange={(e) => setForm({...form, type: 'NOTIFICATION'})} className="hidden" />
                         🔔 Thông Báo
                      </label>
-                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_DRIVER' ? 'bg-purple-50 border-purple-500 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
-                        <input type="radio" name="type" value="TERMS_DRIVER" checked={form.type === 'TERMS_DRIVER'} onChange={(e) => setForm({...form, type: 'TERMS_DRIVER'})} className="hidden" />
-                        📜 Đ.Khoản T.Xế
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_DRIVER_USAGE' ? 'bg-purple-50 border-purple-500 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="TERMS_DRIVER_USAGE" checked={form.type === 'TERMS_DRIVER_USAGE'} onChange={(e) => setForm({...form, type: 'TERMS_DRIVER_USAGE'})} className="hidden" />
+                        📜 Đ.Khoản SD (TX)
                      </label>
-                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_CUSTOMER' ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
-                        <input type="radio" name="type" value="TERMS_CUSTOMER" checked={form.type === 'TERMS_CUSTOMER'} onChange={(e) => setForm({...form, type: 'TERMS_CUSTOMER'})} className="hidden" />
-                        📜 Đ.Khoản KH
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_DRIVER_PRIVACY' ? 'bg-purple-100 border-purple-600 text-purple-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="TERMS_DRIVER_PRIVACY" checked={form.type === 'TERMS_DRIVER_PRIVACY'} onChange={(e) => setForm({...form, type: 'TERMS_DRIVER_PRIVACY'})} className="hidden" />
+                        🔒 Bảo Mật (TX)
+                     </label>
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_CUSTOMER_USAGE' ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="TERMS_CUSTOMER_USAGE" checked={form.type === 'TERMS_CUSTOMER_USAGE'} onChange={(e) => setForm({...form, type: 'TERMS_CUSTOMER_USAGE'})} className="hidden" />
+                        📜 Đ.Khoản SD (KH)
+                     </label>
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_CUSTOMER_PRIVACY' ? 'bg-indigo-100 border-indigo-600 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="TERMS_CUSTOMER_PRIVACY" checked={form.type === 'TERMS_CUSTOMER_PRIVACY'} onChange={(e) => setForm({...form, type: 'TERMS_CUSTOMER_PRIVACY'})} className="hidden" />
+                        🔒 Bảo Mật (KH)
                      </label>
                      <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'BANNER' ? 'bg-pink-50 border-pink-500 text-pink-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
                         <input type="radio" name="type" value="BANNER" checked={form.type === 'BANNER'} onChange={(e) => setForm({...form, type: 'BANNER', title: 'Quảng Cáo', content: 'Hình ảnh quảng cáo'})} className="hidden" />

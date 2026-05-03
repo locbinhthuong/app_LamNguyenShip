@@ -19,14 +19,16 @@ const CustomerProfile = () => {
 
   const [showTermsContent, setShowTermsContent] = useState(false);
   const [termsData, setTermsData] = useState([]);
+  const [termsTitle, setTermsTitle] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
   
   const [showContact, setShowContact] = useState(false);
 
-  const fetchTerms = async (type) => {
+  const fetchTerms = async (type, title) => {
     try {
       setLoadingTerms(true);
       setShowTermsContent(true);
+      setTermsTitle(title);
       setTermsData([]);
       const res = await getActiveAnnouncements();
       if (res && res.success) {
@@ -182,12 +184,22 @@ const CustomerProfile = () => {
         <div>
           <h3 className="font-extrabold text-gray-400 text-[11px] uppercase tracking-wider mb-2 px-1 mt-4">Hệ thống</h3>
           <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
-            <div onClick={() => fetchTerms('TERMS_CUSTOMER')} className="p-4 flex items-center justify-between border-b border-gray-100 cursor-pointer active:bg-gray-50 transition-colors">
+            <div onClick={() => fetchTerms('TERMS_CUSTOMER_USAGE', 'Điều khoản sử dụng')} className="p-4 flex items-center justify-between border-b border-gray-100 cursor-pointer active:bg-gray-50 transition-colors">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
+                   <ScrollText size={20} />
+                 </div>
+                 <span className="font-semibold text-gray-800">Điều khoản sử dụng</span>
+               </div>
+               <ChevronRight size={18} className="text-gray-400" />
+            </div>
+
+            <div onClick={() => fetchTerms('TERMS_CUSTOMER_PRIVACY', 'Chính sách bảo mật')} className="p-4 flex items-center justify-between border-b border-gray-100 cursor-pointer active:bg-gray-50 transition-colors">
                <div className="flex items-center gap-3">
                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
                    <ShieldCheck size={20} />
                  </div>
-                 <span className="font-semibold text-gray-800">Chính sách & Điều khoản</span>
+                 <span className="font-semibold text-gray-800">Chính sách bảo mật</span>
                </div>
                <ChevronRight size={18} className="text-gray-400" />
             </div>
@@ -341,7 +353,10 @@ const CustomerProfile = () => {
         <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden animate-slideUp">
             <div className="bg-purple-600 p-4 shrink-0 flex justify-between items-center text-white relative">
-              <h2 className="font-bold text-lg flex items-center gap-2"><ScrollText size={20} /> Quy định & Chính sách bảo mật</h2>
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                {termsTitle === 'Chính sách bảo mật' ? <ShieldCheck size={20} /> : <ScrollText size={20} />} 
+                {termsTitle}
+              </h2>
               <button onClick={() => setShowTermsContent(false)} className="rounded-full bg-black/10 hover:bg-black/20 p-2 border-0 w-8 h-8 flex items-center justify-center transition-colors">
                 ✕
               </button>

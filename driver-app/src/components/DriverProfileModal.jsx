@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getActiveAnnouncements, uploadDriverAvatar, getFullImageUrl, deleteMyAccount } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { User, Phone, Bike, Car, Edit3, ScrollText, Trash2, Camera, Inbox, AlertTriangle } from 'lucide-react';
+import { User, Phone, Bike, Car, Edit3, ScrollText, ShieldCheck, Headphones, Trash2, Camera, Inbox, AlertTriangle } from 'lucide-react';
 
 export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
@@ -12,7 +12,10 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
 
   const [showTerms, setShowTerms] = useState(false);
   const [termsData, setTermsData] = useState([]);
+  const [termsTitle, setTermsTitle] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
+  
+  const [showContact, setShowContact] = useState(false);
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -97,13 +100,14 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
     }
   };
 
-  const handleShowTerms = async () => {
+  const handleShowTerms = async (type, title) => {
     setShowTerms(true);
+    setTermsTitle(title);
     setLoadingTerms(true);
     try {
       const res = await getActiveAnnouncements();
       if (res.success) {
-        setTermsData(res.data.filter(item => item.type === 'TERMS_DRIVER'));
+        setTermsData(res.data.filter(item => item.type === type));
       }
     } catch (err) {
       console.error(err);
@@ -191,10 +195,22 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               <Edit3 size={18} /> Chỉnh sửa hồ sơ
             </button>
             <button 
-              onClick={handleShowTerms}
+              onClick={() => handleShowTerms('TERMS_DRIVER_USAGE', 'Điều khoản sử dụng')}
               className="w-full mt-3 py-3.5 rounded-xl font-bold text-purple-600 bg-purple-50 hover:bg-purple-100 transition-colors border-2 border-transparent hover:border-purple-200 flex items-center justify-center gap-2"
             >
-              <ScrollText size={18} /> Quy định & Chính sách bảo mật
+              <ScrollText size={18} /> Điều khoản sử dụng
+            </button>
+            <button 
+              onClick={() => handleShowTerms('TERMS_DRIVER_PRIVACY', 'Chính sách bảo mật')}
+              className="w-full mt-3 py-3.5 rounded-xl font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors border-2 border-transparent hover:border-indigo-200 flex items-center justify-center gap-2"
+            >
+              <ShieldCheck size={18} /> Chính sách bảo mật
+            </button>
+            <button 
+              onClick={() => setShowContact(true)}
+              className="w-full mt-3 py-3.5 rounded-xl font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors border-2 border-transparent hover:border-emerald-200 flex items-center justify-center gap-2"
+            >
+              <Headphones size={18} /> Hỗ trợ / Liên hệ
             </button>
             <button 
               onClick={() => setShowDeleteConfirm(true)}
@@ -346,7 +362,10 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
         <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl h-[80vh] sm:h-[80vh] flex flex-col overflow-hidden animate-slideUp">
             <div className="bg-purple-600 p-4 shrink-0 flex justify-between items-center text-white relative">
-              <h2 className="font-bold text-lg flex items-center gap-2"><ScrollText size={20} /> Quy định & Chính sách bảo mật</h2>
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                {termsTitle === 'Chính sách bảo mật' ? <ShieldCheck size={20} /> : <ScrollText size={20} />} 
+                {termsTitle}
+              </h2>
               <button onClick={() => setShowTerms(false)} className="rounded-full bg-black/10 hover:bg-black/20 p-2 border-0 w-8 h-8 flex items-center justify-center transition-colors">
                 ✕
               </button>
@@ -421,6 +440,56 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
                   'Đồng ý Xoá'
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Hỗ trợ / Liên hệ */}
+      {showContact && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl animate-slideUp">
+            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 text-center relative overflow-hidden">
+              <button 
+                onClick={() => setShowContact(false)} 
+                className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-black/10 hover:bg-black/20 text-white rounded-full transition-colors z-10"
+              >✕</button>
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 backdrop-blur-sm border border-white/30 relative z-10">
+                <Headphones size={32} className="text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white relative z-10">Trung Tâm Hỗ Trợ</h3>
+              <p className="text-emerald-100 text-sm relative z-10 mt-1">Luôn đồng hành cùng tài xế</p>
+              
+              {/* Trang trí nền */}
+              <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+            </div>
+            
+            <div className="p-6">
+              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-center mb-5">
+                <p className="text-slate-500 text-sm mb-3">Quét mã QR bằng Zalo để chat ngay</p>
+                <div className="bg-white p-2 rounded-xl inline-block shadow-sm mb-1 border border-slate-200">
+                  <img src="/zalo_qr.png" alt="Zalo QR" className="w-32 h-32 object-contain" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} />
+                  <div className="hidden w-32 h-32 flex items-center justify-center bg-slate-100 text-slate-400 text-xs">Không tải được mã QR</div>
+                </div>
+                <p className="text-xs text-slate-400 mt-2 font-medium">Zalo: AloShipp Support</p>
+              </div>
+
+              <div className="space-y-3">
+                <a 
+                  href="tel:0966952402" 
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-colors border border-blue-100"
+                >
+                  <Phone size={18} />
+                  Gọi tổng đài: 0966.952.402
+                </a>
+                <button 
+                  onClick={() => setShowContact(false)}
+                  className="w-full py-3.5 text-slate-500 hover:text-slate-700 font-bold rounded-xl transition-colors"
+                >
+                  Đóng
+                </button>
+              </div>
             </div>
           </div>
         </div>

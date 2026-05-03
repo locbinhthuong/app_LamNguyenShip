@@ -23,13 +23,15 @@ export default function ShopProfile() {
 
   const [showTermsContent, setShowTermsContent] = useState(false);
   const [termsData, setTermsData] = useState([]);
+  const [termsTitle, setTermsTitle] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [showContact, setShowContact] = useState(false);
 
-  const fetchTerms = async (type) => {
+  const fetchTerms = async (type, title) => {
     try {
       setLoadingTerms(true);
       setShowTermsContent(true);
+      setTermsTitle(title);
       setTermsData([]);
       const res = await getActiveAnnouncements();
       if (res && res.success) {
@@ -221,14 +223,26 @@ export default function ShopProfile() {
               </div>
             </button>
 
-            <button onClick={() => fetchTerms('TERMS_CUSTOMER')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+            <button onClick={() => fetchTerms('TERMS_CUSTOMER_USAGE', 'Điều khoản sử dụng')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
+                  <ScrollText size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 text-sm">Điều khoản sử dụng</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Quy định khi dùng App</p>
+                </div>
+              </div>
+            </button>
+
+            <button onClick={() => fetchTerms('TERMS_CUSTOMER_PRIVACY', 'Chính sách bảo mật')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
                   <ShieldCheck size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-slate-800 text-sm">Chính sách & Điều khoản</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Quy định và điều khoản dùng App</p>
+                  <p className="font-bold text-slate-800 text-sm">Chính sách bảo mật</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Quy định về bảo mật dữ liệu</p>
                 </div>
               </div>
             </button>
@@ -372,7 +386,10 @@ export default function ShopProfile() {
         <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-sm animate-fadeIn">
           <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden animate-slideUp">
             <div className="bg-purple-600 p-4 shrink-0 flex justify-between items-center text-white relative">
-              <h2 className="font-bold text-lg flex items-center gap-2"><ScrollText size={20} /> Quy định & Chính sách bảo mật</h2>
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                {termsTitle === 'Chính sách bảo mật' ? <ShieldCheck size={20} /> : <ScrollText size={20} />} 
+                {termsTitle}
+              </h2>
               <button onClick={() => setShowTermsContent(false)} className="rounded-full bg-black/10 hover:bg-black/20 p-2 border-0 w-8 h-8 flex items-center justify-center transition-colors">
                 ✕
               </button>
