@@ -25,7 +25,7 @@ export default function ShopProfile() {
   const [termsData, setTermsData] = useState([]);
   const [termsTitle, setTermsTitle] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
-  const [showContact, setShowContact] = useState(false);
+  const [showContact, setShowContact] = useState(false); // Can be removed later
 
   const fetchTerms = async (type, title) => {
     try {
@@ -247,7 +247,7 @@ export default function ShopProfile() {
               </div>
             </button>
 
-            <button onClick={() => setShowContact(true)} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+            <button onClick={() => fetchTerms('SUPPORT_CONTACT', 'Trung Tâm Hỗ Trợ')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
                   <HelpCircle size={18} />
@@ -435,71 +435,7 @@ export default function ShopProfile() {
         document.body
       )}
 
-      {/* Contact/Support Modal */}
-      {showContact && createPortal(
-        <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="relative w-full max-w-[340px] animate-slideUp">
-            {/* Nút đóng */}
-            <button 
-              onClick={() => setShowContact(false)} 
-              className="absolute -top-12 right-0 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors z-10"
-            >
-              <X size={20} />
-            </button>
-            
-            {/* Card chính */}
-            <div className="bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20">
-              
-              {/* Phần thông tin (Màu xanh) */}
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 relative overflow-hidden">
-                {/* Patterns */}
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
-                <div className="absolute bottom-0 left-0 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
-
-                <div className="relative z-10 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md p-2">
-                        <img src="/logoALOSHIPP.png" alt="AloShipp" className="w-full h-full object-contain" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-white mb-0.5">Điều Phối Alos</h3>
-                        <p className="text-blue-100 font-mono text-lg font-bold">0765120777</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Mã QR */}
-                  <div className="w-24 h-24 bg-white p-2 rounded-2xl shadow-lg flex-shrink-0 flex items-center justify-center">
-                    <img src="/zalo_qr.png" alt="Zalo QR" className="w-full h-full object-contain rounded-xl" onError={(e) => { e.target.onerror = null; e.target.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=tel:0765120777" }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Phần Nút bấm (Màu trắng) */}
-              <div className="bg-white flex">
-                <a 
-                  href="tel:0765120777"
-                  className="flex-1 py-5 flex items-center justify-center font-bold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                >
-                  Gọi Điện
-                </a>
-                <div className="w-[1px] bg-gray-200 my-4"></div>
-                <a 
-                  href="https://zalo.me/0765120777"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 py-5 flex items-center justify-center font-bold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                >
-                  Nhắn Tin
-                </a>
-              </div>
-
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* Support is now handled by the dynamic terms modal */}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getDriverRevenue, requestDebtPayment, getMyDebtDetail, getMyWalletDetail, requestWithdraw } from '../services/api';
+import { getDriverRevenue, requestDebtPayment, getMyDebtDetail, getMyWalletDetail, requestWithdraw, getActiveAnnouncements, getFullImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CurrencyInput from '../components/CurrencyInput';
 import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, Eye, EyeOff } from 'lucide-react';
@@ -37,6 +37,7 @@ export default function Earnings() {
   const [loading, setLoading] = useState(true);
   const [showQRModal, setShowQRModal] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [paymentQRData, setPaymentQRData] = useState(null);
 
   const handleRequestPayment = async () => {
     if (!selectedDebt) return;
@@ -59,10 +60,11 @@ export default function Earnings() {
     try {
       setLoading(true);
       
-      const [resRev, resDebt, resWallet] = await Promise.all([
+      const [resRev, resDebt, resWallet, resTerms] = await Promise.all([
         getDriverRevenue(),
         getMyDebtDetail().catch(() => ({ success: false })),
-        getMyWalletDetail().catch(() => ({ success: false }))
+        getMyWalletDetail().catch(() => ({ success: false })),
+        getActiveAnnouncements().catch(() => ({ success: false, data: [] }))
       ]);
 
       if (resRev.success && resRev.data) {
@@ -75,6 +77,10 @@ export default function Earnings() {
       }
       if (resWallet.success && resWallet.data) {
         setWalletDetail(resWallet.data);
+      }
+      if (resTerms.success && resTerms.data) {
+        const qrInfo = resTerms.data.find(item => item.type === 'PAYMENT_QR');
+        if (qrInfo) setPaymentQRData(qrInfo);
       }
     } catch (error) {
       console.error('Lỗi lấy dữ liệu thu nhập:', error);
@@ -461,11 +467,15 @@ export default function Earnings() {
               </div>
 
               <div className="bg-white p-3 rounded-2xl border border-slate-200 relative mb-4">
-                <img 
-                  src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=THANHTOANNO ${driver?.driverCode || ''} ${selectedDebt?.date}&accountName=NGUYEN LAM NGUYEN`} 
-                  alt="QR Code Công Nợ" 
-                  className="w-56 h-56 object-contain mix-blend-multiply"
-                />
+                {paymentQRData?.imageUrl ? (
+                  <img src={getFullImageUrl(paymentQRData.imageUrl)} alt="QR Code" className="w-56 h-56 object-contain" />
+                ) : (
+                  <img 
+                    src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=THANHTOANNO ${driver?.driverCode || ''} ${selectedDebt?.date}&accountName=NGUYEN LAM NGUYEN`} 
+                    alt="QR Code Công Nợ mặc định" 
+                    className="w-56 h-56 object-contain mix-blend-multiply"
+                  />
+                )}
               </div>
 
               <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2 mb-4">

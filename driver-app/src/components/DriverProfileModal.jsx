@@ -15,7 +15,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
   const [termsTitle, setTermsTitle] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
   
-  const [showContact, setShowContact] = useState(false);
+  const [showContact, setShowContact] = useState(false); // Deprecated
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -207,7 +207,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               <ShieldCheck size={18} /> Chính sách bảo mật
             </button>
             <button 
-              onClick={() => setShowContact(true)}
+              onClick={() => handleShowTerms('SUPPORT_CONTACT', 'Trung Tâm Hỗ Trợ')}
               className="w-full mt-3 py-3.5 rounded-xl font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors border-2 border-transparent hover:border-emerald-200 flex items-center justify-center gap-2"
             >
               <Headphones size={18} /> Hỗ trợ / Liên hệ
@@ -445,65 +445,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
         </div>
       )}
 
-      {/* Modal Hỗ trợ / Liên hệ */}
-      {showContact && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl animate-slideUp">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 text-center relative overflow-hidden">
-              <button 
-                onClick={() => setShowContact(false)} 
-                className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-black/10 hover:bg-black/20 text-white rounded-full transition-colors z-10"
-              >✕</button>
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-2 backdrop-blur-sm border border-white/30 relative z-10">
-                <Headphones size={32} className="text-white" />
-              </div>
-              <h3 className="text-xl font-bold text-white relative z-10">Trung Tâm Hỗ Trợ</h3>
-              <p className="text-emerald-100 text-sm relative z-10 mt-1">Luôn đồng hành cùng tài xế</p>
-              
-              {/* Trang trí nền */}
-              <div className="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-              <div className="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-            </div>
-            
-            <div className="p-6">
-              <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 text-center mb-5">
-                <p className="text-slate-500 text-sm mb-3">Quét mã QR bằng Zalo để chat ngay</p>
-                <div className="bg-white p-2 rounded-xl inline-block shadow-sm mb-1 border border-slate-200">
-                  <img src="/zalo_qr.png" alt="Zalo QR" className="w-32 h-32 object-contain" onError={(e) => { e.target.style.display='none'; e.target.nextSibling.style.display='block'; }} />
-                  <div className="hidden w-32 h-32 flex items-center justify-center bg-slate-100 text-slate-400 text-xs">Không tải được mã QR</div>
-                </div>
-                <p className="text-xs text-slate-400 mt-2 font-medium">Zalo: AloShipp Support</p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex gap-2">
-                  <a 
-                    href="tel:0765120777" 
-                    className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-colors border border-blue-100"
-                  >
-                    <Phone size={18} />
-                    Gọi điện
-                  </a>
-                  <a 
-                    href="https://zalo.me/0765120777"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-md"
-                  >
-                    Chat Zalo
-                  </a>
-                </div>
-                <button 
-                  onClick={() => setShowContact(false)}
-                  className="w-full py-3.5 text-slate-500 hover:text-slate-700 font-bold rounded-xl transition-colors"
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Support is now handled by the generic terms modal */}
     </div>
   );
 }
