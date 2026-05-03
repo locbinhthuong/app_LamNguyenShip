@@ -384,7 +384,7 @@ export default function Announcements() {
                {form.type === 'PAYMENT_QR' ? (
                  <>
                     <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-1">Mã Ngân Hàng (VD: MB, VCB, TCB...) <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">Mã Ngân Hàng <span className="text-red-500">*</span></label>
                       <input 
                         required autoFocus
                         type="text" 
@@ -393,6 +393,20 @@ export default function Announcements() {
                         placeholder="Ví dụ: MB"
                         className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-sky-500 font-bold uppercase" 
                       />
+                      <p className="text-xs text-slate-500 mt-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <span className="font-bold text-slate-700">Mã phổ biến: </span> 
+                        VietinBank (<b className="text-sky-600">ICB</b>), 
+                        Vietcombank (<b className="text-sky-600">VCB</b>), 
+                        BIDV (<b className="text-sky-600">BIDV</b>), 
+                        Agribank (<b className="text-sky-600">VBA</b>), 
+                        MBBank (<b className="text-sky-600">MB</b>), 
+                        Techcombank (<b className="text-sky-600">TCB</b>), 
+                        VPBank (<b className="text-sky-600">VPB</b>), 
+                        ACB (<b className="text-sky-600">ACB</b>), 
+                        Sacombank (<b className="text-sky-600">STB</b>), 
+                        TPBank (<b className="text-sky-600">TPB</b>),
+                        VIB (<b className="text-sky-600">VIB</b>).
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-slate-700 mb-1">Số Tài Khoản <span className="text-red-500">*</span></label>
