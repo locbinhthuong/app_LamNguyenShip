@@ -221,7 +221,9 @@ export default function Announcements() {
                    </div>
                  )}
                  
-                 {ann.videoUrl ? (
+                 {ann.type === 'PAYMENT_QR' ? (
+                   <span className="text-4xl">💳</span>
+                 ) : ann.videoUrl ? (
                    <video src={getFullImageUrl(ann.videoUrl)} className="w-full h-full object-cover" controls muted />
                  ) : ann.imageUrl ? (
                    <img src={getFullImageUrl(ann.imageUrl)} alt="News" className={`w-full h-full ${ann.type === 'BANNER' ? 'object-contain p-2' : 'object-cover'}`} />

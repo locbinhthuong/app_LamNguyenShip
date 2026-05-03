@@ -468,7 +468,7 @@ export default function Earnings() {
 
               <div className="bg-white p-3 rounded-2xl border border-slate-200 relative mb-4">
                 <img 
-                  src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=THANHTOANNO ${driver?.driverCode || ''} ${selectedDebt?.date}&accountName=${paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN'}`} 
+                  src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
                   alt="QR Code Công Nợ" 
                   className="w-56 h-56 object-contain mix-blend-multiply"
                 />
