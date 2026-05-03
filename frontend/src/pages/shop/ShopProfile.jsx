@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera, FileText, HelpCircle, QrCode, X, Loader2 } from 'lucide-react';
-import { api, getFullImageUrl, uploadCustomerAvatar, getActiveAnnouncements } from '../../services/api';
+import { ArrowLeft, User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2, Store, FileText, HelpCircle, QrCode, ScrollText, Inbox } from 'lucide-react';
+import { api, uploadShopAvatar, getFullImageUrl, deleteMyAccount, getActiveAnnouncements } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function ShopProfile() {
@@ -22,7 +22,7 @@ export default function ShopProfile() {
   const [loading, setLoading] = useState(false);
 
   const [showTermsContent, setShowTermsContent] = useState(false);
-  const [termsData, setTermsData] = useState(null);
+  const [termsData, setTermsData] = useState([]);
   const [loadingTerms, setLoadingTerms] = useState(false);
   const [showContact, setShowContact] = useState(false);
 
@@ -30,18 +30,14 @@ export default function ShopProfile() {
     try {
       setLoadingTerms(true);
       setShowTermsContent(true);
-      setTermsData(null);
+      setTermsData([]);
       const res = await getActiveAnnouncements();
       if (res && res.success) {
-        const terms = res.data.find(a => a.type === type && a.isActive);
-        if (terms) {
-          setTermsData(terms);
-        } else {
-          setTermsData({ title: 'Chưa có dữ liệu', content: 'Nội dung điều khoản đang được cập nhật.' });
-        }
+        const terms = res.data.filter(a => a.type === type && a.isActive);
+        setTermsData(terms);
       }
     } catch (err) {
-       setTermsData({ title: 'Lỗi', content: 'Không thể tải điều khoản.' });
+       console.error(err);
     } finally {
       setLoadingTerms(false);
     }
@@ -373,23 +369,50 @@ export default function ShopProfile() {
 
       {/* Terms Content Modal */}
       {showTermsContent && createPortal(
-        <div className="fixed inset-0 z-[999] bg-white flex flex-col animate-slideUp">
-          <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center shadow-sm border-b border-slate-100">
-            <h3 className="font-bold text-slate-800 flex-1 text-center pl-8 whitespace-nowrap overflow-hidden text-ellipsis text-lg">
-              {loadingTerms ? 'Đang tải...' : termsData?.title || 'Chính sách & Điều khoản'}
-            </h3>
-            <button onClick={() => setShowTermsContent(false)} className="p-2 bg-slate-100 rounded-full text-slate-600 active:scale-90 transition-transform">
-              <X size={20} />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto p-5 bg-slate-50">
-            {loadingTerms ? (
-               <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-500" size={32} /></div>
-            ) : (
-               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 whitespace-pre-wrap leading-relaxed text-slate-700">
-                 {termsData?.content}
-               </div>
-            )}
+        <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-slate-900/60 p-0 sm:p-4 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white w-full max-w-lg sm:rounded-3xl rounded-t-3xl shadow-2xl h-[85vh] sm:h-[80vh] flex flex-col overflow-hidden animate-slideUp">
+            <div className="bg-purple-600 p-4 shrink-0 flex justify-between items-center text-white relative">
+              <h2 className="font-bold text-lg flex items-center gap-2"><ScrollText size={20} /> Quy định & Chính sách bảo mật</h2>
+              <button onClick={() => setShowTermsContent(false)} className="rounded-full bg-black/10 hover:bg-black/20 p-2 border-0 w-8 h-8 flex items-center justify-center transition-colors">
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-5 bg-slate-50">
+              {loadingTerms ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : termsData.length === 0 ? (
+                <div className="flex flex-col justify-center items-center h-full text-slate-400">
+                  <span className="mb-3"><Inbox size={48} strokeWidth={1} /></span>
+                  <p className="font-medium">Chưa có điều khoản nào được đăng.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {termsData.map(term => (
+                    <div key={term._id} className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+                      <h3 className="font-bold text-lg text-slate-800 mb-2">{term.title}</h3>
+                      <div className="text-xs text-slate-400 mb-3 bg-slate-100 inline-block px-2 py-1 rounded">
+                        Cập nhật: {new Date(term.updatedAt || term.createdAt).toLocaleDateString('vi-VN')}
+                      </div>
+                      
+                      {term.imageUrl && (
+                        <img src={getFullImageUrl(term.imageUrl)} alt="Term Banner" className="w-full rounded-xl mb-3" />
+                      )}
+                      
+                      {term.videoUrl && (
+                        <video src={getFullImageUrl(term.videoUrl)} controls className="w-full rounded-xl mb-3" />
+                      )}
+                      
+                      <div className="text-slate-600 text-sm whitespace-pre-wrap leading-relaxed">
+                        {term.content}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>,
         document.body
