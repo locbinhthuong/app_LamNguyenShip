@@ -378,8 +378,44 @@ export default function Announcements() {
                   </div>
                </div>
 
-               {/* Tiêu đề & Nội dung (Ẩn nếu là Quảng Cáo) */}
-               {form.type !== 'BANNER' && (
+               {/* Tiêu đề & Nội dung */}
+               {form.type === 'PAYMENT_QR' ? (
+                 <>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">Mã Ngân Hàng (VD: MB, VCB, TCB...) <span className="text-red-500">*</span></label>
+                      <input 
+                        required autoFocus
+                        type="text" 
+                        value={form.title} 
+                        onChange={e => setForm({...form, title: e.target.value.toUpperCase()})} 
+                        placeholder="Ví dụ: MB"
+                        className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-sky-500 font-bold uppercase" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">Số Tài Khoản <span className="text-red-500">*</span></label>
+                      <input 
+                        required
+                        type="text" 
+                        value={form.content} 
+                        onChange={e => setForm({...form, content: e.target.value.replace(/\D/g, '')})} 
+                        placeholder="Ví dụ: 0857986911"
+                        className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-sky-500 font-mono text-lg" 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">Tên Chủ Tài Khoản <span className="text-red-500">*</span></label>
+                      <input 
+                        required
+                        type="text" 
+                        value={form.videoUrl} 
+                        onChange={e => setForm({...form, videoUrl: e.target.value.toUpperCase()})} 
+                        placeholder="Ví dụ: NGUYEN LAM NGUYEN"
+                        className="w-full border-2 border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-sky-500 font-bold uppercase" 
+                      />
+                    </div>
+                 </>
+               ) : form.type !== 'BANNER' ? (
                  <>
                    <div>
                       <label className="block text-sm font-bold text-slate-700 mb-1">Tiêu Đề (Title) <span className="text-red-500">*</span></label>

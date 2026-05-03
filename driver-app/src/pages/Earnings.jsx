@@ -451,7 +451,7 @@ export default function Earnings() {
             <div className="bg-gradient-to-r from-blue-600 to-sky-500 p-4 flex justify-between items-center text-white">
               <div>
                  <h3 className="font-bold text-lg">Mã QR Thanh Toán Nợ</h3>
-                 <p className="text-xs opacity-90">Bank: MB • NGUYEN LAM NGUYEN</p>
+                 <p className="text-white/80 text-xs mt-1 truncate">Bank: {paymentQRData?.title || 'MB'} • {paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN'}</p>
               </div>
               <button onClick={() => setShowQRModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/30 transition-colors">
                 ✕
@@ -467,15 +467,11 @@ export default function Earnings() {
               </div>
 
               <div className="bg-white p-3 rounded-2xl border border-slate-200 relative mb-4">
-                {paymentQRData?.imageUrl ? (
-                  <img src={getFullImageUrl(paymentQRData.imageUrl)} alt="QR Code" className="w-56 h-56 object-contain" />
-                ) : (
-                  <img 
-                    src={`https://img.vietqr.io/image/MB-0857986911-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=THANHTOANNO ${driver?.driverCode || ''} ${selectedDebt?.date}&accountName=NGUYEN LAM NGUYEN`} 
-                    alt="QR Code Công Nợ mặc định" 
-                    className="w-56 h-56 object-contain mix-blend-multiply"
-                  />
-                )}
+                <img 
+                  src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=THANHTOANNO ${driver?.driverCode || ''} ${selectedDebt?.date}&accountName=${paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN'}`} 
+                  alt="QR Code Công Nợ" 
+                  className="w-56 h-56 object-contain mix-blend-multiply"
+                />
               </div>
 
               <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2 mb-4">
