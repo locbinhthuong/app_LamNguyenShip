@@ -38,6 +38,29 @@ export default function Earnings() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
   const [paymentQRData, setPaymentQRData] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
+
+  const fetchQRInfo = async () => {
+    try {
+      setQrLoading(true);
+      const resTerms = await getActiveAnnouncements();
+      if (resTerms.success && resTerms.data) {
+        const qrInfo = resTerms.data.find(item => item.type === 'PAYMENT_QR');
+        if (qrInfo) setPaymentQRData(qrInfo);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      // Small delay to make the spinner visible if loading is too fast
+      setTimeout(() => setQrLoading(false), 500);
+    }
+  };
+
+  useEffect(() => {
+    if (showQRModal) {
+      fetchQRInfo();
+    }
+  }, [showQRModal]);
 
   const handleRequestPayment = async () => {
     if (!selectedDebt) return;
@@ -467,11 +490,35 @@ export default function Earnings() {
               </div>
 
               <div className="bg-white p-3 rounded-2xl border border-slate-200 relative mb-4">
-                <img 
-                  src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
-                  alt="QR Code Công Nợ" 
-                  className="w-56 h-56 object-contain mix-blend-multiply"
-                />
+                {qrLoading ? (
+                  <div className="w-56 h-56 flex flex-col items-center justify-center bg-slate-50 text-slate-400 rounded-xl">
+                     <RefreshCw size={32} className="animate-spin mb-3 text-sky-500" />
+                     <p className="text-sm font-semibold text-slate-600">Đang tạo mã QR...</p>
+                     <p className="text-xs text-slate-400 text-center mt-1 px-2">Hệ thống đang đồng bộ dữ liệu với Admin</p>
+                  </div>
+                ) : (
+                  <img 
+                    src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
+                    alt="QR Code Công Nợ" 
+                    className="w-56 h-56 object-contain mix-blend-multiply"
+                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                  />
+                )}
+                {/* Fallback error container */}
+                <div style={{display: 'none'}} className="w-56 h-56 flex-col items-center justify-center bg-red-50 text-red-500 rounded-xl p-4 text-center">
+                  <AlertCircle size={32} className="mb-2" />
+                  <p className="text-xs font-bold mb-1">Không tạo được mã</p>
+                  <p className="text-[10px]">Sai mã Ngân hàng (VD: ICB, VCB). Xin thử lại sau!</p>
+                </div>
+                
+                <button 
+                  onClick={fetchQRInfo}
+                  disabled={qrLoading}
+                  className="absolute top-2 right-2 bg-slate-100/80 backdrop-blur shadow-sm p-2 rounded-full text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition-colors disabled:opacity-50"
+                  title="Cập nhật lại mã QR"
+                >
+                  <RefreshCw size={16} className={qrLoading ? 'animate-spin' : ''} />
+                </button>
               </div>
 
               <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2 mb-4">

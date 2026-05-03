@@ -459,81 +459,83 @@ export default function Announcements() {
                ) : null}
 
                {/* Chèn Media */}
-               <div className="border border-dashed border-blue-300 bg-blue-50 rounded-2xl p-6 text-center">
-                  <input 
-                    type="file" 
-                    multiple={form.type === 'BANNER' && !isEditing}
-                    accept={form.type === 'BANNER' ? "image/*" : "image/*,video/*"}
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    className="hidden" 
-                  />
-                  
-                  {multipleFiles.length > 0 ? (
-                    <div className="flex flex-wrap gap-4 justify-center">
-                      {multiplePreviewUrls.map((url, i) => (
-                        <div key={i} className="relative inline-block w-24 h-24 rounded-xl overflow-hidden shadow-md">
-                          <img src={url} className="w-full h-full object-cover" alt="Preview" />
-                          <button 
-                            type="button" 
-                            onClick={() => {
-                              const newFiles = [...multipleFiles];
-                              newFiles.splice(i, 1);
-                              setMultipleFiles(newFiles);
-                              const newUrls = [...multiplePreviewUrls];
-                              newUrls.splice(i, 1);
-                              setMultiplePreviewUrls(newUrls);
-                              if(newFiles.length === 0 && fileInputRef.current) fileInputRef.current.value = "";
-                            }} 
-                            className="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs hover:bg-red-700 shadow"
-                          >✕</button>
+               {form.type !== 'PAYMENT_QR' && (
+                 <div className="border border-dashed border-blue-300 bg-blue-50 rounded-2xl p-6 text-center">
+                    <input 
+                      type="file" 
+                      multiple={form.type === 'BANNER' && !isEditing}
+                      accept={form.type === 'BANNER' ? "image/*" : "image/*,video/*"}
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      className="hidden" 
+                    />
+                    
+                    {multipleFiles.length > 0 ? (
+                      <div className="flex flex-wrap gap-4 justify-center">
+                        {multiplePreviewUrls.map((url, i) => (
+                          <div key={i} className="relative inline-block w-24 h-24 rounded-xl overflow-hidden shadow-md">
+                            <img src={url} className="w-full h-full object-cover" alt="Preview" />
+                            <button 
+                              type="button" 
+                              onClick={() => {
+                                const newFiles = [...multipleFiles];
+                                newFiles.splice(i, 1);
+                                setMultipleFiles(newFiles);
+                                const newUrls = [...multiplePreviewUrls];
+                                newUrls.splice(i, 1);
+                                setMultiplePreviewUrls(newUrls);
+                                if(newFiles.length === 0 && fileInputRef.current) fileInputRef.current.value = "";
+                              }} 
+                              className="absolute top-1 right-1 bg-red-600 text-white w-6 h-6 flex items-center justify-center rounded-full text-xs hover:bg-red-700 shadow"
+                            >✕</button>
+                          </div>
+                        ))}
+                        
+                        {/* Nút Thêm Ảnh Nữa */}
+                        <div 
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-24 h-24 rounded-xl border-2 border-dashed border-blue-400 bg-blue-50 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors shadow-sm"
+                        >
+                          <span className="text-2xl mb-1">➕</span>
+                          <span className="text-[10px] font-bold text-blue-600">Thêm ảnh</span>
                         </div>
-                      ))}
-                      
-                      {/* Nút Thêm Ảnh Nữa */}
+                      </div>
+                    ) : mediaPreviewUrl ? (
+                      <div className="relative inline-block max-w-full rounded-xl overflow-hidden shadow-md">
+                        {mediaType === 'video' ? (
+                          <video src={mediaFile ? mediaPreviewUrl : getFullImageUrl(mediaPreviewUrl)} className="max-h-64 mx-auto" controls />
+                        ) : (
+                          <img src={mediaFile ? mediaPreviewUrl : getFullImageUrl(mediaPreviewUrl)} className="max-h-64 mx-auto object-contain" alt="Preview" />
+                        )}
+                        
+                        <button 
+                          type="button" 
+                          onClick={() => {
+                            setMediaFile(null);
+                            setMediaPreviewUrl(null);
+                            if(fileInputRef.current) fileInputRef.current.value = "";
+                          }}
+                          className="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 flex flex-col justify-center items-center rounded-full shadow-lg hover:bg-red-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ) : (
                       <div 
                         onClick={() => fileInputRef.current?.click()}
-                        className="w-24 h-24 rounded-xl border-2 border-dashed border-blue-400 bg-blue-50 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors shadow-sm"
+                        className="cursor-pointer space-y-2 py-4"
                       >
-                        <span className="text-2xl mb-1">➕</span>
-                        <span className="text-[10px] font-bold text-blue-600">Thêm ảnh</span>
+                        <div className="text-4xl">📸</div>
+                        <h4 className="font-bold text-blue-600">
+                          {form.type === 'BANNER' && !isEditing ? 'Bấm vào đây để chọn (có thể chọn nhiều ảnh cùng lúc)' : form.type === 'BANNER' ? 'Bấm vào đây để thay ảnh quảng cáo' : 'Bấm vào đây để đính kèm Ảnh / Video'}
+                        </h4>
+                        <p className="text-xs text-blue-400">
+                          {form.type === 'BANNER' ? 'Chỉ hỗ trợ JPG, PNG.' : 'Hỗ trợ JPG, PNG, MP4. Tối đa 50MB.'}
+                        </p>
                       </div>
-                    </div>
-                  ) : mediaPreviewUrl ? (
-                    <div className="relative inline-block max-w-full rounded-xl overflow-hidden shadow-md">
-                      {mediaType === 'video' ? (
-                        <video src={mediaFile ? mediaPreviewUrl : getFullImageUrl(mediaPreviewUrl)} className="max-h-64 mx-auto" controls />
-                      ) : (
-                        <img src={mediaFile ? mediaPreviewUrl : getFullImageUrl(mediaPreviewUrl)} className="max-h-64 mx-auto object-contain" alt="Preview" />
-                      )}
-                      
-                      <button 
-                        type="button" 
-                        onClick={() => {
-                          setMediaFile(null);
-                          setMediaPreviewUrl(null);
-                          if(fileInputRef.current) fileInputRef.current.value = "";
-                        }}
-                        className="absolute top-2 right-2 bg-red-600 text-white w-8 h-8 flex flex-col justify-center items-center rounded-full shadow-lg hover:bg-red-700"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="cursor-pointer space-y-2 py-4"
-                    >
-                      <div className="text-4xl">📸</div>
-                      <h4 className="font-bold text-blue-600">
-                        {form.type === 'BANNER' && !isEditing ? 'Bấm vào đây để chọn (có thể chọn nhiều ảnh cùng lúc)' : form.type === 'BANNER' ? 'Bấm vào đây để thay ảnh quảng cáo' : 'Bấm vào đây để đính kèm Ảnh / Video'}
-                      </h4>
-                      <p className="text-xs text-blue-400">
-                        {form.type === 'BANNER' ? 'Chỉ hỗ trợ JPG, PNG.' : 'Hỗ trợ JPG, PNG, MP4. Tối đa 50MB.'}
-                      </p>
-                    </div>
-                  )}
-               </div>
+                    )}
+                 </div>
+               )}
 
                {/* Nút Action */}
                <div className="border-t border-slate-100 pt-6 flex gap-3 flex-col sm:flex-row">
