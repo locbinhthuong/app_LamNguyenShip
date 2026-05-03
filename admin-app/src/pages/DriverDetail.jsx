@@ -332,6 +332,16 @@ export default function DriverDetail() {
               </div>
 
               <div>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">Tài khoản đăng nhập (Số điện thoại)</label>
+                <input 
+                  type="text" 
+                  value={driver?.phone || ''} 
+                  disabled
+                  className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-100 p-3 text-slate-500 cursor-not-allowed"
+                />
+              </div>
+              
+              <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1 block">Tên bác tài</label>
                 <input 
                   required

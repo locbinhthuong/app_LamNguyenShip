@@ -258,6 +258,16 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               </div>
 
               <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Số điện thoại (Tài khoản đăng nhập)</label>
+                <input 
+                  type="text" 
+                  value={driver?.phone || ''} 
+                  disabled
+                  className="w-full rounded-xl border border-slate-200 p-3 text-sm bg-slate-100 text-slate-500 cursor-not-allowed" 
+                />
+              </div>
+
+              <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">Họ và Tên</label>
                 <input 
                   type="text" 
