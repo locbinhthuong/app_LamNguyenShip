@@ -141,7 +141,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform transition-all">
+      <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden transform transition-all max-h-[90vh] flex flex-col">
         {/* Modal Header */}
         <div className="bg-blue-600 p-4 flex justify-between items-center text-white relative">
           <h2 className="font-bold text-lg">{isEditing ? 'Cập nhật hồ sơ' : 'Hồ sơ tài xế'}</h2>
@@ -152,7 +152,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
 
         {/* Cấu trúc xem Profile */}
         {!isEditing ? (
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto">
             <div className="flex flex-col items-center mb-6">
               <div className="w-24 h-24 rounded-full bg-blue-100 border-4 border-blue-50 overflow-hidden flex items-center justify-center mb-3 shadow-inner">
                 {driver?.avatar ? (
@@ -221,7 +221,7 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
           </div>
         ) : (
           /* Khung sửa thông tin */
-          <div className="p-6">
+          <div className="p-6 overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-4">
               
               {/* Khu vực chọn Ảnh đại diện mới */}
