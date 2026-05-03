@@ -246,7 +246,12 @@ export default function Announcements() {
                  )}
                  {ann.type === 'TERMS_DRIVER' && (
                    <div className="absolute top-2 left-2 z-20">
-                     <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 ĐIỀU KHOẢN T.XẾ</span>
+                     <span className="bg-purple-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 Đ.KHOẢN T.XẾ</span>
+                   </div>
+                 )}
+                 {ann.type === 'TERMS_CUSTOMER' && (
+                   <div className="absolute top-2 left-2 z-20">
+                     <span className="bg-indigo-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">📜 Đ.KHOẢN KH</span>
                    </div>
                  )}
                  {ann.type === 'BANNER' && (
@@ -319,7 +324,11 @@ export default function Announcements() {
                      </label>
                      <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_DRIVER' ? 'bg-purple-50 border-purple-500 text-purple-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
                         <input type="radio" name="type" value="TERMS_DRIVER" checked={form.type === 'TERMS_DRIVER'} onChange={(e) => setForm({...form, type: 'TERMS_DRIVER'})} className="hidden" />
-                        📜 Điều Khoản
+                        📜 Đ.Khoản T.Xế
+                     </label>
+                     <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'TERMS_CUSTOMER' ? 'bg-indigo-50 border-indigo-500 text-indigo-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
+                        <input type="radio" name="type" value="TERMS_CUSTOMER" checked={form.type === 'TERMS_CUSTOMER'} onChange={(e) => setForm({...form, type: 'TERMS_CUSTOMER'})} className="hidden" />
+                        📜 Đ.Khoản KH
                      </label>
                      <label className={`flex-1 min-w-[120px] py-3 border rounded-xl text-center cursor-pointer font-bold transition-all ${form.type === 'BANNER' ? 'bg-pink-50 border-pink-500 text-pink-600' : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'}`}>
                         <input type="radio" name="type" value="BANNER" checked={form.type === 'BANNER'} onChange={(e) => setForm({...form, type: 'BANNER', title: 'Quảng Cáo', content: 'Hình ảnh quảng cáo'})} className="hidden" />

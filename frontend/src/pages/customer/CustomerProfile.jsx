@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2 } from 'lucide-react';
-import { api, uploadCustomerAvatar, getFullImageUrl, deleteMyAccount } from '../../services/api';
+import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2, FileText, HelpCircle, QrCode } from 'lucide-react';
+import { api, uploadCustomerAvatar, getFullImageUrl, deleteMyAccount, getActiveAnnouncements } from '../../services/api';
 
 const CustomerProfile = () => {
   const navigate = useNavigate();
@@ -16,6 +16,35 @@ const CustomerProfile = () => {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const [showTermsOptions, setShowTermsOptions] = useState(false);
+  const [showTermsContent, setShowTermsContent] = useState(false);
+  const [termsData, setTermsData] = useState(null);
+  const [loadingTerms, setLoadingTerms] = useState(false);
+  
+  const [showContact, setShowContact] = useState(false);
+
+  const fetchTerms = async (type) => {
+    try {
+      setShowTermsOptions(false);
+      setLoadingTerms(true);
+      setShowTermsContent(true);
+      setTermsData(null);
+      const res = await getActiveAnnouncements();
+      if (res && res.success) {
+        const terms = res.data.find(a => a.type === type && a.isActive);
+        if (terms) {
+          setTermsData(terms);
+        } else {
+          setTermsData({ title: 'Chưa có dữ liệu', content: 'Nội dung điều khoản đang được cập nhật.' });
+        }
+      }
+    } catch (err) {
+       setTermsData({ title: 'Lỗi', content: 'Không thể tải điều khoản.' });
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -147,12 +176,38 @@ const CustomerProfile = () => {
           onClick={openEditModal}
           className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
         >
-           <span className="font-semibold text-gray-800">Cập nhật thông tin</span>
+           <div className="flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+               <User size={20} />
+             </div>
+             <span className="font-semibold text-gray-800">Cập nhật thông tin</span>
+           </div>
            <ChevronRight size={18} className="text-gray-400" />
         </div>
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform">
-           <span className="font-semibold text-gray-800">Quy định & Chính sách bảo mật</span>
-           <ChevronRight size={18} className="text-gray-400" />
+
+        <div>
+          <h3 className="font-extrabold text-gray-400 text-[11px] uppercase tracking-wider mb-2 px-1 mt-4">Hệ thống</h3>
+          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+            <div onClick={() => setShowTermsOptions(true)} className="p-4 flex items-center justify-between border-b border-gray-100 cursor-pointer active:bg-gray-50 transition-colors">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
+                   <ShieldCheck size={20} />
+                 </div>
+                 <span className="font-semibold text-gray-800">Chính sách & Điều khoản</span>
+               </div>
+               <ChevronRight size={18} className="text-gray-400" />
+            </div>
+
+            <div onClick={() => setShowContact(true)} className="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-colors">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
+                   <HelpCircle size={20} />
+                 </div>
+                 <span className="font-semibold text-gray-800">Hỗ trợ / Liên hệ</span>
+               </div>
+               <ChevronRight size={18} className="text-gray-400" />
+            </div>
+          </div>
         </div>
 
         <button 
@@ -281,6 +336,74 @@ const CustomerProfile = () => {
               >
                 {isDeleting ? <Loader2 size={18} className="animate-spin" /> : 'Đồng ý Xóa'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terms Options Modal */}
+      {showTermsOptions && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+          <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slideUp">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Chọn điều khoản</h3>
+              <button onClick={() => setShowTermsOptions(false)} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
+            </div>
+            <div className="space-y-3">
+              <button onClick={() => fetchTerms('TERMS_DRIVER')} className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-2">
+                <FileText size={18} /> Dành cho Tài xế
+              </button>
+              <button onClick={() => fetchTerms('TERMS_CUSTOMER')} className="w-full py-4 bg-blue-50 border border-blue-200 rounded-2xl font-bold text-blue-700 hover:bg-blue-100 flex items-center justify-center gap-2">
+                <ShieldCheck size={18} /> Dành cho Khách hàng & Cửa hàng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terms Content Modal */}
+      {showTermsContent && (
+        <div className="fixed inset-0 z-[60] bg-white flex flex-col animate-slideUp">
+          <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center shadow-sm border-b border-gray-100">
+            <h3 className="font-bold text-gray-800 flex-1 text-center pl-8 whitespace-nowrap overflow-hidden text-ellipsis text-lg">
+              {loadingTerms ? 'Đang tải...' : termsData?.title || 'Chính sách & Điều khoản'}
+            </h3>
+            <button onClick={() => setShowTermsContent(false)} className="p-2 bg-gray-100 rounded-full text-gray-600 active:scale-90 transition-transform">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-5 bg-gray-50">
+            {loadingTerms ? (
+               <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-500" size={32} /></div>
+            ) : (
+               <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 whitespace-pre-wrap leading-relaxed text-gray-700">
+                 {termsData?.content}
+               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Contact/Support Modal */}
+      {showContact && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl animate-slideUp text-center relative overflow-hidden">
+            <button onClick={() => setShowContact(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 bg-gray-100 rounded-full p-1"><X size={20} /></button>
+            
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500 mt-2">
+              <HelpCircle size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Hỗ trợ / Liên hệ</h3>
+            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              Quét mã QR qua Zalo hoặc gọi vào số điện thoại dưới đây để được dịch vụ điều phối hỗ trợ lấy hàng.
+            </p>
+            
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-6 flex flex-col items-center justify-center">
+              <div className="w-40 h-40 bg-white border border-gray-200 p-2 rounded-xl shadow-sm flex items-center justify-center mb-4">
+                 <QrCode size={120} className="text-gray-800" strokeWidth={1} />
+              </div>
+              <p className="font-extrabold text-2xl text-blue-600 tracking-wider font-mono">090.XXXX.XXX</p>
+              <p className="text-xs text-gray-400 mt-1">Hotline điều phối lấy hàng</p>
             </div>
           </div>
         </div>

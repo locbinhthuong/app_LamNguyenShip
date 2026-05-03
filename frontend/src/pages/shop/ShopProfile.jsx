@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera } from 'lucide-react';
-import { api, getFullImageUrl, uploadCustomerAvatar } from '../../services/api';
+import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera, FileText, HelpCircle, QrCode, X, Loader2 } from 'lucide-react';
+import { api, getFullImageUrl, uploadCustomerAvatar, getActiveAnnouncements } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function ShopProfile() {
@@ -20,6 +20,34 @@ export default function ShopProfile() {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  const [showTermsOptions, setShowTermsOptions] = useState(false);
+  const [showTermsContent, setShowTermsContent] = useState(false);
+  const [termsData, setTermsData] = useState(null);
+  const [loadingTerms, setLoadingTerms] = useState(false);
+  const [showContact, setShowContact] = useState(false);
+
+  const fetchTerms = async (type) => {
+    try {
+      setShowTermsOptions(false);
+      setLoadingTerms(true);
+      setShowTermsContent(true);
+      setTermsData(null);
+      const res = await getActiveAnnouncements();
+      if (res && res.success) {
+        const terms = res.data.find(a => a.type === type && a.isActive);
+        if (terms) {
+          setTermsData(terms);
+        } else {
+          setTermsData({ title: 'Chưa có dữ liệu', content: 'Nội dung điều khoản đang được cập nhật.' });
+        }
+      }
+    } catch (err) {
+       setTermsData({ title: 'Lỗi', content: 'Không thể tải điều khoản.' });
+    } finally {
+      setLoadingTerms(false);
+    }
+  };
 
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
@@ -199,14 +227,26 @@ export default function ShopProfile() {
               </div>
             </button>
 
-            <button className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+            <button onClick={() => setShowTermsOptions(true)} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
                   <ShieldCheck size={18} />
                 </div>
                 <div className="text-left">
-                  <p className="font-bold text-slate-800 text-sm">Quy định & Chính sách bảo mật</p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Các điều khoản khi dùng App</p>
+                  <p className="font-bold text-slate-800 text-sm">Chính sách & Điều khoản</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Quy định và điều khoản dùng App</p>
+                </div>
+              </div>
+            </button>
+
+            <button onClick={() => setShowContact(true)} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-600">
+                  <HelpCircle size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 text-sm">Hỗ trợ / Liên hệ</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Liên hệ tổng đài hoặc hỗ trợ</p>
                 </div>
               </div>
             </button>
@@ -327,6 +367,77 @@ export default function ShopProfile() {
                 {loading && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
                 Lưu thay đổi
               </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Terms Options Modal */}
+      {showTermsOptions && createPortal(
+        <div className="fixed inset-0 z-[110] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
+          <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slideUp">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-800">Chọn điều khoản</h3>
+              <button onClick={() => setShowTermsOptions(false)} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
+            </div>
+            <div className="space-y-3">
+              <button onClick={() => fetchTerms('TERMS_DRIVER')} className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-2">
+                <FileText size={18} /> Dành cho Tài xế
+              </button>
+              <button onClick={() => fetchTerms('TERMS_CUSTOMER')} className="w-full py-4 bg-blue-50 border border-blue-200 rounded-2xl font-bold text-blue-700 hover:bg-blue-100 flex items-center justify-center gap-2">
+                <ShieldCheck size={18} /> Dành cho Khách hàng & Cửa hàng
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Terms Content Modal */}
+      {showTermsContent && createPortal(
+        <div className="fixed inset-0 z-[120] bg-white flex flex-col animate-slideUp">
+          <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center shadow-sm border-b border-slate-100">
+            <h3 className="font-bold text-slate-800 flex-1 text-center pl-8 whitespace-nowrap overflow-hidden text-ellipsis text-lg">
+              {loadingTerms ? 'Đang tải...' : termsData?.title || 'Chính sách & Điều khoản'}
+            </h3>
+            <button onClick={() => setShowTermsContent(false)} className="p-2 bg-slate-100 rounded-full text-slate-600 active:scale-90 transition-transform">
+              <X size={20} />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-5 bg-slate-50">
+            {loadingTerms ? (
+               <div className="flex justify-center py-20"><Loader2 className="animate-spin text-blue-500" size={32} /></div>
+            ) : (
+               <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 whitespace-pre-wrap leading-relaxed text-slate-700">
+                 {termsData?.content}
+               </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Contact/Support Modal */}
+      {showContact && createPortal(
+        <div className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl animate-slideUp text-center relative overflow-hidden">
+            <button onClick={() => setShowContact(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1"><X size={20} /></button>
+            
+            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500 mt-2">
+              <HelpCircle size={32} />
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-2">Hỗ trợ / Liên hệ</h3>
+            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
+              Quét mã QR qua Zalo hoặc gọi vào số điện thoại dưới đây để được dịch vụ điều phối hỗ trợ lấy hàng.
+            </p>
+            
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-6 flex flex-col items-center justify-center">
+              <div className="w-40 h-40 bg-white border border-slate-200 p-2 rounded-xl shadow-sm flex items-center justify-center mb-4">
+                 <QrCode size={120} className="text-slate-800" strokeWidth={1} />
+              </div>
+              <p className="font-extrabold text-2xl text-blue-600 tracking-wider font-mono">090.XXXX.XXX</p>
+              <p className="text-xs text-slate-400 mt-1">Hotline điều phối lấy hàng</p>
             </div>
           </div>
         </div>,
