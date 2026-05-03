@@ -561,7 +561,8 @@ const authController = {
             role: user.role,
             shopName: user.shopName,
             shopAddress: user.shopAddress,
-            defaultLocation: user.defaultLocation
+            defaultLocation: user.defaultLocation,
+            avatar: user.avatar
           }
         }
       });
@@ -624,7 +625,8 @@ const authController = {
             role: user.role,
             shopName: user.shopName,
             shopAddress: user.shopAddress,
-            defaultLocation: user.defaultLocation
+            defaultLocation: user.defaultLocation,
+            avatar: user.avatar
           }
         }
       });
