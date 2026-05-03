@@ -440,7 +440,7 @@ export default function Announcements() {
                       ></textarea>
                    </div>
                  </>
-               )}
+               ) : null}
 
                {/* Chèn Media */}
                <div className="border border-dashed border-blue-300 bg-blue-50 rounded-2xl p-6 text-center">
