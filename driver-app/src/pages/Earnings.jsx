@@ -39,10 +39,12 @@ export default function Earnings() {
   const [isRequesting, setIsRequesting] = useState(false);
   const [paymentQRData, setPaymentQRData] = useState(null);
   const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState(false);
 
   const fetchQRInfo = async () => {
     try {
       setQrLoading(true);
+      setQrError(false);
       const resTerms = await getActiveAnnouncements();
       if (resTerms.success && resTerms.data) {
         const qrInfo = resTerms.data.find(item => item.type === 'PAYMENT_QR');
@@ -496,20 +498,20 @@ export default function Earnings() {
                      <p className="text-sm font-semibold text-slate-600">Đang tạo mã QR...</p>
                      <p className="text-xs text-slate-400 text-center mt-1 px-2">Hệ thống đang đồng bộ dữ liệu với Admin</p>
                   </div>
+                ) : qrError ? (
+                  <div className="w-56 h-56 flex flex-col items-center justify-center bg-red-50 text-red-500 rounded-xl p-4 text-center">
+                    <AlertCircle size={32} className="mb-2" />
+                    <p className="text-xs font-bold mb-1">Không tạo được mã</p>
+                    <p className="text-[10px]">Sai mã Ngân hàng (VD: ICB, VCB). Xin thử lại sau!</p>
+                  </div>
                 ) : (
                   <img 
                     src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
                     alt="QR Code Công Nợ" 
                     className="w-56 h-56 object-contain mix-blend-multiply"
-                    onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+                    onError={() => setQrError(true)}
                   />
                 )}
-                {/* Fallback error container */}
-                <div style={{display: 'none'}} className="w-56 h-56 flex-col items-center justify-center bg-red-50 text-red-500 rounded-xl p-4 text-center">
-                  <AlertCircle size={32} className="mb-2" />
-                  <p className="text-xs font-bold mb-1">Không tạo được mã</p>
-                  <p className="text-[10px]">Sai mã Ngân hàng (VD: ICB, VCB). Xin thử lại sau!</p>
-                </div>
                 
                 <button 
                   onClick={fetchQRInfo}

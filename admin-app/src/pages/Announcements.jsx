@@ -132,6 +132,12 @@ export default function Announcements() {
     e.preventDefault();
     if (form.type !== 'BANNER' && (!form.title || !form.content)) return alert('Vui lòng nhập Tiêu đề và Nội dung!');
     if (form.type === 'BANNER' && !mediaFile && !mediaPreviewUrl && multipleFiles.length === 0) return alert('Bảng tin loại Quảng Cáo bắt buộc phải có Hình Ảnh hoặc Video!');
+    if (form.type === 'PAYMENT_QR') {
+      const existingQR = announcements.find(a => a.type === 'PAYMENT_QR' && a._id !== currentId);
+      if (existingQR) {
+        return alert('Chỉ được phép tạo 1 mã QR Công Nợ duy nhất! Vui lòng xóa mã cũ hoặc chỉnh sửa mã đã có.');
+      }
+    }
     
     setIsUploading(true);
     try {
