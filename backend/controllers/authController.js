@@ -184,7 +184,9 @@ const authController = {
             stats: driver.stats,
             isOnline: driver.isOnline,
             completionRate: driver.completionRate,
-            avatar: driver.avatar
+            avatar: driver.avatar,
+            cccd: driver.cccd,
+            gplx: driver.gplx
           }
         }
       });
