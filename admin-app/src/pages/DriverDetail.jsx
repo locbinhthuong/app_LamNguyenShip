@@ -48,7 +48,9 @@ export default function DriverDetail() {
         vehicleType: drRes.data.vehicleType || 'motorcycle',
         licensePlate: drRes.data.licensePlate || '',
         commissionRate: drRes.data.commissionRate || 15,
-        avatar: drRes.data.avatar || ''
+        avatar: drRes.data.avatar || '',
+        cccd: drRes.data.cccd || '',
+        gplx: drRes.data.gplx || ''
       });
       setAvatarPreview(drRes.data.avatar || null);
       setAvatarFile(null);
@@ -165,6 +167,14 @@ export default function DriverDetail() {
               <div className="flex justify-between">
                 <span className="text-slate-500">Loại xe:</span>
                 <span className="text-slate-800 font-medium capitalize">{driver.vehicleType || 'Motorcycle'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Số CCCD:</span>
+                <span className="text-slate-800 font-medium">{driver.cccd || '—'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Số GPLX:</span>
+                <span className="text-slate-800 font-medium">{driver.gplx || '—'}</span>
               </div>
             </div>
 
@@ -338,6 +348,26 @@ export default function DriverDetail() {
                   value={editForm.licensePlate} 
                   onChange={e => setEditForm({...editForm, licensePlate: e.target.value})}
                   placeholder="51H-12345"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">Số Căn Cước Công Dân (CCCD)</label>
+                <input 
+                  type="text" 
+                  value={editForm.cccd} 
+                  onChange={e => setEditForm({...editForm, cccd: e.target.value})}
+                  placeholder="Nhập 12 số CCCD"
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">Số Giấy Phép Lái Xe (GPLX)</label>
+                <input 
+                  type="text" 
+                  value={editForm.gplx} 
+                  onChange={e => setEditForm({...editForm, gplx: e.target.value})}
+                  placeholder="Nhập số GPLX"
                   className="mt-1 w-full rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
                 />
               </div>

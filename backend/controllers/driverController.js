@@ -127,7 +127,7 @@ const driverController = {
   updateDriver: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, vehicleType, licensePlate, status, avatar, commissionRate } = req.body;
+      const { name, vehicleType, licensePlate, status, avatar, commissionRate, cccd, gplx } = req.body;
 
       const updateData = {};
       if (name) updateData.name = name;
@@ -136,6 +136,8 @@ const driverController = {
       if (status) updateData.status = status;
       if (avatar !== undefined) updateData.avatar = avatar;
       if (commissionRate !== undefined) updateData.commissionRate = commissionRate;
+      if (cccd !== undefined) updateData.cccd = cccd;
+      if (gplx !== undefined) updateData.gplx = gplx;
 
       const driver = await Driver.findByIdAndUpdate(
         id,
