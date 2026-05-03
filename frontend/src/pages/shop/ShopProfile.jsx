@@ -21,7 +21,6 @@ export default function ShopProfile() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const [showTermsOptions, setShowTermsOptions] = useState(false);
   const [showTermsContent, setShowTermsContent] = useState(false);
   const [termsData, setTermsData] = useState(null);
   const [loadingTerms, setLoadingTerms] = useState(false);
@@ -29,7 +28,6 @@ export default function ShopProfile() {
 
   const fetchTerms = async (type) => {
     try {
-      setShowTermsOptions(false);
       setLoadingTerms(true);
       setShowTermsContent(true);
       setTermsData(null);
@@ -227,7 +225,7 @@ export default function ShopProfile() {
               </div>
             </button>
 
-            <button onClick={() => setShowTermsOptions(true)} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+            <button onClick={() => fetchTerms('TERMS_CUSTOMER')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">
                   <ShieldCheck size={18} />
@@ -373,30 +371,9 @@ export default function ShopProfile() {
         document.body
       )}
 
-      {/* Terms Options Modal */}
-      {showTermsOptions && createPortal(
-        <div className="fixed inset-0 z-[110] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fadeIn">
-          <div className="w-full sm:max-w-sm bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl animate-slideUp">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-800">Chọn điều khoản</h3>
-              <button onClick={() => setShowTermsOptions(false)} className="text-slate-400 hover:text-slate-600"><X size={24} /></button>
-            </div>
-            <div className="space-y-3">
-              <button onClick={() => fetchTerms('TERMS_DRIVER')} className="w-full py-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-700 hover:bg-slate-100 flex items-center justify-center gap-2">
-                <FileText size={18} /> Dành cho Tài xế
-              </button>
-              <button onClick={() => fetchTerms('TERMS_CUSTOMER')} className="w-full py-4 bg-blue-50 border border-blue-200 rounded-2xl font-bold text-blue-700 hover:bg-blue-100 flex items-center justify-center gap-2">
-                <ShieldCheck size={18} /> Dành cho Khách hàng & Cửa hàng
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
       {/* Terms Content Modal */}
       {showTermsContent && createPortal(
-        <div className="fixed inset-0 z-[120] bg-white flex flex-col animate-slideUp">
+        <div className="fixed inset-0 z-[999] bg-white flex flex-col animate-slideUp">
           <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center shadow-sm border-b border-slate-100">
             <h3 className="font-bold text-slate-800 flex-1 text-center pl-8 whitespace-nowrap overflow-hidden text-ellipsis text-lg">
               {loadingTerms ? 'Đang tải...' : termsData?.title || 'Chính sách & Điều khoản'}
@@ -420,24 +397,64 @@ export default function ShopProfile() {
 
       {/* Contact/Support Modal */}
       {showContact && createPortal(
-        <div className="fixed inset-0 z-[110] bg-black/60 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl animate-slideUp text-center relative overflow-hidden">
-            <button onClick={() => setShowContact(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1"><X size={20} /></button>
+        <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="relative w-full max-w-[340px] animate-slideUp">
+            {/* Nút đóng */}
+            <button 
+              onClick={() => setShowContact(false)} 
+              className="absolute -top-12 right-0 w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors z-10"
+            >
+              <X size={20} />
+            </button>
             
-            <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4 text-orange-500 mt-2">
-              <HelpCircle size={32} />
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-2">Hỗ trợ / Liên hệ</h3>
-            <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Quét mã QR qua Zalo hoặc gọi vào số điện thoại dưới đây để được dịch vụ điều phối hỗ trợ lấy hàng.
-            </p>
-            
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-6 flex flex-col items-center justify-center">
-              <div className="w-40 h-40 bg-white border border-slate-200 p-2 rounded-xl shadow-sm flex items-center justify-center mb-4">
-                 <QrCode size={120} className="text-slate-800" strokeWidth={1} />
+            {/* Card chính */}
+            <div className="bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20">
+              
+              {/* Phần thông tin (Màu xanh) */}
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-6 relative overflow-hidden">
+                {/* Patterns */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full blur-2xl transform translate-x-1/2 -translate-y-1/2"></div>
+                <div className="absolute bottom-0 left-0 w-40 h-40 bg-white opacity-5 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+
+                <div className="relative z-10 flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md p-2">
+                        <img src="/logoALOSHIPP.png" alt="AloShipp" className="w-full h-full object-contain" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-white mb-0.5">Điều Phối Alos</h3>
+                        <p className="text-blue-100 font-mono text-lg font-bold">0765120777</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Mã QR */}
+                  <div className="w-24 h-24 bg-white p-2 rounded-2xl shadow-lg flex-shrink-0 flex items-center justify-center">
+                    <img src="/zalo_qr.png" alt="Zalo QR" className="w-full h-full object-contain rounded-xl" onError={(e) => { e.target.onerror = null; e.target.src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=tel:0765120777" }} />
+                  </div>
+                </div>
               </div>
-              <p className="font-extrabold text-2xl text-blue-600 tracking-wider font-mono">090.XXXX.XXX</p>
-              <p className="text-xs text-slate-400 mt-1">Hotline điều phối lấy hàng</p>
+
+              {/* Phần Nút bấm (Màu trắng) */}
+              <div className="bg-white flex">
+                <a 
+                  href="tel:0765120777"
+                  className="flex-1 py-5 flex items-center justify-center font-bold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  Gọi Điện
+                </a>
+                <div className="w-[1px] bg-gray-200 my-4"></div>
+                <a 
+                  href="https://zalo.me/0765120777"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-5 flex items-center justify-center font-bold text-gray-700 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  Nhắn Tin
+                </a>
+              </div>
+
             </div>
           </div>
         </div>,
