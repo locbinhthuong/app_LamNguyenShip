@@ -476,13 +476,23 @@ export default function DriverProfileModal({ isOpen, onClose, driver, onSave }) 
               </div>
 
               <div className="space-y-3">
-                <a 
-                  href="tel:0966952402" 
-                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-colors border border-blue-100"
-                >
-                  <Phone size={18} />
-                  Gọi tổng đài: 0966.952.402
-                </a>
+                <div className="flex gap-2">
+                  <a 
+                    href="tel:0765120777" 
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl transition-colors border border-blue-100"
+                  >
+                    <Phone size={18} />
+                    Gọi điện
+                  </a>
+                  <a 
+                    href="https://zalo.me/0765120777"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors shadow-md"
+                  >
+                    Chat Zalo
+                  </a>
+                </div>
                 <button 
                   onClick={() => setShowContact(false)}
                   className="w-full py-3.5 text-slate-500 hover:text-slate-700 font-bold rounded-xl transition-colors"
