@@ -27,6 +27,11 @@
             android:grantUriPermissions="true">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
+
+        <!-- Google Play Developer Verification Token -->
+        <meta-data
+            android:name="com.android.vending.developer.id.token"
+            android:value="D37CF3TWCBLVOAAAAAAAAAAAAA" />
     </application>
 
     <!-- Permissions -->
