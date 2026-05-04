@@ -13,4 +13,4 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
       - name: Print Keystore SHA-256
-        run: keytool -list -v -keystore driver-app/android/app/aloshipp-driver.jks -alias driver_alias -storepass aloshipp2026 -keypass aloshipp2026
+        run: keytool -list -v -keystore driver-app/android/app/aloshipp-driver.jks -alias driver_alias -storepass 123456 -keypass 123456
