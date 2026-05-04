@@ -390,13 +390,18 @@ export default function OrderDetail() {
                </p>
                <div className="flex flex-col relative z-10">
                  {order.deliveryFee > 0 ? (
-                    <p className="text-green-600 font-black text-xl sm:text-2xl ">{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ</p>
+                    <p className="text-green-600 font-black text-xl sm:text-2xl ">{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ</p>
                  ) : (
                     <p className="text-green-600 font-black text-lg sm:text-xl ">Thỏa Thuận</p>
                  )}
                  {order.packageDetails?.bulkyFee > 0 && (
                    <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-orange-100">
                      ( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )
+                   </p>
+                 )}
+                 {order.rideDetails?.surcharge > 0 && (
+                   <p className="text-[10px] text-purple-600 font-bold mt-1 bg-purple-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-purple-100">
+                     ( đã cộng phí phụ/lái hộ: {order.rideDetails.surcharge.toLocaleString()}đ )
                    </p>
                  )}
                </div>

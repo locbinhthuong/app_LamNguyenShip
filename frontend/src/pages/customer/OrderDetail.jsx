@@ -211,11 +211,16 @@ export default function OrderDetail() {
                  <span className="text-sm text-slate-600 font-medium">Phí Giao Hàng (Ship)</span>
                  <div className="flex flex-col items-end">
                    <span className="font-black text-slate-800">
-                     {order.deliveryFee > 0 ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ` : <span className="text-blue-500 text-xs italic">Đang cập nhật...</span>}
+                     {order.deliveryFee > 0 ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ` : <span className="text-blue-500 text-xs italic">Đang cập nhật...</span>}
                    </span>
                    {order.packageDetails?.bulkyFee > 0 && (
                      <span className="text-[10px] text-orange-600 font-medium mt-0.5">
                        ( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )
+                     </span>
+                   )}
+                   {order.rideDetails?.surcharge > 0 && (
+                     <span className="text-[10px] text-purple-600 font-medium mt-0.5">
+                       ( đã cộng phí phụ/lái hộ: {order.rideDetails.surcharge.toLocaleString()}đ )
                      </span>
                    )}
                  </div>
@@ -243,7 +248,7 @@ export default function OrderDetail() {
                    <span className="text-[10px] text-slate-400 italic">(Bao gồm COD + Phí Ship)</span>
                  </div>
                  <span className="font-black text-2xl text-red-500">
-                   {(order.deliveryFee > 0 || order.codAmount > 0) ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.codAmount || 0)).toLocaleString()}đ` : '--'}
+                   {(order.deliveryFee > 0 || order.codAmount > 0) ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.rideDetails?.surcharge || 0) + (order.codAmount || 0)).toLocaleString()}đ` : '--'}
                  </span>
               </div>
             </div>
