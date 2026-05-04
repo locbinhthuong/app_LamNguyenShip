@@ -66,6 +66,7 @@ export const useAuthSocket = () => {
               message = `Tài xế ${order.assignedTo?.name || ''} đã nhận đơn và trên đường lấy hàng!`;
             }
             type = 'success';
+            playCustomerPing();
           } else if (order.status === 'PICKED_UP') {
             if (order.serviceType === 'DAT_XE') {
               message = `Tài xế đã đón bạn thành công! Bắt đầu di chuyển...`;
@@ -73,6 +74,7 @@ export const useAuthSocket = () => {
               message = `Tài xế đã lấy hàng và bắt đầu giao!`;
             }
             type = 'warning';
+            playCustomerPing();
           } else if (order.status === 'COMPLETED') {
             if (order.serviceType === 'DAT_XE') {
               message = `Chuyến đi ${order.orderCode} đã hoàn thành. Cảm ơn quý khách đã tin dùng!`;
@@ -80,6 +82,7 @@ export const useAuthSocket = () => {
               message = `Đơn hàng ${order.orderCode} đã giao thành công. Cảm ơn quý khách!`;
             }
             type = 'success';
+            playCustomerPing();
           } else if (order.status === 'DRAFT') {
              message = `Thông tin đơn hàng ${order.orderCode} vừa được Admin cập nhật.`;
              type = 'info';
