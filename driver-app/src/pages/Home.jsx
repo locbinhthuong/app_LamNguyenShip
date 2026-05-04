@@ -88,8 +88,9 @@ function OrderCard({ order, onAccept, loading }) {
 
       <div className="flex flex-col items-center gap-1.5 mt-2 border-t border-slate-100 pt-3">
         <span className="text-green-600 font-black text-sm w-full text-center tracking-wide flex flex-col items-center">
-          <span>💵 GIÁ CƯỚC: +{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ</span>
+          <span>💵 GIÁ CƯỚC: +{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ</span>
           {order.packageDetails?.bulkyFee > 0 && <span className="text-[10px] text-orange-600 font-bold tracking-normal mt-0.5">( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )</span>}
+          {order.rideDetails?.surcharge > 0 && <span className="text-[10px] text-purple-600 font-bold tracking-normal mt-0.5">( đã cộng phí lái hộ: {order.rideDetails.surcharge.toLocaleString()}đ )</span>}
         </span>
         {order.adminBonus > 0 && (
           <span className="text-slate-600 font-black text-xs w-full text-center tracking-wide flex items-center justify-center gap-1 bg-slate-50 py-1 rounded-md">
