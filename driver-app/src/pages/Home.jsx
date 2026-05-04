@@ -694,7 +694,7 @@ export default function Home() {
             </div>
           </div>
           <div className="rounded-xl bg-green-50/50 p-1 text-center border border-green-200 shadow-sm flex flex-col justify-center">
-            <p className="text-[8px] font-bold tracking-wider mb-0.5 text-slate-500">THU NHẬP (TẠM)</p>
+            <p className="text-[8px] font-bold tracking-wider mb-0.5 text-slate-500">ĐIỂM THƯỞNG (TẠM)</p>
             <div className="flex items-baseline justify-center gap-0.5">
               <p className="text-base font-black text-green-600 leading-none">
                  {dailyStats.fee.toLocaleString()}
@@ -861,7 +861,7 @@ export default function Home() {
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
             <Wallet size={24} strokeWidth={1.5} />
-            <span className="text-xs mt-1 font-medium">Thu nhập</span>
+            <span className="text-xs mt-1 font-medium">Điểm thưởng</span>
           </Link>
         </div>
       </div>

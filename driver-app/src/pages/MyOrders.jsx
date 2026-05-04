@@ -244,7 +244,7 @@ export default function MyOrders() {
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
             <Wallet size={24} strokeWidth={1.5} />
-            <span className="text-xs mt-1 font-medium">Thu nhập</span>
+            <span className="text-xs mt-1 font-medium">Điểm thưởng</span>
           </Link>
         </div>
       </div>

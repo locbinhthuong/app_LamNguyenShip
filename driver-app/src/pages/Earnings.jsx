@@ -70,7 +70,7 @@ export default function Earnings() {
       setIsRequesting(true);
       const res = await requestDebtPayment(driver._id, selectedDebt.amount, selectedDebt.date);
       if (res.success) {
-        alert('✅ Đã gửi yêu cầu xác nhận thanh toán nợ đến Tổng đài. Vui lòng chờ Sếp kiểm tra.');
+        alert('✅ Đã gửi yêu cầu xác nhận bù điểm đến Tổng đài. Vui lòng chờ Sếp kiểm tra.');
         setShowQRModal(false);
         fetchEarnings(); // Refresh UI to change to PENDING status
       }
@@ -120,13 +120,13 @@ export default function Earnings() {
       setIsRequesting(true);
       const res = await requestWithdraw(withdrawForm.amount, withdrawForm.bankName, withdrawForm.accountNumber, withdrawForm.accountName);
       if (res.success) {
-        alert('Đã gửi Yêu Cầu Thanh Toán thành công! Vui lòng chờ Admin duyệt vào sáng mai.');
+        alert('Đã gửi Yêu Cầu Đổi Điểm thành công! Vui lòng chờ Admin duyệt vào sáng mai.');
         setShowWithdrawModal(false);
         setWithdrawForm({ amount: '', bankName: '', accountNumber: '', accountName: '' });
         fetchEarnings(); // Refresh
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Lỗi gửi yêu cầu thanh toán');
+      alert(error.response?.data?.message || 'Lỗi gửi yêu cầu đổi điểm');
     } finally {
       setIsRequesting(false);
     }
@@ -176,13 +176,13 @@ export default function Earnings() {
              onClick={() => setActiveTab('revenue')}
              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'revenue' ? 'bg-white text-blue-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
-             <BarChart3 size={18} /> Báo Cáo
+             <BarChart3 size={18} /> Báo Cáo Điểm
            </button>
            <button 
              onClick={() => setActiveTab('wallet')}
              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all flex items-center gap-2 ${activeTab === 'wallet' ? 'bg-white text-emerald-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
-             <Building2 size={18} /> Tài Khoản Đối Tác
+             <Building2 size={18} /> Tài Khoản Điểm
            </button>
         </div>
       </div>
@@ -196,7 +196,7 @@ export default function Earnings() {
             {/* Biểu Đồ Cột 7 Ngày (Chuyển lên trên cùng) */}
         {stats.chartData && stats.chartData.length > 0 && (
           <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4 mb-4 mt-3">
-            <h2 className="text-slate-800 font-bold mb-4 text-sm">Thống Kê Doanh Thu Tuần Đi Làm</h2>
+            <h2 className="text-slate-800 font-bold mb-4 text-sm">Thống Kê Điểm Thưởng Tuần</h2>
             <div className="flex items-end justify-between h-48 gap-1 px-1">
               {stats.chartData.map((d, idx) => {
                 const maxFee = Math.max(...stats.chartData.map(c => c.fee));
@@ -252,16 +252,16 @@ export default function Earnings() {
         
         {/* Thu Nhập Cả Tháng */}
         <div className="rounded-2xl bg-blue-100 border border-blue-200 p-4 mb-8 text-center shadow-md">
-          <p className="text-xs text-blue-600 font-semibold mb-1">Tổng Tích Lũy Từ Trước Đến Nay</p>
+          <p className="text-xs text-blue-600 font-semibold mb-1">Tổng Điểm Tích Lũy Từ Trước Đến Nay</p>
           <p className="text-2xl font-black text-blue-700  shadow-blue-500/20">{showBalance ? formatCurrency(stats.totalFee) : '******'}</p>
         </div>
 
 
             {/* Vùng Thanh Toán Nợ Chi Tiết (Nằm Dưới Cùng) */}
-            <h2 className="text-slate-800 font-bold mb-3 px-1 text-sm uppercase tracking-wide">CÔNG NỢ CẦN THANH TOÁN</h2>
+            <h2 className="text-slate-800 font-bold mb-3 px-1 text-sm uppercase tracking-wide">ĐIỂM TRỪ CẦN BÙ</h2>
             {unpaidDays.length === 0 ? (
                <div className="bg-sky-50 border border-sky-200 p-4 rounded-xl text-center text-sky-700 font-semibold mb-6 flex items-center justify-center gap-2">
-                  <CheckCircle2 size={20} /> Bạn không có công nợ cũ nào cần thanh toán!
+                  <CheckCircle2 size={20} /> Bạn không có điểm trừ cũ nào cần bù!
                </div>
             ) : (
                unpaidDays.map((debt, i) => {
@@ -271,7 +271,7 @@ export default function Earnings() {
                    <div className="flex items-center justify-between mb-3">
                      <div>
                        <p className="text-xs text-slate-500 mb-1 font-semibold flex items-center gap-1">
-                         <span>Công Nợ Ngày: {new Date(debt.date).toLocaleDateString('vi-VN')}</span>
+                         <span>Điểm Trừ Ngày: {new Date(debt.date).toLocaleDateString('vi-VN')}</span>
                        </p>
                        <p className="text-xl font-black text-red-600 ">{showBalance ? formatCurrency(debt.amount) : '******'}</p>
                      </div>
@@ -292,7 +292,7 @@ export default function Earnings() {
                         }}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
                       >
-                        <Smartphone size={18} /> Chọn Thanh Toán Khung Này
+                        <Smartphone size={18} /> Chọn Bù Điểm Khung Này
                       </button>
                    )}
                  </div>
@@ -301,7 +301,7 @@ export default function Earnings() {
 
             {/* Chi tiết từng ngày - Lịch sử cấn nợ (Công nợ theo dòng thời gian) */}
             <div className="flex justify-between items-center mt-6 mb-3 px-1">
-              <h2 className="text-slate-800 font-bold">Lịch Sử Đối Soát Chiết Khấu</h2>
+              <h2 className="text-slate-800 font-bold">Lịch Sử Bù Điểm</h2>
               <button 
                 onClick={fetchEarnings} 
                 className="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
@@ -314,19 +314,19 @@ export default function Earnings() {
                   <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                 </div>
             ) : debtTransactions.length === 0 ? (
-                <div className="bg-slate-50 p-4 rounded-xl text-center text-slate-500 text-sm">Chưa có lịch sử phát sinh công nợ</div>
+                <div className="bg-slate-50 p-4 rounded-xl text-center text-slate-500 text-sm">Chưa có lịch sử phát sinh điểm trừ</div>
             ) : (
                 <div className="space-y-3 mb-6 max-h-80 overflow-y-auto pr-1">
                   {debtTransactions.map((dtx) => {
                      let icon = <CheckCircle2 size={16} />;
-                     let title = 'Thanh Toán Vô Ví Nợ';
+                     let title = 'Cộng Vào Ví Điểm';
                      let colorClass = 'text-emerald-600';
                      let amountClass = dtx.amount > 0 ? 'text-red-500' : 'text-emerald-500';
                      let bgClass = 'bg-white';
 
                      if (dtx.type === 'PENALTY') {
                         icon = <AlertCircle size={16} />;
-                        title = 'Trừ tiền Nợ';
+                        title = 'Trừ Điểm Hệ Thống';
                         colorClass = 'text-red-600';
                      } else if (dtx.status === 'REJECTED') {
                         icon = <XCircle size={16} />;
@@ -374,7 +374,7 @@ export default function Earnings() {
                  </svg>
               </div>
               <div className="flex items-center justify-between relative z-10 mb-1">
-                <p className="text-emerald-100 font-medium text-sm uppercase tracking-wider">Số Dư Khả Dụng</p>
+                <p className="text-emerald-100 font-medium text-sm uppercase tracking-wider">ĐIỂM KHẢ DỤNG</p>
                 <button onClick={() => setShowBalance(!showBalance)} className="p-1 rounded-full hover:bg-emerald-600/30 text-emerald-100 transition-colors">
                   {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
                 </button>
@@ -385,7 +385,7 @@ export default function Earnings() {
               
               {walletDetail.pendingAmount > 0 && (
                 <div className="bg-emerald-900/30 w-fit px-3 py-1.5 rounded-full text-xs font-semibold backdrop-blur-md mb-4 border border-emerald-400/20 flex items-center gap-1.5">
-                   <Clock size={14} /> Đang chờ duyệt chi: {formatCurrency(walletDetail.pendingAmount)}
+                   <Clock size={14} /> Đang chờ duyệt đổi: {formatCurrency(walletDetail.pendingAmount)}
                 </div>
               )}
 
@@ -394,7 +394,7 @@ export default function Earnings() {
                 disabled={(walletDetail.availableBalance || 0) < 50000}
                 className="w-full bg-white text-emerald-600 hover:bg-emerald-50 font-black py-4 px-4 rounded-2xl flex items-center justify-center gap-2 transition-transform shadow-lg active:scale-[0.98] disabled:opacity-80 disabled:active:scale-100 disabled:pointer-events-none"
               >
-                <Rocket size={20} /> YÊU CẦU THANH TOÁN
+                <Rocket size={20} /> YÊU CẦU ĐỔI ĐIỂM
               </button>
               {(walletDetail.availableBalance || 0) < 50000 && (
                  <p className="text-center text-[10px] text-emerald-100 mt-2">Cần đạt tối thiểu 50,000đ</p>
@@ -403,7 +403,7 @@ export default function Earnings() {
 
            {/* Lịch Sử Giao Dịch Ví Điện Tử */}
            <div className="flex justify-between items-center mb-3 px-1">
-             <h2 className="text-slate-800 font-bold">Lịch Sử Giao Dịch Đối Tác</h2>
+             <h2 className="text-slate-800 font-bold">Lịch Sử Đổi Điểm Đối Tác</h2>
              <button 
                onClick={fetchEarnings} 
                className="text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition-colors"
@@ -434,7 +434,7 @@ export default function Earnings() {
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${colorObj.bg}`}>{colorObj.icon}</div>
                           <div>
                             <p className={`font-semibold line-clamp-1 ${colorObj.color}`}>
-                              {wtx.type === 'WITHDRAW_REQUEST' ? 'Yêu Cầu Thanh Toán' : (wtx.type === 'WITHDRAW_SUCCESS' ? 'Thanh Toán Thành Công' : wtx.description)}
+                              {wtx.type === 'WITHDRAW_REQUEST' ? 'Yêu Cầu Đổi Điểm' : (wtx.type === 'WITHDRAW_SUCCESS' ? 'Đổi Điểm Thành Công' : wtx.description)}
                             </p>
                             <p className="text-slate-400 text-[11px] mt-0.5">{new Date(wtx.createdAt).toLocaleString('vi-VN')}</p>
                           </div>
@@ -464,7 +464,7 @@ export default function Earnings() {
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-800">
             <Wallet size={24} strokeWidth={1.5} />
-            <span className="text-xs mt-1 font-bold">Thu nhập</span>
+            <span className="text-xs mt-1 font-bold">Điểm thưởng</span>
           </Link>
         </div>
       </div>
@@ -475,7 +475,7 @@ export default function Earnings() {
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col">
             <div className="bg-gradient-to-r from-blue-600 to-sky-500 p-4 flex justify-between items-center text-white">
               <div>
-                 <h3 className="font-bold text-lg">Mã QR Thanh Toán Nợ</h3>
+                 <h3 className="font-bold text-lg">Mã QR Bù Điểm</h3>
                  <p className="text-white/80 text-xs mt-1 truncate">Bank: {paymentQRData?.title || 'MB'} • {paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN'}</p>
               </div>
               <button onClick={() => setShowQRModal(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/30 transition-colors">
@@ -485,7 +485,7 @@ export default function Earnings() {
             
             <div className="p-6 flex flex-col items-center justify-center bg-slate-50 relative">
               <div className="mb-4 text-center">
-                <p className="text-sm font-semibold text-slate-500 mb-1">Thanh Toán Khung Nợ {new Date(selectedDebt?.date).toLocaleDateString('vi-VN')}</p>
+                <p className="text-sm font-semibold text-slate-500 mb-1">Bù Điểm Khung {new Date(selectedDebt?.date).toLocaleDateString('vi-VN')}</p>
                 <div className="text-3xl font-black text-blue-600 tabular-nums tracking-tight bg-blue-100 px-4 py-2 rounded-2xl border-2 border-blue-200 border-dashed inline-block">
                   {formatCurrency(selectedDebt?.amount)}
                 </div>
@@ -507,7 +507,7 @@ export default function Earnings() {
                 ) : (
                   <img 
                     src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
-                    alt="QR Code Công Nợ" 
+                    alt="QR Code Bù Điểm" 
                     className="w-56 h-56 object-contain mix-blend-multiply"
                     onError={() => setQrError(true)}
                   />
@@ -529,7 +529,7 @@ export default function Earnings() {
                     <span className="text-sky-700 bg-sky-100 px-2 py-0.5 rounded uppercase">{driver?.driverCode || 'N/A'}</span>
                  </div>
                  <div className="flex justify-between text-[11px] font-medium text-slate-500">
-                    <p className="text-center w-full">Thanh toán bằng App ngân hàng bất kỳ để gạch nợ.</p>
+                    <p className="text-center w-full">Chuyển khoản bằng App ngân hàng bất kỳ để bù điểm.</p>
                  </div>
               </div>
 
@@ -557,7 +557,7 @@ export default function Earnings() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-200">
            <form onSubmit={handleWithdrawSubmit} className="bg-white rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
               <div className="bg-emerald-500 p-4 flex justify-between items-center text-white">
-                  <h3 className="font-bold text-lg">Yêu Cầu Thanh Toán</h3>
+                  <h3 className="font-bold text-lg">Yêu Cầu Đổi Điểm</h3>
                   <button type="button" onClick={() => setShowWithdrawModal(false)} className="w-8 h-8 rounded-full bg-black/20 hover:bg-black/30">✕</button>
               </div>
               <div className="p-6 space-y-4">
