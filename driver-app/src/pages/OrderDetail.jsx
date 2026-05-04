@@ -390,13 +390,13 @@ export default function OrderDetail() {
                </p>
                <div className="flex flex-col relative z-10">
                  {order.deliveryFee > 0 ? (
-                    <p className="text-green-600 font-black text-xl sm:text-2xl ">{order.deliveryFee?.toLocaleString()}đ</p>
+                    <p className="text-green-600 font-black text-xl sm:text-2xl ">{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ</p>
                  ) : (
                     <p className="text-green-600 font-black text-lg sm:text-xl ">Thỏa Thuận</p>
                  )}
                  {order.packageDetails?.bulkyFee > 0 && (
                    <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-orange-100">
-                     + {order.packageDetails.bulkyFee.toLocaleString()}đ Cồng kềnh
+                     ( đã cộng vào {order.packageDetails.bulkyFee.toLocaleString()}đ )
                    </p>
                  )}
                </div>

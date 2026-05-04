@@ -220,7 +220,10 @@ export default function MyOrders() {
               </div>
               <p className="text-slate-500 text-sm mb-1 flex items-center gap-1"><MapPin size={14}/> {order.deliveryAddress?.slice(0, 50)}...</p>
               <div className="flex justify-between items-center mt-2">
-                <span className="text-green-400 font-bold">+{order.deliveryFee?.toLocaleString()}đ</span>
+                <div className="flex flex-col">
+                  <span className="text-green-500 font-bold">+{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ</span>
+                  {order.packageDetails?.bulkyFee > 0 && <span className="text-[9px] text-orange-600 font-bold mt-0.5">( đã cộng {order.packageDetails.bulkyFee.toLocaleString()}đ )</span>}
+                </div>
                 <span className="text-slate-500 text-xs">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</span>
               </div>
             </div>

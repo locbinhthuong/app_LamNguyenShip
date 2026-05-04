@@ -209,9 +209,16 @@ export default function OrderDetail() {
             <div className="space-y-3">
               <div className="flex justify-between items-center bg-slate-50 p-3 rounded-2xl">
                  <span className="text-sm text-slate-600 font-medium">Phí Giao Hàng (Ship)</span>
-                 <span className="font-black text-slate-800">
-                   {order.deliveryFee > 0 ? `${order.deliveryFee.toLocaleString()}đ` : <span className="text-blue-500 text-xs italic">Đang cập nhật...</span>}
-                 </span>
+                 <div className="flex flex-col items-end">
+                   <span className="font-black text-slate-800">
+                     {order.deliveryFee > 0 ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ` : <span className="text-blue-500 text-xs italic">Đang cập nhật...</span>}
+                   </span>
+                   {order.packageDetails?.bulkyFee > 0 && (
+                     <span className="text-[10px] text-orange-600 font-medium mt-0.5">
+                       ( đã cộng vào {order.packageDetails.bulkyFee.toLocaleString()}đ )
+                     </span>
+                   )}
+                 </div>
               </div>
 
               {order.financialDetails?.surcharge > 0 && (
@@ -236,7 +243,7 @@ export default function OrderDetail() {
                    <span className="text-[10px] text-slate-400 italic">(Bao gồm COD + Phí Ship)</span>
                  </div>
                  <span className="font-black text-2xl text-red-500">
-                   {(order.deliveryFee > 0 || order.codAmount > 0) ? `${((order.deliveryFee || 0) + (order.financialDetails?.surcharge || 0) + (order.codAmount || 0)).toLocaleString()}đ` : '--'}
+                   {(order.deliveryFee > 0 || order.codAmount > 0) ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.codAmount || 0)).toLocaleString()}đ` : '--'}
                  </span>
               </div>
             </div>
