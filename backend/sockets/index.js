@@ -112,6 +112,22 @@ const setupSocket = (io) => {
 };
 
 // Helper functions
+const sendPushToCustomer = async (order, title, body) => {
+  try {
+    if (!order.customerId) return;
+    const User = require('../models/User');
+    const { sendNotification } = require('../utils/notification');
+    
+    const customerId = order.customerId._id || order.customerId;
+    const user = await User.findById(customerId).select('fcmToken role');
+    if (user && user.fcmToken) {
+      const url = user.role === 'SHOP' ? `/shop/order/${order._id}` : `/customer/order/${order._id}`;
+      await sendNotification(user.fcmToken, title, body, { url });
+    }
+  } catch (err) {
+    console.error('[FCM] Lỗi gửi push cho khách hàng từ socket:', err);
+  }
+};
 const broadcastToCreator = (io, order, eventName) => {
   if (order.customerId) {
     const creatorId = order.customerId._id || order.customerId;
@@ -171,12 +187,21 @@ const emitOrderAccepted = (io, order) => {
   io.to('drivers').emit('order_accepted', order);
   io.to('admins').emit('order_accepted', order);
   broadcastToCreator(io, order, 'order_accepted');
+  
+  const driverName = order.assignedTo?.name || 'Tài xế';
+  const isBike = order.serviceType === 'DAT_XE';
+  const body = isBike ? `${driverName} đã nhận chuyến và đang đến đón bạn!` : `${driverName} đã nhận đơn và trên đường lấy hàng!`;
+  sendPushToCustomer(order, '🛵 Đã có tài xế nhận đơn!', body);
 };
 
 const emitOrderPickedUp = (io, order) => {
   io.to('drivers').emit('order_picked_up', order);
   io.to('admins').emit('order_picked_up', order);
   broadcastToCreator(io, order, 'order_picked_up');
+  
+  const isBike = order.serviceType === 'DAT_XE';
+  const body = isBike ? `Tài xế đã đón bạn thành công! Bắt đầu di chuyển...` : `Tài xế đã lấy hàng và bắt đầu giao!`;
+  sendPushToCustomer(order, '📦 Đơn hàng đang được di chuyển', body);
 };
 
 const emitOrderDelivering = (io, order) => {
@@ -189,6 +214,11 @@ const emitOrderCompleted = (io, order) => {
   io.to('drivers').emit('order_completed', order);
   io.to('admins').emit('order_completed', order);
   broadcastToCreator(io, order, 'order_completed');
+  
+  const isBike = order.serviceType === 'DAT_XE';
+  const orderCodeStr = order.orderCode || 'của bạn';
+  const body = isBike ? `Chuyến đi ${orderCodeStr} đã hoàn thành. Cảm ơn quý khách!` : `Đơn hàng ${orderCodeStr} đã giao thành công. Cảm ơn quý khách!`;
+  sendPushToCustomer(order, '✅ Đơn hàng hoàn tất', body);
 };
 
 const emitOrderCancelled = (io, order) => {
