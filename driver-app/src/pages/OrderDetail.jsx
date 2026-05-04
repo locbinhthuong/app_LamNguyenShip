@@ -396,7 +396,7 @@ export default function OrderDetail() {
                  )}
                  {order.packageDetails?.bulkyFee > 0 && (
                    <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-orange-100">
-                     ( đã cộng vào {order.packageDetails.bulkyFee.toLocaleString()}đ )
+                     ( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )
                    </p>
                  )}
                </div>

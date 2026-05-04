@@ -215,7 +215,7 @@ export default function OrderDetail() {
                    </span>
                    {order.packageDetails?.bulkyFee > 0 && (
                      <span className="text-[10px] text-orange-600 font-medium mt-0.5">
-                       ( đã cộng vào {order.packageDetails.bulkyFee.toLocaleString()}đ )
+                       ( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )
                      </span>
                    )}
                  </div>
