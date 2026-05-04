@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "vn.lamnguyenship.driver"
+    namespace = "vn.lamnguyenship.taixe"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "vn.lamnguyenship.driver"
+        applicationId "vn.lamnguyenship.taixe"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 30

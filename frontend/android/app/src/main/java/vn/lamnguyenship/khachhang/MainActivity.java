@@ -1,4 +1,4 @@
-package vn.lamnguyenship.driver;
+package vn.lamnguyenship.khachhang;
 
 import com.getcapacitor.BridgeActivity;
 

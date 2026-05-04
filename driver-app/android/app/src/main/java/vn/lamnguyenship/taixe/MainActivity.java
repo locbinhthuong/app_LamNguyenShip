@@ -1,4 +1,4 @@
-package vn.lamnguyenship.customer;
+package vn.lamnguyenship.taixe;
 
 import com.getcapacitor.BridgeActivity;
 

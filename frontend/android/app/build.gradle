@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "vn.lamnguyenship.customer"
+    namespace = "vn.lamnguyenship.khachhang"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "vn.lamnguyenship.customer"
+        applicationId "vn.lamnguyenship.khachhang"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 39
