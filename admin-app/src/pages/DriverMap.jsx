@@ -332,7 +332,14 @@ export default function DriverMap() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">🗺️ Bản Đồ Theo Dõi Tài Xế</h1>
         <div className="flex gap-2">
-            <div className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-500 shadow-sm border border-slate-200">
+            <button 
+              onClick={loadInitialData}
+              className="rounded-lg bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-200 transition-colors flex items-center gap-2"
+              title="Tải lại dữ liệu bản đồ khi mạng chập chờn"
+            >
+              🔄 Làm mới
+            </button>
+            <div className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-500 shadow-sm border border-slate-200 flex items-center">
               🟢 Đang gửi vị trí: {onlineCount}
             </div>
         </div>
