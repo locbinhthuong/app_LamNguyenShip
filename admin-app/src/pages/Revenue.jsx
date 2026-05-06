@@ -65,8 +65,8 @@ export default function Revenue() {
         </button>
       </div>
 
-      {/* 2 CỘT THỐNG KÊ DOANH THU & CHIẾT KHẤU */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* THỐNG KÊ DOANH THU & CHIẾT KHẤU XẾP CHỒNG */}
+      <div className="flex flex-col space-y-6">
         {/* BẢNG DOANH THU CƯỚC */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
           <div className="bg-emerald-50 border-b border-emerald-100 p-3 text-center">
@@ -85,7 +85,7 @@ export default function Revenue() {
               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tháng:</h3>
               <p className="text-xl font-black text-slate-800">{formatCurrency(stats.monthlyRevenue)}</p>
             </div>
-            <div className="p-4 sm:p-5 flex items-center justify-between bg-emerald-50/30 hover:bg-emerald-50/50 transition-colors h-[76px]">
+            <div className="p-4 sm:p-5 flex items-center justify-between bg-emerald-50/30 hover:bg-emerald-50/50 transition-colors">
               <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-widest">Tổng Cước:</h3>
               <p className="text-xl font-black text-emerald-600">{formatCurrency(stats.totalRevenue)}</p>
             </div>
@@ -110,7 +110,7 @@ export default function Revenue() {
               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tháng:</h3>
               <p className="text-xl font-black text-slate-800">{formatCurrency(discountStats.monthlyDiscount)}</p>
             </div>
-            <div className="p-4 sm:p-5 flex items-center justify-between bg-purple-50/30 hover:bg-purple-50/50 transition-colors h-[76px]">
+            <div className="p-4 sm:p-5 flex items-center justify-between bg-purple-50/30 hover:bg-purple-50/50 transition-colors">
               <h3 className="text-sm font-bold text-purple-600 uppercase tracking-widest">Tổng (Năm):</h3>
               <p className="text-xl font-black text-purple-600">{formatCurrency(discountStats.yearlyDiscount)}</p>
             </div>
