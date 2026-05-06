@@ -173,6 +173,7 @@ export default function DriverMap() {
 
   const loadInitialData = useCallback(async () => {
     try {
+      setLoading(true);
       const [resDrivers, resOrders] = await Promise.all([
           getDrivers(),
           getOrders({ status: 'ACCEPTED,PICKED_UP,DELIVERING' })
