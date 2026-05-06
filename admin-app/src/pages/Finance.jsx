@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import api from '../services/api';
+import api, { getFinanceStats } from '../services/api';
 import DriverDebtModal from '../components/DriverDebtModal';
 import DriverWalletModal from '../components/DriverWalletModal';
 
@@ -40,7 +40,7 @@ export default function Finance() {
       if (drvRes.data.success) {
         setDrivers(drvRes.data.data);
       }
-      const statsRes = await api.getFinanceStats();
+      const statsRes = await getFinanceStats();
       if (statsRes.success) {
         setStats(statsRes.data);
       }
