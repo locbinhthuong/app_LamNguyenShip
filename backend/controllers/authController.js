@@ -128,7 +128,7 @@ const authController = {
       if (!driver) {
         return res.status(401).json({
           success: false,
-          message: 'Số điện thoại hoặc mật khẩu không đúng'
+          message: 'Sai tài khoản hoặc mật khẩu'
         });
       }
 
@@ -137,15 +137,14 @@ const authController = {
       if (!isMatch) {
         return res.status(401).json({
           success: false,
-          message: 'Số điện thoại hoặc mật khẩu không đúng'
+          message: 'Sai tài khoản hoặc mật khẩu'
         });
       }
 
-      // Check status
       if (driver.status === 'banned') {
         return res.status(403).json({
           success: false,
-          message: 'Tài khoản đã bị khóa. Liên hệ admin.'
+          message: 'Tài khoản đã bị xóa. Liên hệ admin.'
         });
       }
 
@@ -270,6 +269,7 @@ const authController = {
   deleteDriverAccount: async (req, res) => {
     try {
       // Vì tránh lỗi khóa ngoại và giữ lại lịch sử đơn hàng, ta chỉ đổi trạng thái thành banned hoặc xoá thông tin cá nhân
+      const newName = req.driver.name.endsWith(' (Đã xoá)') ? req.driver.name : req.driver.name + ' (Đã xoá)';
       const driver = await Driver.findByIdAndUpdate(
         req.driver._id,
         { 
@@ -277,7 +277,7 @@ const authController = {
           isOnline: false,
           sessionToken: null,
           fcmToken: '',
-          name: req.driver.name + ' (Đã xoá)'
+          name: newName
         },
         { new: true }
       );
@@ -438,7 +438,7 @@ const authController = {
       if (!admin) {
         return res.status(401).json({
           success: false,
-          message: 'Số điện thoại hoặc mật khẩu không đúng'
+          message: 'Sai tài khoản hoặc mật khẩu'
         });
       }
 
@@ -447,7 +447,7 @@ const authController = {
       if (!isMatch) {
         return res.status(401).json({
           success: false,
-          message: 'Số điện thoại hoặc mật khẩu không đúng'
+          message: 'Sai tài khoản hoặc mật khẩu'
         });
       }
 
@@ -588,7 +588,7 @@ const authController = {
       if (!user) {
         return res.status(401).json({
           success: false,
-          message: 'Số điện thoại hoặc mật khẩu không đúng'
+          message: 'Sai tài khoản hoặc mật khẩu'
         });
       }
 
@@ -597,7 +597,7 @@ const authController = {
       if (!isMatch) {
         return res.status(401).json({
           success: false,
-          message: 'Số điện thoại hoặc mật khẩu không đúng'
+          message: 'Sai tài khoản hoặc mật khẩu'
         });
       }
 
@@ -702,9 +702,10 @@ const authController = {
   // DELETE /api/auth/customer/me
   deleteCustomerAccount: async (req, res) => {
     try {
+      const newName = req.customer.name.endsWith(' (Đã xoá)') ? req.customer.name : req.customer.name + ' (Đã xoá)';
       await User.findByIdAndUpdate(req.customer._id, {
         isActive: false,
-        name: req.customer.name + ' (Đã xoá)',
+        name: newName,
         fcmToken: ''
       });
 

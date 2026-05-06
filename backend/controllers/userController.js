@@ -39,7 +39,15 @@ const userController = {
       const { name, phone, password, isActive } = req.body;
       const updateData = {};
       if (name) updateData.name = name;
-      if (isActive !== undefined) updateData.isActive = isActive;
+      if (isActive !== undefined) {
+        updateData.isActive = isActive;
+        if (isActive === true) {
+          const currentUser = await User.findById(req.params.id);
+          if (currentUser && currentUser.name) {
+             updateData.name = currentUser.name.replace(/\s*\(Đã (xoá|xóa)\)/gi, '');
+          }
+        }
+      }
       
       if (phone) {
         const existingUser = await User.findOne({ phone, _id: { $ne: req.params.id } });

@@ -133,7 +133,16 @@ const driverController = {
       if (name) updateData.name = name;
       if (vehicleType) updateData.vehicleType = vehicleType;
       if (licensePlate !== undefined) updateData.licensePlate = licensePlate;
-      if (status) updateData.status = status;
+      if (status) {
+        updateData.status = status;
+        if (status === 'active') {
+          const currentDriver = await Driver.findById(id);
+          // Thay thế tất cả các chuỗi '(Đã xoá)' hoặc '(Đã xóa)' trong tên
+          if (currentDriver && currentDriver.name) {
+            updateData.name = currentDriver.name.replace(/\s*\(Đã (xoá|xóa)\)/gi, '');
+          }
+        }
+      }
       if (avatar !== undefined) updateData.avatar = avatar;
       if (commissionRate !== undefined) updateData.commissionRate = commissionRate;
       if (cccd !== undefined) updateData.cccd = cccd;

@@ -29,7 +29,9 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+    // Bỏ qua lỗi 401 khi đang thực hiện api đăng nhập
+    if (error.response?.status === 401 && originalRequest && !originalRequest.url.includes('/login')) {
       if (localStorage.getItem('driver_token')) {
         window.dispatchEvent(new CustomEvent('api_unauthorized', { 
           detail: { message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác hoặc phiên làm việc hết hạn!' } 
