@@ -174,10 +174,8 @@ const financeController = {
 
       const completedOrders = await require('../models/Order').find({ status: 'COMPLETED' }).lean();
 
-      let dailyDiscount = 0;
-      let weeklyDiscount = 0;
-      let monthlyDiscount = 0;
-      let yearlyDiscount = 0;
+      let stats15 = { dailyDiscount: 0, weeklyDiscount: 0, monthlyDiscount: 0, yearlyDiscount: 0 };
+      let stats20 = { dailyDiscount: 0, weeklyDiscount: 0, monthlyDiscount: 0, yearlyDiscount: 0 };
 
       completedOrders.forEach(order => {
         const fee = order.deliveryFee || 0;
@@ -189,19 +187,25 @@ const financeController = {
         const dateStrFromDB = order.deliveredAt || order.updatedAt;
         const date = new Date(dateStrFromDB);
         
-        if (date >= today) dailyDiscount += discount;
-        if (date >= startOfWeek) weeklyDiscount += discount;
-        if (date >= startOfMonth) monthlyDiscount += discount;
-        if (date >= startOfYear) yearlyDiscount += discount;
+        if (rate >= 0.2) {
+          if (date >= today) stats20.dailyDiscount += discount;
+          if (date >= startOfWeek) stats20.weeklyDiscount += discount;
+          if (date >= startOfMonth) stats20.monthlyDiscount += discount;
+          if (date >= startOfYear) stats20.yearlyDiscount += discount;
+        } else {
+          // <= 15% hoặc mặc định
+          if (date >= today) stats15.dailyDiscount += discount;
+          if (date >= startOfWeek) stats15.weeklyDiscount += discount;
+          if (date >= startOfMonth) stats15.monthlyDiscount += discount;
+          if (date >= startOfYear) stats15.yearlyDiscount += discount;
+        }
       });
 
       res.status(200).json({
         success: true,
         data: {
-          dailyDiscount,
-          weeklyDiscount,
-          monthlyDiscount,
-          yearlyDiscount
+          stats15,
+          stats20
         }
       });
     } catch (e) {

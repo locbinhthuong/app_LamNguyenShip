@@ -12,7 +12,13 @@ export default function Revenue() {
     weeklyRevenue: 0,
     monthlyRevenue: 0
   });
-  const [discountStats, setDiscountStats] = useState({
+  const [stats15, setStats15] = useState({
+    dailyDiscount: 0,
+    weeklyDiscount: 0,
+    monthlyDiscount: 0,
+    yearlyDiscount: 0
+  });
+  const [stats20, setStats20] = useState({
     dailyDiscount: 0,
     weeklyDiscount: 0,
     monthlyDiscount: 0,
@@ -31,8 +37,9 @@ export default function Revenue() {
         setStats(res.data.stats);
         setDrivers(res.data.drivers);
       }
-      if (financeRes.success) {
-        setDiscountStats(financeRes.data);
+      if (financeRes.success && financeRes.data) {
+        setStats15(financeRes.data.stats15 || { dailyDiscount: 0, weeklyDiscount: 0, monthlyDiscount: 0, yearlyDiscount: 0 });
+        setStats20(financeRes.data.stats20 || { dailyDiscount: 0, weeklyDiscount: 0, monthlyDiscount: 0, yearlyDiscount: 0 });
       }
     } catch (error) {
       console.error('Lỗi tải doanh thu:', error);
@@ -92,27 +99,52 @@ export default function Revenue() {
           </div>
         </div>
 
-        {/* BẢNG CHIẾT KHẤU */}
+        {/* BẢNG CHIẾT KHẤU 15% */}
         <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
           <div className="bg-purple-50 border-b border-purple-100 p-3 text-center">
-            <h2 className="font-bold text-purple-700 text-sm tracking-widest uppercase">Tổng Doanh Thu Chiết Khấu</h2>
+            <h2 className="font-bold text-purple-700 text-sm tracking-widest uppercase">Tổng Doanh Thu Chiết Khấu (15%)</h2>
           </div>
           <div className="divide-y divide-slate-100 flex-1">
             <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Ngày:</h3>
-              <p className="text-xl font-black text-slate-800">{formatCurrency(discountStats.dailyDiscount)}</p>
+              <p className="text-xl font-black text-slate-800">{formatCurrency(stats15.dailyDiscount)}</p>
             </div>
             <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tuần:</h3>
-              <p className="text-xl font-black text-slate-800">{formatCurrency(discountStats.weeklyDiscount)}</p>
+              <p className="text-xl font-black text-slate-800">{formatCurrency(stats15.weeklyDiscount)}</p>
             </div>
             <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
               <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tháng:</h3>
-              <p className="text-xl font-black text-slate-800">{formatCurrency(discountStats.monthlyDiscount)}</p>
+              <p className="text-xl font-black text-slate-800">{formatCurrency(stats15.monthlyDiscount)}</p>
             </div>
             <div className="p-4 sm:p-5 flex items-center justify-between bg-purple-50/30 hover:bg-purple-50/50 transition-colors">
               <h3 className="text-sm font-bold text-purple-600 uppercase tracking-widest">Tổng (Năm):</h3>
-              <p className="text-xl font-black text-purple-600">{formatCurrency(discountStats.yearlyDiscount)}</p>
+              <p className="text-xl font-black text-purple-600">{formatCurrency(stats15.yearlyDiscount)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* BẢNG CHIẾT KHẤU 20% */}
+        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col">
+          <div className="bg-orange-50 border-b border-orange-100 p-3 text-center">
+            <h2 className="font-bold text-orange-700 text-sm tracking-widest uppercase">Tổng Doanh Thu Chiết Khấu (20%)</h2>
+          </div>
+          <div className="divide-y divide-slate-100 flex-1">
+            <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Ngày:</h3>
+              <p className="text-xl font-black text-slate-800">{formatCurrency(stats20.dailyDiscount)}</p>
+            </div>
+            <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tuần:</h3>
+              <p className="text-xl font-black text-slate-800">{formatCurrency(stats20.weeklyDiscount)}</p>
+            </div>
+            <div className="p-4 sm:p-5 flex items-center justify-between hover:bg-slate-50 transition-colors">
+              <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest">Tháng:</h3>
+              <p className="text-xl font-black text-slate-800">{formatCurrency(stats20.monthlyDiscount)}</p>
+            </div>
+            <div className="p-4 sm:p-5 flex items-center justify-between bg-orange-50/30 hover:bg-orange-50/50 transition-colors">
+              <h3 className="text-sm font-bold text-orange-600 uppercase tracking-widest">Tổng (Năm):</h3>
+              <p className="text-xl font-black text-orange-600">{formatCurrency(stats20.yearlyDiscount)}</p>
             </div>
           </div>
         </div>
