@@ -242,6 +242,12 @@ export const updateDriverDebt = async (txId, amount, description) => {
   return response.data;
 };
 
+// ==================== FINANCE ====================
+export const getFinanceStats = async () => {
+  const response = await api.get('/api/finance/stats');
+  return response.data;
+};
+
 // ==================== WALLET (ADMIN) ====================
 export const getDriverWalletAdmin = async (driverId) => {
   const response = await api.get(`/api/wallets/admin/${driverId}`);

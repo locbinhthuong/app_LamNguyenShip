@@ -8,6 +8,7 @@ router.use(verifyToken);
 router.use(onlyAdmin);
 
 router.get('/all-requests', financeController.getAllRequests);
+router.get('/stats', financeController.getDiscountStats);
 
 // Duyệt Nợ
 router.post('/debts/:txId/approve', financeController.approveDebt);

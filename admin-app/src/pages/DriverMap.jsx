@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // KHÔNG dùng react-leaflet để tránh lỗi tương thích Vite Production
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { getDrivers, getOrders, getDriverById, getFullImageUrl } from '../services/api';
+import { getDrivers, getOrders, getDriverById, getFullImageUrl, forceOfflineDriver } from '../services/api';
 
 // Hàm tạo Icon thuần có Badge số dư động
 const getMotorbikeIcon = (activeOrderCount, status, avatar) => {
@@ -39,12 +39,10 @@ const getMotorbikeIcon = (activeOrderCount, status, avatar) => {
 export default function DriverMap() {
   const [loading, setLoading] = useState(true);
   const [onlineCount, setOnlineCount] = useState(0);
-  const [showDrivers, setShowDrivers] = useState(true);
   
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef({});
-  const showDriversRef = useRef(true);
   
   // Lưu trữ state cho map để render marker (Ref để tránh re-render bản đồ liên tục)
   const dataRef = useRef({
@@ -59,81 +57,110 @@ export default function DriverMap() {
     
     setOnlineCount(Object.keys(drivers).length);
 
-    if (!showDriversRef.current) {
-        // Xóa tất cả marker nếu đang ẩn
-        Object.keys(markersRef.current).forEach(id => {
-            mapInstance.current.removeLayer(markersRef.current[id]);
-            delete markersRef.current[id];
-        });
-        return;
-    }
-
-    // Xóa marker nếu driver đã offline hoặc bị mất khỏi danh sách
-    Object.keys(markersRef.current).forEach(id => {
-      if (!drivers[id]) {
-        mapInstance.current.removeLayer(markersRef.current[id]);
-        delete markersRef.current[id];
-      }
+    const groups = {};
+    Object.values(drivers).forEach(driver => {
+      const latR = Number(driver.lat).toFixed(4);
+      const lngR = Number(driver.lng).toFixed(4);
+      const key = `${latR},${lngR}`;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(driver);
     });
 
-    Object.values(drivers).forEach(driver => {
-      const activeJobs = orders[driver.id] || [];
-      const latlng = [driver.lat, driver.lng];
+    const newMarkerKeys = new Set();
 
-      let jobsHtml = '';
-      if (activeJobs.length > 0) {
-        jobsHtml = activeJobs.map((job, idx) => `
-          <div style="background: #fff7ed; padding: 8px; border-radius: 4px; border: 1px solid #fed7aa; margin-bottom: ${idx < activeJobs.length - 1 ? '6px' : '0'};">
+    Object.keys(groups).forEach(key => {
+      newMarkerKeys.add(key);
+      const groupDrivers = groups[key];
+      const latlng = key.split(',').map(Number);
+      
+      let totalActiveJobs = 0;
+      let firstOrderStatus = null;
+      let groupJobsHtml = '';
+
+      groupDrivers.forEach(driver => {
+        const activeJobs = orders[driver.id] || [];
+        totalActiveJobs += activeJobs.length;
+        if (!firstOrderStatus && activeJobs.length > 0) firstOrderStatus = activeJobs[0].status;
+
+        let jobsHtml = '';
+        if (activeJobs.length > 0) {
+          jobsHtml = activeJobs.map((job, idx) => `
+            <div style="background: #fff7ed; padding: 8px; border-radius: 4px; border: 1px solid #fed7aa; margin-bottom: ${idx < activeJobs.length - 1 ? '6px' : '0'};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <p style="margin: 0; font-size: 10px; font-weight: bold; color: ${job.status === 'ACCEPTED' ? '#f97316' : '#2563eb'}; text-transform: uppercase;">
+                        ${job.status === 'ACCEPTED' ? 'Đang đi lấy' : 'Đang chở hàng'}
+                    </p>
+                    <span style="font-size: 9px; padding: 2px 4px; background: #fdba74; border-radius: 4px; color: #fff; font-weight: bold;">${job.orderCode ? job.orderCode.slice(-6) : 'ORDER'}</span>
+                </div>
+                <p style="margin: 0 0 2px 0; font-size: 12px; font-weight: 600;">👤 ${job.customerName}</p>
+                <p style="margin: 0 0 4px 0; font-size: 11px; color: #4b5563;">🏠 ${job.deliveryAddress}</p>
+                <p style="margin: 0; font-size: 12px; font-weight: bold; color: #16a34a;">💰 COD: ${job.codAmount?.toLocaleString()}đ</p>
+            </div>
+          `).join('');
+        } else {
+          jobsHtml = `
+            <div style="background: #f3f4f6; padding: 8px; border-radius: 4px;">
+                <p style="margin: 0; font-size: 11px; color: #6b7280; font-style: italic;">🚦 Đang chạy rỗng chờ đơn</p>
+            </div>
+          `;
+        }
+
+        groupJobsHtml += `
+          <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                  <p style="margin: 0; font-size: 10px; font-weight: bold; color: ${job.status === 'ACCEPTED' ? '#f97316' : '#2563eb'}; text-transform: uppercase;">
-                      ${job.status === 'ACCEPTED' ? 'Đang đi lấy' : 'Đang chở hàng'}
-                  </p>
-                  <span style="font-size: 9px; padding: 2px 4px; background: #fdba74; border-radius: 4px; color: #fff; font-weight: bold;">${job.orderCode ? job.orderCode.slice(-6) : 'ORDER'}</span>
+                  <h3 style="margin: 0; color: #ea580c; font-weight: bold; font-size: 16px;">${driver.name}</h3>
+                  <div style="display: flex; gap: 4px; align-items: center;">
+                      ${activeJobs.length > 0 ? `<span style="font-size: 10px; background: #ef4444; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;">${activeJobs.length} ĐƠN</span>` : ''}
+                      <button onclick="window.handleForceOffline('${driver.id}')" style="background: #ef4444; color: white; border: none; padding: 2px 6px; border-radius: 4px; font-size: 10px; cursor: pointer; font-weight: bold;" title="Tắt định vị">🔴 TẮT ĐỊNH VỊ</button>
+                  </div>
               </div>
-              <p style="margin: 0 0 2px 0; font-size: 12px; font-weight: 600;">👤 ${job.customerName}</p>
-              <p style="margin: 0 0 4px 0; font-size: 11px; color: #4b5563;">🏠 ${job.deliveryAddress}</p>
-              <p style="margin: 0; font-size: 12px; font-weight: bold; color: #16a34a;">💰 COD: ${job.codAmount?.toLocaleString()}đ</p>
-          </div>
-        `).join('');
-      } else {
-        jobsHtml = `
-          <div style="background: #f3f4f6; padding: 8px; border-radius: 4px;">
-              <p style="margin: 0; font-size: 11px; color: #6b7280; font-style: italic;">🚦 Đang chạy rỗng chờ đơn</p>
+              ${driver.phone ? `<p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">📞 ${driver.phone}</p>` : ''}
+              ${jobsHtml}
+              <p style="margin: 4px 0 0 0; font-size: 10px; color: #9ca3af; text-align: right;">Cập nhật: ${new Date(driver.updatedAt).toLocaleTimeString()}</p>
           </div>
         `;
+      });
+
+      let headerHtml = '';
+      if (groupDrivers.length > 1) {
+          headerHtml = `<div style="background: #ef4444; color: white; padding: 6px; text-align: center; font-weight: bold; font-size: 12px; border-radius: 4px; margin-bottom: 8px;">📍 CÓ ${groupDrivers.length} TÀI XẾ Ở ĐÂY</div>`;
       }
 
       // Nội dung Popup
       const popupHtml = `
-        <div style="padding: 4px; min-width: 220px; max-height: 250px; overflow-y: auto; font-family: sans-serif;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                <h3 style="margin: 0; color: #ea580c; font-weight: bold; font-size: 16px;">${driver.name}</h3>
-                ${activeJobs.length > 0 ? `<span style="font-size: 10px; background: #ef4444; color: white; padding: 2px 6px; border-radius: 10px; font-weight: bold;">${activeJobs.length} ĐƠN</span>` : ''}
-            </div>
-            ${driver.phone ? `<p style="margin: 0 0 8px 0; font-size: 12px; color: #6b7280;">📞 ${driver.phone}</p>` : ''}
-            
-            ${jobsHtml}
-            
-            <p style="margin: 8px 0 0 0; font-size: 10px; color: #9ca3af; text-align: right;">
-                Cập nhật: ${new Date(driver.updatedAt).toLocaleTimeString()}
-            </p>
+        <div style="padding: 4px; min-width: 250px; max-height: 300px; overflow-y: auto; font-family: sans-serif;">
+            ${headerHtml}
+            ${groupJobsHtml}
         </div>
       `;
 
-      const firstOrderStatus = activeJobs.length > 0 ? activeJobs[0].status : null;
-      const currentIcon = getMotorbikeIcon(activeJobs.length, firstOrderStatus, driver.avatar);
+      // Icon (nếu nhiều tài xế thì hiện số lượng thay vì số đơn)
+      // Mẹo: Tái sử dụng getMotorbikeIcon. activeOrderCount có thể hiện số tài xế.
+      let currentIcon;
+      if (groupDrivers.length > 1) {
+          currentIcon = getMotorbikeIcon(groupDrivers.length + ' TX', null, null); // "X TX" string won't break anything, just a badge
+      } else {
+          currentIcon = getMotorbikeIcon(totalActiveJobs, firstOrderStatus, groupDrivers[0].avatar);
+      }
 
-      if (markersRef.current[driver.id]) {
+      if (markersRef.current[key]) {
         // Đã có marker, chỉ cần dời vị trí và cập nhật popup và icon tĩnh
-        markersRef.current[driver.id].setLatLng(latlng);
-        markersRef.current[driver.id].setIcon(currentIcon);
-        markersRef.current[driver.id].getPopup().setContent(popupHtml);
+        markersRef.current[key].setLatLng(latlng);
+        markersRef.current[key].setIcon(currentIcon);
+        markersRef.current[key].getPopup().setContent(popupHtml);
       } else {
         // Tạo marker mới
         const marker = L.marker(latlng, { icon: currentIcon }).addTo(mapInstance.current);
         marker.bindPopup(popupHtml);
-        markersRef.current[driver.id] = marker;
+        markersRef.current[key] = marker;
       }
+    });
+
+    Object.keys(markersRef.current).forEach(key => {
+        if (!newMarkerKeys.has(key)) {
+            mapInstance.current.removeLayer(markersRef.current[key]);
+            delete markersRef.current[key];
+        }
     });
 
     // Căn giữa bản đồ nếu có tài xế và chưa từng căn
@@ -188,6 +215,17 @@ export default function DriverMap() {
   }, [updateMapMarkers]);
 
   useEffect(() => {
+    // 0. Tạo hàm Global cho onClick của popup
+    window.handleForceOffline = async (driverId) => {
+        if (!window.confirm('Bạn có chắc muốn ép Tắt Định Vị tài xế này?')) return;
+        try {
+            await forceOfflineDriver(driverId);
+            alert('Đã tắt định vị thành công!');
+        } catch(e) {
+            alert('Lỗi khi tắt định vị!');
+        }
+    };
+
     // 1. Khởi tạo bản đồ thuần Túy
     if (mapRef.current && !mapInstance.current) {
         mapInstance.current = L.map(mapRef.current).setView([10.762622, 106.660172], 13); // TPHCM Mặc định
@@ -294,18 +332,7 @@ export default function DriverMap() {
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">🗺️ Bản Đồ Theo Dõi Tài Xế</h1>
         <div className="flex gap-2">
-            <button
-                onClick={() => {
-                    const nextVal = !showDrivers;
-                    setShowDrivers(nextVal);
-                    showDriversRef.current = nextVal;
-                    updateMapMarkers();
-                }}
-                className={`rounded-lg px-4 py-2 text-sm font-bold shadow-sm transition-colors ${showDrivers ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}
-            >
-                {showDrivers ? '👁️ Ẩn Tài Xế' : '👁️‍🗨️ Hiện Tài Xế'}
-            </button>
-            <div className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-500 shadow-sm">
+            <div className="rounded-lg bg-white px-4 py-2 text-sm font-bold text-green-500 shadow-sm border border-slate-200">
               🟢 Đang gửi vị trí: {onlineCount}
             </div>
         </div>

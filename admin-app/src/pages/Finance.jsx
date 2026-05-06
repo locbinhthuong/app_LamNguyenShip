@@ -3,6 +3,10 @@ import api from '../services/api';
 import DriverDebtModal from '../components/DriverDebtModal';
 import DriverWalletModal from '../components/DriverWalletModal';
 
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
+};
+
 export default function Finance() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
@@ -10,6 +14,12 @@ export default function Finance() {
     pendingWallets: [],
     recentDebts: [],
     recentWallets: []
+  });
+  const [stats, setStats] = useState({
+    dailyDiscount: 0,
+    weeklyDiscount: 0,
+    monthlyDiscount: 0,
+    yearlyDiscount: 0
   });
   const [activeTab, setActiveTab] = useState('debts'); // 'debts' | 'wallets'
   const [drivers, setDrivers] = useState([]);
@@ -29,6 +39,10 @@ export default function Finance() {
       }
       if (drvRes.data.success) {
         setDrivers(drvRes.data.data);
+      }
+      const statsRes = await api.getFinanceStats();
+      if (statsRes.success) {
+        setStats(statsRes.data);
       }
     } catch (e) {
       console.error(e);
@@ -157,6 +171,30 @@ export default function Finance() {
         <button onClick={fetchData} className="px-5 py-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 font-semibold transition-all focus:ring-2 focus:ring-blue-500 outline-none flex items-center gap-2">
           🔄 Làm mới (Refresh)
         </button>
+      </div>
+
+      {/* KHUNG THỐNG KÊ DOANH THU CHIẾT KHẤU */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-blue-50 rounded-bl-[100px] -z-0"></div>
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest relative z-10">Chiết khấu Ngày</p>
+          <p className="text-2xl font-black text-blue-600 mt-2 relative z-10">{formatCurrency(stats.dailyDiscount)}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-50 rounded-bl-[100px] -z-0"></div>
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest relative z-10">Chiết khấu Tuần</p>
+          <p className="text-2xl font-black text-indigo-600 mt-2 relative z-10">{formatCurrency(stats.weeklyDiscount)}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-fuchsia-50 rounded-bl-[100px] -z-0"></div>
+          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest relative z-10">Chiết khấu Tháng</p>
+          <p className="text-2xl font-black text-fuchsia-600 mt-2 relative z-10">{formatCurrency(stats.monthlyDiscount)}</p>
+        </div>
+        <div className="bg-white rounded-2xl border border-amber-200 p-5 shadow-sm hover:shadow-md transition-shadow bg-amber-50/30 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-amber-100 rounded-bl-[100px] -z-0"></div>
+          <p className="text-sm font-bold text-amber-600 uppercase tracking-widest relative z-10">Chiết khấu Năm</p>
+          <p className="text-2xl font-black text-amber-600 mt-2 relative z-10">{formatCurrency(stats.yearlyDiscount)}</p>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden min-h-[500px]">

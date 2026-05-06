@@ -157,6 +157,57 @@ const financeController = {
     } catch (e) {
       res.status(500).json({ success: false, message: 'Lỗi server' });
     }
+  },
+
+  getDiscountStats: async (req, res) => {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const startOfWeek = new Date(today);
+      const dayOfWeek = startOfWeek.getDay();
+      const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      startOfWeek.setDate(today.getDate() + diffToMonday);
+
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startOfYear = new Date(today.getFullYear(), 0, 1);
+
+      const completedOrders = await require('../models/Order').find({ status: 'COMPLETED' }).lean();
+
+      let dailyDiscount = 0;
+      let weeklyDiscount = 0;
+      let monthlyDiscount = 0;
+      let yearlyDiscount = 0;
+
+      completedOrders.forEach(order => {
+        const fee = order.deliveryFee || 0;
+        if (fee <= 0) return;
+        
+        const rate = order.commissionRate ? order.commissionRate / 100 : 0.15;
+        const discount = fee * rate;
+        
+        const dateStrFromDB = order.deliveredAt || order.updatedAt;
+        const date = new Date(dateStrFromDB);
+        
+        if (date >= today) dailyDiscount += discount;
+        if (date >= startOfWeek) weeklyDiscount += discount;
+        if (date >= startOfMonth) monthlyDiscount += discount;
+        if (date >= startOfYear) yearlyDiscount += discount;
+      });
+
+      res.status(200).json({
+        success: true,
+        data: {
+          dailyDiscount,
+          weeklyDiscount,
+          monthlyDiscount,
+          yearlyDiscount
+        }
+      });
+    } catch (e) {
+      console.error('Lỗi tính stats finance:', e);
+      res.status(500).json({ success: false, message: 'Lỗi lấy thống kê tài chính' });
+    }
   }
 
 };

@@ -111,12 +111,13 @@ export default function Revenue() {
                 <th className="px-4 py-4 font-bold">Bonus tháng</th>
                 <th className="px-4 py-4 font-bold">Ship tháng</th>
                 <th className="px-4 py-4 font-bold">Đơn Ngày</th>
+                <th className="px-4 py-4 font-bold">Ship Ngày</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
               {drivers.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="px-6 py-12 text-center text-slate-500 italic text-base">
+                  <td colSpan="10" className="px-6 py-12 text-center text-slate-500 italic text-base">
                     Chưa có tài xế nào hoàn thành đơn hàng.
                   </td>
                 </tr>
@@ -138,6 +139,7 @@ export default function Revenue() {
                     <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap flex items-center gap-1.5">
                       <span className="text-lg">☀️</span> {d.todayOrders || 0}
                     </td>
+                    <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap">{formatCurrency(d.todayFee || 0)}</td>
                   </tr>
                 ))
               )}
