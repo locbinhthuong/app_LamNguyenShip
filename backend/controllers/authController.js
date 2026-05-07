@@ -155,12 +155,12 @@ const authController = {
         { expiresIn: '30d' }
       );
 
-      // Bắn tia kích văng người dùng CŨ trước khi cấp vé cho người sửa MỚI
-      if (req.io) {
-        req.io.to(`driver_${driver._id}`).emit('force_logout', { 
-          message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!' 
-        });
-      }
+      // Bắn tia kích văng người dùng CŨ trước khi cấp vé cho người sửa MỚI (Tắt tạm thời cho Apple Review)
+      // if (req.io) {
+      //   req.io.to(`driver_${driver._id}`).emit('force_logout', { 
+      //     message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!' 
+      //   });
+      // }
 
       // Update sessionToken & last active
       driver.sessionToken = token;

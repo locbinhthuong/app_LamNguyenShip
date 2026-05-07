@@ -60,17 +60,17 @@ const onlyDriver = async (req, res, next) => {
     });
   }
 
-  // Single Session Verification
-  const authHeader = req.headers.authorization;
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const currentToken = authHeader.split(' ')[1];
-    if (driver.sessionToken && driver.sessionToken !== currentToken) {
-      return res.status(401).json({
-        success: false,
-        message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác'
-      });
-    }
-  }
+  // Single Session Verification (Tạm thời tắt để Apple Review test trên nhiều thiết bị)
+  // const authHeader = req.headers.authorization;
+  // if (authHeader && authHeader.startsWith('Bearer ')) {
+  //   const currentToken = authHeader.split(' ')[1];
+  //   if (driver.sessionToken && driver.sessionToken !== currentToken) {
+  //     return res.status(401).json({
+  //       success: false,
+  //       message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác'
+  //     });
+  //   }
+  // }
 
   req.driver = driver;
   next();
