@@ -17,7 +17,7 @@ const Login = () => {
 
     try {
       const response = await loginCustomer({ phone, password });
-      
+
       if (response.success) {
         const { token, user } = response.data;
         // Lưu thông tin đăng nhập
@@ -95,9 +95,8 @@ const Login = () => {
           <button
             type="submit"
             disabled={loading}
-            className={`w-full py-3.5 mt-2 rounded-xl text-white font-semibold flex justify-center items-center shadow-md active:scale-95 transition-all ${
-              loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-500'
-            }`}
+            className={`w-full py-3.5 mt-2 rounded-xl text-white font-semibold flex justify-center items-center shadow-md active:scale-95 transition-all ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-500'
+              }`}
           >
             {loading ? (
               <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
@@ -120,7 +119,7 @@ const Login = () => {
           <div className="flex justify-center border-t border-gray-100 pt-4">
             <Link to="/" className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium">
               <Home size={18} />
-              <span>Vào trang chủ (Không cần tài khoản)</span>
+              <span>Trang chủ</span>
             </Link>
           </div>
         </div>
