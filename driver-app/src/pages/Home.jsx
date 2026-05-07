@@ -909,7 +909,7 @@ export default function Home() {
         message="Vui lòng liên hệ Admin để được phê duyệt và trở thành tài xế chính thức của AloShipp."
         onConfirm={() => {
           setShowPendingModal(false);
-          window.location.href = "tel:0987123456"; // Hoặc số Hotline của AloShipp
+          window.location.href = "tel:0765120777";
         }}
         onCancel={() => setShowPendingModal(false)}
         confirmText="Liên hệ ngay"
