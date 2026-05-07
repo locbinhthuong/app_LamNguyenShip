@@ -59,9 +59,7 @@ const CustomerProfile = () => {
 
   const handleLogout = () => {
     localStorage.clear();
-    navigate('/');
-    // Reload mượt mà để lấy trạng thái Guest mới nhất
-    window.location.reload();
+    window.location.href = '/login';
   };
 
   const openEditModal = () => {

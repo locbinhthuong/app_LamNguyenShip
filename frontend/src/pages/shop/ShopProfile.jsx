@@ -48,7 +48,7 @@ export default function ShopProfile() {
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
       localStorage.clear();
-      navigate('/login');
+      window.location.href = '/login';
     }
   };
 

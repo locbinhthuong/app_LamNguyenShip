@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { Home } from 'lucide-react';
 import { loginCustomer } from '../services/api';
 
 const Login = () => {
@@ -109,12 +110,20 @@ const Login = () => {
           </button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-gray-600">
-          Chưa có tài khoản?{' '}
-          <Link to="/register" className="text-blue-600 font-semibold hover:underline">
-            Đăng ký ngay
-          </Link>
-        </p>
+        <div className="mt-8 space-y-4">
+          <p className="text-center text-sm text-gray-600">
+            Chưa có tài khoản?{' '}
+            <Link to="/register" className="text-blue-600 font-semibold hover:underline">
+              Đăng ký ngay
+            </Link>
+          </p>
+          <div className="flex justify-center border-t border-gray-100 pt-4">
+            <Link to="/" className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium">
+              <Home size={18} />
+              <span>Vào trang chủ (Không cần tài khoản)</span>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
