@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Capacitor } from '@capacitor/core';
 
@@ -28,7 +28,11 @@ export default function Login() {
       await login(phone, password);
       navigate('/');
     } catch (err) {
-      setError(err.message);
+      let msg = err.message;
+      if (msg === 'Sai tài khoản hoặc mật khẩu') {
+        msg = 'Sai tài khoản hoặc mật khẩu (Invalid credentials)';
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -229,16 +233,11 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="mt-8 text-center text-sm text-slate-500 flex flex-col items-center">
-          <span className="mb-3">Chưa có tài khoản? Liên hệ quản lý:</span>
-          <div className="flex gap-4">
-            <a href="tel:0827758062" className="flex items-center gap-1.5 px-4 py-2 bg-slate-100 text-slate-700 font-semibold rounded-xl hover:bg-slate-200 transition-colors">
-              📞 0827758062
-            </a>
-            <a href="https://zalo.me/0827758062" target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-600 font-semibold rounded-xl hover:bg-blue-100 transition-colors">
-              💬 Zalo
-            </a>
-          </div>
+        <div className="mt-8 text-center text-sm text-slate-500">
+          Chưa có tài khoản?{' '}
+          <Link to="/register" className="text-blue-600 font-bold hover:underline">
+            Đăng ký làm đối tác
+          </Link>
         </div>
       </div>
     </div>

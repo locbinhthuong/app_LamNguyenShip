@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { loginDriver, getDriverProfile, updateDriverStatus } from '../services/api';
+import { loginDriver, getDriverProfile, updateDriverStatus, registerDriver } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -25,7 +25,21 @@ export const AuthProvider = ({ children }) => {
       setDriver(response.data);
     } catch (err) {
       console.error('Load profile error:', err);
-      logout();
+      if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+        logout();
+      } else {
+        // Lỗi mạng hoặc server, sử dụng lại data từ localStorage để app không bị văng
+        const cachedDriver = localStorage.getItem('driver_info');
+        if (cachedDriver) {
+          try {
+            setDriver(JSON.parse(cachedDriver));
+          } catch (e) {
+            logout();
+          }
+        } else {
+          logout();
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -46,6 +60,22 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (err) {
       const message = err.response?.data?.message || 'Đăng nhập thất bại';
+      setError(message);
+      throw new Error(message);
+    }
+  };
+
+  const register = async (data) => {
+    setError(null);
+    try {
+      const response = await registerDriver(data);
+      const { token, driver: driverData } = response.data;
+      localStorage.setItem('driver_token', token);
+      localStorage.setItem('driver_info', JSON.stringify(driverData));
+      setDriver(driverData);
+      return response;
+    } catch (err) {
+      const message = err.response?.data?.message || 'Đăng ký thất bại';
       setError(message);
       throw new Error(message);
     }
@@ -74,7 +104,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const value = { driver, loading, error, login, logout, setOnline, loadProfile };
+  const value = { driver, loading, error, login, register, logout, setOnline, loadProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

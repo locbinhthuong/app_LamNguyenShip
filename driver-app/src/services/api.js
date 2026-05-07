@@ -45,6 +45,11 @@ api.interceptors.response.use(
 );
 
 // ==================== AUTH ====================
+export const registerDriver = async (data) => {
+  const response = await api.post('/api/auth/driver/register', data);
+  return response.data;
+};
+
 export const loginDriver = async (phone, password) => {
   const response = await api.post('/api/auth/driver/login', { phone, password });
   return response.data;

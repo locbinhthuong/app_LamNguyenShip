@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Home from './pages/Home';
 import OrderDetail from './pages/OrderDetail';
 import MyOrders from './pages/MyOrders';
@@ -286,6 +287,7 @@ function AppContent() {
     <>
       <Routes>
         <Route path="/login" element={driver ? <Navigate to="/" /> : <Login />} />
+        <Route path="/register" element={driver ? <Navigate to="/" /> : <Register />} />
         <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
         <Route path="/order/:id" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
         <Route path="/my-orders" element={<PrivateRoute><MyOrders /></PrivateRoute>} />

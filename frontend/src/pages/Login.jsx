@@ -39,7 +39,11 @@ const Login = () => {
         }
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Không thể đăng nhập. Vui lòng thử lại.');
+      let msg = err.response?.data?.message || 'Không thể đăng nhập. Vui lòng thử lại.';
+      if (msg === 'Sai tài khoản hoặc mật khẩu') {
+        msg = 'Sai tài khoản hoặc mật khẩu (Invalid credentials)';
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
