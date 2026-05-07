@@ -166,6 +166,11 @@ const driverController = {
         message: 'Cập nhật tài xế thành công',
         data: driver
       });
+
+      // Bắn socket cho tài xế nếu admin đổi status
+      if (req.io && status) {
+        emitToDriver(req.io, id, 'driver_status_updated', { status });
+      }
     } catch (error) {
       console.error('Error updateDriver:', error);
       res.status(500).json({
@@ -320,6 +325,10 @@ const driverController = {
         success: true,
         message: 'Xóa tài xế thành công'
       });
+
+      if (req.io) {
+        emitToDriver(req.io, id, 'driver_deleted', {});
+      }
     } catch (error) {
       console.error('Error deleteDriver:', error);
       res.status(500).json({

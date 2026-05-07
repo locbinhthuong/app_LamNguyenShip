@@ -25,7 +25,7 @@ const PrivateRoute = ({ children }) => {
 };
 
 function AppContent() {
-  const { driver, logout } = useAuth();
+  const { driver, logout, loadProfile } = useAuth();
   const socketRef = useRef(null);
   const navigate = useNavigate();
   const [logoutAlert, setLogoutAlert] = useState(null);
@@ -255,6 +255,22 @@ function AppContent() {
 
       socketRef.current.on('force_logout', (data) => {
         setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');
+      });
+
+      socketRef.current.on('driver_status_updated', (data) => {
+        if (data.status === 'active') {
+          setPushMessage({
+            title: '🎉 CHÚC MỪNG',
+            message: 'Admin đã duyệt! Bạn đã trở thành tài xế chính thức của AloShipp và có thể nhận đơn ngay.'
+          });
+          loadProfile(); // Tải lại thông tin để mở khóa nút Online
+        } else if (data.status === 'banned') {
+          setLogoutAlert('Tài khoản của bạn đã bị khóa bởi Admin!');
+        }
+      });
+
+      socketRef.current.on('driver_deleted', () => {
+        setLogoutAlert('Tài khoản của bạn đã bị xóa khỏi hệ thống!');
       });
 
       const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated', 'force_assigned'];
