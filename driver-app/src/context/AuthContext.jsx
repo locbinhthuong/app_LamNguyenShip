@@ -69,7 +69,12 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const response = await registerDriver(data);
-      // Không tự động đăng nhập nữa, vì tài xế cần admin duyệt
+      const { token, driver: driverData } = response.data;
+      if (token) {
+        localStorage.setItem('driver_token', token);
+        localStorage.setItem('driver_info', JSON.stringify(driverData));
+        setDriver(driverData);
+      }
       return response;
     } catch (err) {
       const message = err.response?.data?.message || 'Đăng ký thất bại';
@@ -98,6 +103,7 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (err) {
       console.error('Set online error:', err);
+      throw err;
     }
   };
 

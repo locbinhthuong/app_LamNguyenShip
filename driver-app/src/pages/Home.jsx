@@ -600,6 +600,8 @@ export default function Home() {
           console.error("Push Token Error:", e);
         }
       }
+    } catch (err) {
+      showNotification(err.response?.data?.message || err.message || 'Lỗi không xác định', 'error');
     } finally {
       setTimeout(() => setIsToggling(false), 800);
     }
