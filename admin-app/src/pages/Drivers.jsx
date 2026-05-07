@@ -10,7 +10,8 @@ import { useAuth } from '../context/AuthContext';
 const STATUS_COLORS = {
   active: 'bg-green-500',
   inactive: 'bg-gray-500',
-  banned: 'bg-red-500'
+  banned: 'bg-red-500',
+  pending: 'bg-yellow-500'
 };
 
 const STATUS_LABELS = {
@@ -34,6 +35,7 @@ export default function Drivers() {
     try {
       const params = {};
       if (filter === 'banned') params.status = 'banned';
+      else if (filter === 'pending') params.status = 'pending';
       else if (filter === 'online') params.isOnline = 'true';
       else if (filter === 'offline') params.isOnline = 'false';
       if (search) params.search = search;
@@ -145,6 +147,7 @@ export default function Drivers() {
     { key: '', label: 'Tất cả' },
     { key: 'online', label: 'Online' },
     { key: 'offline', label: 'Offline' },
+    { key: 'pending', label: 'Chờ duyệt' },
     { key: 'banned', label: 'Bị khóa' }
   ];
 
@@ -213,6 +216,10 @@ export default function Drivers() {
                   {driver.status === 'banned' ? (
                     <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white bg-red-500">
                       🔒 Bị khóa
+                    </span>
+                  ) : driver.status === 'pending' ? (
+                    <span className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-white bg-yellow-500">
+                      ⏳ Chờ duyệt
                     </span>
                   ) : driver.isOnline ? (
                     <span className="shrink-0 rounded-full bg-green-500/20 border border-green-500/50 px-2 py-0.5 text-[10px] font-bold text-green-600">
@@ -308,6 +315,10 @@ export default function Drivers() {
                         {driver.status === 'banned' ? (
                           <span className="rounded-full px-2 py-1 text-xs font-bold text-white bg-red-500">
                             🔒 Bị khóa
+                          </span>
+                        ) : driver.status === 'pending' ? (
+                          <span className="rounded-full px-2 py-1 text-xs font-bold text-white bg-yellow-500">
+                            ⏳ Chờ duyệt
                           </span>
                         ) : driver.isOnline ? (
                           <span className="rounded-full bg-green-500/20 border border-green-500/50 px-2 py-0.5 text-[10px] font-bold text-green-600">

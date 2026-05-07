@@ -81,21 +81,10 @@ const authController = {
 
       await driver.save();
 
-      // Generate token
-      const token = jwt.sign(
-        { id: driver._id, role: 'driver', phone: driver.phone },
-        process.env.JWT_SECRET,
-        { expiresIn: '30d' }
-      );
-
-      driver.sessionToken = token;
-      await driver.save();
-
       res.status(201).json({
         success: true,
         message: 'Đăng ký tài xế thành công',
         data: {
-          token,
           driver: {
             id: driver._id,
             name: driver.name,
@@ -145,6 +134,13 @@ const authController = {
         return res.status(403).json({
           success: false,
           message: 'Tài khoản đã bị xóa. Liên hệ admin.'
+        });
+      }
+
+      if (driver.status === 'pending') {
+        return res.status(403).json({
+          success: false,
+          message: 'Tài khoản của bạn đang chờ duyệt. Vui lòng liên hệ Admin 0827758062 để kích hoạt.'
         });
       }
 

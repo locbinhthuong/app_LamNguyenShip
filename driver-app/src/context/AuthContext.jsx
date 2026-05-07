@@ -69,10 +69,7 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     try {
       const response = await registerDriver(data);
-      const { token, driver: driverData } = response.data;
-      localStorage.setItem('driver_token', token);
-      localStorage.setItem('driver_info', JSON.stringify(driverData));
-      setDriver(driverData);
+      // Không tự động đăng nhập nữa, vì tài xế cần admin duyệt
       return response;
     } catch (err) {
       const message = err.response?.data?.message || 'Đăng ký thất bại';

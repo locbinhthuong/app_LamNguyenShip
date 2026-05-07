@@ -6,12 +6,14 @@ const STATUS_COLORS = {
   active: 'bg-green-500 text-slate-800',
   inactive: 'bg-gray-500 text-slate-800',
   banned: 'bg-red-500 text-slate-800',
+  pending: 'bg-yellow-500 text-slate-800',
 };
 
 const STATUS_LABELS = {
   active: 'Hoạt động',
   inactive: 'Tạm nghỉ',
   banned: 'BỊ KHOÁ',
+  pending: 'CHỜ DUYỆT',
 };
 
 const formatCurrency = (amount) => {
@@ -82,6 +84,18 @@ export default function DriverDetail() {
       loadData();
     } catch (err) {
       alert('Lỗi cập nhật trạng thái');
+    }
+  };
+
+  const handleApprove = async () => {
+    if (!driver) return;
+    if (!window.confirm('Duyệt tài xế này để bắt đầu nhận đơn?')) return;
+    try {
+      await updateDriver(id, { status: 'active' });
+      alert('Đã duyệt thành công!');
+      loadData();
+    } catch (err) {
+      alert('Lỗi duyệt tài khoản');
     }
   };
 
@@ -183,16 +197,25 @@ export default function DriverDetail() {
                 ✏️ Sửa Thông Tin
               </button>
               
-              <button 
-                onClick={handleToggleBan} 
-                className={`w-full rounded-xl py-2.5 text-sm font-bold transition shadow-lg ${
-                  driver.status === 'banned' 
-                    ? 'bg-green-600 text-white hover:bg-green-500 hover:shadow-green-500/20' 
-                    : 'bg-red-600 text-white hover:bg-red-500 hover:shadow-red-500/20'
-                }`}
-              >
-                {driver.status === 'banned' ? '🔓 MỞ KHOÁ TÀI KHOẢN' : '🔒 KHOÁ TÀI KHOẢN'}
-              </button>
+              {driver.status === 'pending' ? (
+                <button 
+                  onClick={handleApprove} 
+                  className="w-full rounded-xl py-2.5 text-sm font-bold transition shadow-lg bg-green-500 text-white hover:bg-green-600 hover:shadow-green-500/20"
+                >
+                  ✅ DUYỆT TÀI XẾ NÀY
+                </button>
+              ) : (
+                <button 
+                  onClick={handleToggleBan} 
+                  className={`w-full rounded-xl py-2.5 text-sm font-bold transition shadow-lg ${
+                    driver.status === 'banned' 
+                      ? 'bg-green-600 text-white hover:bg-green-500 hover:shadow-green-500/20' 
+                      : 'bg-red-600 text-white hover:bg-red-500 hover:shadow-red-500/20'
+                  }`}
+                >
+                  {driver.status === 'banned' ? '🔓 MỞ KHOÁ TÀI KHOẢN' : '🔒 KHOÁ TÀI KHOẢN'}
+                </button>
+              )}
             </div>
           </div>
           

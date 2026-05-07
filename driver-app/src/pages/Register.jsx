@@ -33,7 +33,8 @@ export default function Register() {
 
     try {
       await register(formData);
-      navigate('/');
+      alert('Đăng ký thành công! Vui lòng liên hệ Admin 0827758062 để duyệt tài khoản.');
+      navigate('/login');
     } catch (err) {
       setError(err.message);
     } finally {
