@@ -33,8 +33,8 @@ export default function Register() {
 
     try {
       await register(formData);
-      alert('Đăng ký thành công! Vui lòng liên hệ Admin để được duyệt.');
-      navigate('/');
+      alert('Đăng ký thành công! Vui lòng Đăng nhập và liên hệ Admin để được duyệt.');
+      navigate('/login');
     } catch (err) {
       setError(err.message);
     } finally {
