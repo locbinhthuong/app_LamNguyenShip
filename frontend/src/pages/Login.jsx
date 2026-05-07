@@ -54,7 +54,7 @@ const Login = () => {
       <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl transition-all">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center mb-4">
-            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="h-24 w-auto max-w-[200px] object-contain" />
+            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="w-56 h-auto object-contain scale-125 origin-center" />
           </div>
           <h1 className="hidden">AloShipp</h1>
           <p className="text-sm text-gray-500 mt-1">Nhanh chóng & An toàn</p>
