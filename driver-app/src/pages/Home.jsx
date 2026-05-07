@@ -184,6 +184,7 @@ export default function Home() {
   const [filter, setFilter] = useState('available');
   const [showToast, setShowToast] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [confirmAcceptOrder, setConfirmAcceptOrder] = useState(null); // ID đơn hàng đang được hỏi Xác Nhận
   const [historyOrders, setHistoryOrders] = useState([]);
@@ -586,7 +587,7 @@ export default function Home() {
     if (isToggling) return;
 
     if (!driver?.isOnline && driver?.status === 'pending') {
-      showNotification('Liên hệ admin để được duyệt trở thành tài xế chính thức của AloShipp', 'error');
+      setShowPendingModal(true);
       return;
     }
 
@@ -900,6 +901,20 @@ export default function Home() {
         onCancel={() => setLogoutModal(false)}
         confirmText="Đăng xuất"
         isDestructive={true}
+      />
+
+      <ConfirmModal 
+        isOpen={showPendingModal}
+        title="Tài khoản chưa được duyệt"
+        message="Vui lòng liên hệ Admin để được phê duyệt và trở thành tài xế chính thức của AloShipp."
+        onConfirm={() => {
+          setShowPendingModal(false);
+          window.location.href = "tel:0987123456"; // Hoặc số Hotline của AloShipp
+        }}
+        onCancel={() => setShowPendingModal(false)}
+        confirmText="Liên hệ ngay"
+        cancelText="Đóng"
+        isDestructive={false}
       />
     </div>
   );
