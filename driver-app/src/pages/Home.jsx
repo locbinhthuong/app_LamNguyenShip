@@ -584,6 +584,12 @@ export default function Home() {
 
   const toggleOnline = async () => {
     if (isToggling) return;
+
+    if (!driver?.isOnline && driver?.status === 'pending') {
+      showNotification('Liên hệ admin để được duyệt trở thành tài xế chính thức của AloShipp', 'error');
+      return;
+    }
+
     setIsToggling(true);
     try {
       const newStatus = !driver?.isOnline;
