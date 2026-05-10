@@ -57,10 +57,10 @@ const CustomerLayout = () => {
 
   return (
     <div className="flex w-full h-[100dvh] bg-slate-100 font-sans overflow-hidden relative">
-      
+
       {/* NỀN TRANG TRÍ DESKTOP (Chỉ hiện trên màn lớn) */}
-      <div className="hidden md:block absolute inset-0 opacity-10 pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(#3b82f6 2px, transparent 2px)', backgroundSize: '30px 30px' }}>
+      <div className="hidden md:block absolute inset-0 opacity-10 pointer-events-none"
+        style={{ backgroundImage: 'radial-gradient(#3b82f6 2px, transparent 2px)', backgroundSize: '30px 30px' }}>
       </div>
 
       {/* DESKTOP SIDEBAR TRÁI */}
@@ -69,7 +69,7 @@ const CustomerLayout = () => {
           <img src="/logoALOSHIPP.png" alt="Logo" className="w-56 h-auto object-contain scale-125 origin-center" />
           <span className="font-black text-2xl text-blue-600 tracking-tight hidden">AloShipp</span>
         </div>
-        
+
         <div className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
           {navItems.map((item, index) => {
             const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/customer');
@@ -77,11 +77,10 @@ const CustomerLayout = () => {
               <button
                 key={index}
                 onClick={() => handleNavClick(item)}
-                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all font-bold ${
-                  isActive 
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
-                    : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
-                }`}
+                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all font-bold ${isActive
+                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30'
+                  : 'text-gray-500 hover:bg-blue-50 hover:text-blue-600'
+                  }`}
               >
                 <div className="relative">
                   {item.icon}
@@ -92,15 +91,15 @@ const CustomerLayout = () => {
             )
           })}
         </div>
-        
+
         <div className="p-6 text-center">
-            <p className="text-xs font-semibold text-gray-400">© 2026 AloShipp Web App</p>
+          <p className="text-xs font-semibold text-gray-400">© 2026 AloShipp Web App</p>
         </div>
       </div>
 
       {/* VÙNG CHỨA APP GIỮA MÀN HÌNH */}
       <div className="flex-1 h-[100dvh] relative flex overflow-hidden">
-        
+
         {/* CONTAINER NỘI DUNG WEB FULL TỶ LỆ */}
         <div className="relative w-full h-full bg-white overflow-hidden flex flex-col z-10 transition-all">
 
@@ -114,12 +113,11 @@ const CustomerLayout = () => {
             {navItems.map((item, index) => {
               const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/customer');
               return (
-                <button 
+                <button
                   key={index}
                   onClick={() => handleNavClick(item)}
-                  className={`flex flex-col items-center justify-center w-full h-full relative transition-colors ${
-                    isActive ? 'text-blue-600' : 'text-gray-400 hover:text-blue-500'
-                  }`}
+                  className={`flex flex-col items-center justify-center w-full h-full relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-blue-500'
+                    }`}
                 >
                   <div className={`mb-1 transition-transform ${isActive ? 'scale-110' : ''}`}>
                     {item.icon}
@@ -127,9 +125,9 @@ const CustomerLayout = () => {
                   <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>
                     {item.name}
                   </span>
-                  
+
                   {item.badge && (
-                     <span className="absolute top-2 right-6 w-2 h-2 bg-red-500 rounded-full"></span>
+                    <span className="absolute top-2 right-6 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
               )
