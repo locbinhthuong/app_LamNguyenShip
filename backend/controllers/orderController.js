@@ -949,8 +949,8 @@ const orderController = {
       if (req.io) {
         const { emitNewOrder } = require('../sockets/index');
         const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
-        // Phát sự kiện cho Admin và Driver
-        emitNewOrder(req.io, payload, false);
+        // Phát sự kiện cho Admin và Driver (isSilentAdmin = true để không hú còi rốngng)
+        emitNewOrder(req.io, payload, true);
         req.io.to('admins').emit('order_updated', payload);
         
         // Cập nhật lại cho khách
