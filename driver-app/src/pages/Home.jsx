@@ -81,7 +81,7 @@ function OrderCard({ order, onAccept, loading }) {
       </div>
 
       {order.note && (
-        <div className="bg-slate-700 rounded-lg p-2 mb-3 text-xs text-yellow-300">
+        <div className="bg-slate-700 rounded-lg p-2 mb-3 text-xs text-yellow-300 whitespace-pre-wrap">
           📝 {order.note}
         </div>
       )}

@@ -375,7 +375,7 @@ export default function OrderDetail() {
           {order.note && (
             <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 mb-4">
               <p className="text-slate-600 text-xs font-bold uppercase mb-0.5 flex items-center gap-1"><FileText size={14}/> Ghi chú từ khách hàng</p>
-              <p className="text-slate-800 text-sm font-medium">{order.note}</p>
+              <p className="text-slate-800 text-sm font-medium whitespace-pre-wrap">{order.note}</p>
             </div>
           )}
 

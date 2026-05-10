@@ -162,7 +162,7 @@ export default function CreateOrder() {
     }
 
     if (rawNote.length > 0) {
-        newForm.note = rawNote.join(' | ');
+        newForm.note = rawNote.join('\n');
     } else {
         newForm.note = '';
     }
@@ -314,12 +314,13 @@ export default function CreateOrder() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-600">Ghi chú</label>
-            <input
+            <textarea
               name="note"
               value={form.note}
               onChange={handleChange}
+              rows={3}
               placeholder="Giao nhanh giúp em"
-              className="input-field"
+              className="input-field resize-y whitespace-pre-wrap"
             />
           </div>
 
