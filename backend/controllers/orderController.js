@@ -203,7 +203,49 @@ const orderController = {
         });
       }
 
-      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, scheduledPublishAt } = req.body;
+      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, scheduledPublishAt, forceAssignDriverId, commissionRate } = req.body;
+
+      let didAdminForceAssign = false;
+      let forceAssignedDriverFcm = null;
+
+      if (forceAssignDriverId) {
+        const Driver = require('../models/Driver');
+        const DebtTransaction = require('../models/DebtTransaction');
+
+        const driver = await Driver.findById(forceAssignDriverId);
+        if (!driver || driver.status !== 'active') {
+          return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
+        }
+
+        // Tường lửa nợ
+        let hasUnpaidDebt = false;
+        const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
+        const debtByDate = {};
+        transactions.forEach(tx => {
+          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+            debtByDate[dateStr] += tx.amount;
+          }
+        });
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          if (amount > 0 && dateStr !== todayStr) {
+            hasUnpaidDebt = true;
+            break;
+          }
+        }
+
+        if (hasUnpaidDebt) {
+          return res.status(400).json({
+            success: false,
+            message: 'Tài xế này đang MẮC NỢ CÓ CHƯA THANH TOÁN. Hệ thống đã chặn gán đơn!'
+          });
+        }
+
+        didAdminForceAssign = true;
+        forceAssignedDriverFcm = driver.fcmToken;
+      }
 
       const order = new Order({
         customerName,
@@ -216,9 +258,12 @@ const orderController = {
         codAmount: codAmount || 0,
         deliveryFee: deliveryFee || 0,
         adminBonus: adminBonus || 0,
+        commissionRate: commissionRate !== undefined ? commissionRate : null,
         pickupCoordinates,
         deliveryCoordinates,
-        status: scheduledPublishAt ? 'DRAFT' : 'PENDING',
+        status: didAdminForceAssign ? 'ACCEPTED' : (scheduledPublishAt ? 'DRAFT' : 'PENDING'),
+        assignedTo: didAdminForceAssign ? forceAssignDriverId : undefined,
+        acceptedAt: didAdminForceAssign ? new Date() : undefined,
         scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : null,
         createdBy: req.admin._id,
         ipAddress: req.ip
@@ -226,12 +271,32 @@ const orderController = {
 
       await order.save();
 
+      if (didAdminForceAssign) {
+        await order.populate('assignedTo', 'name phone driverCode');
+      }
+
       // Emit socket — plain object để createdAt luôn có trong JSON (Mongoose doc đôi khi serialize lệch)
       if (req.io && !scheduledPublishAt) {
         const payload = typeof order.toObject === 'function'
           ? order.toObject({ virtuals: true })
           : order;
-        emitNewOrder(req.io, payload, true); // true = isSilentAdmin
+          
+        if (didAdminForceAssign) {
+          req.io.to(`driver_${forceAssignDriverId.toString()}`).emit('force_assigned', payload);
+          req.io.to('admins').emit('new_order', payload);
+          
+          if (forceAssignedDriverFcm) {
+            const { sendMultipleNotifications } = require('../utils/notification');
+            const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+            let msgBody = `📍 Đơn: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+            await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+          }
+        } else {
+          const { emitNewOrder } = require('../sockets/index');
+          emitNewOrder(req.io, payload, true); // true = isSilentAdmin
+        }
+      } else if (req.io && scheduledPublishAt) {
+        req.io.to('admins').emit('new_order', order);
       }
 
       console.log(`[Order] Created: ${order._id} by ${req.admin.name}`);

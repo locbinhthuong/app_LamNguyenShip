@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createOrder } from '../services/api';
+import { createOrder, getDrivers } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
 
 export default function CreateOrder() {
@@ -16,10 +16,26 @@ export default function CreateOrder() {
     codAmount: '',
     deliveryFee: '',
     adminBonus: '',
-    scheduledPublishAt: ''
+    scheduledPublishAt: '',
+    forceAssignDriverId: '',
+    commissionRate: null
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [drivers, setDrivers] = useState([]);
+
+  useEffect(() => {
+    fetchDrivers();
+  }, []);
+
+  const fetchDrivers = async () => {
+    try {
+      const { data } = await getDrivers();
+      setDrivers(data.data || []);
+    } catch (err) {
+      console.error('Lỗi tải danh sách tài xế', err);
+    }
+  };
 
   const [smartText, setSmartText] = useState('');
 
@@ -198,7 +214,9 @@ export default function CreateOrder() {
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
         deliveryFee: form.deliveryFee ? parseInt(form.deliveryFee) : 0,
         adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0,
-        scheduledPublishAt: form.scheduledPublishAt || undefined
+        scheduledPublishAt: form.scheduledPublishAt || undefined,
+        forceAssignDriverId: form.forceAssignDriverId || undefined,
+        commissionRate: form.commissionRate
       });
       alert('Tạo đơn hàng thành công!');
       navigate('/orders');
@@ -219,7 +237,7 @@ export default function CreateOrder() {
           <span>🤖 Dán Nhanh Đơn Zalo / Facebook</span>
           <button 
             type="button" 
-            onClick={() => { setSmartText(''); setForm({ customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '' }); }}
+            onClick={() => { setSmartText(''); setForm({ customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null }); }}
             className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
           >
             🔄 Tạo Mới Lại
@@ -358,6 +376,38 @@ export default function CreateOrder() {
                 className="input-field border-emerald-200 bg-emerald-50 focus:border-emerald-500 focus:bg-white text-emerald-700"
               />
             </div>
+          </div>
+
+          <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 relative overflow-hidden mb-4">
+             <div className="absolute -right-2 -top-2 text-6xl opacity-5">🎯</div>
+             <label className="block text-xs font-bold text-purple-700 uppercase mb-2 tracking-wider relative z-10">
+               👨‍✈️ ĐIỀU PHỐI / GÁN TÀI XẾ MỚI
+             </label>
+             <select 
+                name="assignOption" 
+                value={form.forceAssignDriverId ? `${form.forceAssignDriverId}|` : `|${form.commissionRate == null ? '' : form.commissionRate}`}
+                onChange={(e) => {
+                   const [driverId, rate] = e.target.value.split('|');
+                   setForm(prev => ({
+                     ...prev, 
+                     forceAssignDriverId: driverId, 
+                     commissionRate: rate ? Number(rate) : null
+                   }));
+                }} 
+                className="w-full rounded-lg border border-purple-300 p-2.5 text-sm bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 focus:outline-none font-medium relative z-10 appearance-none"
+             >
+                <option value="|">-- Đơn tự do (Mặc định - Tất cả tài xế) --</option>
+                <option value="|15">-- Đơn tự do (Chỉ dành cho Tài xế 15%) --</option>
+                <option value="|20">-- Đơn tự do (Chỉ dành cho Tài xế 20%) --</option>
+                {drivers.sort((a,b) => (b.isOnline ? 1 : 0) - (a.isOnline ? 1 : 0)).map(d => (
+                  <option key={d._id} value={`${d._id}|`}>
+                    {d.isOnline ? '🟢 [ONLINE]' : '🔴 [OFFLINE]'} - {d.name} ({d.phone})
+                  </option>
+                ))}
+             </select>
+             <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">
+               * Hệ thống sẽ đánh giá công nợ của tài xế trước khi chốt gán đơn.
+             </p>
           </div>
 
           <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-200">
