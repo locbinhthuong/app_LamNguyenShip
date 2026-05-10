@@ -354,16 +354,42 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {/* Nút Hủy Đơn */}
+        {/* Nút Hủy Đơn & Xác Nhận Đơn */}
         {['PENDING', 'DRAFT'].includes(order.status) && (
           <div className="mt-6 mb-2">
-            <button 
-              onClick={handleCancelOrder}
-              disabled={loading}
-              className="w-full bg-red-50 text-red-600 font-bold border border-red-200 py-3.5 rounded-2xl active:bg-red-100 transition-colors"
-            >
-              HỦY ĐƠN HÀNG
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                onClick={handleCancelOrder}
+                disabled={loading}
+                className={`w-full bg-red-50 text-red-600 font-bold border border-red-200 py-3.5 rounded-2xl active:bg-red-100 transition-colors ${order.status === 'DRAFT' && order.deliveryFee > 0 ? '' : 'col-span-2'}`}
+              >
+                HỦY ĐƠN HÀNG
+              </button>
+              
+              {order.status === 'DRAFT' && order.deliveryFee > 0 && (
+                <button 
+                  onClick={async () => {
+                    if (window.confirm('Xác nhận đặt xe/giao hàng với cước phí này?')) {
+                      try {
+                        setLoading(true);
+                        const res = await api.post(`/orders/${id}/confirm`);
+                        if (res.data.success) {
+                          showToast('Đã xác nhận thành công, đang tìm tài xế!', 'success');
+                          fetchDetail();
+                        }
+                      } catch (e) {
+                        showToast(e.response?.data?.message || 'Không thể xác nhận đơn', 'error');
+                        setLoading(false);
+                      }
+                    }
+                  }}
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                >
+                  XÁC NHẬN
+                </button>
+              )}
+            </div>
             <p className="text-center text-[10px] text-slate-400 mt-2">Bạn chỉ có thể hủy trước khi Tài xế nhận đơn.</p>
           </div>
         )}

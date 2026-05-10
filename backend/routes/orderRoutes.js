@@ -64,6 +64,9 @@ router.get('/:id', verifyToken, anyAuthenticatedUser, orderController.getOrderBy
 // POST /api/orders/customer - Tạo đơn hàng (Customer/Shop)
 router.post('/customer', verifyToken, onlyCustomer, orderController.createCustomerOrder);
 
+// POST /api/orders/:id/confirm - Xác nhận đơn hàng (Customer/Shop)
+router.post('/:id/confirm', verifyToken, onlyCustomer, orderController.confirmCustomerOrder);
+
 // GET /api/orders/customer/my - Lấy đơn hàng của chính mình (Customer/Shop)
 router.get('/customer/my', verifyToken, onlyCustomer, orderController.getCustomerOrders);
 

@@ -927,6 +927,52 @@ const orderController = {
     }
   },
 
+  // POST /api/orders/:id/confirm - Khách hàng xác nhận đơn hàng sau khi có báo giá
+  confirmCustomerOrder: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!req.customer) {
+        return res.status(403).json({ success: false, message: 'Chỉ khách hàng mới có thể xác nhận đơn.' });
+      }
+
+      const order = await Order.findOneAndUpdate(
+        { _id: id, customerId: req.customer._id, status: 'DRAFT' },
+        { status: 'PENDING' },
+        { new: true }
+      );
+
+      if (!order) {
+        return res.status(400).json({ success: false, message: 'Không thể xác nhận! Đơn hàng không tồn tại hoặc đã được xử lý.' });
+      }
+
+      if (req.io) {
+        const { emitNewOrder } = require('../sockets/index');
+        const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+        // Phát sự kiện cho Admin và Driver
+        emitNewOrder(req.io, payload, false);
+        req.io.to('admins').emit('order_updated', payload);
+        
+        // Cập nhật lại cho khách
+        const creatorId = payload.customerId._id || payload.customerId;
+        req.io.to(`customer_${creatorId.toString()}`).emit('order_updated', payload);
+        req.io.to(`shop_${creatorId.toString()}`).emit('order_updated', payload);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Xác nhận đơn hàng thành công, đang tìm tài xế!',
+        data: order
+      });
+    } catch (error) {
+      console.error('Error confirmCustomerOrder:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi xác nhận đơn hàng'
+      });
+    }
+  },
+
   // DELETE /api/orders/:id - Xóa đơn hàng (Admin)
   deleteOrder: async (req, res) => {
     try {
