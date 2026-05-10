@@ -30,8 +30,8 @@ export default function CreateOrder() {
 
   const fetchDrivers = async () => {
     try {
-      const { data } = await getDrivers();
-      setDrivers(data.data || []);
+      const response = await getDrivers();
+      setDrivers(response.data || []);
     } catch (err) {
       console.error('Lỗi tải danh sách tài xế', err);
     }
