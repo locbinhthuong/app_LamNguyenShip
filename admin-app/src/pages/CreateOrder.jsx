@@ -33,85 +33,138 @@ export default function CreateOrder() {
     if (!text.trim()) return;
 
     const newForm = { ...form };
+    
+    let rawPickup = [];
+    let rawDelivery = [];
+    let rawNote = [];
+    let rawName = '';
 
-    // 1. Phân tích Điểm Lấy (Sắp xếp từ khóa dài trước, ngắn sau để không bị bắt hụt)
-    const pickupRegex = /^(?:(?:📍)?điểm lấy đơn|điểm lấy|lấy đơn tại|lấy hàng|lấy tại|lấy ở|nhận tại|địa chỉ lấy|nơi lấy|chỗ này lấy đơn|chỗ lấy|lấy chỗ này|lấy chỗ|lấy|từ)\s*:?\s*([^\n]+)/im;
-    const pickupMatch = text.match(pickupRegex);
-    let rawPickup = pickupMatch ? pickupMatch[1].trim() : '';
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l);
 
-    // 2. Phân tích Điểm Giao
-    const deliveryRegex = /^(?:(?:📍)?điểm giao|giao đơn tại|giao hàng|giao tại|giao ở|giao tới|giao đến|giao chỗ này|giao|địa chỉ giao|nơi giao|chỗ giao|trực tiếp|gửi cho|ship qua|địa chỉ nhận|nơi nhận|đến)\s*:?\s*([^\n]+)/im;
-    const deliveryMatch = text.match(deliveryRegex);
-    let rawDelivery = deliveryMatch ? deliveryMatch[1].trim() : '';
+    const pickupKws = /^(?:(?:📍)?điểm lấy đơn|điểm lấy|lấy đơn tại|lấy hàng|lấy tại|lấy ở|nhận tại|địa chỉ lấy|nơi lấy|chỗ này lấy đơn|chỗ lấy|lấy chỗ này|lấy chỗ|lấy|từ)\s*:?(.*)$/i;
+    const deliveryKws = /^(?:(?:📍)?điểm giao|giao đơn tại|giao hàng|giao tại|giao ở|giao tới|giao đến|giao chỗ này|giao|địa chỉ giao|nơi giao|chỗ giao|trực tiếp|gửi cho|ship qua|địa chỉ nhận|nơi nhận|đến)\s*:?(.*)$/i;
+    const noteKws = /^(?:ghi chú|note)\s*:?(.*)$/i;
+    const nameKws = /^(?:tên|tên khách|tên người nhận)\s*:?(.*)$/i;
 
-    // 3. Phân tích SĐT
-    // Quét tìm cụm Sdt/Phone trước
-    let allPhones = Array.from(text.matchAll(/(?:sđt|sdt|đt|dt|phone)\s*:?\s*([0-9\.\s-]{8,12})/gi)).map(m => m[1].replace(/\D/g, ''));
-    // Quét tìm tất cả các chuỗi số 8-11 chữ số bắt đầu bằng 0
-    const loosePhones = (text.match(/\b0[0-9]{7,10}\b/g) || []);
-    allPhones = [...new Set([...allPhones, ...loosePhones])].filter(p => p.length >= 8);
+    let currentMode = 'none';
 
-    let pPhone = '';
-    let dPhone = '';
+    lines.forEach(line => {
+        let processedLine = line;
 
-    if (allPhones.length === 1) {
-       pPhone = allPhones[0]; // Chỉ có 1 sđt thì mặc định là của điểm lấy
-    } else if (allPhones.length >= 2) {
-       pPhone = allPhones[0]; // SĐT đầu tiên thường là điểm lấy
-       dPhone = allPhones[allPhones.length - 1]; // SĐT cuối cùng thường là khách nhận
-    }
+        const codMatch = processedLine.match(/(?:tiền\s*)?(?:thu|cod)\s*:?\s*([0-9\.,]+[kK]?)/i);
+        if (codMatch) {
+            let codStr = codMatch[1].toLowerCase().replace(/[,.]/g, '');
+            let cod = parseInt(codStr) || 0;
+            if (codStr.includes('k')) cod = cod * 1000;
+            else if (cod > 0 && cod < 1000) cod = cod * 1000;
+            newForm.codAmount = cod;
+            processedLine = processedLine.replace(codMatch[0], '');
+        }
 
-    // Xóa sdt rác dính trong chuỗi địa chỉ
-    const removePhoneFromAddress = (addr) => {
-        return addr.replace(/(?:sđt|sdt|đt|dt|phone)\s*:?\s*[0-9\.\s-]+/i, '')
-                   .replace(/\b0[0-9]{7,10}\b/g, '')
-                   .replace(/[-,\s]+$/, '').trim();
+        const shipMatch = processedLine.match(/(?:tiền\s*)?(?:ship|phí ship|phí giao|cước)\s*:?\s*([0-9\.,]+)[&kK]?/i);
+        if (shipMatch) {
+            let shipStr = shipMatch[1].toLowerCase().replace(/[,.]/g, '');
+            let ship = parseInt(shipStr) || 0;
+            if (shipMatch[0].toLowerCase().includes('k') || shipMatch[0].includes('&')) ship = ship * 1000;
+            else if (ship > 0 && ship < 1000) ship = ship * 1000;
+            newForm.deliveryFee = ship;
+            processedLine = processedLine.replace(shipMatch[0], '');
+        }
+
+        processedLine = processedLine.replace(/^[-,\s]+|[-,\s]+$/g, '');
+
+        if (!processedLine) return;
+
+        let match;
+        if ((match = processedLine.match(pickupKws))) {
+            currentMode = 'pickup';
+            if (match[1].trim()) rawPickup.push(match[1].trim());
+            return;
+        }
+
+        if ((match = processedLine.match(deliveryKws))) {
+            currentMode = 'delivery';
+            if (match[1].trim()) rawDelivery.push(match[1].trim());
+            return;
+        }
+
+        if ((match = processedLine.match(noteKws))) {
+            currentMode = 'note';
+            if (match[1].trim()) rawNote.push(match[1].trim());
+            return;
+        }
+
+        if ((match = processedLine.match(nameKws))) {
+            currentMode = 'delivery';
+            if (match[1].trim()) {
+                rawName = match[1].trim();
+            }
+            return;
+        }
+
+        if (currentMode === 'pickup') rawPickup.push(processedLine);
+        else if (currentMode === 'delivery') rawDelivery.push(processedLine);
+        else if (currentMode === 'note') rawNote.push(processedLine);
+        else {
+            if (rawPickup.length === 0 && rawDelivery.length === 0) {
+                rawPickup.push(processedLine);
+            }
+        }
+    });
+
+    const extractPhones = (linesArray) => {
+        let textToParse = linesArray.join(' ');
+        let allPhones = Array.from(textToParse.matchAll(/(?:sđt|sdt|đt|dt|phone)\s*:?\s*([0-9\.\s-]{8,12})/gi)).map(m => m[1].replace(/\D/g, ''));
+        const loosePhones = (textToParse.match(/\b[0-9]{9,11}\b/g) || []);
+        allPhones = [...new Set([...allPhones, ...loosePhones])].filter(p => p.length >= 9);
+        
+        textToParse = textToParse.replace(/(?:sđt|sdt|đt|dt|phone)\s*:?\s*[0-9\.\s-]+/gi, '')
+                   .replace(/\b[0-9]{9,11}\b/g, '')
+                   .replace(/[-,\s]+$/, '')
+                   .replace(/\s{2,}/g, ' ')
+                   .trim();
+                   
+        return { phones: allPhones, text: textToParse };
     };
 
-    if (rawPickup) newForm.pickupAddress = removePhoneFromAddress(rawPickup);
+    const pData = extractPhones(rawPickup);
+    const dData = extractPhones(rawDelivery);
+
+    if (pData.text) newForm.pickupAddress = pData.text;
+    if (dData.text) newForm.deliveryAddress = dData.text;
+
+    let pPhone = pData.phones.length > 0 ? pData.phones[0] : '';
+    let dPhone = dData.phones.length > 0 ? dData.phones[0] : '';
+
+    if (!pPhone && dData.phones.length >= 2) {
+        pPhone = dData.phones[1];
+    } else if (!dPhone && pData.phones.length >= 2) {
+        dPhone = pData.phones[1];
+    }
+    
+    if (!pPhone && !dPhone) {
+        const allTextData = extractPhones([text]);
+        if (allTextData.phones.length === 1) {
+            pPhone = allTextData.phones[0];
+        } else if (allTextData.phones.length >= 2) {
+            pPhone = allTextData.phones[0];
+            dPhone = allTextData.phones[allTextData.phones.length - 1];
+        }
+    }
+
     if (pPhone) newForm.pickupPhone = pPhone;
-    if (rawDelivery) newForm.deliveryAddress = removePhoneFromAddress(rawDelivery);
-    if (dPhone) newForm.customerPhone = dPhone; 
-    if (dPhone && !newForm.customerName) newForm.customerName = 'Khách đặt qua Chat';
-
-    // 4. Phân tích COD
-    const codMatch = text.match(/^(?:tiền\s*)?Thu\s*:?\s*([0-9\.,]+[kK]?)/im);
-    if (codMatch) {
-       let codStr = codMatch[1].toLowerCase().replace(/[,.]/g, '');
-       let cod = 0;
-       if (codStr.includes('k')) cod = parseInt(codStr.replace('k', '')) * 1000;
-       else cod = parseInt(codStr);
-       if (cod > 0 && cod < 1000) cod = cod * 1000;
-       newForm.codAmount = cod;
+    if (dPhone) newForm.customerPhone = dPhone;
+    
+    if (rawName) {
+        newForm.customerName = rawName;
+    } else if (dPhone && !newForm.customerName) {
+        newForm.customerName = 'Khách đặt qua Chat';
     }
 
-    // 5. Phân tích Ship
-    const shipMatch = text.match(/^(?:tiền\s*)?Ship\s*:?\s*([0-9\.,]+[kK]?)/im);
-    if (shipMatch) {
-       let shipStr = shipMatch[1].toLowerCase().replace(/[,.]/g, '');
-       let ship = 0;
-       if (shipStr.includes('k')) ship = parseInt(shipStr.replace('k', '')) * 1000;
-       else ship = parseInt(shipStr);
-       if (ship > 0 && ship < 1000) ship = ship * 1000;
-       newForm.deliveryFee = ship;
-    }
-
-    // 6. Trích xuất ghi chú
-    const noteLines = text.split('\n').map(l => l.trim()).filter(l => {
-       if (!l) return false;
-       if (l.match(/^(?:(?:📍)?điểm lấy đơn|điểm lấy|lấy đơn tại|lấy hàng|lấy tại|lấy ở|nhận tại|địa chỉ lấy|nơi lấy|chỗ này lấy đơn|chỗ lấy|lấy chỗ này|lấy chỗ|lấy|từ)/i)) return false;
-       if (l.match(/^(?:(?:📍)?điểm giao|giao đơn tại|giao hàng|giao tại|giao ở|giao tới|giao đến|giao chỗ này|giao|địa chỉ giao|nơi giao|chỗ giao|trực tiếp|gửi cho|ship qua|địa chỉ nhận|nơi nhận|đến)/i)) return false;
-       if (l.match(/^(?:sđt|sdt|đt|dt|phone)/i)) return false;
-       if (l.match(/^0[0-9]{7,10}$/)) return false; // Chỉ có số đt
-       if (l.match(/^(?:tiền\s*)?Thu\s*:?\s*([0-9\.,]+[kK]?)$/i)) return false; // Dòng chỉ chứa COD
-       if (l.match(/^(?:tiền\s*)?Ship\s*:?\s*([0-9\.,]+[kK]?)$/i)) return false; // Dòng chỉ chứa Ship
-       return true;
-    });
-    const parsedNote = noteLines.join(' | ');
-    if (parsedNote) {
-       newForm.note = parsedNote; // Không xài cộng dồn (tránh lỗi lặp chữ khi gõ tay từng ký tự)
+    if (rawNote.length > 0) {
+        newForm.note = rawNote.join(' | ');
     } else {
-       newForm.note = '';
+        newForm.note = '';
     }
 
     setForm(newForm);
