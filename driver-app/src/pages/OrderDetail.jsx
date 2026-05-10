@@ -373,9 +373,9 @@ export default function OrderDetail() {
 
           {/* GHI CHÚ CHUNG */}
           {order.note && (
-            <div className="bg-slate-50 rounded-xl p-3 border border-slate-200 mb-4">
-              <p className="text-slate-600 text-xs font-bold uppercase mb-0.5 flex items-center gap-1"><FileText size={14}/> Ghi chú từ khách hàng</p>
-              <p className="text-slate-800 text-sm font-medium whitespace-pre-wrap">{order.note}</p>
+            <div className="bg-rose-50 rounded-xl p-3.5 sm:p-4 border-2 border-rose-200 mb-4 shadow-sm">
+              <p className="text-rose-600 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><FileText size={16}/> LƯU Ý TỪ KHÁCH HÀNG</p>
+              <p className="text-slate-900 text-base sm:text-lg font-bold whitespace-pre-wrap leading-snug">{order.note}</p>
             </div>
           )}
 
