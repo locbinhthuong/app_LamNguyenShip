@@ -203,7 +203,12 @@ const orderController = {
         });
       }
 
-      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, scheduledPublishAt, forceAssignDriverId, commissionRate, serviceType, subServiceType } = req.body;
+      const { 
+        customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, 
+        items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, 
+        scheduledPublishAt, forceAssignDriverId, commissionRate, serviceType, subServiceType,
+        senderPhone, receiverPhone, receiverPhone2, rideDetails, financialDetails, packageDetails
+      } = req.body;
 
       let didAdminForceAssign = false;
       let forceAssignedDriverFcm = null;
@@ -261,6 +266,12 @@ const orderController = {
         deliveryFee: deliveryFee || 0,
         adminBonus: adminBonus || 0,
         commissionRate: commissionRate !== undefined ? commissionRate : null,
+        senderPhone: senderPhone || '',
+        receiverPhone: receiverPhone || '',
+        receiverPhone2: receiverPhone2 || '',
+        rideDetails: rideDetails || {},
+        financialDetails: financialDetails || {},
+        packageDetails: packageDetails || {},
         pickupCoordinates,
         deliveryCoordinates,
         status: didAdminForceAssign ? 'ACCEPTED' : (scheduledPublishAt ? 'DRAFT' : 'PENDING'),

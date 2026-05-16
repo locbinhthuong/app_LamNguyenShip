@@ -20,7 +20,12 @@ export default function CreateOrder() {
     adminBonus: '',
     scheduledPublishAt: '',
     forceAssignDriverId: '',
-    commissionRate: null
+    commissionRate: null,
+    vehicleClass: 'TAY_GA',
+    bankName: '',
+    bankAccount: '',
+    bankAccountName: '',
+    transactionAmount: ''
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -205,6 +210,36 @@ export default function CreateOrder() {
 
     try {
       const items = form.items ? form.items.split('\n').filter(i => i.trim()) : [];
+      let rideDetails = undefined;
+      let financialDetails = undefined;
+      let packageDetails = undefined;
+      
+      if (form.serviceType === 'DAT_XE') {
+        rideDetails = {
+          vehicleType: form.subServiceType === 'LAI_HO_OTO' ? 'OTO' : 'XE_MAY',
+          vehicleClass: (form.subServiceType === 'LAI_HO_XE_MAY' || form.subServiceType === 'LAI_HO_OTO') ? form.vehicleClass : '',
+          passengerCount: 1,
+          surcharge: 0
+        };
+      } else if (form.serviceType === 'DIEU_PHOI') {
+        let title = '[GẶP ĐIỀU PHỐI VIÊN]';
+        if (form.subServiceType === 'NAP_TIEN') title = `[NẠP TIỀN NGÂN HÀNG ${form.bankName.toUpperCase()}]`;
+        if (form.subServiceType === 'RUT_TIEN') title = `[RÚT TIỀN MẶT]`;
+        
+        packageDetails = { description: title };
+        
+        if (form.subServiceType === 'NAP_TIEN' || form.subServiceType === 'RUT_TIEN') {
+          financialDetails = {
+            bankName: form.bankName.trim(),
+            bankAccount: form.bankAccount.trim(),
+            bankAccountName: form.bankAccountName.trim().toUpperCase(),
+            transactionAmount: form.transactionAmount ? parseInt(form.transactionAmount.toString().replace(/[,.]/g, '')) : 0
+          };
+        }
+      } else if (form.serviceType === 'MUA_HO') {
+        packageDetails = { description: 'MUA HỘ' };
+      }
+
       await createOrder({
         serviceType: form.serviceType,
         subServiceType: form.subServiceType || undefined,
@@ -220,7 +255,11 @@ export default function CreateOrder() {
         adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0,
         scheduledPublishAt: form.scheduledPublishAt || undefined,
         forceAssignDriverId: form.forceAssignDriverId || undefined,
-        commissionRate: form.commissionRate
+        commissionRate: form.commissionRate,
+        senderPhone: form.pickupPhone,
+        rideDetails,
+        financialDetails,
+        packageDetails
       });
       alert('Tạo đơn hàng thành công!');
       navigate('/orders');
@@ -269,7 +308,7 @@ export default function CreateOrder() {
             <button
               key={svc.id}
               type="button"
-              onClick={() => setForm(prev => ({ ...prev, serviceType: svc.id, subServiceType: svc.id === 'DAT_XE' ? 'XE_OM' : svc.id === 'DIEU_PHOI' ? 'NAP_TIEN' : svc.id === 'MUA_HO' ? 'MUA_HO' : '' }))}
+              onClick={() => setForm(prev => ({ ...prev, serviceType: svc.id, subServiceType: svc.id === 'DAT_XE' ? 'XE_OM' : svc.id === 'DIEU_PHOI' ? 'GAP_TRUC_TIEP' : svc.id === 'MUA_HO' ? 'MUA_HO' : '' }))}
               className={`shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition-all border ${
                 form.serviceType === svc.id 
                   ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
@@ -289,47 +328,109 @@ export default function CreateOrder() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {form.serviceType === 'DAT_XE' && (
-            <div className="mb-4 flex gap-2 overflow-x-auto">
-              {[
-                { id: 'XE_OM', label: '🛵 Xe Ôm' },
-                { id: 'LAI_HO_XE_MAY', label: '🔑 Lái hộ (Máy)' },
-                { id: 'LAI_HO_OTO', label: '🚗 Lái hộ (Ôtô)' }
-              ].map(sub => (
-                <button
-                  key={sub.id}
-                  type="button"
-                  onClick={() => setForm({ ...form, subServiceType: sub.id })}
-                  className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold border ${
-                    form.subServiceType === sub.id 
-                      ? 'bg-orange-500 text-white border-orange-500' 
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {sub.label}
-                </button>
-              ))}
+            <div className="mb-4">
+              <div className="flex gap-2 overflow-x-auto mb-3">
+                {[
+                  { id: 'XE_OM', label: '🛵 Xe Ôm' },
+                  { id: 'LAI_HO_XE_MAY', label: '🔑 Lái hộ (Máy)' },
+                  { id: 'LAI_HO_OTO', label: '🚗 Lái hộ (Ôtô)' }
+                ].map(sub => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, subServiceType: sub.id, vehicleClass: sub.id === 'LAI_HO_XE_MAY' ? 'TAY_GA' : '' })}
+                    className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold border ${
+                      form.subServiceType === sub.id 
+                        ? 'bg-orange-500 text-white border-orange-500' 
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+              {form.subServiceType === 'LAI_HO_XE_MAY' && (
+                <div className="flex gap-2 animate-fadeIn">
+                  {['TAY_GA', 'XE_SO', 'CON_TAY'].map(type => (
+                    <button 
+                      key={type} type="button" 
+                      onClick={() => setForm({ ...form, vehicleClass: type })}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${form.vehicleClass === type ? 'bg-teal-50 text-teal-700 border-2 border-teal-500' : 'bg-gray-50 text-gray-400 border-2 border-transparent'}`}
+                    >
+                      {type === 'TAY_GA' ? 'Tay Ga' : type === 'XE_SO' ? 'Xe Số' : 'Côn Tay'}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {form.subServiceType === 'LAI_HO_OTO' && (
+                <div className="animate-fadeIn">
+                  <input 
+                    type="text" 
+                    placeholder="Dòng xe (VD: Mazda 3 số tự động...)"
+                    className="w-full text-sm font-semibold bg-gray-50 border border-indigo-100 p-3 rounded-xl outline-none text-indigo-800 focus:border-indigo-300"
+                    value={form.vehicleClass === 'TAY_GA' || form.vehicleClass === 'XE_SO' || form.vehicleClass === 'CON_TAY' ? '' : form.vehicleClass}
+                    onChange={e => setForm({...form, vehicleClass: e.target.value})}
+                  />
+                </div>
+              )}
             </div>
           )}
 
           {form.serviceType === 'DIEU_PHOI' && (
-            <div className="mb-4 flex gap-2 overflow-x-auto">
-              {[
-                { id: 'NAP_TIEN', label: '🏦 Khách Nạp Tiền' },
-                { id: 'RUT_TIEN', label: '💵 Khách Rút Tiền' }
-              ].map(sub => (
-                <button
-                  key={sub.id}
-                  type="button"
-                  onClick={() => setForm({ ...form, subServiceType: sub.id })}
-                  className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold border ${
-                    form.subServiceType === sub.id 
-                      ? 'bg-emerald-600 text-white border-emerald-600' 
-                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {sub.label}
-                </button>
-              ))}
+            <div className="mb-4 space-y-3">
+              <div className="flex gap-2 overflow-x-auto">
+                {[
+                  { id: 'GAP_TRUC_TIEP', label: '🤝 Gặp Trực Tiếp' },
+                  { id: 'NAP_TIEN', label: '🏦 Khách Nạp Tiền' },
+                  { id: 'RUT_TIEN', label: '💵 Khách Rút Tiền' }
+                ].map(sub => (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    onClick={() => setForm({ ...form, subServiceType: sub.id })}
+                    className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold border ${
+                      form.subServiceType === sub.id 
+                        ? 'bg-emerald-600 text-white border-emerald-600' 
+                        : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {sub.label}
+                  </button>
+                ))}
+              </div>
+
+              {(form.subServiceType === 'NAP_TIEN' || form.subServiceType === 'RUT_TIEN') && (
+                <div className={`p-4 rounded-xl border animate-fadeIn ${form.subServiceType === 'NAP_TIEN' ? 'bg-blue-50/50 border-blue-200' : 'bg-orange-50/50 border-orange-200'} space-y-3`}>
+                  <label className="text-[10px] font-bold uppercase text-slate-600 block mb-2">THÔNG TIN TÀI KHOẢN GIAO DỊCH</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <input 
+                      type="text" placeholder="Ngân Hàng (VD: VCB)"
+                      className="input-field bg-white"
+                      value={form.bankName} onChange={e => setForm({...form, bankName: e.target.value})}
+                    />
+                    <input 
+                      type="text" placeholder="Tên Chủ TK"
+                      className="input-field bg-white uppercase"
+                      value={form.bankAccountName} onChange={e => setForm({...form, bankAccountName: e.target.value.toUpperCase()})}
+                    />
+                  </div>
+                  <div>
+                    <input 
+                      type="text" placeholder="Số Tài Khoản"
+                      className="input-field bg-white text-blue-600 font-bold tracking-wider"
+                      value={form.bankAccount} onChange={e => setForm({...form, bankAccount: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <CurrencyInput 
+                      name="transactionAmount"
+                      placeholder={`Số Tiền ${form.subServiceType === 'NAP_TIEN' ? 'Nạp' : 'Rút'} (VD: 50.000)`}
+                      className="input-field font-bold text-gray-800 bg-white"
+                      value={form.transactionAmount} onChange={handleChange}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -344,7 +445,7 @@ export default function CreateOrder() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">SĐT Khách Nhận (Giao đến) <span className="text-red-400">*</span></label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'GIAO_HANG' ? 'SĐT Khách Nhận (Giao đến)' : 'SĐT Khách hàng'} <span className="text-red-400">*</span></label>
               <input
                 name="customerPhone"
                 value={form.customerPhone}
