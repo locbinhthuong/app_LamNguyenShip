@@ -9,6 +9,7 @@ import OrderDetail from './pages/OrderDetail';
 import MyOrders from './pages/MyOrders';
 import Earnings from './pages/Earnings';
 import AlertModal from './components/AlertModal';
+import SwipeWrapper from './components/SwipeWrapper';
 import api from './services/api';
 import { requestFirebaseToken, setupForegroundListener } from './utils/firebase';
 
@@ -300,7 +301,7 @@ function AppContent() {
   };
 
   return (
-    <>
+    <SwipeWrapper>
       <Routes>
         <Route path="/login" element={driver ? <Navigate to="/" /> : <Login />} />
         <Route path="/register" element={driver ? <Navigate to="/" /> : <Register />} />
@@ -339,7 +340,7 @@ function AppContent() {
           </div>
         </div>
       )}
-    </>
+    </SwipeWrapper>
   );
 }
 

@@ -1,5 +1,8 @@
 {
   "appId": "vn.lamnguyenship.customer",
   "appName": "AloShipp",
-  "webDir": "dist"
+  "webDir": "dist",
+  "ios": {
+    "allowsBackForwardNavigationGestures": true
+  }
 }
