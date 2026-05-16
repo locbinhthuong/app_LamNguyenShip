@@ -97,6 +97,8 @@ export default function MyOrders() {
 
   useEffect(() => {
     loadOrders();
+    window.addEventListener('refresh_data', loadOrders);
+    return () => window.removeEventListener('refresh_data', loadOrders);
   }, [loadOrders]);
 
   const filteredOrders = filter === 'all'

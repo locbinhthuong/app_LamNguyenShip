@@ -449,6 +449,7 @@ export default function Home() {
 
   useEffect(() => {
     loadData();
+    window.addEventListener('refresh_data', loadData);
     // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
     const interval = setInterval(loadData, 30000);
 
@@ -531,6 +532,7 @@ export default function Home() {
 
     return () => {
       clearInterval(interval);
+      window.removeEventListener('refresh_data', loadData);
       window.removeEventListener('driver_new_order', handleNewOrder);
       window.removeEventListener('driver_order_accepted', handleOrderAccepted);
       window.removeEventListener('driver_order_cancelled', handleOrderLost);

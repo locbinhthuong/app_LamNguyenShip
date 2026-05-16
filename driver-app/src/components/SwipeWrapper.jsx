@@ -74,7 +74,7 @@ export default function SwipeWrapper({ children }) {
       const innerScrollTop = scrollableElement ? scrollableElement.scrollTop : 0;
       
       if (scrollTop === 0 && innerScrollTop === 0) {
-        window.location.reload();
+        window.dispatchEvent(new CustomEvent('refresh_data'));
       }
     }
 
@@ -86,7 +86,7 @@ export default function SwipeWrapper({ children }) {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      className="w-full h-[100dvh] flex flex-col overflow-hidden relative"
+      className="w-full h-full"
     >
       {children}
     </div>

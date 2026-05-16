@@ -85,6 +85,8 @@ const CustomerDashboard = () => {
       }
     };
     fetchAnnouncements();
+    window.addEventListener('refresh_data', fetchAnnouncements);
+    return () => window.removeEventListener('refresh_data', fetchAnnouncements);
   }, []);
 
   // Tự động trượt Slider mỗi 3 giây

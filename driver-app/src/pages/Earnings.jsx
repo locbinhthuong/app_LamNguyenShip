@@ -134,6 +134,8 @@ export default function Earnings() {
 
   useEffect(() => {
     fetchEarnings();
+    window.addEventListener('refresh_data', fetchEarnings);
+    return () => window.removeEventListener('refresh_data', fetchEarnings);
   }, [fetchEarnings]);
 
   useEffect(() => {
