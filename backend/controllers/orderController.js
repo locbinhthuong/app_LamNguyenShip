@@ -203,7 +203,7 @@ const orderController = {
         });
       }
 
-      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, scheduledPublishAt, forceAssignDriverId, commissionRate } = req.body;
+      const { customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, scheduledPublishAt, forceAssignDriverId, commissionRate, serviceType, subServiceType } = req.body;
 
       let didAdminForceAssign = false;
       let forceAssignedDriverFcm = null;
@@ -248,6 +248,8 @@ const orderController = {
       }
 
       const order = new Order({
+        serviceType: serviceType || 'GIAO_HANG',
+        subServiceType: subServiceType || null,
         customerName,
         customerPhone,
         pickupPhone: pickupPhone || '',

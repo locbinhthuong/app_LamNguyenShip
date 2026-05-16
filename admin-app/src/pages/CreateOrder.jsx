@@ -6,6 +6,8 @@ import CurrencyInput from '../components/CurrencyInput';
 export default function CreateOrder() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
+    serviceType: 'GIAO_HANG',
+    subServiceType: '',
     customerName: '',
     customerPhone: '',
     pickupPhone: '',
@@ -204,6 +206,8 @@ export default function CreateOrder() {
     try {
       const items = form.items ? form.items.split('\n').filter(i => i.trim()) : [];
       await createOrder({
+        serviceType: form.serviceType,
+        subServiceType: form.subServiceType || undefined,
         customerName: form.customerName,
         customerPhone: form.customerPhone,
         pickupPhone: form.pickupPhone,
@@ -237,7 +241,7 @@ export default function CreateOrder() {
           <span>🤖 Dán Nhanh Đơn Zalo / Facebook</span>
           <button 
             type="button" 
-            onClick={() => { setSmartText(''); setForm({ customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null }); }}
+            onClick={() => { setSmartText(''); setForm(prev => ({ ...prev, customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null })); }}
             className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
           >
             🔄 Tạo Mới Lại
@@ -254,6 +258,29 @@ export default function CreateOrder() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
+        {/* TABS CHỌN DỊCH VỤ */}
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-2 border-b border-slate-100">
+          {[
+            { id: 'GIAO_HANG', label: '📦 Giao hàng' },
+            { id: 'DAT_XE', label: '🛵 Đặt xe' },
+            { id: 'MUA_HO', label: '🛒 Mua hộ' },
+            { id: 'DIEU_PHOI', label: '🏦 Nạp/Rút Tiền' }
+          ].map(svc => (
+            <button
+              key={svc.id}
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, serviceType: svc.id, subServiceType: svc.id === 'DAT_XE' ? 'XE_OM' : svc.id === 'DIEU_PHOI' ? 'NAP_TIEN' : svc.id === 'MUA_HO' ? 'MUA_HO' : '' }))}
+              className={`shrink-0 rounded-xl px-4 py-2 text-sm font-bold transition-all border ${
+                form.serviceType === svc.id 
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md' 
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {svc.label}
+            </button>
+          ))}
+        </div>
+
         {error && (
           <div className="mb-4 rounded-xl border border-red-500/50 bg-red-500/20 px-4 py-3 text-sm text-red-300">
             {error}
@@ -261,6 +288,50 @@ export default function CreateOrder() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {form.serviceType === 'DAT_XE' && (
+            <div className="mb-4 flex gap-2 overflow-x-auto">
+              {[
+                { id: 'XE_OM', label: '🛵 Xe Ôm' },
+                { id: 'LAI_HO_XE_MAY', label: '🔑 Lái hộ (Máy)' },
+                { id: 'LAI_HO_OTO', label: '🚗 Lái hộ (Ôtô)' }
+              ].map(sub => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => setForm({ ...form, subServiceType: sub.id })}
+                  className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold border ${
+                    form.subServiceType === sub.id 
+                      ? 'bg-orange-500 text-white border-orange-500' 
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {form.serviceType === 'DIEU_PHOI' && (
+            <div className="mb-4 flex gap-2 overflow-x-auto">
+              {[
+                { id: 'NAP_TIEN', label: '🏦 Khách Nạp Tiền' },
+                { id: 'RUT_TIEN', label: '💵 Khách Rút Tiền' }
+              ].map(sub => (
+                <button
+                  key={sub.id}
+                  type="button"
+                  onClick={() => setForm({ ...form, subServiceType: sub.id })}
+                  className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold border ${
+                    form.subServiceType === sub.id 
+                      ? 'bg-emerald-600 text-white border-emerald-600' 
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {sub.label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">Tên khách hàng <span className="text-red-400">*</span></label>
@@ -286,7 +357,7 @@ export default function CreateOrder() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ lấy hàng (Shop) <span className="text-red-400">*</span></label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'Điểm đón' : form.serviceType === 'DIEU_PHOI' ? 'Địa chỉ khách' : form.serviceType === 'MUA_HO' ? 'Nơi mua hàng' : 'Địa chỉ lấy hàng (Shop)'} <span className="text-red-400">*</span></label>
               <input
                 name="pickupAddress"
                 value={form.pickupAddress}
@@ -296,7 +367,7 @@ export default function CreateOrder() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">SĐT Điểm lấy (Shop)</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'SĐT Điểm đón (Tùy chọn)' : form.serviceType === 'DIEU_PHOI' ? 'SĐT Khác (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'SĐT Nơi mua (Tùy chọn)' : 'SĐT Điểm lấy (Shop)'}</label>
               <input
                 name="pickupPhone"
                 value={form.pickupPhone}
@@ -307,28 +378,32 @@ export default function CreateOrder() {
             </div>
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-600">Địa chỉ giao hàng (Tùy chọn)</label>
-            <input
-              name="deliveryAddress"
-              value={form.deliveryAddress}
-              onChange={handleChange}
-              placeholder="456 Lê Lợi, Quận 1, TP.HCM"
-              className="input-field"
-            />
-          </div>
+          {form.serviceType !== 'DIEU_PHOI' && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'Điểm đến (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'Nơi giao hàng (Tùy chọn)' : 'Địa chỉ giao hàng (Tùy chọn)'}</label>
+              <input
+                name="deliveryAddress"
+                value={form.deliveryAddress}
+                onChange={handleChange}
+                placeholder="456 Lê Lợi, Quận 1, TP.HCM"
+                className="input-field"
+              />
+            </div>
+          )}
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-600">Hàng hóa <span className="text-slate-500">(mỗi dòng 1 món)</span></label>
-            <textarea
-              name="items"
-              value={form.items}
-              onChange={handleChange}
-              rows={3}
-              placeholder={"2x Bánh mì thịt\n1x Trà sữa"}
-              className="input-field resize-none"
-            />
-          </div>
+          {form.serviceType !== 'DAT_XE' && form.serviceType !== 'DIEU_PHOI' && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'MUA_HO' ? 'Hàng hóa cần mua (mỗi dòng 1 món)' : 'Hàng hóa (mỗi dòng 1 món)'} <span className="text-slate-500">(mỗi dòng 1 món)</span></label>
+              <textarea
+                name="items"
+                value={form.items}
+                onChange={handleChange}
+                rows={3}
+                placeholder={"2x Bánh mì thịt\n1x Trà sữa"}
+                className="input-field resize-none"
+              />
+            </div>
+          )}
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-600">Ghi chú</label>
@@ -344,7 +419,7 @@ export default function CreateOrder() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">Thu hộ (COD)</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'MUA_HO' ? 'Tạm ứng (COD)' : form.serviceType === 'DIEU_PHOI' ? 'Số tiền (Giao dịch)' : 'Thu hộ (COD)'}</label>
               <CurrencyInput
                 name="codAmount"
                 value={form.codAmount}
@@ -354,7 +429,7 @@ export default function CreateOrder() {
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">Phí giao hàng</label>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'Cước phí xe' : form.serviceType === 'DIEU_PHOI' ? 'Phí dịch vụ' : 'Phí giao hàng'}</label>
               <CurrencyInput
                 name="deliveryFee"
                 value={form.deliveryFee}
