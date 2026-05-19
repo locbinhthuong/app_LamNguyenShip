@@ -656,13 +656,13 @@ const orderController = {
         const transactions = await DebtTransaction.find({ driverId: req.driver._id }).select('amount targetDate createdAt status').lean();
         const debtByDate = {};
         transactions.forEach(tx => {
-          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
           if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
             if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
             debtByDate[dateStr] += tx.amount;
           }
         });
-        const todayStr = new Date().toLocaleDateString('en-CA');
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
         for (const [dateStr, amount] of Object.entries(debtByDate)) {
           if (amount > 0 && dateStr !== todayStr) {
             hasUnpaidDebt = true;
@@ -832,7 +832,7 @@ const orderController = {
 
       if (debtAmount > 0) {
         // Lưu Lịch sử Giao Dịch
-        const todayStr = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD' local time
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }); // 'YYYY-MM-DD' local time VN
         const debtTx = new DebtTransaction({
           driverId: driver._id,
           orderId: order._id,

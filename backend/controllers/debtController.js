@@ -26,17 +26,18 @@ const debtController = {
       const debtByDate = {};
       const pendingDays = new Set();
       transactions.forEach(tx => {
-        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
         
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
-        } else if (tx.status !== 'REJECTED') { // Chỉ cộng dồn các khoản SUCCESS hoặc cũ không có status
+        } else if (tx.status !== 'REJECTED' && tx.type !== 'PAYMENT') {
+           // CHỈ cộng FEE_DEDUCTION + PENALTY, KHÔNG cộng PAYMENT vào khung nợ
            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
            debtByDate[dateStr] += tx.amount;
         }
       });
 
-      const todayStr = new Date().toLocaleDateString('en-CA');
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       let unpaidDays = [];
       if (driver.walletDebt > 0) {
         for (const [dateStr, amount] of Object.entries(debtByDate)) {
@@ -287,7 +288,7 @@ const debtController = {
         type: 'PAYMENT',
         amount: -Number(amount), // Âm là khoản nạp/thanh toán nợ. Khi pending chưa trừ ví.
         status: 'PENDING',
-        targetDate: targetDate || new Date().toLocaleDateString('en-CA'),
+        targetDate: targetDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
         description: `Yêu cầu xác nhận chuyển khoản cho nợ ngày ${targetDate || 'cũ'}`
       });
       await tx.save();
@@ -331,17 +332,18 @@ const debtController = {
       const debtByDate = {};
       const pendingDays = new Set();
       transactions.forEach(tx => {
-        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
         
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
-        } else if (tx.status !== 'REJECTED') {
+        } else if (tx.status !== 'REJECTED' && tx.type !== 'PAYMENT') {
+           // CHỈ cộng FEE_DEDUCTION + PENALTY, KHÔNG cộng PAYMENT vào khung nợ
            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
            debtByDate[dateStr] += tx.amount;
         }
       });
 
-      const todayStr = new Date().toLocaleDateString('en-CA');
+      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       let unpaidDays = [];
       if (driver.walletDebt > 0) {
         for (const [dateStr, amount] of Object.entries(debtByDate)) {
