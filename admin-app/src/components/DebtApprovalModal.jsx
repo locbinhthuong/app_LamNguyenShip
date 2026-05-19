@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { addDriverPayment } from '../services/api';
+import { approveDebtAdmin, rejectDebtAdmin } from '../services/api';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
@@ -45,13 +45,28 @@ export default function DebtApprovalModal() {
   const handleApprove = async () => {
     try {
       setIsProcessing(true);
-      const res = await addDriverPayment(payload.driverId, payload.amount, 'Duyệt thanh toán QR tự động (Semi)');
+      const res = await approveDebtAdmin(payload.txId);
       if (res.success) {
         alert('✅ ĐÃ GẠCH NỢ THÀNH CÔNG CHO TÀI XẾ!');
         handleClose();
       }
     } catch (error) {
       alert('Lỗi phê duyệt: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      setIsProcessing(true);
+      const res = await rejectDebtAdmin(payload.txId, 'Admin đã kiểm tra nhưng không nhận được tiền (Semi)');
+      if (res.success) {
+        alert('❌ ĐÃ TỪ CHỐI DUYỆT!');
+        handleClose();
+      }
+    } catch (error) {
+      alert('Lỗi từ chối: ' + (error.response?.data?.message || error.message));
     } finally {
       setIsProcessing(false);
     }
@@ -111,8 +126,9 @@ export default function DebtApprovalModal() {
 
           <div className="flex gap-4 w-full">
             <button
-              onClick={handleClose}
-              className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 rounded-2xl transition-all"
+              onClick={handleReject}
+              disabled={isProcessing}
+              className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 rounded-2xl transition-all disabled:opacity-50"
             >
               CHƯA NHẬN ĐƯỢC
             </button>

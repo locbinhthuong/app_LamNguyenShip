@@ -37,13 +37,15 @@ const debtController = {
       });
 
       const todayStr = new Date().toLocaleDateString('en-CA');
-      const unpaidDays = [];
-      for (const [dateStr, amount] of Object.entries(debtByDate)) {
-        if (amount > 0 && dateStr !== todayStr) {
-          unpaidDays.push({ date: dateStr, amount });
+      let unpaidDays = [];
+      if (driver.walletDebt > 0) {
+        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          if (amount > 0 && dateStr !== todayStr) {
+            unpaidDays.push({ date: dateStr, amount });
+          }
         }
+        unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
       }
-      unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       res.status(200).json({
         success: true,
@@ -340,13 +342,15 @@ const debtController = {
       });
 
       const todayStr = new Date().toLocaleDateString('en-CA');
-      const unpaidDays = [];
-      for (const [dateStr, amount] of Object.entries(debtByDate)) {
-        if (amount > 0 && dateStr !== todayStr) {
-          unpaidDays.push({ date: dateStr, amount });
+      let unpaidDays = [];
+      if (driver.walletDebt > 0) {
+        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          if (amount > 0 && dateStr !== todayStr) {
+            unpaidDays.push({ date: dateStr, amount });
+          }
         }
+        unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
       }
-      unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       res.status(200).json({
         success: true,

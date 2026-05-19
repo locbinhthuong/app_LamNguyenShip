@@ -248,6 +248,16 @@ export const getFinanceStats = async () => {
   return response.data;
 };
 
+export const approveDebtAdmin = async (txId) => {
+  const response = await api.post(`/api/finance/debts/${txId}/approve`);
+  return response.data;
+};
+
+export const rejectDebtAdmin = async (txId, reason) => {
+  const response = await api.post(`/api/finance/debts/${txId}/reject`, { reason });
+  return response.data;
+};
+
 // ==================== WALLET (ADMIN) ====================
 export const getDriverWalletAdmin = async (driverId) => {
   const response = await api.get(`/api/wallets/admin/${driverId}`);

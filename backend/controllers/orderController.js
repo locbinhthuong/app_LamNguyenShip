@@ -222,22 +222,23 @@ const orderController = {
           return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
         }
 
-        // Tường lửa nợ
         let hasUnpaidDebt = false;
-        const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-        const debtByDate = {};
-        transactions.forEach(tx => {
-          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-            debtByDate[dateStr] += tx.amount;
-          }
-        });
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        for (const [dateStr, amount] of Object.entries(debtByDate)) {
-          if (amount > 0 && dateStr !== todayStr) {
-            hasUnpaidDebt = true;
-            break;
+        if (driver.walletDebt > 0) {
+          const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
+          const debtByDate = {};
+          transactions.forEach(tx => {
+            const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+            if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+              if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+              debtByDate[dateStr] += tx.amount;
+            }
+          });
+          const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+          for (const [dateStr, amount] of Object.entries(debtByDate)) {
+            if (amount > 0 && dateStr !== todayStr) {
+              hasUnpaidDebt = true;
+              break;
+            }
           }
         }
 
@@ -521,20 +522,22 @@ const orderController = {
 
         // Tường lửa Đòi Nợ y chang App Tài Xế (Không nể nang)
         let hasUnpaidDebt = false;
-        const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-        const debtByDate = {};
-        transactions.forEach(tx => {
-          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-            debtByDate[dateStr] += tx.amount;
-          }
-        });
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        for (const [dateStr, amount] of Object.entries(debtByDate)) {
-          if (amount > 0 && dateStr !== todayStr) {
-            hasUnpaidDebt = true;
-            break;
+        if (driver.walletDebt > 0) {
+          const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
+          const debtByDate = {};
+          transactions.forEach(tx => {
+            const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+            if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+              if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+              debtByDate[dateStr] += tx.amount;
+            }
+          });
+          const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+          for (const [dateStr, amount] of Object.entries(debtByDate)) {
+            if (amount > 0 && dateStr !== todayStr) {
+              hasUnpaidDebt = true;
+              break;
+            }
           }
         }
 
@@ -648,21 +651,23 @@ const orderController = {
 
       let hasUnpaidDebt = false;
 
-      // Luôn kiểm tra chi tiết từng ngày (Chỉ chặn nếu có nợ CŨ chưa thanh toán)
-      const transactions = await DebtTransaction.find({ driverId: req.driver._id }).select('amount targetDate createdAt status').lean();
-      const debtByDate = {};
-      transactions.forEach(tx => {
-        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
-        if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-          if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-          debtByDate[dateStr] += tx.amount;
-        }
-      });
-      const todayStr = new Date().toLocaleDateString('en-CA');
-      for (const [dateStr, amount] of Object.entries(debtByDate)) {
-        if (amount > 0 && dateStr !== todayStr) {
-          hasUnpaidDebt = true;
-          break;
+      if (driver.walletDebt > 0) {
+        // Luôn kiểm tra chi tiết từng ngày (Chỉ chặn nếu có nợ CŨ chưa thanh toán)
+        const transactions = await DebtTransaction.find({ driverId: req.driver._id }).select('amount targetDate createdAt status').lean();
+        const debtByDate = {};
+        transactions.forEach(tx => {
+          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
+            debtByDate[dateStr] += tx.amount;
+          }
+        });
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          if (amount > 0 && dateStr !== todayStr) {
+            hasUnpaidDebt = true;
+            break;
+          }
         }
       }
 
