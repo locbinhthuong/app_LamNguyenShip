@@ -3,51 +3,53 @@ const mongoose = require('mongoose');
 const Driver = require('./models/Driver');
 const DebtTransaction = require('./models/DebtTransaction');
 
-async function restoreDebts() {
+async function restoreDebts19May() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('✅ Connected to MongoDB');
 
-  // Lấy tất cả tài xế
-  const drivers = await Driver.find().select('_id name phone walletDebt');
-  console.log(`🔍 Tìm thấy ${drivers.length} tài xế. Đang khôi phục công nợ...\n`);
+  // Bước 1: Tìm tất cả tài xế đã chạy đơn trong ngày 19/5
+  const feeTxs19 = await DebtTransaction.find({
+    type: 'FEE_DEDUCTION',
+    targetDate: '2026-05-19'
+  }).distinct('driverId');
+
+  console.log(`🔍 Tìm thấy ${feeTxs19.length} tài xế đã chạy đơn trong ngày 19/5\n`);
 
   let totalFixed = 0;
 
-  for (const driver of drivers) {
-    // Lấy tất cả giao dịch KHÔNG phải PAYMENT (tức là chỉ FEE_DEDUCTION và PENALTY)
-    const feeTxs = await DebtTransaction.find({
-      driverId: driver._id,
+  for (const driverId of feeTxs19) {
+    const driver = await Driver.findById(driverId).select('name phone walletDebt');
+
+    // Bước 2: Xóa toàn bộ lệnh PAYMENT (kể cả PENDING) của tài xế này
+    const deleted = await DebtTransaction.deleteMany({
+      driverId: driverId,
+      type: 'PAYMENT'
+    });
+
+    // Bước 3: Tính lại walletDebt = tổng tất cả FEE_DEDUCTION + PENALTY còn lại
+    const allFeeTxs = await DebtTransaction.find({
+      driverId: driverId,
       type: { $in: ['FEE_DEDUCTION', 'PENALTY'] },
       status: { $ne: 'REJECTED' }
     });
 
-    // Tính tổng nợ thực sự = tổng chiết khấu + phạt
-    const trueDebt = feeTxs.reduce((sum, tx) => sum + tx.amount, 0);
+    const trueDebt = allFeeTxs.reduce((sum, tx) => sum + tx.amount, 0);
 
-    // Xóa toàn bộ giao dịch PAYMENT (kể cả PENDING) của tài xế này
-    const deleted = await DebtTransaction.deleteMany({
-      driverId: driver._id,
-      type: 'PAYMENT'
-    });
+    // Cập nhật lại ví
+    await Driver.findByIdAndUpdate(driverId, { walletDebt: trueDebt });
 
-    // Cập nhật lại walletDebt = tổng thực tế (chỉ từ phí đơn + phạt)
-    await Driver.findByIdAndUpdate(driver._id, { walletDebt: trueDebt });
-
-    if (deleted.deletedCount > 0 || Math.abs(driver.walletDebt - trueDebt) > 1) {
-      console.log(`✅ ${driver.name} (${driver.phone})`);
-      console.log(`   Xóa ${deleted.deletedCount} lệnh thanh toán`);
-      console.log(`   WalletDebt: ${driver.walletDebt}đ → ${trueDebt}đ`);
-      console.log('');
-      totalFixed++;
-    }
+    console.log(`✅ ${driver.name} (${driver.phone})`);
+    console.log(`   Xóa ${deleted.deletedCount} lệnh thanh toán`);
+    console.log(`   WalletDebt: ${driver.walletDebt}đ → ${trueDebt}đ`);
+    console.log('');
+    totalFixed++;
   }
 
-  console.log(`\n🎉 HOÀN TẤT! Đã khôi phục công nợ cho ${totalFixed} tài xế.`);
-  console.log('Ví công nợ của tất cả tài xế hiện tại = ĐÚNG tổng chiết khấu đơn hàng thực tế.');
+  console.log(`🎉 HOÀN TẤT! Đã khôi phục công nợ cho ${totalFixed} tài xế chạy ngày 19/5.`);
   process.exit(0);
 }
 
-restoreDebts().catch(e => {
+restoreDebts19May().catch(e => {
   console.error('Lỗi:', e.message);
   process.exit(1);
 });
