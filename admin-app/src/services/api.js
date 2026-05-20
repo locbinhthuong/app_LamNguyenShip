@@ -163,8 +163,10 @@ export const deleteDriver = async (id) => {
 };
 
 // ==================== REVENUE ====================
-export const getRevenueStats = async () => {
-  const response = await api.get('/api/revenue/stats');
+export const getRevenueStats = async (date) => {
+  const params = {};
+  if (date) params.date = date;
+  const response = await api.get('/api/revenue/stats', { params });
   return response.data;
 };
 

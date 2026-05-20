@@ -1,11 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getRevenueStats, getFinanceStats } from '../services/api';
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 };
 
+// Format date to YYYY-MM-DD for API and input
+const toDateString = (d) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Format date to DD/MM/YYYY for display
+const toDisplayDate = (dateStr) => {
+  const d = new Date(dateStr + 'T00:00:00');
+  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+};
+
 export default function Revenue() {
+  const [selectedDate, setSelectedDate] = useState(() => toDateString(new Date()));
   const [stats, setStats] = useState({
     totalRevenue: 0,
     dailyRevenue: 0,
@@ -28,10 +43,10 @@ export default function Revenue() {
   const [loading, setLoading] = useState(true);
   const [expandedRow, setExpandedRow] = useState(null);
 
-  const fetchRevenueData = async () => {
+  const fetchRevenueData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await getRevenueStats();
+      const res = await getRevenueStats(selectedDate);
       const financeRes = await getFinanceStats();
       if (res.success && res.data) {
         setStats(res.data.stats);
@@ -46,11 +61,36 @@ export default function Revenue() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate]);
 
   useEffect(() => {
     fetchRevenueData();
-  }, []);
+  }, [fetchRevenueData]);
+
+  // Date navigation helpers
+  const goToPreviousDay = () => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    setSelectedDate(toDateString(d));
+  };
+
+  const goToNextDay = () => {
+    const d = new Date(selectedDate + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    // Cho phép xem đến ngày hôm nay
+    if (d <= todayDate) {
+      setSelectedDate(toDateString(d));
+    }
+  };
+
+  const goToToday = () => {
+    setSelectedDate(toDateString(new Date()));
+  };
+
+  const isToday = selectedDate === toDateString(new Date());
+  const displayDate = toDisplayDate(selectedDate);
 
   if (loading) {
     return (
@@ -150,7 +190,7 @@ export default function Revenue() {
         </div>
       </div>
 
-      {/* BẢNG CÔNG NỢ TÀI XẾ 15% */}
+      {/* BẢNG CÔNG NỢ TÀI XẾ */}
       <div className="flex-1 rounded-2xl bg-white border-slate-200 shadow flex flex-col overflow-hidden">
         <div className="border-b border-blue-100 p-4 sm:p-5 bg-gradient-to-r from-blue-50 to-white">
           <h2 className="text-lg sm:text-xl font-bold text-blue-800 flex items-center gap-2">
@@ -160,12 +200,62 @@ export default function Revenue() {
 
         {/* DESKTOP VIEW BẢNG DOANH THU HOẠT ĐỘNG */}
         <div className="flex-1 overflow-x-auto">
-          {/* Header filter (Mô phỏng như hình) */}
-          <div className="border-b border-slate-200 p-4 bg-white flex items-center gap-3">
+          {/* Header filter - BỘ LỌC NGÀY */}
+          <div className="border-b border-slate-200 p-4 bg-white flex items-center gap-3 flex-wrap">
              <span className="font-bold text-slate-700">Bộ lọc hoạt động</span>
-             <span className="bg-orange-50 text-orange-600 border border-orange-200 px-3 py-1 rounded-lg text-sm font-bold flex items-center gap-2 cursor-pointer">
-                Ngày: {new Date().toLocaleDateString('vi-VN')}
-             </span>
+             
+             {/* Nút lùi ngày */}
+             <button
+               onClick={goToPreviousDay}
+               className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 transition-all hover:shadow-sm active:scale-95"
+               title="Ngày trước"
+             >
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+               </svg>
+             </button>
+
+             {/* Ô chọn ngày + hiển thị */}
+             <div className="relative">
+               <input
+                 type="date"
+                 value={selectedDate}
+                 max={toDateString(new Date())}
+                 onChange={(e) => {
+                   if (e.target.value) setSelectedDate(e.target.value);
+                 }}
+                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+               />
+               <span className="bg-orange-50 text-orange-600 border border-orange-200 px-4 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2 cursor-pointer select-none hover:bg-orange-100 transition-colors">
+                  📅 Ngày: {displayDate}
+               </span>
+             </div>
+
+             {/* Nút tiến ngày */}
+             <button
+               onClick={goToNextDay}
+               disabled={isToday}
+               className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-95 ${
+                 isToday 
+                   ? 'border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed' 
+                   : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 hover:shadow-sm'
+               }`}
+               title="Ngày sau"
+             >
+               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+               </svg>
+             </button>
+
+             {/* Nút về Hôm nay */}
+             {!isToday && (
+               <button
+                 onClick={goToToday}
+                 className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition-all hover:shadow-md active:scale-95"
+               >
+                 Hôm nay
+               </button>
+             )}
           </div>
           <table className="w-full text-left text-sm text-slate-700 font-medium">
             <thead className="bg-white border-b border-slate-200 text-slate-800 text-sm">
@@ -186,7 +276,7 @@ export default function Revenue() {
               {drivers.length === 0 ? (
                 <tr>
                   <td colSpan="10" className="px-6 py-12 text-center text-slate-500 italic text-base">
-                    Chưa có tài xế nào hoàn thành đơn hàng.
+                    {isToday ? 'Chưa có tài xế nào hoàn thành đơn hàng.' : `Không có dữ liệu cho ngày ${displayDate}.`}
                   </td>
                 </tr>
               ) : (

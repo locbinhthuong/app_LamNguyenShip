@@ -5,8 +5,12 @@ const revenueController = {
   getRevenueStats: async (req, res) => {
     try {
       // Xác định các mốc thời gian
-      const today = new Date();
+      // Hỗ trợ bộ lọc ngày: ?date=YYYY-MM-DD
+      const dateParam = req.query.date;
+      const today = dateParam ? new Date(dateParam + 'T00:00:00') : new Date();
       today.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
       
       const startOfWeek = new Date(today);
       // getDay() trả về 0: Chủ nhật, 1: Thứ 2... (Giả sử tuần bắt đầu từ Thứ Hai)
@@ -37,7 +41,7 @@ const revenueController = {
         
         // Cộng dồn thống kê Admin
         totalRevenue += fee;
-        if (date >= today) dailyRevenue += fee;
+        if (date >= today && date <= endOfDay) dailyRevenue += fee;
         if (date >= startOfWeek) weeklyRevenue += fee;
         if (date >= startOfMonth) monthlyRevenue += fee;
 
@@ -64,7 +68,7 @@ const revenueController = {
           driverDebts[driverId].totalBonus += bonus;
 
           // Cập nhật các KPI con
-          if (date >= today) {
+          if (date >= today && date <= endOfDay) {
             driverDebts[driverId].todayOrders += 1;
             driverDebts[driverId].todayFee += fee;
             driverDebts[driverId].todayBonus += bonus;
