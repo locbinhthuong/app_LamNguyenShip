@@ -262,14 +262,14 @@ export default function Revenue() {
               <tr>
                 <th className="px-4 py-4 font-bold">#</th>
                 <th className="px-4 py-4 font-bold">Tài xế</th>
-                <th className="px-4 py-4 font-bold">Đơn Tổng</th>
-                <th className="px-4 py-4 font-bold">Bonus Tổng</th>
-                <th className="px-4 py-4 font-bold">Ship Tổng</th>
+                <th className="px-4 py-4 font-bold">Đơn Ngày</th>
+                <th className="px-4 py-4 font-bold">Ship Ngày</th>
                 <th className="px-4 py-4 font-bold">Đơn Tháng</th>
                 <th className="px-4 py-4 font-bold">Bonus tháng</th>
                 <th className="px-4 py-4 font-bold">Ship tháng</th>
-                <th className="px-4 py-4 font-bold">Đơn Ngày</th>
-                <th className="px-4 py-4 font-bold">Ship Ngày</th>
+                <th className="px-4 py-4 font-bold">Đơn Tổng</th>
+                <th className="px-4 py-4 font-bold">Bonus Tổng</th>
+                <th className="px-4 py-4 font-bold">Ship Tổng</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 bg-white">
@@ -284,20 +284,20 @@ export default function Revenue() {
                   <tr key={d.driverId} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-4 font-bold text-slate-800">{idx + 1}</td>
                     <td className="px-4 py-4 font-bold text-slate-800 whitespace-nowrap">{d.name || 'Không tên'}</td>
-                    <td className="px-4 py-4 text-blue-600 font-bold whitespace-nowrap flex items-center gap-1.5">
-                      <span className="text-lg">📄</span> {d.totalOrders || 0}
+                    <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap flex items-center gap-1.5">
+                      <span className="text-lg">☀️</span> {d.todayOrders || 0}
                     </td>
-                    <td className="px-4 py-4 font-bold whitespace-nowrap">{formatCurrency(d.totalBonus || 0)}</td>
-                    <td className="px-4 py-4 text-blue-600 font-bold whitespace-nowrap">{formatCurrency(d.totalFee || 0)}</td>
+                    <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap">{formatCurrency(d.todayFee || 0)}</td>
                     <td className="px-4 py-4 text-orange-500 font-bold whitespace-nowrap flex items-center gap-1.5">
                       <span className="text-lg">📅</span> {d.monthOrders || 0}
                     </td>
                     <td className="px-4 py-4 font-bold whitespace-nowrap">{formatCurrency(d.monthBonus || 0)}</td>
                     <td className="px-4 py-4 text-orange-500 font-bold whitespace-nowrap">{formatCurrency(d.monthFee || 0)}</td>
-                    <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap flex items-center gap-1.5">
-                      <span className="text-lg">☀️</span> {d.todayOrders || 0}
+                    <td className="px-4 py-4 text-blue-600 font-bold whitespace-nowrap flex items-center gap-1.5">
+                      <span className="text-lg">📄</span> {d.totalOrders || 0}
                     </td>
-                    <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap">{formatCurrency(d.todayFee || 0)}</td>
+                    <td className="px-4 py-4 font-bold whitespace-nowrap">{formatCurrency(d.totalBonus || 0)}</td>
+                    <td className="px-4 py-4 text-blue-600 font-bold whitespace-nowrap">{formatCurrency(d.totalFee || 0)}</td>
                   </tr>
                 ))
               )}

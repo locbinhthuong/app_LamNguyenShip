@@ -33,10 +33,26 @@ const orderController = {
 
       if (req.query.search) {
         const searchRegex = new RegExp(req.query.search, 'i');
+        
+        // Tìm các tài xế có tên hoặc SĐT khớp với từ khóa
+        const matchingDrivers = await Driver.find({
+          $or: [{ name: searchRegex }, { phone: searchRegex }]
+        }).select('_id');
+        const driverIds = matchingDrivers.map(d => d._id);
+
         query.$or = [
           { customerPhone: searchRegex },
-          { customerName: searchRegex }
+          { customerName: searchRegex },
+          { pickupAddress: searchRegex },
+          { deliveryAddress: searchRegex },
+          { senderPhone: searchRegex },
+          { receiverPhone: searchRegex }
         ];
+
+        if (driverIds.length > 0) {
+          query.$or.push({ assignedTo: { $in: driverIds } });
+        }
+
         // Xử lý tìm theo OrderCode (bất cứ chuỗi nào khớp id)
         const pureSearch = req.query.search.replace(/^DH/i, '').toLowerCase();
         if (pureSearch.length > 0) {
