@@ -47,7 +47,7 @@ export default function Revenue() {
     try {
       setLoading(true);
       const res = await getRevenueStats(selectedDate);
-      const financeRes = await getFinanceStats();
+      const financeRes = await getFinanceStats(selectedDate);
       if (res.success && res.data) {
         setStats(res.data.stats);
         setDrivers(res.data.drivers);

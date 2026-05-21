@@ -245,8 +245,10 @@ export const updateDriverDebt = async (txId, amount, description) => {
 };
 
 // ==================== FINANCE ====================
-export const getFinanceStats = async () => {
-  const response = await api.get('/api/finance/stats');
+export const getFinanceStats = async (date) => {
+  const params = {};
+  if (date) params.date = date;
+  const response = await api.get('/api/finance/stats', { params });
   return response.data;
 };
 

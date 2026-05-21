@@ -161,8 +161,11 @@ const financeController = {
 
   getDiscountStats: async (req, res) => {
     try {
-      const today = new Date();
+      const dateParam = req.query.date;
+      const today = dateParam ? new Date(dateParam + 'T00:00:00') : new Date();
       today.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(today);
+      endOfDay.setHours(23, 59, 59, 999);
       
       const startOfWeek = new Date(today);
       const dayOfWeek = startOfWeek.getDay();
@@ -188,13 +191,13 @@ const financeController = {
         const date = new Date(dateStrFromDB);
         
         if (rate >= 0.2) {
-          if (date >= today) stats20.dailyDiscount += discount;
+          if (date >= today && date <= endOfDay) stats20.dailyDiscount += discount;
           if (date >= startOfWeek) stats20.weeklyDiscount += discount;
           if (date >= startOfMonth) stats20.monthlyDiscount += discount;
           if (date >= startOfYear) stats20.yearlyDiscount += discount;
         } else {
           // <= 15% hoặc mặc định
-          if (date >= today) stats15.dailyDiscount += discount;
+          if (date >= today && date <= endOfDay) stats15.dailyDiscount += discount;
           if (date >= startOfWeek) stats15.weeklyDiscount += discount;
           if (date >= startOfMonth) stats15.monthlyDiscount += discount;
           if (date >= startOfYear) stats15.yearlyDiscount += discount;
