@@ -175,7 +175,10 @@ const financeController = {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const startOfYear = new Date(today.getFullYear(), 0, 1);
 
-      const completedOrders = await require('../models/Order').find({ status: 'COMPLETED' }).lean();
+      const completedOrders = await require('../models/Order')
+        .find({ status: 'COMPLETED' })
+        .populate('assignedTo', 'commissionRate')
+        .lean();
 
       let stats15 = { dailyDiscount: 0, weeklyDiscount: 0, monthlyDiscount: 0, yearlyDiscount: 0 };
       let stats20 = { dailyDiscount: 0, weeklyDiscount: 0, monthlyDiscount: 0, yearlyDiscount: 0 };
@@ -184,7 +187,10 @@ const financeController = {
         const fee = order.deliveryFee || 0;
         if (fee <= 0) return;
         
-        const rate = order.commissionRate ? order.commissionRate / 100 : 0.15;
+        const driverRate = order.assignedTo?.commissionRate || 15;
+        const finalRateValue = order.commissionRate != null ? order.commissionRate : driverRate;
+        const rate = finalRateValue / 100;
+        
         const discount = fee * rate;
         
         const dateStrFromDB = order.deliveredAt || order.updatedAt;
