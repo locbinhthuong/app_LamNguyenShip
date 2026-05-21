@@ -33,9 +33,15 @@ const driverController = {
         .sort({ createdAt: -1 })
         .lean();
 
-      // Aggregate today's orders
-      const startOfDay = new Date();
+      // Aggregate today's orders (or a specific date)
+      let filterDate = new Date();
+      if (req.query.date) {
+        filterDate = new Date(req.query.date);
+      }
+      const startOfDay = new Date(filterDate);
       startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(filterDate);
+      endOfDay.setHours(23, 59, 59, 999);
       const Order = require('../models/Order');
 
       const todayStats = await Order.aggregate([
@@ -43,7 +49,7 @@ const driverController = {
           $match: {
             assignedTo: { $in: drivers.map(d => d._id) },
             status: 'COMPLETED',
-            deliveredAt: { $gte: startOfDay }
+            deliveredAt: { $gte: startOfDay, $lte: endOfDay }
           }
         },
         {

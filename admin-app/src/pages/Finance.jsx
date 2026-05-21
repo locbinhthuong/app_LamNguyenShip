@@ -19,6 +19,7 @@ export default function Finance() {
   const [drivers, setDrivers] = useState([]);
   const [debtModal, setDebtModal] = useState({ isOpen: false, driverId: null });
   const [walletModal, setWalletModal] = useState({ isOpen: false, driverId: null });
+  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
 
   const [selectedDebts, setSelectedDebts] = useState([]);
   const [selectedWallets, setSelectedWallets] = useState([]);
@@ -27,7 +28,7 @@ export default function Finance() {
     try {
       setLoading(true);
       const res = await api.get('/api/finance/all-requests');
-      const drvRes = await api.get('/api/drivers');
+      const drvRes = await api.get(`/api/drivers?date=${filterDate}`);
       if (res.data.success) {
         setData(res.data.data);
       }
@@ -44,7 +45,7 @@ export default function Finance() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [filterDate]);
 
   const handleApproveDebt = async (txId) => {
     if (!window.confirm('Xác nhận đã nhận được tiền của Tài xế?')) return;
@@ -314,9 +315,20 @@ export default function Finance() {
                   </tbody>
                 </table>
              </div>
-             <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
-                <span className="w-2 h-6 bg-blue-400 rounded-full"></span> Danh Sách Quản Lý Công Nợ Tài Xế
-             </h2>
+             <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-12 mb-4 gap-4">
+               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-blue-400 rounded-full"></span> Danh Sách Quản Lý Công Nợ Tài Xế
+               </h2>
+               <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
+                  <span className="text-sm font-semibold text-slate-600">Xem thống kê ngày:</span>
+                  <input
+                    type="date"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    className="border-none bg-white rounded-lg px-3 py-1.5 text-sm font-medium shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+               </div>
+             </div>
              
              {/* Quản lý sổ đen: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
