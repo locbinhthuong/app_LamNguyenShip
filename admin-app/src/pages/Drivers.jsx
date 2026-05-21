@@ -232,10 +232,14 @@ export default function Drivers() {
                   )}
                 </div>
               </div>
-              <div className="mb-3 grid grid-cols-2 gap-2">
+              <div className="mb-3 grid grid-cols-3 gap-2">
                 <div className="rounded-xl bg-blue-50/50 p-2 text-center">
                   <p className="text-sm font-bold text-green-400">{driver.stats?.completedOrders || 0}</p>
                   <p className="text-[10px] text-slate-500">Hoàn thành</p>
+                </div>
+                <div className="rounded-xl bg-orange-50/50 p-2 text-center">
+                  <p className="text-sm font-bold text-orange-500">{driver.commissionRate || 15}%</p>
+                  <p className="text-[10px] text-slate-500">Chiết khấu</p>
                 </div>
                 <div className="rounded-xl bg-blue-50/50 p-2 text-center">
                   <p className="text-sm font-bold text-blue-600">{driver.driverCode}</p>
@@ -295,6 +299,7 @@ export default function Drivers() {
                   <th className="table-th">Xe</th>
                   <th className="table-th">Trạng thái</th>
                   <th className="table-th">Hoàn thành</th>
+                  <th className="table-th">Chiết khấu</th>
                   <th className="table-th">Hành động</th>
                 </tr>
               </thead>
@@ -332,6 +337,7 @@ export default function Drivers() {
                       </div>
                     </td>
                     <td className="table-td font-bold text-green-400">{driver.stats?.completedOrders || 0}</td>
+                    <td className="table-td font-bold text-orange-500">{driver.commissionRate || 15}%</td>
                     <td className="table-td">
                         <div className="flex gap-2 flex-wrap">
                           
