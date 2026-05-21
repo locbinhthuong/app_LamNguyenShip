@@ -355,7 +355,7 @@ export default function Finance() {
                          <div className="text-xs text-slate-500 flex flex-col items-end">
                             <span className="font-semibold text-slate-700">Nợ mới: <span className="text-red-500 font-bold">{(drv.todayDebt || 0).toLocaleString()} đ</span></span>
                             <span className="uppercase font-semibold mt-1">
-                               Tổng Nợ: 
+                               Nợ: 
                                <span className={`font-black ml-1 text-sm ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
                                    {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Đủ'}
                                </span>
@@ -375,7 +375,7 @@ export default function Finance() {
                       <th className="px-4 py-3 font-semibold text-center border-l border-slate-200">Đơn Hôm Nay</th>
                       <th className="px-4 py-3 font-semibold text-center border-l border-slate-200">Phí Giao (Hôm Nay)</th>
                       <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Công Nợ Hôm Nay</th>
-                      <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Tổng Dư Nợ</th>
+                      <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Nợ Còn Thiếu</th>
                       <th className="px-4 py-3 font-semibold text-center mt-1 border-l border-slate-200">Quản Lý Sổ Đen</th>
                     </tr>
                   </thead>
