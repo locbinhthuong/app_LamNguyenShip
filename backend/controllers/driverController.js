@@ -33,10 +33,45 @@ const driverController = {
         .sort({ createdAt: -1 })
         .lean();
 
+      // Aggregate today's orders
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const Order = require('../models/Order');
+
+      const todayStats = await Order.aggregate([
+        {
+          $match: {
+            assignedTo: { $in: drivers.map(d => d._id) },
+            status: 'COMPLETED',
+            deliveredAt: { $gte: startOfDay }
+          }
+        },
+        {
+          $group: {
+            _id: '$assignedTo',
+            todayOrders: { $sum: 1 },
+            todayDeliveryFee: { $sum: '$deliveryFee' }
+          }
+        }
+      ]);
+
+      const statsMap = {};
+      todayStats.forEach(stat => {
+        statsMap[stat._id.toString()] = {
+          todayOrders: stat.todayOrders,
+          todayDeliveryFee: stat.todayDeliveryFee
+        };
+      });
+
+      const driversWithStats = drivers.map(drv => {
+        const stat = statsMap[drv._id.toString()] || { todayOrders: 0, todayDeliveryFee: 0 };
+        return { ...drv, ...stat };
+      });
+
       res.status(200).json({
         success: true,
-        count: drivers.length,
-        data: drivers
+        count: driversWithStats.length,
+        data: driversWithStats
       });
     } catch (error) {
       console.error('Error getAllDrivers:', error);

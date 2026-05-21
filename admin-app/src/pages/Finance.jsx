@@ -321,20 +321,32 @@ export default function Finance() {
              {/* Quản lý sổ đen: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
                 {drivers.map(drv => (
-                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between">
-                      <div>
-                         <div className="font-bold text-slate-800 text-lg mb-1">{drv.name}</div>
-                         <div className="text-xs text-slate-500 mb-2">{drv.phone}</div>
-                         <div className="text-xs text-slate-500 uppercase font-semibold">Nợ: <span className={`font-black ml-1 text-sm ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                             {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Thanh toán đủ'}
-                         </span></div>
+                   <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                           <div className="font-bold text-slate-800 text-lg mb-1">{drv.name}</div>
+                           <div className="text-xs text-slate-500 mb-2">{drv.phone}</div>
+                        </div>
+                        <button
+                           onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
+                           className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-bold text-orange-600 hover:bg-orange-100 transition-colors whitespace-nowrap"
+                        >
+                           📓 Sổ Đen
+                        </button>
                       </div>
-                      <button
-                         onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
-                         className="rounded-xl bg-orange-50 px-4 py-3 text-sm font-bold text-orange-600 hover:bg-orange-100 transition-colors whitespace-nowrap"
-                      >
-                         📓 Sổ Đen
-                      </button>
+                      
+                      <div className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
+                         <div className="text-xs text-slate-500 flex flex-col">
+                            <span className="font-semibold text-slate-700">Hôm nay: {drv.todayOrders || 0} đơn</span>
+                            <span className="font-bold text-emerald-600">{(drv.todayDeliveryFee || 0).toLocaleString()} đ</span>
+                         </div>
+                         <div className="text-xs text-slate-500 uppercase font-semibold text-right">
+                            Nợ: 
+                            <span className={`font-black ml-1 text-sm ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                                {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Thanh toán đủ'}
+                            </span>
+                         </div>
+                      </div>
                    </div>
                 ))}
              </div>
@@ -345,8 +357,10 @@ export default function Finance() {
                   <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                     <tr>
                       <th className="px-4 py-3 font-semibold min-w-[200px]">Tài xế</th>
+                      <th className="px-4 py-3 font-semibold text-center border-l border-slate-200">Đơn Hôm Nay</th>
+                      <th className="px-4 py-3 font-semibold text-center border-l border-slate-200">Phí Giao (Hôm Nay)</th>
                       <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Nợ Còn Thiếu</th>
-                      <th className="px-4 py-3 font-semibold text-center mt-1">Quản Lý Sổ Đen</th>
+                      <th className="px-4 py-3 font-semibold text-center mt-1 border-l border-slate-200">Quản Lý Sổ Đen</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -357,12 +371,19 @@ export default function Finance() {
                             <div className="text-xs text-slate-500">{drv.phone}</div>
                          </td>
                          
+                         <td className="px-4 py-3 text-center border-l border-slate-100">
+                            <span className="font-semibold text-slate-700">{drv.todayOrders || 0}</span>
+                         </td>
+                         <td className="px-4 py-3 text-center border-l border-slate-100">
+                            <span className="font-semibold text-slate-700">{(drv.todayDeliveryFee || 0).toLocaleString()} đ</span>
+                         </td>
+
                          <td className="px-4 py-3 text-right border-l border-slate-100">
                             <span className={`font-black ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
                                 {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Thanh toán đủ'}
                             </span>
                          </td>
-                         <td className="px-4 py-3 text-center">
+                         <td className="px-4 py-3 text-center border-l border-slate-100">
                             <button
                               onClick={() => setDebtModal({ isOpen: true, driverId: drv._id })}
                               className="rounded-lg bg-orange-50 px-4 py-2 text-xs font-bold text-orange-600 hover:bg-orange-100 transition-colors"
