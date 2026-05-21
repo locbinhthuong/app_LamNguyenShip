@@ -37,16 +37,16 @@ async function fixSurplus() {
       }
 
       // Calculate starting balance for today
-      // Current walletDebt = startingBalance + todayDebt + todayPayment
-      // So startingBalance = walletDebt - todayDebt - todayPayment
       let startingBalance = drv.walletDebt - todayDebt - todayPayment;
 
-      // If starting balance is negative (surplus), user wants to wipe it out
-      if (startingBalance < 0 && todayDebt > 0) {
-        const adjustmentAmount = Math.abs(startingBalance);
-        console.log(`Driver ${drv.name} (${drv.phone}): walletDebt = ${drv.walletDebt}, todayDebt = ${todayDebt}, todayPayment = ${todayPayment}. Starting balance = ${startingBalance}. Adjusting +${adjustmentAmount} đ`);
+      // If the current walletDebt is LESS than todayDebt, it means they have a surplus (from past bug) or made a payment.
+      // The user wants to WIPE OUT any past surplus so walletDebt matches todayDebt.
+      // Wait, if todayPayment is 0, walletDebt < todayDebt means startingBalance < 0.
+      if (drv.walletDebt < todayDebt) {
+        const adjustmentAmount = todayDebt - drv.walletDebt;
+        console.log(`[!] Phat hien tai xe ${drv.name} co walletDebt (${drv.walletDebt}) NHO HON todayDebt (${todayDebt}).`);
+        console.log(`    => Fix: Cong them ${adjustmentAmount} vao walletDebt.`);
         
-        // Add a penalty to correct the starting balance
         await DebtTransaction.create({
           driverId: drv._id,
           type: 'PENALTY',
@@ -55,14 +55,15 @@ async function fixSurplus() {
           status: 'SUCCESS'
         });
 
-        // Update walletDebt
         drv.walletDebt += adjustmentAmount;
         await drv.save();
         fixedCount++;
+      } else {
+        console.log(`[OK] Tai xe ${drv.name} co walletDebt (${drv.walletDebt}) >= todayDebt (${todayDebt}). Bo qua.`);
       }
     }
 
-    console.log(`Fixed surplus for ${fixedCount} drivers.`);
+    console.log(`\n=> DA FIX XONG CHO ${fixedCount} TAI XE.`);
     process.exit(0);
   } catch (err) {
     console.error(err);
