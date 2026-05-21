@@ -221,7 +221,7 @@ export default function DriverDetail() {
           
           {/* Cảnh báo Giam Tiền */}
           <div className="rounded-2xl bg-red-500/10 border border-red-500/30 p-5 shadow-xl">
-             <h3 className="text-sm font-bold text-red-400 mb-1">Công nợ Phát Sinh Hôm Nay (15%)</h3>
+             <h3 className="text-sm font-bold text-red-400 mb-1">Tổng Dư Nợ Hiện Tại ({driver.commissionRate || 15}%)</h3>
              <p className="text-3xl font-black text-red-500 ">{formatCurrency(stats.totalDebt)}</p>
              <p className="text-xs text-red-400/80 mt-2 font-medium">Khoản này cần thu cuối ngày để đối soát.</p>
           </div>
