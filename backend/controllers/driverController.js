@@ -61,16 +61,41 @@ const driverController = {
         }
       ]);
 
+      const DebtTransaction = require('../models/DebtTransaction');
+      const todayDebtStats = await DebtTransaction.aggregate([
+        {
+          $match: {
+            driverId: { $in: drivers.map(d => d._id) },
+            type: { $in: ['FEE_DEDUCTION', 'PENALTY'] },
+            createdAt: { $gte: startOfDay, $lte: endOfDay }
+          }
+        },
+        {
+          $group: {
+            _id: '$driverId',
+            todayDebt: { $sum: '$amount' }
+          }
+        }
+      ]);
+
       const statsMap = {};
       todayStats.forEach(stat => {
         statsMap[stat._id.toString()] = {
           todayOrders: stat.todayOrders,
-          todayDeliveryFee: stat.todayDeliveryFee
+          todayDeliveryFee: stat.todayDeliveryFee,
+          todayDebt: 0
         };
       });
 
+      todayDebtStats.forEach(stat => {
+        if (!statsMap[stat._id.toString()]) {
+          statsMap[stat._id.toString()] = { todayOrders: 0, todayDeliveryFee: 0, todayDebt: 0 };
+        }
+        statsMap[stat._id.toString()].todayDebt = stat.todayDebt;
+      });
+
       const driversWithStats = drivers.map(drv => {
-        const stat = statsMap[drv._id.toString()] || { todayOrders: 0, todayDeliveryFee: 0 };
+        const stat = statsMap[drv._id.toString()] || { todayOrders: 0, todayDeliveryFee: 0, todayDebt: 0 };
         return { ...drv, ...stat };
       });
 
