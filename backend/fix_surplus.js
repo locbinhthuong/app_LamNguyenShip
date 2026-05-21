@@ -1,20 +1,19 @@
 const mongoose = require('mongoose');
-require('dotenv').config({ path: '../admin-app/.env' });
+require('dotenv').config({ path: __dirname + '/.env' });
 
 const Driver = require('./models/Driver');
 const DebtTransaction = require('./models/DebtTransaction');
 
 async function fixSurplus() {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27017/lamnguyenship');
+    await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to DB');
 
     const drivers = await Driver.find({});
     
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    // Khóa cứng thời gian là ngày 21/05/2026 (theo giờ Việt Nam)
+    const startOfDay = new Date('2026-05-21T00:00:00+07:00');
+    const endOfDay = new Date('2026-05-21T23:59:59+07:00');
 
     let fixedCount = 0;
 
