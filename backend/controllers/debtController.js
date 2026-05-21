@@ -30,8 +30,8 @@ const debtController = {
         
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
-        } else if (tx.status !== 'REJECTED' && tx.type !== 'PAYMENT') {
-           // CHỈ cộng FEE_DEDUCTION + PENALTY, KHÔNG cộng PAYMENT vào khung nợ
+        } else if (tx.status !== 'REJECTED') {
+           // Cộng FEE_DEDUCTION, PENALTY, và trừ PAYMENT vào khung nợ
            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
            debtByDate[dateStr] += tx.amount;
         }
@@ -336,8 +336,8 @@ const debtController = {
         
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
-        } else if (tx.status !== 'REJECTED' && tx.type !== 'PAYMENT') {
-           // CHỈ cộng FEE_DEDUCTION + PENALTY, KHÔNG cộng PAYMENT vào khung nợ
+        } else if (tx.status !== 'REJECTED') {
+           // Cộng FEE_DEDUCTION, PENALTY, và trừ PAYMENT vào khung nợ
            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
            debtByDate[dateStr] += tx.amount;
         }
