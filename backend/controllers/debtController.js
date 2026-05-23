@@ -22,8 +22,8 @@ const debtController = {
         .filter(t => t.type === 'PAYMENT')
         .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
 
-      // Nhóm nợ theo ngày & tìm các ngày đang PENDING
-      const debtByDate = {};
+      let totalPaidTx = 0;
+      const grossDebtByDate = {};
       const pendingDays = new Set();
       transactions.forEach(tx => {
         const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -31,16 +31,30 @@ const debtController = {
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
         } else if (tx.status !== 'REJECTED') {
-           // Cộng FEE_DEDUCTION, PENALTY, và trừ PAYMENT vào khung nợ
-           if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-           debtByDate[dateStr] += tx.amount;
+           if (tx.amount < 0) {
+             totalPaidTx += Math.abs(tx.amount);
+           } else if (tx.amount > 0) {
+             if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
+             grossDebtByDate[dateStr] += tx.amount;
+           }
         }
       });
+
+      const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
+      for (const dateStr of sortedDates) {
+        if (totalPaidTx >= grossDebtByDate[dateStr]) {
+          totalPaidTx -= grossDebtByDate[dateStr];
+          grossDebtByDate[dateStr] = 0;
+        } else {
+          grossDebtByDate[dateStr] -= totalPaidTx;
+          totalPaidTx = 0;
+        }
+      }
 
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       let unpaidDays = [];
       if (driver.walletDebt > 0) {
-        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+        for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
           if (amount > 0 && dateStr !== todayStr) {
             unpaidDays.push({ date: dateStr, amount });
           }
@@ -328,8 +342,8 @@ const debtController = {
         .sort({ createdAt: -1 })
         .lean();
 
-      // Nhóm nợ theo ngày
-      const debtByDate = {};
+      let totalPaidTx = 0;
+      const grossDebtByDate = {};
       const pendingDays = new Set();
       transactions.forEach(tx => {
         const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -337,16 +351,30 @@ const debtController = {
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
         } else if (tx.status !== 'REJECTED') {
-           // Cộng FEE_DEDUCTION, PENALTY, và trừ PAYMENT vào khung nợ
-           if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-           debtByDate[dateStr] += tx.amount;
+           if (tx.amount < 0) {
+             totalPaidTx += Math.abs(tx.amount);
+           } else if (tx.amount > 0) {
+             if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
+             grossDebtByDate[dateStr] += tx.amount;
+           }
         }
       });
+
+      const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
+      for (const dateStr of sortedDates) {
+        if (totalPaidTx >= grossDebtByDate[dateStr]) {
+          totalPaidTx -= grossDebtByDate[dateStr];
+          grossDebtByDate[dateStr] = 0;
+        } else {
+          grossDebtByDate[dateStr] -= totalPaidTx;
+          totalPaidTx = 0;
+        }
+      }
 
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       let unpaidDays = [];
       if (driver.walletDebt > 0) {
-        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+        for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
           if (amount > 0 && dateStr !== todayStr) {
             unpaidDays.push({ date: dateStr, amount });
           }

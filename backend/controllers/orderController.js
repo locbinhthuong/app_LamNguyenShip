@@ -241,16 +241,33 @@ const orderController = {
         let hasUnpaidDebt = false;
         if (driver.walletDebt > 0) {
           const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-          const debtByDate = {};
+          let totalPaid = 0;
+          const grossDebtByDate = {};
           transactions.forEach(tx => {
             const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
             if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-              if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-              debtByDate[dateStr] += tx.amount;
+              if (tx.amount < 0) {
+                totalPaid += Math.abs(tx.amount);
+              } else if (tx.amount > 0) {
+                if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
+                grossDebtByDate[dateStr] += tx.amount;
+              }
             }
           });
+
+          const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
+          for (const dateStr of sortedDates) {
+            if (totalPaid >= grossDebtByDate[dateStr]) {
+              totalPaid -= grossDebtByDate[dateStr];
+              grossDebtByDate[dateStr] = 0;
+            } else {
+              grossDebtByDate[dateStr] -= totalPaid;
+              totalPaid = 0;
+            }
+          }
+
           const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
             if (amount > 0 && dateStr !== todayStr) {
               hasUnpaidDebt = true;
               break;
@@ -540,16 +557,33 @@ const orderController = {
         let hasUnpaidDebt = false;
         if (driver.walletDebt > 0) {
           const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-          const debtByDate = {};
+          let totalPaid = 0;
+          const grossDebtByDate = {};
           transactions.forEach(tx => {
             const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
             if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-              if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-              debtByDate[dateStr] += tx.amount;
+              if (tx.amount < 0) {
+                totalPaid += Math.abs(tx.amount);
+              } else if (tx.amount > 0) {
+                if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
+                grossDebtByDate[dateStr] += tx.amount;
+              }
             }
           });
+
+          const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
+          for (const dateStr of sortedDates) {
+            if (totalPaid >= grossDebtByDate[dateStr]) {
+              totalPaid -= grossDebtByDate[dateStr];
+              grossDebtByDate[dateStr] = 0;
+            } else {
+              grossDebtByDate[dateStr] -= totalPaid;
+              totalPaid = 0;
+            }
+          }
+
           const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          for (const [dateStr, amount] of Object.entries(debtByDate)) {
+          for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
             if (amount > 0 && dateStr !== todayStr) {
               hasUnpaidDebt = true;
               break;
@@ -670,16 +704,33 @@ const orderController = {
       if (driver.walletDebt > 0) {
         // Luôn kiểm tra chi tiết từng ngày (Chỉ chặn nếu có nợ CŨ chưa thanh toán)
         const transactions = await DebtTransaction.find({ driverId: req.driver._id }).select('amount targetDate createdAt status').lean();
-        const debtByDate = {};
+        let totalPaid = 0;
+        const grossDebtByDate = {};
         transactions.forEach(tx => {
           const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
           if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-            debtByDate[dateStr] += tx.amount;
+            if (tx.amount < 0) {
+              totalPaid += Math.abs(tx.amount);
+            } else if (tx.amount > 0) {
+              if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
+              grossDebtByDate[dateStr] += tx.amount;
+            }
           }
         });
+
+        const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
+        for (const dateStr of sortedDates) {
+          if (totalPaid >= grossDebtByDate[dateStr]) {
+            totalPaid -= grossDebtByDate[dateStr];
+            grossDebtByDate[dateStr] = 0;
+          } else {
+            grossDebtByDate[dateStr] -= totalPaid;
+            totalPaid = 0;
+          }
+        }
+
         const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        for (const [dateStr, amount] of Object.entries(debtByDate)) {
+        for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
           if (amount > 0 && dateStr !== todayStr) {
             hasUnpaidDebt = true;
             break;
