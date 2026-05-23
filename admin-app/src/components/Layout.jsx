@@ -5,7 +5,7 @@ import { useAdminSocket } from '../hooks/useAdminSocket';
 import DebtApprovalModal from './DebtApprovalModal';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
 import { updateFcmToken } from '../services/api';
-import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset } from 'lucide-react';
+import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset, Settings } from 'lucide-react';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
@@ -92,6 +92,7 @@ export default function Layout() {
         { to: '/drivers',              icon: <Car size={20} />, label: 'Tài xế' },
         { to: '/customers',            icon: <Users size={20} />, label: 'Khách hàng' },
         ...(admin?.role === 'admin' ? [{ to: '/dispatchers', icon: <Headset size={20} />, label: 'Tổng đài viên' }] : []),
+        ...(admin?.role === 'admin' ? [{ to: '/settings', icon: <Settings size={20} />, label: 'Cấu hình Tính tiền' }] : []),
       ];
 
   return (

@@ -15,7 +15,7 @@ async function main() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ Đã kết nối Database thành công');
 
-    const driver = await Driver.findOne({ phone: '0857986911' });
+    const driver = await Driver.findOne({ phone: '0935278494' });
     if (!driver) {
       console.log('❌ Không tìm thấy tài xế với SĐT 0857986911');
       process.exit(0);

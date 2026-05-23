@@ -13,6 +13,7 @@ import Announcements from './pages/Announcements';
 import Finance from './pages/Finance';
 import Customers from './pages/Customers';
 import Dispatchers from './pages/Dispatchers';
+import Settings from './pages/Settings';
 import Layout from './components/Layout';
 
 const PrivateRoute = ({ children }) => {
@@ -51,6 +52,7 @@ export default function App() {
         <Route path="customers" element={<Customers />} />
         <Route path="announcements" element={<Announcements />} />
         <Route path="dispatchers" element={<Dispatchers />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
