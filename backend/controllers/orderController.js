@@ -1403,7 +1403,7 @@ const orderController = {
         note: note || '',
         codAmount: codAmount || 0,
         deliveryFee, // Phí ship đã được tính tự động
-        status: 'PENDING',
+        status: 'DRAFT', // Chuyển thành DRAFT (Chờ báo giá) thay vì PENDING để chờ Admin xem xét lại trước khi Treo lên cho tài xế
         ipAddress: req.ip
       });
 
