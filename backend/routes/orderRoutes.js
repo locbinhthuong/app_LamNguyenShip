@@ -59,7 +59,10 @@ router.delete('/:id', verifyToken, onlyAdmin, orderController.deleteOrder);
 // GET /api/orders/:id - Chi tiết đơn hàng (Admin, Driver, Customer, Shop)
 router.get('/:id', verifyToken, anyAuthenticatedUser, orderController.getOrderById);
 
-// ==================== CUSTOMER / SHOP ====================
+// ==================== CUSTOMER / SHOP / INTEGRATION ====================
+
+// POST /api/orders/integration - Mở API cho App Bán Bánh gọi sang (Tự động tính tiền bằng OSRM Map)
+router.post('/integration', orderController.createIntegrationOrder);
 
 // POST /api/orders/customer - Tạo đơn hàng (Customer/Shop)
 router.post('/customer', verifyToken, onlyCustomer, orderController.createCustomerOrder);

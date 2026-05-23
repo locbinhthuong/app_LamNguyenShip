@@ -7,6 +7,8 @@ const { emitNewOrder, emitOrderAccepted, emitOrderPickedUp, emitOrderDelivering,
 const { startOfTodayVietnam } = require('../utils/todayVietnam');
 const DebtTransaction = require('../models/DebtTransaction');
 const { sendNotification, sendMultipleNotifications } = require('../utils/notification');
+const Config = require('../models/Config');
+const { getDrivingDistance } = require('../utils/distance');
 
 const orderController = {
   // GET /api/orders - Lấy danh sách đơn hàng
@@ -1349,6 +1351,86 @@ const orderController = {
     } catch (error) {
       console.error('Error bulkDeleteOrders:', error);
       res.status(500).json({ success: false, message: 'Lỗi server khi xoá nhiều đơn hàng' });
+    }
+  },
+
+  // POST /api/orders/integration - API mở cho App bán bánh đẩy đơn sang
+  createIntegrationOrder: async (req, res) => {
+    try {
+      const {
+        customerName, customerPhone,
+        pickupAddress, pickupCoordinates,
+        deliveryAddress, deliveryCoordinates,
+        items, note, codAmount
+      } = req.body;
+
+      if (!pickupCoordinates || !deliveryCoordinates || !pickupCoordinates.lat || !deliveryCoordinates.lat) {
+        return res.status(400).json({ success: false, message: 'Thiếu thông tin tọa độ bắt buộc.' });
+      }
+
+      // Lấy khoảng cách thực tế từ OSRM
+      const distanceKm = await getDrivingDistance(
+        pickupCoordinates.lat, pickupCoordinates.lng,
+        deliveryCoordinates.lat, deliveryCoordinates.lng
+      );
+
+      // Lấy cấu hình tính tiền
+      let pricingConfig = { basePrice: 15000, baseDistance: 2, pricePerKm: 5000 };
+      const configDoc = await Config.findOne({ key: 'PRICING_CONFIG' });
+      if (configDoc && configDoc.value) {
+        pricingConfig = configDoc.value;
+      }
+
+      // Tính tiền ship
+      let deliveryFee = pricingConfig.basePrice;
+      if (distanceKm > pricingConfig.baseDistance) {
+        const extraKm = distanceKm - pricingConfig.baseDistance;
+        deliveryFee += Math.ceil(extraKm * pricingConfig.pricePerKm);
+      }
+
+      // Làm tròn tiền đến hàng nghìn (ví dụ 17500 -> 18000 hoặc giữ nguyên tùy ý, tạm giữ nguyên)
+
+      const order = new Order({
+        serviceType: 'GIAO_HANG',
+        subServiceType: 'GIAO_BANH',
+        customerName: customerName || 'Khách App Bán Bánh',
+        customerPhone: customerPhone || '',
+        pickupAddress: pickupAddress || 'Cửa hàng Bánh',
+        deliveryAddress: deliveryAddress || '',
+        pickupCoordinates,
+        deliveryCoordinates,
+        items: items || [],
+        note: note || '',
+        codAmount: codAmount || 0,
+        deliveryFee, // Phí ship đã được tính tự động
+        status: 'PENDING',
+        ipAddress: req.ip
+      });
+
+      await order.save();
+
+      // Emit qua socket để báo tài xế & admin
+      if (req.io) {
+        const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+        const { emitNewOrder } = require('../sockets/index');
+        emitNewOrder(req.io, payload, false); // false = báo chuông cho Admin
+      }
+
+      // Trả về cho App bán bánh
+      res.status(201).json({
+        success: true,
+        message: 'Tạo đơn hàng thành công từ App Bán Bánh',
+        data: {
+          orderId: order._id,
+          orderCode: order.orderCode,
+          distanceKm,
+          deliveryFee
+        }
+      });
+
+    } catch (error) {
+      console.error('Error createIntegrationOrder:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi tạo đơn integration' });
     }
   }
 };
