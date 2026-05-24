@@ -330,6 +330,11 @@ export default function Earnings() {
                         icon = <AlertCircle size={16} />;
                         title = 'Trừ Điểm Hệ Thống';
                         colorClass = 'text-red-600';
+                     } else if (dtx.type === 'FEE_DEDUCTION') {
+                        icon = <Receipt size={16} />;
+                        title = 'Phí Chiết Khấu Đơn Hàng';
+                        colorClass = 'text-red-600';
+                        amountClass = 'text-red-500';
                      } else if (dtx.status === 'REJECTED') {
                         icon = <XCircle size={16} />;
                         title = 'Admin Từ Chối Nhận';

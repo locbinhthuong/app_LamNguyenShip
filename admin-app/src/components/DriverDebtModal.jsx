@@ -262,6 +262,16 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${tx.type === 'PAYMENT' ? 'bg-green-100 text-green-700' : tx.type === 'PENALTY' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700'}`}>
                             {tx.type === 'PAYMENT' ? 'THU NỢ' : tx.type === 'PENALTY' ? 'PHẠT' : 'PHÍ ĐƠN'}
                           </span>
+                          {tx.status === 'PENDING' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">
+                              CHỜ DUYỆT
+                            </span>
+                          )}
+                          {tx.status === 'REJECTED' && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 text-red-700">
+                              TỪ CHỐI
+                            </span>
+                          )}
                           <span className="text-xs text-slate-400">{new Date(tx.createdAt).toLocaleString('vi-VN')}</span>
                         </div>
                         <p className="text-sm font-medium text-slate-700">{tx.description}</p>
@@ -269,11 +279,15 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
                           <p className="text-[10px] text-slate-500 mt-1">Người duyệt: {tx.createdByAdminId.name}</p>
                         )}
                         <div className="mt-2 flex gap-3">
-                           <button onClick={() => handleEditSetup(tx)} className="text-[10px] uppercase font-bold text-blue-500 hover:text-blue-700 decoration-blue-500 underline underline-offset-2">Sửa</button>
-                           <button onClick={() => handleDelete(tx._id)} className="text-[10px] uppercase font-bold text-red-500 hover:text-red-700 decoration-red-500 underline underline-offset-2">Xóa</button>
+                           {tx.status !== 'PENDING' && (
+                             <>
+                               <button onClick={() => handleEditSetup(tx)} className="text-[10px] uppercase font-bold text-blue-500 hover:text-blue-700 decoration-blue-500 underline underline-offset-2">Sửa</button>
+                               <button onClick={() => handleDelete(tx._id)} className="text-[10px] uppercase font-bold text-red-500 hover:text-red-700 decoration-red-500 underline underline-offset-2">Xóa</button>
+                             </>
+                           )}
                         </div>
                       </div>
-                      <div className={`font-black tracking-tight ${tx.amount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                      <div className={`font-black tracking-tight ${tx.status === 'PENDING' ? 'text-yellow-600' : tx.status === 'REJECTED' ? 'text-slate-400 line-through' : (tx.amount > 0 ? 'text-red-600' : 'text-green-600')}`}>
                         {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}đ
                       </div>
                     </div>
