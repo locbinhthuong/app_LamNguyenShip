@@ -19,7 +19,7 @@ const debtController = {
 
       // Tính tổng đã nạp (PAYMENT)
       const totalPaid = transactions
-        .filter(t => t.type === 'PAYMENT')
+        .filter(t => t.type === 'PAYMENT' && t.status === 'SUCCESS')
         .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0);
 
       let totalPaidTx = 0;
@@ -253,9 +253,15 @@ const debtController = {
       const tx = await DebtTransaction.findById(txId);
       if (!tx) return res.status(404).json({ success: false, message: 'Giao dịch không tồn tại' });
       
+      const prevStatus = tx.status;
+      
       tx.status = 'DELETED';
       tx.description = (tx.description || '') + ' [ĐÃ XÓA]';
       await tx.save();
+
+      if (prevStatus === 'SUCCESS') {
+         await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: -tx.amount } });
+      }
 
       if (req.io) emitToDriver(req.io, tx.driverId, 'debt_updated', {});
 
@@ -265,7 +271,7 @@ const debtController = {
     }
   },
 
-  // Xóa nhiều giao dịch nợ cùng lúc (Chỉ xoá Log)
+  // Xóa nhiều giao dịch nợ cùng lúc
   bulkDeleteDebtTx: async (req, res) => {
     try {
       const { txIds } = req.body;
@@ -273,7 +279,14 @@ const debtController = {
         return res.status(400).json({ success: false, message: 'Danh sách ID không hợp lệ' });
       }
 
-      await DebtTransaction.updateMany({ _id: { $in: txIds } }, { $set: { status: 'DELETED' } });
+      const transactions = await DebtTransaction.find({ _id: { $in: txIds } });
+      for (const tx of transactions) {
+         if (tx.status === 'SUCCESS') {
+            await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: -tx.amount } });
+         }
+      }
+
+      await DebtTransaction.updateMany({ _id: { $in: txIds } }, { $set: { status: 'DELETED', description: '[ĐÃ XÓA]' } });
 
       // Cập nhật giao diện nếu cần
       if (req.io) {
