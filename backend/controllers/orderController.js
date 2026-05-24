@@ -1411,6 +1411,7 @@ const orderController = {
         serviceType: 'GIAO_HANG',
         subServiceType: 'GIAO_BANH',
         customerName: customerName || 'Khách App Bán Bánh',
+        bakeryOrderId: req.body.bakeryOrderId || null,
         customerPhone: customerPhone || '',
         pickupAddress: pickupAddress || 'Cửa hàng Bánh',
         deliveryAddress: deliveryAddress || '',
@@ -1448,6 +1449,37 @@ const orderController = {
     } catch (error) {
       console.error('Error createIntegrationOrder:', error);
       res.status(500).json({ success: false, message: 'Lỗi server khi tạo đơn integration' });
+    }
+  },
+
+  // POST /api/orders/integration/:id/cancel
+  cancelIntegrationOrder: async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const order = await Order.findOneAndUpdate(
+        { _id: id, status: { $in: ['DRAFT', 'PENDING'] } },
+        {
+          status: 'CANCELLED',
+          cancelledAt: new Date(),
+          cancelReason: 'Hủy từ App Bán Bánh'
+        },
+        { new: true }
+      );
+
+      if (!order) {
+        return res.status(400).json({ success: false, message: 'Không thể hủy. Đơn hàng có thể đã được tài xế nhận hoặc không tồn tại.' });
+      }
+
+      if (req.io) {
+        const { emitOrderCancelled } = require('../sockets/index');
+        emitOrderCancelled(req.io, order);
+      }
+
+      res.status(200).json({ success: true, message: 'Đã hủy đơn bên AloShipp thành công.' });
+    } catch (error) {
+      console.error('Error cancelIntegrationOrder:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi hủy đơn integration' });
     }
   }
 };

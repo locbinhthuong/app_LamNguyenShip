@@ -21,6 +21,13 @@ const orderSchema = new mongoose.Schema({
     default: null,
     index: true
   },
+  
+  // Liên kết đơn hàng Bakery App
+  bakeryOrderId: {
+    type: String,
+    default: null,
+    index: true
+  },
 
   // Thông tin khách hàng (Người đặt chung)
   customerName: {

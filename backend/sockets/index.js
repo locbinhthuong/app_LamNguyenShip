@@ -10,6 +10,12 @@ const setupSocket = (io) => {
       return next(new Error('Không có token'));
     }
 
+    if (token === 'BAKERY_APP_GUEST') {
+      const bakeryOrderId = socket.handshake.query.bakeryOrderId;
+      socket.user = { role: 'bakery_guest', bakeryOrderId };
+      return next();
+    }
+
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
@@ -33,7 +39,15 @@ const setupSocket = (io) => {
     console.log(`[Socket] Client connected: ${socket.id} - Role: ${socket.user.role}`);
 
     // Join room theo role
-    if (socket.user.role === 'driver') {
+    if (socket.user.role === 'bakery_guest') {
+      if (socket.user.bakeryOrderId) {
+        socket.join(`bakery_order_${socket.user.bakeryOrderId}`);
+        console.log(`[Socket] Bakery Guest joined room bakery_order_${socket.user.bakeryOrderId}`);
+      } else if (socket.handshake.query.bakeryAdmin === 'true') {
+        socket.join('bakery_admins');
+        console.log(`[Socket] Bakery Admin joined room bakery_admins`);
+      }
+    } else if (socket.user.role === 'driver') {
       socket.join(`driver_${socket.user.id}`);
       socket.join('drivers');
       console.log(`[Socket] Driver ${socket.user.id} joined driver room`);
@@ -139,6 +153,12 @@ const broadcastToCreator = (io, order, eventName) => {
       io.to(`customer_${creatorId.toString()}`).emit('order_updated', order);
       io.to(`shop_${creatorId.toString()}`).emit('order_updated', order);
     }
+  }
+
+  // Bắn cho Bakery App qua Socket
+  if (order.bakeryOrderId) {
+    io.to(`bakery_order_${order.bakeryOrderId}`).emit('bakery_order_update', order);
+    io.to('bakery_admins').emit('bakery_order_update', order);
   }
 };
 

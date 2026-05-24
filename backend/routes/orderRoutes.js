@@ -64,6 +64,9 @@ router.get('/:id', verifyToken, anyAuthenticatedUser, orderController.getOrderBy
 // POST /api/orders/integration - Mở API cho App Bán Bánh gọi sang (Tự động tính tiền bằng OSRM Map)
 router.post('/integration', orderController.createIntegrationOrder);
 
+// POST /api/orders/integration/:id/cancel - Bán Bánh gọi sang để xin hủy đơn
+router.post('/integration/:id/cancel', orderController.cancelIntegrationOrder);
+
 // POST /api/orders/customer - Tạo đơn hàng (Customer/Shop)
 router.post('/customer', verifyToken, onlyCustomer, orderController.createCustomerOrder);
 
