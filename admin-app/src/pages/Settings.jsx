@@ -147,17 +147,17 @@ export default function Settings() {
                   : `(Áp dụng từ ${prevKm} km đến dưới mức này)`;
                 
                 return (
-                  <div key={index} className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-6 items-start md:items-center p-4 md:p-3 bg-white md:bg-transparent hover:bg-slate-50 rounded-xl transition-colors border border-slate-200 md:border-slate-100 shadow-sm md:shadow-none relative">
-                    <div className="w-full md:w-auto md:col-span-1 font-black text-slate-300 text-lg md:text-2xl border-b md:border-b-0 border-slate-100 pb-2 md:pb-0 mb-2 md:mb-0 flex justify-between md:block">
+                  <div key={index} className="grid grid-cols-2 md:grid-cols-12 gap-x-3 gap-y-2 md:gap-6 items-start md:items-center p-3 md:p-3 bg-white md:bg-transparent hover:bg-slate-50 rounded-xl transition-colors border border-slate-200 md:border-slate-100 shadow-sm md:shadow-none relative">
+                    <div className="col-span-2 md:col-span-1 font-black text-slate-300 text-sm md:text-2xl border-b md:border-b-0 border-slate-100 pb-1 md:pb-0 flex justify-between md:block">
                       <span className="md:hidden text-slate-400">BẬC</span>
-                      <span>{index + 1}</span>
+                      <span className="text-lg md:text-2xl">{index + 1}</span>
                     </div>
                     
-                    <div className="w-full md:col-span-6 flex flex-col">
-                      <label className="text-xs font-bold text-blue-600 mb-1.5 md:hidden">{isLast ? 'KHOẢNG CÁCH' : 'KHOẢNG CÁCH MAX (KM)'}</label>
+                    <div className="col-span-1 md:col-span-6 flex flex-col">
+                      <label className="text-[10px] md:text-xs font-bold text-blue-600 mb-1 md:hidden whitespace-nowrap">{isLast ? 'TỪ' : 'ĐẾN (KM)'}</label>
                       {isLast ? (
-                         <div className="w-full text-center py-3 bg-amber-50 border border-amber-200 border-dashed rounded-xl text-amber-700 font-bold text-sm md:text-base">
-                           {distanceLabel}
+                         <div className="w-full text-center py-2 md:py-3 bg-amber-50 border border-amber-200 border-dashed rounded-lg text-amber-700 font-bold text-xs md:text-base flex items-center justify-center h-[42px] md:h-auto">
+                           {prevKm} km
                          </div>
                       ) : (
                          <div className="relative">
@@ -166,32 +166,35 @@ export default function Settings() {
                             step="0.1"
                             value={tier.maxKm}
                             onChange={(e) => handleTierChange(index, 'maxKm', e.target.value)}
-                            className="w-full pl-4 md:pl-6 pr-12 py-3 md:py-4 bg-slate-50 md:bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-black text-lg md:text-xl text-blue-900"
+                            className="w-full pl-2 md:pl-6 pr-8 md:pr-12 py-2 md:py-4 bg-slate-50 md:bg-white border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-black text-base md:text-xl text-blue-900"
                             required
                           />
-                          <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                            <span className="text-slate-400 font-bold">Km</span>
+                          <div className="absolute inset-y-0 right-0 pr-2 md:pr-4 flex items-center pointer-events-none">
+                            <span className="text-slate-400 font-bold text-xs md:text-base">Km</span>
                           </div>
                           <div className="hidden md:block absolute -top-3 left-4 px-2 bg-white text-[10px] md:text-xs text-blue-600 font-bold rounded-full border border-blue-100">{distanceLabel}</div>
                         </div>
                       )}
-                      <div className="md:hidden mt-1 text-[11px] text-slate-500 font-medium italic">{distanceLabel}</div>
                     </div>
 
-                    <div className="w-full md:col-span-5 flex flex-col mt-2 md:mt-0">
-                      <label className="text-xs font-bold text-emerald-600 mb-1.5 md:hidden">GIÁ TIỀN GIAO MỨC NÀY</label>
+                    <div className="col-span-1 md:col-span-5 flex flex-col">
+                      <label className="text-[10px] md:text-xs font-bold text-emerald-600 mb-1 md:hidden whitespace-nowrap">GIÁ (VNĐ)</label>
                       <div className="relative">
                         <input
                           type="number"
                           value={tier.price}
                           onChange={(e) => handleTierChange(index, 'price', e.target.value)}
-                          className="w-full pl-4 md:pl-6 pr-20 py-3 md:py-4 bg-emerald-50/50 md:bg-emerald-50 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-black text-emerald-700 text-lg md:text-xl"
+                          className="w-full pl-2 md:pl-6 pr-12 md:pr-20 py-2 md:py-4 bg-emerald-50/50 md:bg-emerald-50 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-black text-emerald-700 text-base md:text-xl"
                           required
                         />
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                          <span className="text-emerald-600/70 text-xs md:text-sm font-black">{isLast ? 'đ / 1Km' : 'VNĐ'}</span>
+                        <div className="absolute inset-y-0 right-0 pr-2 md:pr-4 flex items-center pointer-events-none">
+                          <span className="text-emerald-600/70 text-[10px] md:text-sm font-black whitespace-nowrap">{isLast ? 'đ/Km' : 'VNĐ'}</span>
                         </div>
                       </div>
+                    </div>
+                    
+                    <div className="col-span-2 md:hidden mt-1 text-[10px] text-slate-500 font-medium italic text-center bg-slate-50 py-1 rounded">
+                      {distanceLabel}
                     </div>
                   </div>
                 );
