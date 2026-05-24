@@ -41,8 +41,12 @@ const setupSocket = (io) => {
     // Join room theo role
     if (socket.user.role === 'bakery_guest') {
       if (socket.user.bakeryOrderId) {
-        socket.join(`bakery_order_${socket.user.bakeryOrderId}`);
-        console.log(`[Socket] Bakery Guest joined room bakery_order_${socket.user.bakeryOrderId}`);
+        socket.user.bakeryOrderId.split(',').forEach(id => {
+          if (id) {
+            socket.join(`bakery_order_${id}`);
+            console.log(`[Socket] Bakery Guest joined room bakery_order_${id}`);
+          }
+        });
       } else if (socket.handshake.query.bakeryAdmin === 'true') {
         socket.join('bakery_admins');
         console.log(`[Socket] Bakery Admin joined room bakery_admins`);
