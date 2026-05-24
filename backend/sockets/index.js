@@ -155,10 +155,17 @@ const broadcastToCreator = (io, order, eventName) => {
     }
   }
 
-  // Bắn cho Bakery App qua Socket
+  // Bắn cho Bakery App qua Socket và gọi Webhook để đồng bộ DB
   if (order.bakeryOrderId) {
     io.to(`bakery_order_${order.bakeryOrderId}`).emit('bakery_order_update', order);
     io.to('bakery_admins').emit('bakery_order_update', order);
+
+    // Gửi Webhook ngầm
+    const axios = require('axios');
+    axios.post('https://bakery-backend-six.vercel.app/api/shop/orders/webhook', {
+      aloShippOrderId: order._id.toString(),
+      status: order.status
+    }).catch(err => console.error('[Webhook] Lỗi gửi webhook sang Bakery App:', err.message));
   }
 };
 
