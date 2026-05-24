@@ -30,7 +30,7 @@ const debtController = {
         
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
-        } else if (tx.status !== 'REJECTED') {
+        } else if (tx.status !== 'REJECTED' && tx.status !== 'DELETED') {
            if (tx.amount < 0) {
              totalPaidTx += Math.abs(tx.amount);
            } else if (tx.amount > 0) {
@@ -120,7 +120,7 @@ const debtController = {
       let currentAmount = 0;
       transactions.forEach(tx => {
         const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
-        if (dateStr === targetDate && tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
+        if (dateStr === targetDate && tx.status !== 'REJECTED' && tx.status !== 'PENDING' && tx.status !== 'DELETED') {
           currentAmount += tx.amount;
         }
       });
@@ -253,7 +253,9 @@ const debtController = {
       const tx = await DebtTransaction.findById(txId);
       if (!tx) return res.status(404).json({ success: false, message: 'Giao dịch không tồn tại' });
       
-      await DebtTransaction.findByIdAndDelete(txId);
+      tx.status = 'DELETED';
+      tx.description = (tx.description || '') + ' [ĐÃ XÓA]';
+      await tx.save();
 
       if (req.io) emitToDriver(req.io, tx.driverId, 'debt_updated', {});
 
@@ -271,7 +273,7 @@ const debtController = {
         return res.status(400).json({ success: false, message: 'Danh sách ID không hợp lệ' });
       }
 
-      await DebtTransaction.deleteMany({ _id: { $in: txIds } });
+      await DebtTransaction.updateMany({ _id: { $in: txIds } }, { $set: { status: 'DELETED' } });
 
       // Cập nhật giao diện nếu cần
       if (req.io) {
@@ -350,7 +352,7 @@ const debtController = {
         
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
-        } else if (tx.status !== 'REJECTED') {
+        } else if (tx.status !== 'REJECTED' && tx.status !== 'DELETED') {
            if (tx.amount < 0) {
              totalPaidTx += Math.abs(tx.amount);
            } else if (tx.amount > 0) {
