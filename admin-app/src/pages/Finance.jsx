@@ -219,7 +219,7 @@ export default function Finance() {
                           </div>
                        </div>
                        
-                       <div className="flex md:flex-col gap-2 w-full md:w-auto">
+                       <div className="flex flex-col gap-2 w-full">
                           <button onClick={() => handleApproveDebt(tx._id)} className="flex-1 whitespace-nowrap px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors">
                              Đã Nhận Tiền - Duyệt
                           </button>

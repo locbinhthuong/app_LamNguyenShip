@@ -124,22 +124,12 @@ export default function DebtApprovalModal() {
             Hãy Mở App Ngân Hàng của Sếp. Nếu đã thấy tiền vào tài khoản, vui lòng bấm Xác Nhận Gạch Nợ!
           </p>
 
-          <div className="flex gap-4 w-full">
+          <div className="flex w-full">
             <button
-              onClick={handleReject}
-              disabled={isProcessing}
-              className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-4 rounded-2xl transition-all disabled:opacity-50"
+              onClick={handleClose}
+              className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-black text-lg py-4 rounded-2xl shadow-xl shadow-slate-500/30 transition-all active:scale-[0.98]"
             >
-              CHƯA NHẬN ĐƯỢC
-            </button>
-            <button
-              onClick={handleApprove}
-              disabled={isProcessing}
-              className="flex-[2] flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-black text-lg py-4 rounded-2xl shadow-xl shadow-emerald-500/30 transition-all active:scale-[0.98] disabled:opacity-50"
-            >
-              {isProcessing ? 'ĐANG GẠCH NỢ...' : (
-                <><span>✅</span> ĐÃ NHẬN TIỀN XONG</>
-              )}
+              <span>🔍</span> KIỂM TRA NGAY
             </button>
           </div>
           
