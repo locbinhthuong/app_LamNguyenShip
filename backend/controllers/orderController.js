@@ -1375,17 +1375,34 @@ const orderController = {
       );
 
       // Lấy cấu hình tính tiền
-      let pricingConfig = { basePrice: 15000, baseDistance: 2, pricePerKm: 5000 };
+      let deliveryFee = 0;
       const configDoc = await Config.findOne({ key: 'PRICING_CONFIG' });
-      if (configDoc && configDoc.value) {
-        pricingConfig = configDoc.value;
-      }
+      if (configDoc && configDoc.value && Array.isArray(configDoc.value.tiers)) {
+        const tiers = configDoc.value.tiers.sort((a, b) => a.maxKm - b.maxKm);
+        
+        let appliedTier = tiers.find(t => distanceKm <= t.maxKm);
+        if (!appliedTier) {
+           appliedTier = tiers[tiers.length - 1];
+        }
 
-      // Tính tiền ship
-      let deliveryFee = pricingConfig.basePrice;
-      if (distanceKm > pricingConfig.baseDistance) {
-        const extraKm = distanceKm - pricingConfig.baseDistance;
-        deliveryFee += Math.ceil(extraKm * pricingConfig.pricePerKm);
+        if (appliedTier.type === 'fixed') {
+           deliveryFee = appliedTier.price;
+        } else if (appliedTier.type === 'per_km') {
+           const prevTierIndex = tiers.indexOf(appliedTier) - 1;
+           const prevTier = prevTierIndex >= 0 ? tiers[prevTierIndex] : null;
+           
+           if (prevTier) {
+              const extraKm = Math.max(0, distanceKm - prevTier.maxKm);
+              deliveryFee = prevTier.price + Math.ceil(extraKm * appliedTier.price);
+           } else {
+              deliveryFee = Math.ceil(distanceKm * appliedTier.price);
+           }
+        }
+      } else {
+        deliveryFee = 15000;
+        if (distanceKm > 2) {
+          deliveryFee += Math.ceil((distanceKm - 2) * 5000);
+        }
       }
 
       // Làm tròn tiền đến hàng nghìn (ví dụ 17500 -> 18000 hoặc giữ nguyên tùy ý, tạm giữ nguyên)

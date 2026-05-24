@@ -10,9 +10,15 @@ exports.getConfig = async (req, res) => {
       // Nếu chưa có, trả về giá trị mặc định cho PRICING_CONFIG
       if (key === 'PRICING_CONFIG') {
         const defaultPricing = {
-          basePrice: 15000,
-          baseDistance: 2,
-          pricePerKm: 5000
+          tiers: [
+            { maxKm: 3, price: 17000, type: 'fixed' },
+            { maxKm: 4, price: 20000, type: 'fixed' },
+            { maxKm: 5, price: 22000, type: 'fixed' },
+            { maxKm: 6, price: 25000, type: 'fixed' },
+            { maxKm: 8, price: 27000, type: 'fixed' },
+            { maxKm: 10, price: 35000, type: 'fixed' },
+            { maxKm: 99999, price: 5000, type: 'per_km' }
+          ]
         };
         config = new Config({ key, value: defaultPricing });
         await config.save();

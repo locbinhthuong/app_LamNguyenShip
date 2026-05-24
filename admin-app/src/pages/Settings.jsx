@@ -8,9 +8,15 @@ export default function Settings() {
   const [errorMsg, setErrorMsg] = useState('');
 
   const [config, setConfig] = useState({
-    basePrice: 15000,
-    baseDistance: 2,
-    pricePerKm: 5000
+    tiers: [
+      { maxKm: 3, price: 17000, type: 'fixed' },
+      { maxKm: 4, price: 20000, type: 'fixed' },
+      { maxKm: 5, price: 22000, type: 'fixed' },
+      { maxKm: 6, price: 25000, type: 'fixed' },
+      { maxKm: 8, price: 27000, type: 'fixed' },
+      { maxKm: 10, price: 35000, type: 'fixed' },
+      { maxKm: 99999, price: 5000, type: 'per_km' }
+    ]
   });
 
   useEffect(() => {
@@ -21,7 +27,7 @@ export default function Settings() {
     try {
       setLoading(true);
       const res = await getPricingConfig();
-      if (res.success && res.data && res.data.value) {
+      if (res.success && res.data && res.data.value && Array.isArray(res.data.value.tiers)) {
         setConfig(res.data.value);
       }
     } catch (err) {
@@ -32,12 +38,13 @@ export default function Settings() {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setConfig(prev => ({
-      ...prev,
-      [name]: Number(value) || 0
-    }));
+  const handleTierChange = (index, field, value) => {
+    const newTiers = [...config.tiers];
+    newTiers[index] = {
+      ...newTiers[index],
+      [field]: Number(value) || 0
+    };
+    setConfig({ tiers: newTiers });
   };
 
   const handleSubmit = async (e) => {
@@ -67,10 +74,32 @@ export default function Settings() {
     );
   }
 
+  // Calculate example 12km
+  const tiers = config.tiers || [];
+  let exampleFee = 0;
+  let exampleText = [];
+  if (tiers.length > 0) {
+    const distanceKm = 12;
+    let appliedTier = tiers.find(t => distanceKm <= t.maxKm) || tiers[tiers.length - 1];
+    if (appliedTier.type === 'fixed') {
+      exampleFee = appliedTier.price;
+      exampleText.push(`- Rơi vào khung đến ${appliedTier.maxKm} km: Giá ${appliedTier.price.toLocaleString()}đ`);
+    } else {
+      const prevTierIndex = tiers.indexOf(appliedTier) - 1;
+      const prevTier = prevTierIndex >= 0 ? tiers[prevTierIndex] : null;
+      if (prevTier) {
+        const extraKm = Math.max(0, distanceKm - prevTier.maxKm);
+        exampleFee = prevTier.price + (extraKm * appliedTier.price);
+        exampleText.push(`- Tiền khung cơ bản (${prevTier.maxKm} km): ${prevTier.price.toLocaleString()}đ`);
+        exampleText.push(`- Tiền phụ trội (${extraKm} km x ${appliedTier.price.toLocaleString()}đ): ${(extraKm * appliedTier.price).toLocaleString()}đ`);
+      }
+    }
+  }
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-800">Cấu Hình Tính Tiền (App Bán Bánh)</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Cấu Hình Tính Tiền Theo Quãng Đường</h1>
       </div>
 
       {successMsg && (
@@ -101,91 +130,86 @@ export default function Settings() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <div className="grid grid-cols-12 gap-6 items-center bg-slate-50 p-4 rounded-lg border border-slate-200 font-bold text-slate-700 text-sm">
+                <div className="col-span-1 text-center">BẬC</div>
+                <div className="col-span-6 text-center">KHOẢNG CÁCH MAX (KM)</div>
+                <div className="col-span-5 text-center">GIÁ TIỀN GIAO MỨC NÀY</div>
+              </div>
               
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Giá Mở Cửa (VNĐ)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="basePrice"
-                    value={config.basePrice}
-                    onChange={handleChange}
-                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <span className="text-slate-400 text-sm">VNĐ</span>
-                  </div>
-                </div>
-                <p className="mt-1 text-sm text-slate-500">Số tiền cố định cho khoảng cách ban đầu</p>
-              </div>
+              {config.tiers?.map((tier, index) => {
+                const isLast = index === config.tiers.length - 1;
+                const prevTier = index > 0 ? config.tiers[index - 1] : null;
+                const distanceLabel = isLast 
+                  ? `Áp dụng từ ${(prevTier?.maxKm || 0) + 0.1} km trở lên` 
+                  : `(Áp dụng từ ${index === 0 ? 0 : (prevTier?.maxKm || 0) + 0.1} km đến dưới mức này)`;
+                
+                return (
+                  <div key={index} className="grid grid-cols-12 gap-6 items-center p-3 hover:bg-slate-50 rounded-xl transition-colors border border-slate-100 shadow-sm relative">
+                    <div className="col-span-1 text-center font-black text-slate-300 text-2xl">{index + 1}</div>
+                    
+                    <div className="col-span-6 flex flex-col">
+                      {isLast ? (
+                         <div className="w-full text-center py-4 bg-amber-50 border-2 border-amber-200 border-dashed rounded-xl text-amber-700 font-bold">
+                           {distanceLabel}
+                         </div>
+                      ) : (
+                         <div className="relative">
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={tier.maxKm}
+                            onChange={(e) => handleTierChange(index, 'maxKm', e.target.value)}
+                            className="w-full pl-6 pr-12 py-4 bg-white border-2 border-blue-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-black text-xl text-blue-900"
+                            required
+                          />
+                          <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                            <span className="text-slate-400 font-bold">Km</span>
+                          </div>
+                          <div className="absolute -top-3 left-4 px-2 bg-white text-xs text-blue-600 font-bold rounded-full border border-blue-100">{distanceLabel}</div>
+                        </div>
+                      )}
+                    </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Khoảng Cách Cơ Bản (Km)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    step="0.1"
-                    name="baseDistance"
-                    value={config.baseDistance}
-                    onChange={handleChange}
-                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <span className="text-slate-400 text-sm">Km</span>
+                    <div className="col-span-5 flex flex-col">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          value={tier.price}
+                          onChange={(e) => handleTierChange(index, 'price', e.target.value)}
+                          className="w-full pl-6 pr-20 py-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-black text-emerald-700 text-xl"
+                          required
+                        />
+                        <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                          <span className="text-emerald-600/70 text-sm font-black">{isLast ? 'đ / 1Km' : 'VNĐ'}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <p className="mt-1 text-sm text-slate-500">Bao nhiêu km đầu tiên sẽ tính giá mở cửa?</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Giá Mỗi Km Tiếp Theo (VNĐ)
-                </label>
-                <div className="relative">
-                  <input
-                    type="number"
-                    name="pricePerKm"
-                    value={config.pricePerKm}
-                    onChange={handleChange}
-                    className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    required
-                  />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <span className="text-slate-400 text-sm">VNĐ</span>
-                  </div>
-                </div>
-                <p className="mt-1 text-sm text-slate-500">Số tiền cộng thêm cho mỗi 1km vượt mức cơ bản</p>
-              </div>
-
+                );
+              })}
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex justify-end">
+            <div className="pt-6 border-t border-slate-100 flex justify-end">
               <button
                 type="submit"
                 disabled={saving}
-                className="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-colors flex items-center shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-10 py-4 bg-blue-600 text-white font-black text-lg rounded-2xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all flex items-center shadow-xl shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
               >
                 {saving ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Đang lưu...
+                    ĐANG LƯU...
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    <svg className="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                     </svg>
-                    Lưu Cấu Hình
+                    LƯU BẢNG GIÁ
                   </>
                 )}
               </button>
@@ -194,15 +218,24 @@ export default function Settings() {
         </div>
       </div>
       
-      <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
-        <h3 className="text-blue-800 font-semibold mb-2">Ví dụ Công Thức Tính Tiền</h3>
-        <p className="text-blue-700 text-sm mb-4">
-          Nếu khoảng cách từ Cửa hàng bánh đến nhà Khách là <strong>5.5 km</strong>.
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100/50 rounded-2xl p-8 shadow-sm">
+        <h3 className="text-blue-900 font-black text-lg mb-4 flex items-center gap-3">
+          <span className="bg-blue-200 w-8 h-8 rounded-full flex items-center justify-center text-xl">💡</span> 
+          Ví dụ Thuật Toán Tính Tiền (Theo Cách B)
+        </h3>
+        <p className="text-blue-800 font-medium mb-4">
+          Nếu khách mua bánh nhà cách Cửa hàng đúng <strong className="bg-blue-200 px-2 py-0.5 rounded text-blue-900">12 km</strong>:
         </p>
-        <ul className="text-sm text-blue-800 space-y-2 font-mono">
-          <li>- Phí mở cửa ({config.baseDistance} km): {config.basePrice.toLocaleString()}đ</li>
-          <li>- Phí km vượt quá ({Math.max(0, 5.5 - config.baseDistance)} km): {Math.max(0, 5.5 - config.baseDistance)} * {config.pricePerKm.toLocaleString()}đ = {(Math.max(0, 5.5 - config.baseDistance) * config.pricePerKm).toLocaleString()}đ</li>
-          <li className="font-bold border-t border-blue-200 pt-2">- Tổng tiền ship: {(config.basePrice + Math.max(0, 5.5 - config.baseDistance) * config.pricePerKm).toLocaleString()}đ</li>
+        <ul className="text-sm text-blue-800 space-y-3 font-mono bg-white/60 p-5 rounded-xl border border-blue-200/50">
+          {exampleText.map((text, i) => (
+             <li key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span>
+                {text}
+             </li>
+          ))}
+          <li className="font-black text-rose-600 border-t-2 border-dashed border-blue-200 pt-4 text-xl mt-4">
+            💸 TỔNG TIỀN SHIP: {exampleFee.toLocaleString()} đ
+          </li>
         </ul>
       </div>
 
