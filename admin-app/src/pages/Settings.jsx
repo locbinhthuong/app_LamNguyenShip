@@ -130,8 +130,8 @@ export default function Settings() {
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-3">
-              <div className="grid grid-cols-12 gap-6 items-center bg-slate-50 p-4 rounded-lg border border-slate-200 font-bold text-slate-700 text-sm">
+            <div className="space-y-4">
+              <div className="hidden md:grid grid-cols-12 gap-6 items-center bg-slate-50 p-4 rounded-lg border border-slate-200 font-bold text-slate-700 text-sm">
                 <div className="col-span-1 text-center">BẬC</div>
                 <div className="col-span-6 text-center">KHOẢNG CÁCH MAX (KM)</div>
                 <div className="col-span-5 text-center">GIÁ TIỀN GIAO MỨC NÀY</div>
@@ -140,17 +140,23 @@ export default function Settings() {
               {config.tiers?.map((tier, index) => {
                 const isLast = index === config.tiers.length - 1;
                 const prevTier = index > 0 ? config.tiers[index - 1] : null;
+                const prevKm = prevTier ? (Number(prevTier.maxKm) + 0.1).toFixed(1) : 0;
+                
                 const distanceLabel = isLast 
-                  ? `Áp dụng từ ${(prevTier?.maxKm || 0) + 0.1} km trở lên` 
-                  : `(Áp dụng từ ${index === 0 ? 0 : (prevTier?.maxKm || 0) + 0.1} km đến dưới mức này)`;
+                  ? `Áp dụng từ ${prevKm} km trở lên` 
+                  : `(Áp dụng từ ${prevKm} km đến dưới mức này)`;
                 
                 return (
-                  <div key={index} className="grid grid-cols-12 gap-6 items-center p-3 hover:bg-slate-50 rounded-xl transition-colors border border-slate-100 shadow-sm relative">
-                    <div className="col-span-1 text-center font-black text-slate-300 text-2xl">{index + 1}</div>
+                  <div key={index} className="flex flex-col md:grid md:grid-cols-12 gap-3 md:gap-6 items-start md:items-center p-4 md:p-3 bg-white md:bg-transparent hover:bg-slate-50 rounded-xl transition-colors border border-slate-200 md:border-slate-100 shadow-sm md:shadow-none relative">
+                    <div className="w-full md:w-auto md:col-span-1 font-black text-slate-300 text-lg md:text-2xl border-b md:border-b-0 border-slate-100 pb-2 md:pb-0 mb-2 md:mb-0 flex justify-between md:block">
+                      <span className="md:hidden text-slate-400">BẬC</span>
+                      <span>{index + 1}</span>
+                    </div>
                     
-                    <div className="col-span-6 flex flex-col">
+                    <div className="w-full md:col-span-6 flex flex-col">
+                      <label className="text-xs font-bold text-blue-600 mb-1.5 md:hidden">{isLast ? 'KHOẢNG CÁCH' : 'KHOẢNG CÁCH MAX (KM)'}</label>
                       {isLast ? (
-                         <div className="w-full text-center py-4 bg-amber-50 border-2 border-amber-200 border-dashed rounded-xl text-amber-700 font-bold">
+                         <div className="w-full text-center py-3 bg-amber-50 border border-amber-200 border-dashed rounded-xl text-amber-700 font-bold text-sm md:text-base">
                            {distanceLabel}
                          </div>
                       ) : (
@@ -160,28 +166,30 @@ export default function Settings() {
                             step="0.1"
                             value={tier.maxKm}
                             onChange={(e) => handleTierChange(index, 'maxKm', e.target.value)}
-                            className="w-full pl-6 pr-12 py-4 bg-white border-2 border-blue-100 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-black text-xl text-blue-900"
+                            className="w-full pl-4 md:pl-6 pr-12 py-3 md:py-4 bg-slate-50 md:bg-white border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all font-black text-lg md:text-xl text-blue-900"
                             required
                           />
-                          <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
+                          <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                             <span className="text-slate-400 font-bold">Km</span>
                           </div>
-                          <div className="absolute -top-3 left-4 px-2 bg-white text-xs text-blue-600 font-bold rounded-full border border-blue-100">{distanceLabel}</div>
+                          <div className="hidden md:block absolute -top-3 left-4 px-2 bg-white text-[10px] md:text-xs text-blue-600 font-bold rounded-full border border-blue-100">{distanceLabel}</div>
                         </div>
                       )}
+                      <div className="md:hidden mt-1 text-[11px] text-slate-500 font-medium italic">{distanceLabel}</div>
                     </div>
 
-                    <div className="col-span-5 flex flex-col">
+                    <div className="w-full md:col-span-5 flex flex-col mt-2 md:mt-0">
+                      <label className="text-xs font-bold text-emerald-600 mb-1.5 md:hidden">GIÁ TIỀN GIAO MỨC NÀY</label>
                       <div className="relative">
                         <input
                           type="number"
                           value={tier.price}
                           onChange={(e) => handleTierChange(index, 'price', e.target.value)}
-                          className="w-full pl-6 pr-20 py-4 bg-emerald-50 border-2 border-emerald-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-black text-emerald-700 text-xl"
+                          className="w-full pl-4 md:pl-6 pr-20 py-3 md:py-4 bg-emerald-50/50 md:bg-emerald-50 border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all font-black text-emerald-700 text-lg md:text-xl"
                           required
                         />
-                        <div className="absolute inset-y-0 right-0 pr-5 flex items-center pointer-events-none">
-                          <span className="text-emerald-600/70 text-sm font-black">{isLast ? 'đ / 1Km' : 'VNĐ'}</span>
+                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                          <span className="text-emerald-600/70 text-xs md:text-sm font-black">{isLast ? 'đ / 1Km' : 'VNĐ'}</span>
                         </div>
                       </div>
                     </div>
