@@ -16,7 +16,10 @@ export default function Settings() {
       { maxKm: 8, price: 27000, type: 'fixed' },
       { maxKm: 10, price: 35000, type: 'fixed' },
       { maxKm: 99999, price: 5000, type: 'per_km' }
-    ]
+    ],
+    xeOm: { pricePerKm: 5000 },
+    laiHoXeMay: { initialKm: 2, initialPrice: 50000, pricePerKm: 10000 },
+    laiHoOto: { initialKm: 2, initialPrice: 100000, pricePerKm: 20000 }
   });
 
   useEffect(() => {
@@ -28,7 +31,12 @@ export default function Settings() {
       setLoading(true);
       const res = await getPricingConfig();
       if (res.success && res.data && res.data.value && Array.isArray(res.data.value.tiers)) {
-        setConfig(res.data.value);
+        setConfig({
+          tiers: res.data.value.tiers,
+          xeOm: res.data.value.xeOm || { pricePerKm: 5000 },
+          laiHoXeMay: res.data.value.laiHoXeMay || { initialKm: 2, initialPrice: 50000, pricePerKm: 10000 },
+          laiHoOto: res.data.value.laiHoOto || { initialKm: 2, initialPrice: 100000, pricePerKm: 20000 }
+        });
       }
     } catch (err) {
       setErrorMsg('Không thể tải cấu hình giá');
@@ -44,7 +52,17 @@ export default function Settings() {
       ...newTiers[index],
       [field]: Number(value) || 0
     };
-    setConfig({ tiers: newTiers });
+    setConfig({ ...config, tiers: newTiers });
+  };
+
+  const handleServiceChange = (service, field, value) => {
+    setConfig({
+      ...config,
+      [service]: {
+        ...config[service],
+        [field]: Number(value) || 0
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -199,6 +217,87 @@ export default function Settings() {
                   </div>
                 );
               })}
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-8">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Cấu Hình Giá Xe Ôm</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Giá mỗi km (VNĐ)</label>
+                  <input
+                    type="number"
+                    value={config.xeOm?.pricePerKm || ''}
+                    onChange={(e) => handleServiceChange('xeOm', 'pricePerKm', e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-8">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Cấu Hình Giá Lái Hộ Xe Máy</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Số km đầu</label>
+                  <input
+                    type="number" step="0.1"
+                    value={config.laiHoXeMay?.initialKm || ''}
+                    onChange={(e) => handleServiceChange('laiHoXeMay', 'initialKm', e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold"
+                  />
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Giá cho km đầu (VNĐ)</label>
+                  <input
+                    type="number"
+                    value={config.laiHoXeMay?.initialPrice || ''}
+                    onChange={(e) => handleServiceChange('laiHoXeMay', 'initialPrice', e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold"
+                  />
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Giá mỗi km sau đó (VNĐ)</label>
+                  <input
+                    type="number"
+                    value={config.laiHoXeMay?.pricePerKm || ''}
+                    onChange={(e) => handleServiceChange('laiHoXeMay', 'pricePerKm', e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 font-bold"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-8">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Cấu Hình Giá Lái Hộ Ô Tô</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Số km đầu</label>
+                  <input
+                    type="number" step="0.1"
+                    value={config.laiHoOto?.initialKm || ''}
+                    onChange={(e) => handleServiceChange('laiHoOto', 'initialKm', e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Giá cho km đầu (VNĐ)</label>
+                  <input
+                    type="number"
+                    value={config.laiHoOto?.initialPrice || ''}
+                    onChange={(e) => handleServiceChange('laiHoOto', 'initialPrice', e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                </div>
+                <div className="bg-white p-4 rounded-xl border border-slate-200">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Giá mỗi km sau đó (VNĐ)</label>
+                  <input
+                    type="number"
+                    value={config.laiHoOto?.pricePerKm || ''}
+                    onChange={(e) => handleServiceChange('laiHoOto', 'pricePerKm', e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="pt-6 border-t border-slate-100 flex justify-end">

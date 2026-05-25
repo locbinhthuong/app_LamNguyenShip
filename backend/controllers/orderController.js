@@ -1504,35 +1504,55 @@ const orderController = {
 
       // Lấy cấu hình tính tiền
       let deliveryFee = 0;
-      if (distanceKm > 10.1) {
-        deliveryFee = Math.ceil(distanceKm * 5000);
-      } else {
-        const configDoc = await Config.findOne({ key: 'PRICING_CONFIG' });
-        if (configDoc && configDoc.value && Array.isArray(configDoc.value.tiers)) {
-          const tiers = configDoc.value.tiers.sort((a, b) => a.maxKm - b.maxKm);
-          
-          let appliedTier = tiers.find(t => distanceKm <= t.maxKm);
-          if (!appliedTier) {
-             appliedTier = tiers[tiers.length - 1];
-          }
-
-          if (appliedTier.type === 'fixed') {
-             deliveryFee = appliedTier.price;
-          } else if (appliedTier.type === 'per_km') {
-             const prevTierIndex = tiers.indexOf(appliedTier) - 1;
-             const prevTier = prevTierIndex >= 0 ? tiers[prevTierIndex] : null;
-             
-             if (prevTier) {
-                const extraKm = Math.max(0, distanceKm - prevTier.maxKm);
-                deliveryFee = prevTier.price + Math.ceil(extraKm * appliedTier.price);
-             } else {
-                deliveryFee = Math.ceil(distanceKm * appliedTier.price);
-             }
-          }
+      const configDoc = await Config.findOne({ key: 'PRICING_CONFIG' });
+      
+      if (subServiceType === 'XE_OM') {
+        const pricePerKm = configDoc?.value?.xeOm?.pricePerKm || 5000;
+        deliveryFee = Math.ceil(distanceKm * pricePerKm);
+      } else if (subServiceType === 'LAI_HO_XE_MAY') {
+        const cfg = configDoc?.value?.laiHoXeMay || { initialKm: 2, initialPrice: 50000, pricePerKm: 10000 };
+        if (distanceKm <= cfg.initialKm) {
+          deliveryFee = cfg.initialPrice;
         } else {
-          deliveryFee = 15000;
-          if (distanceKm > 2) {
-            deliveryFee += Math.ceil((distanceKm - 2) * 5000);
+          deliveryFee = cfg.initialPrice + Math.ceil((distanceKm - cfg.initialKm) * cfg.pricePerKm);
+        }
+      } else if (subServiceType === 'LAI_HO_OTO') {
+        const cfg = configDoc?.value?.laiHoOto || { initialKm: 2, initialPrice: 100000, pricePerKm: 20000 };
+        if (distanceKm <= cfg.initialKm) {
+          deliveryFee = cfg.initialPrice;
+        } else {
+          deliveryFee = cfg.initialPrice + Math.ceil((distanceKm - cfg.initialKm) * cfg.pricePerKm);
+        }
+      } else {
+        if (distanceKm > 10.1) {
+          deliveryFee = Math.ceil(distanceKm * 5000);
+        } else {
+          if (configDoc && configDoc.value && Array.isArray(configDoc.value.tiers)) {
+            const tiers = configDoc.value.tiers.sort((a, b) => a.maxKm - b.maxKm);
+            
+            let appliedTier = tiers.find(t => distanceKm <= t.maxKm);
+            if (!appliedTier) {
+               appliedTier = tiers[tiers.length - 1];
+            }
+
+            if (appliedTier.type === 'fixed') {
+               deliveryFee = appliedTier.price;
+            } else if (appliedTier.type === 'per_km') {
+               const prevTierIndex = tiers.indexOf(appliedTier) - 1;
+               const prevTier = prevTierIndex >= 0 ? tiers[prevTierIndex] : null;
+               
+               if (prevTier) {
+                  const extraKm = Math.max(0, distanceKm - prevTier.maxKm);
+                  deliveryFee = prevTier.price + Math.ceil(extraKm * appliedTier.price);
+               } else {
+                  deliveryFee = Math.ceil(distanceKm * appliedTier.price);
+               }
+            }
+          } else {
+            deliveryFee = 15000;
+            if (distanceKm > 2) {
+              deliveryFee += Math.ceil((distanceKm - 2) * 5000);
+            }
           }
         }
       }
