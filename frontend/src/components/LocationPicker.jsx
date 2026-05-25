@@ -104,9 +104,17 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     if (isOpen && !initialPosition && !initialSearchQuery) {
       const getInitialLocation = async () => {
         try {
-          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
-          setMapCenter([pos.coords.latitude, pos.coords.longitude]);
-          setFlyPos([pos.coords.latitude, pos.coords.longitude]);
+          let permission = await Geolocation.checkPermissions();
+          if (permission.location !== 'granted') {
+            permission = await Geolocation.requestPermissions();
+          }
+          if (permission.location === 'granted') {
+            const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+            setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+            setFlyPos([pos.coords.latitude, pos.coords.longitude]);
+          } else {
+            console.log('User denied GPS permission');
+          }
         } catch (err) {
           console.log('Không thể lấy GPS tự động:', err);
           if ('geolocation' in navigator) {
