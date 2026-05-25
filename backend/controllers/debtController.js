@@ -301,6 +301,12 @@ const debtController = {
       const driver = await Driver.findById(driverId).select('name phone driverCode');
       if (!driver) return res.status(404).json({ success: false, message: 'Tài xế không tồn tại' });
 
+      // Chống spam: Kiểm tra xem tài xế đã có lệnh PENDING nào chưa
+      const existingPending = await DebtTransaction.findOne({ driverId, type: 'PAYMENT', status: 'PENDING' });
+      if (existingPending) {
+        return res.status(400).json({ success: false, message: 'Bạn đang có một yêu cầu thanh toán chờ duyệt. Vui lòng đợi Admin xử lý trước khi gửi yêu cầu mới.' });
+      }
+
       const tx = new DebtTransaction({
         driverId,
         type: 'PAYMENT',
