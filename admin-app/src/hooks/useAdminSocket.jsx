@@ -145,6 +145,11 @@ export const useAdminSocket = () => {
       if (!order.createdBy) {
         showToast(`📲 KHÁCH ĐẶT MỚI: ${order.orderCode || order._id?.slice(-8).toUpperCase() || ''}. Click Quản Lý Đơn để mở!`, 'warning', 30000);
         playAdminAlarm('NORMAL'); // Play chuong.mp3
+        
+        // Thông báo ngoài (Desktop Notification)
+        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+            new Notification('Khách Hàng Đặt Đơn Mới', { body: `Mã đơn: ${order.orderCode || ''}. Vào check ngay!`, icon: '/logoALOSHIPP.png' });
+        }
       }
       window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
     });
@@ -177,6 +182,11 @@ export const useAdminSocket = () => {
 
       showToast(`💸 BÁO CÁO NẠP TIỀN QUÉT MÃ QR CỦA TÀI XẾ ${payload.name.toUpperCase()} (Mã: ${payload.driverCode}). Chờ Sếp duyệt!`, 'error', 60000); // 60s
       
+      // Thông báo ngoài (Desktop Notification)
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('Yêu Cầu Duyệt Tiền', { body: `Tài xế ${payload.name.toUpperCase()} báo đã chuyển khoản nợ. Vào Sổ Đen kiểm tra!`, icon: '/logoALOSHIPP.png' });
+      }
+
       window.dispatchEvent(new CustomEvent('show_debt_approval_modal', { detail: payload }));
     });
 
@@ -184,6 +194,11 @@ export const useAdminSocket = () => {
       playAdminAlarm('FINANCE'); // finance alarm
 
       showToast(`💰 YÊU CẦU RÚT TIỀN TỪ TÀI XẾ ${payload.name.toUpperCase()} (Mã: ${payload.driverCode}). Số tiền: ${payload.amount.toLocaleString()}đ. Chờ Sếp duyệt!`, 'error', 60000); // 60s
+
+      // Thông báo ngoài (Desktop Notification)
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('Tài xế Rút Tiền', { body: `Tài xế ${payload.name.toUpperCase()} muốn rút ${payload.amount.toLocaleString()}đ.`, icon: '/logoALOSHIPP.png' });
+      }
     });
 
     socket.on('driver_location_update', (data) => {
