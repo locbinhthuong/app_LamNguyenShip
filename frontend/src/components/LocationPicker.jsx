@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, X, Target, Loader2, Search } from 'lucide-react';
+import { Geolocation } from '@capacitor/geolocation';
 
 const MapController = ({ setMapCenter, setIsDragging }) => {
   const map = useMap();
@@ -59,17 +60,25 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
             setFlyPos([lat, lon]);
           } else {
             // FALLBACK TO GPS IF TEXT SEARCH YIELDS NOTHING
-            if ('geolocation' in navigator) {
-              navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                  const lat = pos.coords.latitude;
-                  const lng = pos.coords.longitude;
-                  setMapCenter([lat, lng]);
-                  setFlyPos([lat, lng]);
-                },
-                (err) => console.log('Không thể lấy GPS fallback:', err),
-                { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-              );
+            try {
+              const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              setMapCenter([lat, lng]);
+              setFlyPos([lat, lng]);
+            } catch (err) {
+              console.log('Không thể lấy GPS fallback:', err);
+              // Fallback to HTML5 if Capacitor fails (e.g. on web)
+              if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+                    setFlyPos([pos.coords.latitude, pos.coords.longitude]);
+                  },
+                  (e) => console.log('HTML5 GPS fallback failed:', e),
+                  { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+              }
             }
           }
         } catch (err) {
@@ -93,20 +102,26 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
   // Luôn luôn lấy lại vị trí GPS thực tế khi bản đồ vừa được mở (NẾU KHÔNG CÓ POS VÀ CŨNG KHÔNG CÓ QUERY TỪ FORM TRUYỀN VÀO)
   useEffect(() => {
     if (isOpen && !initialPosition && !initialSearchQuery) {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            setMapCenter([lat, lng]);
-            setFlyPos([lat, lng]);
-          },
-          (err) => {
-            console.log('Không thể lấy GPS tự động:', err);
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-        );
-      }
+      const getInitialLocation = async () => {
+        try {
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+          setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+          setFlyPos([pos.coords.latitude, pos.coords.longitude]);
+        } catch (err) {
+          console.log('Không thể lấy GPS tự động:', err);
+          if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+                setFlyPos([pos.coords.latitude, pos.coords.longitude]);
+              },
+              (e) => console.log('HTML5 GPS auto failed:', e),
+              { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            );
+          }
+        }
+      };
+      getInitialLocation();
     }
   }, [isOpen, initialPosition, initialSearchQuery]);
 
@@ -171,18 +186,30 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
   }, [mapCenter, isDragging]);
 
   // Về vị trí GPS hiện tại
-  const locateMe = (e) => {
+  const locateMe = async (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setFlyPos([pos.coords.latitude, pos.coords.longitude]);
-        },
-        (err) => alert('Vui lòng cấp quyền định vị GPS.')
-      );
+    try {
+      const permission = await Geolocation.checkPermissions();
+      if (permission.location !== 'granted') {
+        const request = await Geolocation.requestPermissions();
+        if (request.location !== 'granted') {
+          alert('Vui lòng cấp quyền định vị GPS trong cài đặt để sử dụng tính năng này.');
+          return;
+        }
+      }
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      setFlyPos([pos.coords.latitude, pos.coords.longitude]);
+    } catch (err) {
+      console.log('Lỗi định vị:', err);
+      if ('geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => setFlyPos([pos.coords.latitude, pos.coords.longitude]),
+          (err) => alert('Không thể lấy vị trí GPS hiện tại.')
+        );
+      }
     }
   };
 
