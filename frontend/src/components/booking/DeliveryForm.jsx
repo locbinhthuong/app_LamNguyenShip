@@ -107,7 +107,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pb-12">
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-5">
+      <div className="bg-white p-5 rounded-[24px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-gray-100/50 flex flex-col gap-6">
         
         {/* LẤY HÀNG (SENDER) */}
         <div className="flex items-start gap-4">
@@ -128,14 +128,14 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="Nhập địa chỉ lấy hàng..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-[16px] overflow-hidden focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100/50 transition-all duration-300"
               />
             </div>
             <div className="mt-2">
               <input 
                 type="tel"
                 placeholder="SĐT Lấy Hàng"
-                className="w-full text-xs font-semibold text-blue-600 outline-none p-2.5 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300"
+                className="w-full text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50/50 border border-gray-100 rounded-[16px] focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 transition-all duration-300"
                 value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
               />
             </div>
@@ -160,19 +160,19 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                 placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-[16px] overflow-hidden focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100/50 transition-all duration-300"
               />
             </div>
             <div className="mt-2">
               <input 
                 type="text" placeholder="Tên người nhận (Tùy chọn)"
-                className="w-full mb-2 text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-medium text-slate-800"
+                className="w-full mb-3 text-xs bg-gray-50/50 border border-gray-100 p-3 rounded-[16px] outline-none font-medium text-slate-800 focus:border-sky-400 focus:ring-4 focus:ring-sky-100/50 transition-all duration-300"
                 value={form.receiverName} onChange={e => setForm({...form, receiverName: e.target.value})}
               />
               <div className="mt-2">
                 <input 
                   type="tel" placeholder="SĐT Người Nhận"
-                  className="w-full text-xs bg-gray-50 border border-gray-100 p-2.5 rounded-xl outline-none font-bold text-blue-600"
+                  className="w-full text-xs bg-gray-50/50 border border-gray-100 p-3 rounded-[16px] outline-none font-bold text-sky-600 focus:border-sky-400 focus:ring-4 focus:ring-sky-100/50 transition-all duration-300"
                   value={form.receiverPhone} onChange={e => setForm({...form, receiverPhone: e.target.value})}
                 />
               </div>
@@ -183,7 +183,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       </div>
 
       {/* THÔNG TIN BỔ SUNG */}
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-4">
+      <div className="bg-white p-5 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 space-y-5">
         <div>
           <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
             <DollarSign size={14} className="text-yellow-500" /> THU HỘ TIỀN HÀNG (COD)
@@ -191,7 +191,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           <CurrencyInput 
             name="codAmount"
             placeholder="Ví dụ: 250.000"
-            className="w-full text-sm font-bold text-gray-800 bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:border-blue-200 focus:bg-white transition-colors"
+            className="w-full text-sm font-bold text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-[16px] outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100/50 focus:bg-white transition-all duration-300"
             value={form.codAmount}
             onChange={e => setForm({...form, codAmount: e.target.value})}
           />
@@ -205,7 +205,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           <textarea 
             rows="3"
             placeholder="Lưu ý cho tài xế (mặt hàng dễ vỡ, giao hẻm...)"
-            className="w-full text-sm text-gray-800 bg-gray-50 border border-gray-100 p-3 rounded-xl outline-none focus:border-blue-200 focus:bg-white transition-colors resize-none"
+            className="w-full text-sm text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-[16px] outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 focus:bg-white transition-all duration-300 resize-none"
             value={form.note}
             onChange={e => setForm({...form, note: e.target.value})}
           ></textarea>
@@ -231,7 +231,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         <button 
           disabled={loading}
           type="submit"
-          className="w-full bg-blue-600 active:bg-blue-700 text-white font-bold text-sm sm:text-base py-3 sm:py-4 rounded-xl sm:rounded-2xl shadow-lg shadow-blue-200 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+          className="w-full bg-blue-600 active:bg-blue-700 text-white font-bold text-sm sm:text-base py-3.5 sm:py-4 rounded-[16px] shadow-[0_8px_20px_rgba(37,99,235,0.24)] active:scale-[0.98] transition-transform duration-300 ease-out disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
         >
           {loading ? (
             <>

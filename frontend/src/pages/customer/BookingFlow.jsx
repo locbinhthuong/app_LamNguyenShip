@@ -77,8 +77,8 @@ export default function BookingFlow() {
   return (
     <div className="flex flex-col flex-1 w-full max-w-5xl mx-auto bg-gray-50 font-sans overflow-hidden md:border-x border-gray-100 md:shadow-sm">
       {/* HEADER TỪ CHỐI VUỐT */}
-      <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 active:scale-90 transition-transform">
+      <div className="shrink-0 bg-white/90 backdrop-blur-md px-5 py-4 safe-pt z-40 flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.02)] border-b border-gray-100/50">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-600 active:scale-[0.85] transition-transform duration-300 ease-out bg-gray-50 rounded-full hover:bg-gray-100">
           <ArrowLeft size={22} />
         </button>
         <span className="font-bold text-gray-800 flex-1 text-center pr-8 whitespace-nowrap overflow-hidden text-ellipsis text-lg">

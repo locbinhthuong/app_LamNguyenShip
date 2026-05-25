@@ -92,7 +92,7 @@ const ActivityList = () => {
     return (
       <div 
         key={order._id} 
-        className="bg-white p-4 rounded-2xl border border-gray-100 relative overflow-hidden cursor-pointer active:scale-[0.98] transition-all mb-4"
+        className="bg-white p-5 rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100/50 relative overflow-hidden cursor-pointer active:scale-[0.96] transition-transform duration-300 ease-out mb-5 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)]"
         onClick={() => navigate(`/customer/order/${order._id}`)}
       >
         {/* Status Bar */}
@@ -128,7 +128,7 @@ const ActivityList = () => {
         </div>
 
         {order.assignedTo && order.status !== 'CANCELLED' && (
-          <div className="mt-4 bg-blue-50/50 rounded-xl p-3 border border-blue-50 flex items-center justify-between ml-2">
+          <div className="mt-4 bg-blue-50/80 rounded-[16px] p-3.5 border border-blue-100/50 flex items-center justify-between ml-2 shadow-[0_2px_10px_rgba(37,99,235,0.04)]">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center text-xl text-blue-700">🧔</div>
               <div>
@@ -147,8 +147,8 @@ const ActivityList = () => {
 
   return (
     <div className="flex flex-col flex-1 w-full bg-gray-50 font-sans overflow-hidden">
-      <div className="shrink-0 bg-white px-4 py-3 safe-pt relative z-40 flex items-center justify-center">
-        <span className="font-bold text-gray-800 text-lg">Hoạt động của tôi</span>
+      <div className="shrink-0 bg-white/90 backdrop-blur-md px-5 py-4 safe-pt relative z-40 flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.02)] border-b border-gray-100/50">
+        <span className="font-bold text-gray-800 text-lg tracking-wide">Hoạt động của tôi</span>
       </div>
       
       {/* Tabs */}

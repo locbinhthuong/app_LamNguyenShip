@@ -116,10 +116,10 @@ const CustomerDashboard = () => {
   };
 
   const services = [
-    { id: 'GIAO_HANG', name: 'Giao hàng', icon: <Package size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
-    { id: 'DAT_XE', name: 'Đặt xe', icon: <Bike size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
-    { id: 'MUA_HO', name: 'Mua hộ', icon: <ShoppingCart size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
-    { id: 'DIEU_PHOI', name: 'Điều phối', icon: <Headset size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white border border-slate-200' },
+    { id: 'GIAO_HANG', name: 'Giao hàng', icon: <Package size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-slate-100/50' },
+    { id: 'DAT_XE', name: 'Đặt xe', icon: <Bike size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-slate-100/50' },
+    { id: 'MUA_HO', name: 'Mua hộ', icon: <ShoppingCart size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-slate-100/50' },
+    { id: 'DIEU_PHOI', name: 'Điều phối', icon: <Headset size={32} className="text-slate-600" strokeWidth={1.5} />, color: 'bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] border border-slate-100/50' },
   ];
 
   return (
@@ -128,16 +128,16 @@ const CustomerDashboard = () => {
       {/* HEADER: Địa điểm của tôi */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white px-4 pb-3 safe-pt sticky top-0 z-50 flex items-center justify-between cursor-pointer active:bg-gray-50"
+        className="bg-white/90 backdrop-blur-md px-5 pb-4 pt-3 safe-pt sticky top-0 z-50 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform duration-300 ease-out shadow-[0_4px_20px_rgba(0,0,0,0.02)] mb-4"
       >
         <div className="flex flex-col flex-1 overflow-hidden mr-4">
-          <div className="flex items-center gap-1 text-gray-500 mb-0.5">
-            <span className="text-xs font-medium bg-gray-100 px-2 py-0.5 rounded text-gray-600">📍 Kéo ghim</span>
-            <ChevronRight size={14} />
+          <div className="flex items-center gap-1 text-gray-500 mb-1">
+            <span className="text-xs font-medium bg-gray-100/80 px-2.5 py-0.5 rounded-full text-gray-600">📍 Kéo ghim</span>
+            <ChevronRight size={14} className="opacity-50" />
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[13px] font-bold text-gray-800 line-clamp-1 truncate block">{address}</span>
-            <div className="bg-blue-100 text-blue-600 p-1 rounded">
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[13px] font-bold text-gray-800 line-clamp-1 truncate block leading-tight">{address}</span>
+            <div className="bg-blue-100/80 text-blue-600 px-1.5 py-0.5 rounded shadow-sm">
               <span className="text-[10px] uppercase font-bold tracking-wider">Chọn</span>
             </div>
           </div>
@@ -147,15 +147,15 @@ const CustomerDashboard = () => {
 
 
       {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}
-      <div className="px-4 pb-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-start gap-3 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-          <div className="mt-0.5 text-blue-500 animate-bounce">
-            <MapPin size={20} />
+      <div className="px-5 pb-5">
+        <div className="bg-blue-50/80 border border-blue-100/50 rounded-[20px] p-4 flex items-start gap-3.5 relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] backdrop-blur-sm">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-blue-500 rounded-l-full"></div>
+          <div className="mt-0.5 text-blue-500 bg-white p-1.5 rounded-full shadow-sm animate-bounce">
+            <MapPin size={18} />
           </div>
           <div>
-            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wide mb-0.5">Lưu ý trước khi Đặt Đơn</h4>
-            <p className="text-[11px] text-blue-700 leading-relaxed font-medium">
+            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wider mb-1">Lưu ý trước khi Đặt Đơn</h4>
+            <p className="text-[11px] text-blue-700/90 leading-relaxed font-medium">
               Vui lòng chạm vào thanh <strong>"📍 Kéo ghim"</strong> ở trên cùng để kiểm tra và định vị chính xác vị trí của bạn trên bản đồ giúp tài xế tìm đến nhanh hơn nhé!
             </p>
           </div>
@@ -163,15 +163,15 @@ const CustomerDashboard = () => {
       </div>
 
       {/* DANH SÁCH DỊCH VỤ (GRID HÀNG NGANG) */}
-      <div className="px-4 mb-4">
-        <div className="grid grid-cols-4 gap-2 sm:gap-4">
+      <div className="px-5 mb-6">
+        <div className="grid grid-cols-4 gap-3 sm:gap-5">
           {services.map((svc) => (
             <div 
               key={svc.id} 
               onClick={() => handleServiceClick(svc.id)}
-              className={`flex flex-col items-center justify-start gap-2 py-3 rounded-2xl cursor-pointer active:scale-95 transition-all shadow-sm hover:shadow-md ${svc.color}`}
+              className={`flex flex-col items-center justify-start gap-2.5 py-4 rounded-[20px] cursor-pointer active:scale-[0.92] transition-transform duration-300 ease-out hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] ${svc.color}`}
             >
-              <div className="text-slate-600 scale-90 sm:scale-100">
+              <div className="text-slate-600 scale-90 sm:scale-100 drop-shadow-sm">
                 {svc.icon}
               </div>
               <span className="text-[10px] sm:text-[13px] font-bold text-slate-700 text-center leading-tight px-1">{svc.name}</span>
@@ -182,8 +182,8 @@ const CustomerDashboard = () => {
 
       {/* SLIDER BANNER TỪ ADMIN */}
       {banners.length > 0 && (
-        <div className="px-4 mb-6">
-          <div className="relative w-full h-48 sm:h-60 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-slate-50 group flex items-center justify-center">
+        <div className="px-5 mb-8">
+          <div className="relative w-full h-48 sm:h-60 rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-slate-50 group flex items-center justify-center">
             <div 
               className="flex w-full h-full transition-transform duration-500 ease-out items-center"
               style={{ transform: `translateX(-${currentSlide * 100}%)` }}
