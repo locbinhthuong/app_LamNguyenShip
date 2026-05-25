@@ -176,22 +176,6 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
         </div>
       )}
 
-      {/* KHUYẾN CÁO */}
-      <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
-        <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
-        <p className="text-xs text-blue-800 leading-relaxed font-medium">
-          {estimatedFee !== null ? (
-            <>
-              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}.
-            </>
-          ) : (
-            subType === 'XE_OM' 
-              ? "Đưa đón tận nơi, an toàn trên mọi nẻo đường. Giá sẽ được báo trước khi xe chạy."
-              : "Chỉ nhậu không lái, bảo vệ bản thân và túi tiền. Tài xế sẽ gọi điện chốt giá trước khi đến đón."
-          )}
-        </p>
-      </div>
-
       {/* THÔNG TIN HÀNH TRÌNH */}
       <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-4">
         
@@ -268,6 +252,22 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
             onChange={e => setForm({...form, note: e.target.value})}
           ></textarea>
         </div>
+      </div>
+
+      {/* KHUYẾN CÁO */}
+      <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
+        <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
+        <p className="text-xs text-blue-800 leading-relaxed font-medium">
+          {estimatedFee !== null ? (
+            <>
+              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}.
+            </>
+          ) : (
+            subType === 'XE_OM' 
+              ? "Đưa đón tận nơi, an toàn trên mọi nẻo đường. Giá sẽ được báo trước khi xe chạy."
+              : "Chỉ nhậu không lái, bảo vệ bản thân và túi tiền. Tài xế sẽ gọi điện chốt giá trước khi đến đón."
+          )}
+        </p>
       </div>
 
       {/* SUBMIT BUTTON */}

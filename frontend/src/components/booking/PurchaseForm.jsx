@@ -100,20 +100,6 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pb-12">
       
-      {/* KHUYẾN CÁO */}
-      <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
-        <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
-        <p className="text-xs text-blue-800 leading-relaxed font-medium">
-          {estimatedFee !== null ? (
-            <>
-              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}. Giá món đồ sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.
-            </>
-          ) : (
-            'Bạn chỉ trả tiền sau khi nhận được hàng. Giá món đồ và Phí đi lấy sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.'
-          )}
-        </p>
-      </div>
-
       {/* THÔNG TIN HÀNH TRÌNH */}
       <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-4">
         
@@ -193,6 +179,20 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       
       {/* THÔNG TIN KHÁCH HÀNG */}
       {/* ĐÃ ẨN KHỐI THÔNG TIN KHÁCH HÀNG - LẤY TỰ ĐỘNG TỪ ACCOUNT */}
+
+      {/* KHUYẾN CÁO */}
+      <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
+        <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
+        <p className="text-xs text-blue-800 leading-relaxed font-medium">
+          {estimatedFee !== null ? (
+            <>
+              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}. Giá món đồ sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.
+            </>
+          ) : (
+            'Bạn chỉ trả tiền sau khi nhận được hàng. Giá món đồ và Phí đi lấy sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.'
+          )}
+        </p>
+      </div>
 
       {/* SUBMIT BUTTON */}
       <div className="mt-6">

@@ -107,20 +107,6 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pb-12">
-      {/* KHUYẾN CÁO */}
-      <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
-        <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
-        <p className="text-xs text-blue-800 leading-relaxed font-medium">
-          {estimatedFee !== null ? (
-            <>
-              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}. Tổng đài có thể phụ thu thêm phí cồng kềnh (nếu có).
-            </>
-          ) : (
-            'Tổng đài sẽ gọi điện báo cước Phí Ship và Phí Cồng Kềnh (Nếu có) sau khi bạn lên đơn.'
-          )}
-        </p>
-      </div>
-
       <div className="bg-white p-4 rounded-2xl border border-gray-100 flex flex-col gap-5">
         
         {/* LẤY HÀNG (SENDER) */}
@@ -224,6 +210,20 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             onChange={e => setForm({...form, note: e.target.value})}
           ></textarea>
         </div>
+      </div>
+
+      {/* KHUYẾN CÁO */}
+      <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
+        <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
+        <p className="text-xs text-blue-800 leading-relaxed font-medium">
+          {estimatedFee !== null ? (
+            <>
+              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}. Tổng đài có thể phụ thu thêm phí cồng kềnh (nếu có).
+            </>
+          ) : (
+            'Tổng đài sẽ gọi điện báo cước Phí Ship và Phí Cồng Kềnh (Nếu có) sau khi bạn lên đơn.'
+          )}
+        </p>
       </div>
 
       {/* SUBMIT BUTTON */}
