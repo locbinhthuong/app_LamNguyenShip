@@ -340,8 +340,7 @@ const debtController = {
         .sort({ createdAt: -1 })
         .lean();
 
-      let totalPaidTx = 0;
-      const grossDebtByDate = {};
+      const netDebtByDate = {};
       const pendingDays = new Set();
       transactions.forEach(tx => {
         const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -349,36 +348,19 @@ const debtController = {
         if (tx.status === 'PENDING') {
            pendingDays.add(dateStr);
         } else if (tx.status !== 'REJECTED' && tx.status !== 'DELETED') {
-           if (tx.amount < 0) {
-             totalPaidTx += Math.abs(tx.amount);
-           } else if (tx.amount > 0) {
-             if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
-             grossDebtByDate[dateStr] += tx.amount;
-           }
+           if (!netDebtByDate[dateStr]) netDebtByDate[dateStr] = 0;
+           netDebtByDate[dateStr] += tx.amount;
         }
       });
 
-      const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
-      for (const dateStr of sortedDates) {
-        if (totalPaidTx >= grossDebtByDate[dateStr]) {
-          totalPaidTx -= grossDebtByDate[dateStr];
-          grossDebtByDate[dateStr] = 0;
-        } else {
-          grossDebtByDate[dateStr] -= totalPaidTx;
-          totalPaidTx = 0;
-        }
-      }
-
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       let unpaidDays = [];
-      if (driver.walletDebt > 0) {
-        for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
-          if (amount > 0 && dateStr !== todayStr) {
-            unpaidDays.push({ date: dateStr, amount });
-          }
+      for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
+        if (amount > 0 && dateStr !== todayStr) {
+          unpaidDays.push({ date: dateStr, amount });
         }
-        unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
       }
+      unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       res.status(200).json({
         success: true,
