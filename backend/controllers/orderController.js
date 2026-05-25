@@ -1480,6 +1480,7 @@ const orderController = {
     } catch (error) {
       console.error('Error cancelIntegrationOrder:', error);
       res.status(500).json({ success: false, message: 'Lỗi server khi hủy đơn integration' });
+    }
   },
 
   // POST /api/orders/estimate-fee
