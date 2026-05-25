@@ -37,13 +37,14 @@ const debtController = {
       });
 
       let unpaidDays = [];
-      // Lấy toàn bộ các ngày có dư nợ > 0, bao gồm cả hôm nay (theo yêu cầu)
-      for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
-        if (amount > 0) {
-          unpaidDays.push({ date: dateStr, amount });
+      if (driver.walletDebt > 0) {
+        for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
+          if (amount > 0) {
+            unpaidDays.push({ date: dateStr, amount });
+          }
         }
+        unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
       }
-      unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       res.status(200).json({
         success: true,
@@ -355,12 +356,14 @@ const debtController = {
 
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       let unpaidDays = [];
-      for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
-        if (amount > 0 && dateStr !== todayStr) {
-          unpaidDays.push({ date: dateStr, amount });
+      if (driver.walletDebt > 0) {
+        for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
+          if (amount > 0 && dateStr !== todayStr) {
+            unpaidDays.push({ date: dateStr, amount });
+          }
         }
+        unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
       }
-      unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       res.status(200).json({
         success: true,
