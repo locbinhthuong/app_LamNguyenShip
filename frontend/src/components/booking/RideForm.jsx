@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Navigation, Bike, Car, Key, Shield } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
+import { estimateFee } from '../../services/api';
 
 export default function RideForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
   const [subType, setSubType] = useState('XE_OM'); // XE_OM, LAI_HO_XE_MAY, LAI_HO_OTO
@@ -21,6 +22,9 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
   });
 
   const [mapConfig, setMapConfig] = useState(null);
+  const [estimatedFee, setEstimatedFee] = useState(null);
+  const [distanceKm, setDistanceKm] = useState(null);
+  const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
     if (defaultLocation?.address) {
@@ -42,6 +46,44 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
     }
   }, [customerData, defaultPhone]);
 
+  useEffect(() => {
+    const fetchEstimate = async () => {
+      if (form.pickupCoordinates && form.deliveryCoordinates && form.pickupCoordinates.lat && form.deliveryCoordinates.lat) {
+        setEstimating(true);
+        try {
+          const res = await estimateFee({
+            pickupCoordinates: form.pickupCoordinates,
+            deliveryCoordinates: form.deliveryCoordinates,
+            serviceType: 'DAT_XE',
+            subServiceType: subType
+          });
+          if (res && res.data && res.data.deliveryFee !== null) {
+            setEstimatedFee(res.data.deliveryFee);
+            setDistanceKm(res.data.distanceKm);
+          } else {
+            setEstimatedFee(null);
+            setDistanceKm(null);
+          }
+        } catch (error) {
+          console.error('Lỗi tính phí:', error);
+          setEstimatedFee(null);
+          setDistanceKm(null);
+        } finally {
+          setEstimating(false);
+        }
+      } else {
+        setEstimatedFee(null);
+        setDistanceKm(null);
+      }
+    };
+    
+    const timer = setTimeout(() => {
+      fetchEstimate();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [form.pickupCoordinates, form.deliveryCoordinates, subType]);
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.customerName.trim() || !form.customerPhone.trim()) {
@@ -61,6 +103,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       senderPhone: form.senderPhone.trim() || defaultPhone,
       receiverPhone: '',
       receiverPhone2: form.receiverPhone2.trim(),
+      deliveryFee: estimatedFee || 0,
       rideDetails: {
         vehicleType: subType === 'LAI_HO_OTO' ? 'OTO' : 'XE_MAY',
         vehicleClass: (subType === 'LAI_HO_XE_MAY' || subType === 'LAI_HO_OTO') ? vehicleClass : '',
@@ -137,9 +180,15 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
         <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
         <p className="text-xs text-blue-800 leading-relaxed font-medium">
-          {subType === 'XE_OM' 
-            ? "Đưa đón tận nơi, an toàn trên mọi nẻo đường. Giá sẽ được báo trước khi xe chạy."
-            : "Chỉ nhậu không lái, bảo vệ bản thân và túi tiền. Tài xế sẽ gọi điện chốt giá trước khi đến đón."}
+          {estimatedFee !== null ? (
+            <>
+              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}.
+            </>
+          ) : (
+            subType === 'XE_OM' 
+              ? "Đưa đón tận nơi, an toàn trên mọi nẻo đường. Giá sẽ được báo trước khi xe chạy."
+              : "Chỉ nhậu không lái, bảo vệ bản thân và túi tiền. Tài xế sẽ gọi điện chốt giá trước khi đến đón."
+          )}
         </p>
       </div>
 

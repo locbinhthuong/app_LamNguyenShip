@@ -61,6 +61,9 @@ router.get('/:id', verifyToken, anyAuthenticatedUser, orderController.getOrderBy
 
 // ==================== CUSTOMER / SHOP / INTEGRATION ====================
 
+// POST /api/orders/estimate-fee - Tính phí ship cho app khách hàng
+router.post('/estimate-fee', orderController.estimateCustomerFee);
+
 // POST /api/orders/integration - Mở API cho App Bán Bánh gọi sang (Tự động tính tiền bằng OSRM Map)
 router.post('/integration', orderController.createIntegrationOrder);
 

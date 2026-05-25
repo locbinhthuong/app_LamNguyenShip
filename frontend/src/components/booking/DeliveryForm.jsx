@@ -3,6 +3,7 @@ import { MapPin, Navigation, Package, DollarSign } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
 import CurrencyInput from '../CurrencyInput';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
+import { estimateFee } from '../../services/api';
 
 export default function DeliveryForm({ onBooking, loading, defaultLocation, defaultPhone }) {
   const [form, setForm] = useState({
@@ -23,6 +24,9 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   });
 
   const [mapConfig, setMapConfig] = useState(null); // null hoặc { type: 'pickup' | 'delivery', pos: [lat, lng] }
+  const [estimatedFee, setEstimatedFee] = useState(null);
+  const [distanceKm, setDistanceKm] = useState(null);
+  const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
     if (defaultLocation?.address) {
@@ -33,6 +37,44 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       }));
     }
   }, [defaultLocation]);
+
+  useEffect(() => {
+    const fetchEstimate = async () => {
+      if (form.pickupCoordinates && form.deliveryCoordinates && form.pickupCoordinates.lat && form.deliveryCoordinates.lat) {
+        setEstimating(true);
+        try {
+          const res = await estimateFee({
+            pickupCoordinates: form.pickupCoordinates,
+            deliveryCoordinates: form.deliveryCoordinates,
+            serviceType: 'GIAO_HANG'
+          });
+          if (res && res.data && res.data.deliveryFee !== null) {
+            setEstimatedFee(res.data.deliveryFee);
+            setDistanceKm(res.data.distanceKm);
+          } else {
+            setEstimatedFee(null);
+            setDistanceKm(null);
+          }
+        } catch (error) {
+          console.error('Lỗi tính phí:', error);
+          setEstimatedFee(null);
+          setDistanceKm(null);
+        } finally {
+          setEstimating(false);
+        }
+      } else {
+        setEstimatedFee(null);
+        setDistanceKm(null);
+      }
+    };
+    
+    // Thêm debounce nhẹ 500ms
+    const timer = setTimeout(() => {
+      fetchEstimate();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [form.pickupCoordinates, form.deliveryCoordinates]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -53,6 +95,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       deliveryCoordinates: form.deliveryCoordinates || null,
       note: form.note.trim(),
       codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
+      deliveryFee: estimatedFee || 0,
       packageDetails: {
         description: 'Giao hàng hóa/tài liệu',
         weight: '',
@@ -68,7 +111,13 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
         <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
         <p className="text-xs text-blue-800 leading-relaxed font-medium">
-          Tổng đài sẽ gọi điện báo cước Phí Ship và Phí Cồng Kềnh (Nếu có) sau khi bạn lên đơn. 
+          {estimatedFee !== null ? (
+            <>
+              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}. Tổng đài có thể phụ thu thêm phí cồng kềnh (nếu có).
+            </>
+          ) : (
+            'Tổng đài sẽ gọi điện báo cước Phí Ship và Phí Cồng Kềnh (Nếu có) sau khi bạn lên đơn.'
+          )}
         </p>
       </div>
 

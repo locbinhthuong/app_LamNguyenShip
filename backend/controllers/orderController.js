@@ -397,8 +397,8 @@ const orderController = {
         rideDetails: rideDetails || {},
         financialDetails: financialDetails || {},
         codAmount: codAmount || 0,
-        deliveryFee: 0, // Admin tính giá sau (Phí Ship)
-        status: 'DRAFT', // Khách tạo đơn xong phải chờ Admin tính phí Ship -> status: DRAFT
+        deliveryFee: req.body.deliveryFee || 0,
+        status: (req.body.deliveryFee > 0) ? 'PENDING' : 'DRAFT', // Nếu đã có phí ship tự động thì đẩy luôn cho tài xế, nếu không thì chờ Admin
         ipAddress: req.ip
       });
 
@@ -1480,6 +1480,67 @@ const orderController = {
     } catch (error) {
       console.error('Error cancelIntegrationOrder:', error);
       res.status(500).json({ success: false, message: 'Lỗi server khi hủy đơn integration' });
+  },
+
+  // POST /api/orders/estimate-fee
+  estimateCustomerFee: async (req, res) => {
+    try {
+      const { pickupCoordinates, deliveryCoordinates, serviceType, subServiceType } = req.body;
+
+      if (serviceType === 'DIEU_PHOI' || !pickupCoordinates || !deliveryCoordinates || !pickupCoordinates.lat || !deliveryCoordinates.lat) {
+        return res.status(200).json({ success: true, data: { distanceKm: 0, deliveryFee: null } });
+      }
+
+      // Lấy khoảng cách thực tế từ OSRM
+      const distanceKm = await getDrivingDistance(
+        pickupCoordinates.lat, pickupCoordinates.lng,
+        deliveryCoordinates.lat, deliveryCoordinates.lng
+      );
+
+      // Lấy cấu hình tính tiền
+      let deliveryFee = 0;
+      const configDoc = await Config.findOne({ key: 'PRICING_CONFIG' });
+      if (configDoc && configDoc.value && Array.isArray(configDoc.value.tiers)) {
+        const tiers = configDoc.value.tiers.sort((a, b) => a.maxKm - b.maxKm);
+        
+        let appliedTier = tiers.find(t => distanceKm <= t.maxKm);
+        if (!appliedTier) {
+           appliedTier = tiers[tiers.length - 1];
+        }
+
+        if (appliedTier.type === 'fixed') {
+           deliveryFee = appliedTier.price;
+        } else if (appliedTier.type === 'per_km') {
+           const prevTierIndex = tiers.indexOf(appliedTier) - 1;
+           const prevTier = prevTierIndex >= 0 ? tiers[prevTierIndex] : null;
+           
+           if (prevTier) {
+              const extraKm = Math.max(0, distanceKm - prevTier.maxKm);
+              deliveryFee = prevTier.price + Math.ceil(extraKm * appliedTier.price);
+           } else {
+              deliveryFee = Math.ceil(distanceKm * appliedTier.price);
+           }
+        }
+      } else {
+        deliveryFee = 15000;
+        if (distanceKm > 2) {
+          deliveryFee += Math.ceil((distanceKm - 2) * 5000);
+        }
+      }
+
+      // Nếu là dịch vụ mua hộ, cước có thể tăng hoặc giữ nguyên tùy ý (chưa có quy tắc cụ thể nên dùng bảng giá chung)
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          distanceKm,
+          deliveryFee
+        }
+      });
+
+    } catch (error) {
+      console.error('Error estimateCustomerFee:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi tính phí' });
     }
   }
 };

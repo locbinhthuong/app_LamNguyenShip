@@ -63,6 +63,11 @@ export const getOrderDetails = async (orderId) => {
   return response.data;
 };
 
+export const estimateFee = async (payload) => {
+  const response = await api.post('/orders/estimate-fee', payload);
+  return response.data;
+};
+
 // ==================== BẢNG TIN (ANNOUNCEMENTS) ====================
 export const getActiveAnnouncements = async () => {
   const response = await api.get(`/announcements?t=${new Date().getTime()}`);

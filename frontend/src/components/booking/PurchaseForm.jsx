@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ShoppingBag, Navigation } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
+import { estimateFee } from '../../services/api';
 
 export default function PurchaseForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
   const [form, setForm] = useState({
@@ -19,6 +20,9 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
   });
 
   const [mapConfig, setMapConfig] = useState(null);
+  const [estimatedFee, setEstimatedFee] = useState(null);
+  const [distanceKm, setDistanceKm] = useState(null);
+  const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
     if (defaultLocation?.address) {
@@ -29,6 +33,43 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       }));
     }
   }, [defaultLocation]);
+
+  useEffect(() => {
+    const fetchEstimate = async () => {
+      if (form.pickupCoordinates && form.deliveryCoordinates && form.pickupCoordinates.lat && form.deliveryCoordinates.lat) {
+        setEstimating(true);
+        try {
+          const res = await estimateFee({
+            pickupCoordinates: form.pickupCoordinates,
+            deliveryCoordinates: form.deliveryCoordinates,
+            serviceType: 'MUA_HO'
+          });
+          if (res && res.data && res.data.deliveryFee !== null) {
+            setEstimatedFee(res.data.deliveryFee);
+            setDistanceKm(res.data.distanceKm);
+          } else {
+            setEstimatedFee(null);
+            setDistanceKm(null);
+          }
+        } catch (error) {
+          console.error('Lỗi tính phí:', error);
+          setEstimatedFee(null);
+          setDistanceKm(null);
+        } finally {
+          setEstimating(false);
+        }
+      } else {
+        setEstimatedFee(null);
+        setDistanceKm(null);
+      }
+    };
+    
+    const timer = setTimeout(() => {
+      fetchEstimate();
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [form.pickupCoordinates, form.deliveryCoordinates]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -48,6 +89,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       senderPhone: form.senderPhone.trim() || defaultPhone,
       receiverPhone: form.receiverPhone.trim() || '',
       receiverPhone2: '',
+      deliveryFee: estimatedFee || 0,
       packageDetails: {
         description: 'MUA HỘ',
         itemsToBuy: []
@@ -62,7 +104,13 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
         <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
         <p className="text-xs text-blue-800 leading-relaxed font-medium">
-          Bạn chỉ trả tiền sau khi nhận được hàng. Giá món đồ và Phí đi lấy sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.
+          {estimatedFee !== null ? (
+            <>
+              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}. Giá món đồ sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.
+            </>
+          ) : (
+            'Bạn chỉ trả tiền sau khi nhận được hàng. Giá món đồ và Phí đi lấy sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.'
+          )}
         </p>
       </div>
 
