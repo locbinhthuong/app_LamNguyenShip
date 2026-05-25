@@ -38,12 +38,17 @@ const debtController = {
 
       let unpaidDays = [];
       if (driver.walletDebt > 0) {
-        for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
-          if (amount > 0) {
-            unpaidDays.push({ date: dateStr, amount });
+        let firstDate = null;
+        const sortedDates = Object.keys(netDebtByDate).sort((a, b) => new Date(a) - new Date(b));
+        for (const dateStr of sortedDates) {
+          if (netDebtByDate[dateStr] > 0) {
+            firstDate = dateStr;
+            break;
           }
         }
-        unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (!firstDate) firstDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        
+        unpaidDays = [{ date: firstDate, amount: driver.walletDebt }];
       }
 
       res.status(200).json({
@@ -357,12 +362,17 @@ const debtController = {
       const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       let unpaidDays = [];
       if (driver.walletDebt > 0) {
-        for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
-          if (amount > 0 && dateStr !== todayStr) {
-            unpaidDays.push({ date: dateStr, amount });
+        let firstDate = null;
+        const sortedDates = Object.keys(netDebtByDate).sort((a, b) => new Date(a) - new Date(b));
+        for (const dateStr of sortedDates) {
+          if (netDebtByDate[dateStr] > 0 && dateStr !== todayStr) {
+            firstDate = dateStr;
+            break;
           }
         }
-        unpaidDays.sort((a, b) => new Date(b.date) - new Date(a.date));
+        if (firstDate) {
+          unpaidDays = [{ date: firstDate, amount: driver.walletDebt }];
+        }
       }
 
       res.status(200).json({
