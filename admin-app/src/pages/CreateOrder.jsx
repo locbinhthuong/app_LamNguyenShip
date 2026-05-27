@@ -30,9 +30,24 @@ export default function CreateOrder() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [drivers, setDrivers] = useState([]);
+  const [history, setHistory] = useState({
+    customerNames: [],
+    customerPhones: [],
+    pickupAddresses: [],
+    pickupPhones: [],
+    deliveryAddresses: []
+  });
 
   useEffect(() => {
     fetchDrivers();
+    try {
+      const saved = localStorage.getItem('orderFormHistory');
+      if (saved) {
+        setHistory(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error('Lỗi đọc lịch sử', e);
+    }
   }, []);
 
   const fetchDrivers = async () => {
@@ -48,6 +63,32 @@ export default function CreateOrder() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const saveToHistory = (newForm) => {
+    try {
+      const addUnique = (arr, val) => {
+        if (!val || typeof val !== 'string') return arr;
+        const trimmed = val.trim();
+        if (!trimmed) return arr;
+        const newArr = arr.filter(item => item !== trimmed);
+        newArr.unshift(trimmed);
+        return newArr.slice(0, 50); // Giữ lại 50 mục gần nhất
+      };
+
+      const newHistory = {
+        customerNames: addUnique(history.customerNames, newForm.customerName),
+        customerPhones: addUnique(history.customerPhones, newForm.customerPhone),
+        pickupAddresses: addUnique(history.pickupAddresses, newForm.pickupAddress),
+        pickupPhones: addUnique(history.pickupPhones, newForm.pickupPhone),
+        deliveryAddresses: addUnique(history.deliveryAddresses, newForm.deliveryAddress)
+      };
+
+      setHistory(newHistory);
+      localStorage.setItem('orderFormHistory', JSON.stringify(newHistory));
+    } catch (e) {
+      console.error('Lỗi lưu lịch sử', e);
+    }
   };
 
   const handleSmartPaste = (e) => {
@@ -261,6 +302,7 @@ export default function CreateOrder() {
         financialDetails,
         packageDetails
       });
+      saveToHistory(form);
       alert('Tạo đơn hàng thành công!');
       navigate('/orders');
     } catch (err) {
@@ -442,7 +484,12 @@ export default function CreateOrder() {
                 onChange={handleChange}
                 placeholder="Nguyễn Văn A"
                 className="input-field"
+                list="customerNameList"
+                autoComplete="off"
               />
+              <datalist id="customerNameList">
+                {history.customerNames.map((item, index) => <option key={index} value={item} />)}
+              </datalist>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'GIAO_HANG' ? 'SĐT Khách Nhận (Giao đến)' : 'SĐT Khách hàng'} <span className="text-red-400">*</span></label>
@@ -452,7 +499,12 @@ export default function CreateOrder() {
                 onChange={handleChange}
                 placeholder="0909123456"
                 className="input-field"
+                list="customerPhoneList"
+                autoComplete="off"
               />
+              <datalist id="customerPhoneList">
+                {history.customerPhones.map((item, index) => <option key={index} value={item} />)}
+              </datalist>
             </div>
           </div>
 
@@ -465,7 +517,12 @@ export default function CreateOrder() {
                 onChange={handleChange}
                 placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
                 className="input-field"
+                list="pickupAddressList"
+                autoComplete="off"
               />
+              <datalist id="pickupAddressList">
+                {history.pickupAddresses.map((item, index) => <option key={index} value={item} />)}
+              </datalist>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'SĐT Điểm đón (Tùy chọn)' : form.serviceType === 'DIEU_PHOI' ? 'SĐT Khác (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'SĐT Nơi mua (Tùy chọn)' : 'SĐT Điểm lấy (Shop)'}</label>
@@ -475,7 +532,12 @@ export default function CreateOrder() {
                 onChange={handleChange}
                 placeholder="0911222333"
                 className="input-field"
+                list="pickupPhoneList"
+                autoComplete="off"
               />
+              <datalist id="pickupPhoneList">
+                {history.pickupPhones.map((item, index) => <option key={index} value={item} />)}
+              </datalist>
             </div>
           </div>
 
@@ -488,7 +550,12 @@ export default function CreateOrder() {
                 onChange={handleChange}
                 placeholder="456 Lê Lợi, Quận 1, TP.HCM"
                 className="input-field"
+                list="deliveryAddressList"
+                autoComplete="off"
               />
+              <datalist id="deliveryAddressList">
+                {history.deliveryAddresses.map((item, index) => <option key={index} value={item} />)}
+              </datalist>
             </div>
           )}
 
