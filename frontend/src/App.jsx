@@ -33,10 +33,12 @@ function App() {
   useEffect(() => {
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen) {
+      const timeElapsed = performance.now();
+      const remainingTime = Math.max(0, 1500 - timeElapsed);
       setTimeout(() => {
         splashScreen.classList.add('fade-out');
-        setTimeout(() => splashScreen.remove(), 500);
-      }, 1500);
+        setTimeout(() => splashScreen.remove(), 400);
+      }, remainingTime);
     }
   }, []);
 

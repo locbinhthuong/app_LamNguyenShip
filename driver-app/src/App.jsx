@@ -45,13 +45,15 @@ function AppContent() {
 
   // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay) và Tắt Splash Screen
   useEffect(() => {
-    // Ẩn Splash Screen sau khi React đã mount
+    // Ẩn Splash Screen
     const splashScreen = document.getElementById('splash-screen');
     if (splashScreen) {
+      const timeElapsed = performance.now();
+      const remainingTime = Math.max(0, 1500 - timeElapsed);
       setTimeout(() => {
         splashScreen.classList.add('fade-out');
-        setTimeout(() => splashScreen.remove(), 500); // Chờ CSS fade-out 0.5s rồi xoá node
-      }, 1500); // Giữ tối thiểu 1.5s để người dùng kịp nhìn thấy hiệu ứng
+        setTimeout(() => splashScreen.remove(), 400);
+      }, remainingTime);
     }
 
     const initAudio = async () => {
