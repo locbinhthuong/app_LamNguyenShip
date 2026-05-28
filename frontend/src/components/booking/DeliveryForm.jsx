@@ -128,7 +128,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="Nhập địa chỉ lấy hàng..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-[16px] overflow-hidden focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100/50 transition-all duration-300"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-[16px] focus-within:border-blue-400 focus-within:ring-4 focus-within:ring-blue-100/50 transition-all duration-300"
               />
             </div>
             <div className="mt-2">
@@ -160,7 +160,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                 placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-[16px] overflow-hidden focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100/50 transition-all duration-300"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-[16px] focus-within:border-sky-400 focus-within:ring-4 focus-within:ring-sky-100/50 transition-all duration-300"
               />
             </div>
             <div className="mt-2">

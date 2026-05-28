@@ -140,7 +140,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
                   onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                   placeholder="Nhập địa chỉ giao dịch..."
                   onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-indigo-300"
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl focus-within:border-indigo-300"
                 />
                 <input 
                   type="tel"

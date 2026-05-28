@@ -122,7 +122,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="VD: Để trống nếu mua nhiều nơi..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl focus-within:border-blue-300"
               />
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
                   onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                   placeholder="Nhập địa chỉ nhận hoặc để trống..."
                   onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
-                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-sky-300"
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl focus-within:border-sky-300"
                 />
                 <input 
                   type="tel"

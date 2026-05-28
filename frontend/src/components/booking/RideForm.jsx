@@ -198,7 +198,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
                 onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                 placeholder="Nhập địa chỉ đón..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'pickup', pos: form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-blue-300"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl focus-within:border-blue-300"
               />
               <div className="mt-2">
                 <input 
@@ -231,7 +231,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
                 onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
                 placeholder="Nhập địa chỉ đến..."
                 onClickMapIcon={(query) => setMapConfig({ type: 'delivery', pos: form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null, query })}
-                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl overflow-hidden focus-within:border-red-300"
+                className="bg-white border text-sm font-semibold border-gray-100 rounded-xl focus-within:border-red-300"
               />
 
             </div>
