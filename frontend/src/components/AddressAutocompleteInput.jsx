@@ -88,10 +88,13 @@ export default function AddressAutocompleteInput({
         <input
           type="text"
           value={query}
-          onChange={handleInputChange}
-          onFocus={() => { if (suggestions.length > 0) setShowDropdown(true); }}
-          placeholder={placeholder || "Nhập địa chỉ..."}
-          className="w-full text-sm outline-none px-2 py-1 text-slate-700 bg-transparent flex-1"
+          readOnly
+          onClick={(e) => {
+            e.preventDefault();
+            if (onClickMapIcon) onClickMapIcon(query);
+          }}
+          placeholder={placeholder || "Bấm vào đây để chọn địa chỉ trên bản đồ..."}
+          className="w-full text-sm font-semibold outline-none px-2 py-1 text-slate-700 bg-transparent flex-1 cursor-pointer"
         />
         
         {onClickMapIcon && (
