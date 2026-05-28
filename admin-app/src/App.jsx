@@ -31,8 +31,8 @@ export default function App() {
     if (splashScreen) {
       setTimeout(() => {
         splashScreen.classList.add('fade-out');
-        setTimeout(() => splashScreen.remove(), 400);
-      }, 100);
+        setTimeout(() => splashScreen.remove(), 500);
+      }, 1500);
     }
   }, []);
 

@@ -50,8 +50,8 @@ function AppContent() {
     if (splashScreen) {
       setTimeout(() => {
         splashScreen.classList.add('fade-out');
-        setTimeout(() => splashScreen.remove(), 400); // Chờ CSS fade-out 0.4s rồi xoá node
-      }, 100); // Rút ngắn thời gian chờ để app mở lên nhanh tức thì
+        setTimeout(() => splashScreen.remove(), 500); // Chờ CSS fade-out 0.5s rồi xoá node
+      }, 1500); // Giữ tối thiểu 1.5s để người dùng kịp nhìn thấy hiệu ứng
     }
 
     const initAudio = async () => {
