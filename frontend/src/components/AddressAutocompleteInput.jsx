@@ -74,14 +74,11 @@ export default function AddressAutocompleteInput({
         const data = await res.json();
         setSuggestions(data);
         
-        // Auto-fly map to the first result and AUTO-CAPTURE coordinates
+        // Auto-fly map to the first result but DO NOT auto-capture coordinates yet
         if (data && data.length > 0) {
           const lat = parseFloat(data[0].lat);
           const lon = parseFloat(data[0].lon);
           setMapCenter([lat, lon]);
-          if (onSelectCoordinates) {
-            onSelectCoordinates({ lat, lng: lon });
-          }
         }
       } catch (err) {
         console.error('Lỗi tìm kiếm gợi ý:', err);
@@ -113,11 +110,11 @@ export default function AddressAutocompleteInput({
     isSelecting.current = false;
     setQuery(e.target.value);
     if (onChangeText) onChangeText(e.target.value);
+    // Clear parent coordinates when user modifies text (fee will hide until confirmed)
+    if (onSelectCoordinates) onSelectCoordinates(null);
   };
 
-  const handleMapMoveEnd = (lat, lng) => {
-    if (onSelectCoordinates) onSelectCoordinates({ lat, lng });
-  };
+  // Remove handleMapMoveEnd since we don't want to auto-capture on map drag either
 
   return (
     <div className={`relative w-full ${className || ''}`} ref={wrapperRef}>
@@ -153,7 +150,7 @@ export default function AddressAutocompleteInput({
             <MapContainer center={mapCenter} zoom={15} zoomControl={false} className="w-full h-full z-10">
               <TileLayer url="https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}" />
               <FlyToLocation targetPos={mapCenter} />
-              <MapController setMapCenter={setMapCenter} onMapMoveEnd={handleMapMoveEnd} />
+              <MapController setMapCenter={setMapCenter} />
             </MapContainer>
             
             {/* PIN GIỮA BẢN ĐỒ */}
@@ -189,7 +186,12 @@ export default function AddressAutocompleteInput({
           <div className="p-3 bg-gray-50 border-t border-gray-200">
              <button 
                 type="button"
-                onClick={() => setIsFocused(false)}
+                onClick={() => {
+                  setIsFocused(false);
+                  if (onSelectCoordinates) {
+                    onSelectCoordinates({ lat: mapCenter[0], lng: mapCenter[1] });
+                  }
+                }}
                 className="w-full py-3 bg-blue-600 active:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
              >
                 XÁC NHẬN ĐỊA CHỈ NÀY
