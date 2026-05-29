@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate, useLocation, useOutlet } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, useOutlet, useNavigationType } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import AnimatedPage from './AnimatedPage';
 import { Search, Clock, Bell, User } from 'lucide-react';
@@ -10,6 +10,8 @@ const CustomerLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const outlet = useOutlet();
+  const navType = useNavigationType();
+  const direction = location.state?.direction || (navType === 'POP' ? -1 : 1);
   const isAuthenticated = !!localStorage.getItem('customerToken');
 
   useEffect(() => {
@@ -112,8 +114,8 @@ const CustomerLayout = () => {
 
           {/* VÙNG RENDER COMPONENT CON THỰC TẾ CỦA APP */}
           <div className="absolute top-0 left-0 right-0 bottom-[64px] md:bottom-0 pb-[env(safe-area-inset-bottom)] overflow-x-hidden flex flex-col z-0 bg-gray-50">
-            <AnimatePresence mode="popLayout" initial={false}>
-              <AnimatedPage key={location.pathname}>
+            <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+              <AnimatedPage key={location.pathname} direction={direction}>
                 {outlet}
               </AnimatedPage>
             </AnimatePresence>

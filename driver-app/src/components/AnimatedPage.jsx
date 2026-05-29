@@ -1,6 +1,6 @@
 import React from 'react';
-import { motion, useDragControls } from 'framer-motion';
-import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
+import { motion, useDragControls, useIsPresent } from 'framer-motion';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const DRIVER_TABS = ['/', '/my-orders', '/earnings'];
 
@@ -16,15 +16,12 @@ const pageVariants = {
   })
 };
 
-export default function AnimatedPage({ children }) {
+export default function AnimatedPage({ children, direction = 1 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const navType = useNavigationType();
   const dragControls = useDragControls();
+  const isPresent = useIsPresent();
   
-  // Xác định hướng vuốt (Mặc định vuốt sang phải/Next là 1, vuốt trái/Back là -1)
-  let direction = location.state?.direction || (navType === 'POP' ? -1 : 1);
-
   // Chỉ cho phép kéo (drag) nếu đang ở các trang Tab chính
   const isTab = DRIVER_TABS.includes(location.pathname);
 
@@ -102,7 +99,7 @@ export default function AnimatedPage({ children }) {
       exit="exit"
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onPointerDown={handlePointerDown}
-      style={{ touchAction: 'pan-y' }}
+      style={{ touchAction: 'pan-y', pointerEvents: isPresent ? 'auto' : 'none' }}
     >
       <div className="w-full h-full overflow-y-auto no-scrollbar pb-24 bg-gray-50">
         {children}

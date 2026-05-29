@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation, useNavigationType } from 'react-router-dom';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './context/AuthContext';
@@ -31,6 +31,8 @@ function AppContent() {
   const socketRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const navType = useNavigationType();
+  const direction = location.state?.direction || (navType === 'POP' ? -1 : 1);
   const [logoutAlert, setLogoutAlert] = useState(null);
   const [pushMessage, setPushMessage] = useState(null);
 
@@ -306,14 +308,14 @@ function AppContent() {
 
   return (
     <div className="h-[100dvh] w-full relative overflow-hidden bg-gray-50">
-      <AnimatePresence mode="popLayout" initial={false}>
+      <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <Routes location={location} key={location.pathname}>
-          <Route path="/login" element={driver ? <Navigate to="/" /> : <AnimatedPage><Login /></AnimatedPage>} />
-          <Route path="/register" element={driver ? <Navigate to="/" /> : <AnimatedPage><Register /></AnimatedPage>} />
-          <Route path="/" element={<PrivateRoute><AnimatedPage><Home /></AnimatedPage></PrivateRoute>} />
-          <Route path="/order/:id" element={<PrivateRoute><AnimatedPage><OrderDetail /></AnimatedPage></PrivateRoute>} />
-          <Route path="/my-orders" element={<PrivateRoute><AnimatedPage><MyOrders /></AnimatedPage></PrivateRoute>} />
-          <Route path="/earnings" element={<PrivateRoute><AnimatedPage><Earnings /></AnimatedPage></PrivateRoute>} />
+          <Route path="/login" element={driver ? <Navigate to="/" /> : <AnimatedPage direction={direction}><Login /></AnimatedPage>} />
+          <Route path="/register" element={driver ? <Navigate to="/" /> : <AnimatedPage direction={direction}><Register /></AnimatedPage>} />
+          <Route path="/" element={<PrivateRoute><AnimatedPage direction={direction}><Home /></AnimatedPage></PrivateRoute>} />
+          <Route path="/order/:id" element={<PrivateRoute><AnimatedPage direction={direction}><OrderDetail /></AnimatedPage></PrivateRoute>} />
+          <Route path="/my-orders" element={<PrivateRoute><AnimatedPage direction={direction}><MyOrders /></AnimatedPage></PrivateRoute>} />
+          <Route path="/earnings" element={<PrivateRoute><AnimatedPage direction={direction}><Earnings /></AnimatedPage></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </AnimatePresence>
