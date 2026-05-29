@@ -7,7 +7,8 @@
  * ============================================================
  */
 const mongoose = require('mongoose');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://tanlocdepzai123_db_user:CoDtoiPXpllytpuj@cluster0.4sm9yrn.mongodb.net/lamnguyenship?appName=Cluster0';
 
