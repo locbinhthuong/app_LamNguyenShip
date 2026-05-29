@@ -25,7 +25,11 @@ export default function AnimatedPage({ children }) {
   // Xác định hướng vuốt (Mặc định vuốt sang phải/Next là 1, vuốt trái/Back là -1)
   let direction = location.state?.direction || (navType === 'POP' ? -1 : 1);
 
+  // Chỉ cho phép kéo (drag) nếu đang ở các trang Tab chính
+  const isTab = DRIVER_TABS.includes(location.pathname);
+
   const handlePointerDown = (e) => {
+    if (!isTab) return;
     const target = e.target;
     // BỘ LỌC XUNG ĐỘT: Bỏ qua vùng bản đồ, các thanh trượt ngang, và các input/button
     if (
@@ -78,15 +82,13 @@ export default function AnimatedPage({ children }) {
       if (currentIndex > 0) {
         navigate(currentTabs[currentIndex - 1], { state: { direction: -1 } });
       }
-    } else {
-      navigate(-1, { state: { direction: -1 } });
     }
   };
 
   return (
     <motion.div
       className="absolute top-0 left-0 w-full h-full bg-gray-50 overflow-hidden"
-      drag="x"
+      drag={isTab ? "x" : false}
       dragControls={dragControls}
       dragListener={false} 
       dragDirectionLock 
