@@ -1,47 +1,45 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Loader2, MapPin } from 'lucide-react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import { Search, Loader2 } from 'lucide-react';
 
-const FlyToLocation = ({ targetPos }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (targetPos) {
-      map.flyTo(targetPos, 16, { animate: true });
-    }
-  }, [targetPos, map]);
-  return null;
-};
-
-const MapController = ({ setMapCenter, onMapMoveEnd }) => {
-  const map = useMap();
-  useEffect(() => {
-    const handleMoveEnd = () => {
-      const center = map.getCenter();
-      setMapCenter([center.lat, center.lng]);
-      if (onMapMoveEnd) onMapMoveEnd(center.lat, center.lng);
-    };
-    map.on('moveend', handleMoveEnd);
-    return () => map.off('moveend', handleMoveEnd);
-  }, [map, setMapCenter, onMapMoveEnd]);
-  return null;
+const formatPhotonAddress = (properties) => {
+  if (!properties) return 'Vị trí không xác định';
+  const parts = [];
+  if (properties.name) parts.push(properties.name);
+  if (properties.housenumber) parts.push(properties.housenumber);
+  if (properties.street) parts.push(properties.street);
+  if (properties.district) parts.push(properties.district);
+  if (properties.city) parts.push(properties.city);
+  if (properties.state) parts.push(properties.state);
+  return parts.join(', ') || 'Vị trí không xác định';
 };
 
 export default function AddressAutocompleteInput({ 
   value, 
   onChangeText, 
   onSelectCoordinates, 
-  placeholder, 
+  placeholder = "Nhập điểm đón...",
   onClickMapIcon,
-  className 
+  className = "" 
 }) {
   const [query, setQuery] = useState(value || '');
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  // Default mapCenter. Will be updated by GPS shortly after mount.
   const [mapCenter, setMapCenter] = useState([10.045162, 105.746854]);
   const wrapperRef = useRef(null);
   const isSelecting = useRef(false);
+
+  // Lấy toạ độ GPS thực tế của thiết bị ngay khi Component được tải
+  useEffect(() => {
+    import('@capacitor/geolocation').then(({ Geolocation }) => {
+      Geolocation.getCurrentPosition({ enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 })
+        .then(pos => {
+          setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+        })
+        .catch(err => console.log('Không lấy được GPS tự động', err));
+    });
+  }, []);
 
   useEffect(() => {
     if (!isSelecting.current && value !== query) {
@@ -69,22 +67,41 @@ export default function AddressAutocompleteInput({
 
     const delayDebounce = setTimeout(async () => {
       setIsSearching(true);
+      
+      let data = [];
+      let isPhoton = true;
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=vn&accept-language=vi`);
-        const data = await res.json();
-        setSuggestions(data);
-        
-        // Auto-fly map to the first result but DO NOT auto-capture coordinates yet
-        if (data && data.length > 0) {
-          const lat = parseFloat(data[0].lat);
-          const lon = parseFloat(data[0].lon);
-          setMapCenter([lat, lon]);
-        }
+        // Biasing search to current mapCenter (Device GPS)
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
+        if (!res.ok) throw new Error();
+        const photonData = await res.json();
+        data = photonData.features || [];
       } catch (err) {
-        console.error('Lỗi tìm kiếm gợi ý:', err);
-      } finally {
-        setIsSearching(false);
+        isPhoton = false;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=vn`);
+          data = await res.json() || [];
+        } catch (e) {}
       }
+      
+      const normalizedSuggestions = data.map(item => {
+        if (isPhoton) {
+          return {
+            display_name: formatPhotonAddress(item.properties),
+            lat: parseFloat(item.geometry.coordinates[1]),
+            lon: parseFloat(item.geometry.coordinates[0])
+          };
+        } else {
+          return {
+            display_name: item.display_name,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon)
+          };
+        }
+      });
+      
+      setSuggestions(normalizedSuggestions);
+      setIsSearching(false);
     }, 600);
 
     return () => clearTimeout(delayDebounce);
@@ -93,17 +110,16 @@ export default function AddressAutocompleteInput({
   const handleSelect = (item) => {
     isSelecting.current = true;
     const selectedText = item.display_name;
-    const lat = parseFloat(item.lat);
-    const lon = parseFloat(item.lon);
+    const lon = item.lon;
+    const lat = item.lat;
     
     setQuery(selectedText);
-    setMapCenter([lat, lon]);
     setSuggestions([]);
     
     if (onChangeText) onChangeText(selectedText);
     if (onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
     
-    setTimeout(() => { isSelecting.current = false; }, 200);
+    setTimeout(() => { isSelecting.current = false; setIsFocused(false); }, 200);
   };
 
   const handleInputChange = (e) => {
@@ -142,33 +158,18 @@ export default function AddressAutocompleteInput({
         )}
       </div>
 
-      {isFocused && (
+      {isFocused && (suggestions.length > 0 || isSearching) && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden z-[9999] flex flex-col animate-[slideDown_0.2s_ease-out]">
           
-          {/* MAP TRƯỢT TỪ DƯỚI RA */}
-          <div className="w-full h-48 bg-gray-100 relative">
-            <MapContainer center={mapCenter} zoom={15} zoomControl={false} className="w-full h-full z-10">
-              <TileLayer url="https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}" />
-              <FlyToLocation targetPos={mapCenter} />
-              <MapController setMapCenter={setMapCenter} />
-            </MapContainer>
-            
-            {/* PIN GIỮA BẢN ĐỒ */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-full z-[400] pointer-events-none drop-shadow-xl">
-              <MapPin size={32} className="text-blue-600" fill="white" />
-              <div className="w-2 h-1 bg-black/30 rounded-full mx-auto mt-0.5"></div>
+          {isSearching && (
+            <div className="flex items-center justify-center p-4">
+              <Loader2 size={20} className="animate-spin text-blue-600" />
             </div>
-
-            {isSearching && (
-              <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full p-2 z-[500] shadow-md flex items-center justify-center">
-                <Loader2 size={16} className="animate-spin text-blue-600" />
-              </div>
-            )}
-          </div>
+          )}
 
           {/* DANH SÁCH GỢI Ý */}
-          {suggestions.length > 0 && (
-            <div className="max-h-40 overflow-y-auto border-t border-slate-100 bg-white">
+          {!isSearching && suggestions.length > 0 && (
+            <div className="max-h-60 overflow-y-auto bg-white">
               {suggestions.map((item, idx) => (
                 <div 
                   key={idx} 
@@ -181,22 +182,6 @@ export default function AddressAutocompleteInput({
               ))}
             </div>
           )}
-
-          {/* NÚT XÁC NHẬN */}
-          <div className="p-3 bg-gray-50 border-t border-gray-200">
-             <button 
-                type="button"
-                onClick={() => {
-                  setIsFocused(false);
-                  if (onSelectCoordinates) {
-                    onSelectCoordinates({ lat: mapCenter[0], lng: mapCenter[1] });
-                  }
-                }}
-                className="w-full py-3 bg-blue-600 active:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-blue-600/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
-             >
-                XÁC NHẬN ĐỊA CHỈ NÀY
-             </button>
-          </div>
         </div>
       )}
     </div>

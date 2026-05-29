@@ -1,8 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, X, Target, Loader2, Search } from 'lucide-react';
+import { MapPin, X, Target, Loader2, Search, Layers } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
+
+const formatPhotonAddress = (properties) => {
+  if (!properties) return 'Vị trí không xác định';
+  const parts = [];
+  if (properties.name) parts.push(properties.name);
+  if (properties.housenumber) parts.push(properties.housenumber);
+  if (properties.street) parts.push(properties.street);
+  if (properties.district) parts.push(properties.district);
+  if (properties.city) parts.push(properties.city);
+  if (properties.state) parts.push(properties.state);
+  return parts.join(', ') || 'Vị trí không xác định';
+};
 
 const MapController = ({ setMapCenter, setIsDragging }) => {
   const map = useMap();
@@ -39,6 +51,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [flyPos, setFlyPos] = useState(initialPosition);
+  const [mapType, setMapType] = useState('m'); // 'm' for standard, 'y' for hybrid/satellite
 
   // Search State
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
@@ -51,17 +64,33 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       const fetchInitialCoord = async () => {
         setIsSearching(true);
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(initialSearchQuery)}&limit=1&countrycodes=vn&accept-language=vi`);
+          const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(initialSearchQuery)}&limit=1`);
+          if (!res.ok) throw new Error('Photon error');
           const data = await res.json();
-          if (data && data.length > 0) {
-            const lat = parseFloat(data[0].lat);
-            const lon = parseFloat(data[0].lon);
+          if (data && data.features && data.features.length > 0) {
+            const lon = parseFloat(data.features[0].geometry.coordinates[0]);
+            const lat = parseFloat(data.features[0].geometry.coordinates[1]);
             setMapCenter([lat, lon]);
             setFlyPos([lat, lon]);
           } else {
+            throw new Error('No results');
+          }
+        } catch (err) {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(initialSearchQuery)}&limit=1&countrycodes=vn`);
+            const data = await res.json();
+            if (data && data.length > 0) {
+              const lat = parseFloat(data[0].lat);
+              const lon = parseFloat(data[0].lon);
+              setMapCenter([lat, lon]);
+              setFlyPos([lat, lon]);
+            } else {
+              throw new Error('No results');
+            }
+          } catch (e) {
             // FALLBACK TO GPS IF TEXT SEARCH YIELDS NOTHING
             try {
-              const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+              const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 });
               const lat = pos.coords.latitude;
               const lng = pos.coords.longitude;
               setMapCenter([lat, lng]);
@@ -81,8 +110,8 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
               }
             }
           }
-        } catch (err) {
-          console.error(err);
+            }
+          }
         } finally {
           setIsSearching(false);
         }
@@ -109,7 +138,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
             permission = await Geolocation.requestPermissions();
           }
           if (permission.location === 'granted') {
-            const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+            const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 });
             setMapCenter([pos.coords.latitude, pos.coords.longitude]);
             setFlyPos([pos.coords.latitude, pos.coords.longitude]);
           } else {
@@ -141,22 +170,50 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     }
     const delayDebounce = setTimeout(async () => {
       setIsSearching(true);
+      
+      let data = [];
+      let isPhoton = true;
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=vn&accept-language=vi`);
-        const data = await res.json();
-        setSuggestions(data);
+        // Áp dụng Location Biasing: Quét ưu tiên quanh toạ độ mapCenter hiện tại
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=5&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
+        if (!res.ok) throw new Error('Photon error');
+        const photonData = await res.json();
+        data = photonData.features || [];
       } catch (err) {
-        console.error('Lỗi tìm kiếm:', err);
-      } finally {
-        setIsSearching(false);
+        isPhoton = false;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=vn`);
+          data = await res.json() || [];
+        } catch (fallbackErr) {
+          console.error('Cả hai hệ thống tìm kiếm đều lỗi:', fallbackErr);
+        }
       }
+      
+      const normalizedSuggestions = data.map(item => {
+        if (isPhoton) {
+          return {
+            display_name: formatPhotonAddress(item.properties),
+            lat: parseFloat(item.geometry.coordinates[1]),
+            lon: parseFloat(item.geometry.coordinates[0])
+          };
+        } else {
+          return {
+            display_name: item.display_name,
+            lat: parseFloat(item.lat),
+            lon: parseFloat(item.lon)
+          };
+        }
+      });
+      
+      setSuggestions(normalizedSuggestions);
+      setIsSearching(false);
     }, 600);
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
 
   const handleSelectSuggestion = (place) => {
-    const lat = parseFloat(place.lat);
-    const lon = parseFloat(place.lon);
+    const lon = place.lon;
+    const lat = place.lat;
     setFlyPos([lat, lon]);
     setMapCenter([lat, lon]);
     setSearchQuery(''); // Ẩn suggestions menu đi
@@ -169,21 +226,31 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
     
     const fetchAddress = async () => {
       setIsLoadingAddress(true);
+      let addr = 'Vị trí không xác định';
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${mapCenter[0]}&lon=${mapCenter[1]}&accept-language=vi`
+          `https://photon.komoot.io/reverse?lat=${mapCenter[0]}&lon=${mapCenter[1]}`
         );
+        if (!res.ok) throw new Error();
         const data = await res.json();
-        if (data && data.display_name) {
-          setAddress(data.display_name);
+        if (data && data.features && data.features.length > 0) {
+          addr = formatPhotonAddress(data.features[0].properties);
         } else {
-          setAddress('Vị trí không xác định');
+          throw new Error();
         }
       } catch (error) {
-        setAddress('Lỗi mạng khi lấy địa chỉ');
-      } finally {
-        setIsLoadingAddress(false);
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${mapCenter[0]}&lon=${mapCenter[1]}`
+          );
+          const data = await res.json();
+          if (data && data.display_name) {
+            addr = data.display_name;
+          }
+        } catch (e) {}
       }
+      setAddress(addr);
+      setIsLoadingAddress(false);
     };
 
     const delayDebounce = setTimeout(() => {
@@ -208,7 +275,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
           return;
         }
       }
-      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 });
+      const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, maximumAge: 10000, timeout: 5000 });
       setFlyPos([pos.coords.latitude, pos.coords.longitude]);
     } catch (err) {
       console.log('Lỗi định vị:', err);
@@ -304,7 +371,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
         >
           <TileLayer
             attribution='&copy; Google Maps'
-            url="https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}"
+            url={`https://mt0.google.com/vt/lyrs=${mapType}&hl=en&x={x}&y={y}&z={z}`}
           />
           <MapController setMapCenter={setMapCenter} setIsDragging={setIsDragging} />
           {flyPos && <FlyToLocation targetPos={flyPos} />}
@@ -339,6 +406,18 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
             className="absolute bottom-16 right-4 z-[2000] bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
           >
           <Target size={24} />
+        </button>
+
+        {/* NÚT CHUYỂN ĐỔI BẢN ĐỒ VỆ TINH */}
+        <button 
+          type="button"
+          onClick={(e) => {
+            if (e) { e.preventDefault(); e.stopPropagation(); }
+            setMapType(prev => prev === 'm' ? 'y' : 'm');
+          }} 
+          className="absolute top-4 right-4 z-[2000] bg-white p-2.5 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform"
+        >
+          <Layers size={22} className={mapType === 'y' ? 'text-blue-600' : ''} />
         </button>
       </div>
 
