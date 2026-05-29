@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './context/AuthContext';
@@ -9,7 +9,8 @@ import OrderDetail from './pages/OrderDetail';
 import MyOrders from './pages/MyOrders';
 import Earnings from './pages/Earnings';
 import AlertModal from './components/AlertModal';
-import SwipeWrapper from './components/SwipeWrapper';
+import { AnimatePresence } from 'framer-motion';
+import AnimatedPage from './components/AnimatedPage';
 import api from './services/api';
 import { requestFirebaseToken, setupForegroundListener } from './utils/firebase';
 
@@ -29,6 +30,7 @@ function AppContent() {
   const { driver, logout, loadProfile } = useAuth();
   const socketRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const [logoutAlert, setLogoutAlert] = useState(null);
   const [pushMessage, setPushMessage] = useState(null);
 
@@ -303,16 +305,18 @@ function AppContent() {
   };
 
   return (
-    <SwipeWrapper>
-      <Routes>
-        <Route path="/login" element={driver ? <Navigate to="/" /> : <Login />} />
-        <Route path="/register" element={driver ? <Navigate to="/" /> : <Register />} />
-        <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
-        <Route path="/order/:id" element={<PrivateRoute><OrderDetail /></PrivateRoute>} />
-        <Route path="/my-orders" element={<PrivateRoute><MyOrders /></PrivateRoute>} />
-        <Route path="/earnings" element={<PrivateRoute><Earnings /></PrivateRoute>} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+    <div className="h-[100dvh] w-full relative overflow-hidden bg-gray-50">
+      <AnimatePresence mode="popLayout" initial={false}>
+        <Routes location={location} key={location.pathname}>
+          <Route path="/login" element={driver ? <Navigate to="/" /> : <AnimatedPage><Login /></AnimatedPage>} />
+          <Route path="/register" element={driver ? <Navigate to="/" /> : <AnimatedPage><Register /></AnimatedPage>} />
+          <Route path="/" element={<PrivateRoute><AnimatedPage><Home /></AnimatedPage></PrivateRoute>} />
+          <Route path="/order/:id" element={<PrivateRoute><AnimatedPage><OrderDetail /></AnimatedPage></PrivateRoute>} />
+          <Route path="/my-orders" element={<PrivateRoute><AnimatedPage><MyOrders /></AnimatedPage></PrivateRoute>} />
+          <Route path="/earnings" element={<PrivateRoute><AnimatedPage><Earnings /></AnimatedPage></PrivateRoute>} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </AnimatePresence>
 
       <AlertModal 
         isOpen={!!logoutAlert}
@@ -342,7 +346,7 @@ function AppContent() {
           </div>
         </div>
       )}
-    </SwipeWrapper>
+    </div>
   );
 }
 

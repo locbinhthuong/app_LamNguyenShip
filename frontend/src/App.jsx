@@ -14,7 +14,6 @@ import OrderDetail from './pages/customer/OrderDetail';
 import ShopBookingFlow from './pages/shop/ShopBookingFlow';
 import ShopProfile from './pages/shop/ShopProfile';
 import ShopActivity from './pages/shop/ShopActivity';
-import SwipeWrapper from './components/SwipeWrapper';
 import { useAuthSocket } from './hooks/useAuthSocket';
 
 import { useEffect } from 'react';
@@ -43,9 +42,8 @@ function App() {
   }, []);
 
   return (
-    <SwipeWrapper>
-      <div className="h-[100dvh] bg-gray-50 flex flex-col font-sans overflow-hidden relative">
-        <Routes>
+    <div className="h-[100dvh] bg-gray-50 flex flex-col font-sans overflow-hidden relative">
+      <Routes>
         {/* Các màn hình con của Khách hàng (Được dính Footer Layout) */}
         <Route element={<CustomerLayout />}>
           {/* Trang chủ mặc định là màn hình 4 dịch vụ (Cho phép Guest xem, nhưng SHOP thì chuyển qua /shop) */}
@@ -143,9 +141,8 @@ function App() {
           } 
         />
 
-        </Routes>
-      </div>
-    </SwipeWrapper>
+      </Routes>
+    </div>
   );
 }
 

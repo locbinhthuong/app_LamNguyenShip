@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation, useOutlet } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import AnimatedPage from './AnimatedPage';
 import { Search, Clock, Bell, User } from 'lucide-react';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
 import { updateFcmToken } from '../services/api';
@@ -7,6 +9,7 @@ import { updateFcmToken } from '../services/api';
 const ShopLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const outlet = useOutlet();
   const isAuthenticated = !!localStorage.getItem('customerToken');
 
   useEffect(() => {
@@ -105,8 +108,12 @@ const ShopLayout = () => {
         <div className="relative w-full h-full bg-white overflow-hidden flex flex-col z-10 transition-all">
 
           {/* VÙNG RENDER COMPONENT CON THỰC TẾ CỦA APP */}
-          <div className="absolute top-0 left-0 right-0 bottom-[64px] md:bottom-0 pb-[env(safe-area-inset-bottom)] overflow-y-auto overflow-x-hidden flex flex-col z-0 bg-gray-50 scroll-smooth">
-            <Outlet />
+          <div className="absolute top-0 left-0 right-0 bottom-[64px] md:bottom-0 pb-[env(safe-area-inset-bottom)] overflow-x-hidden flex flex-col z-0 bg-gray-50">
+            <AnimatePresence mode="popLayout" initial={false}>
+              <AnimatedPage key={location.pathname}>
+                {outlet}
+              </AnimatedPage>
+            </AnimatePresence>
           </div>
 
           {/* THANH ĐIỀU HƯỚNG DƯỚI CÙNG (CHỈ XUẤT HIỆN Ở MOBILE) */}
