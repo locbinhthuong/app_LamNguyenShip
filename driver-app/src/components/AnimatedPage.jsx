@@ -89,7 +89,7 @@ export default function AnimatedPage({ children, direction = 1 }) {
       dragControls={dragControls}
       dragListener={false} 
       dragDirectionLock 
-      dragElastic={0.2}
+      dragElastic={1}
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
       custom={direction}
