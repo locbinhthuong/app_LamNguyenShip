@@ -8,12 +8,20 @@ const formatPhotonAddress = (properties) => {
   if (!properties) return 'Vị trí không xác định';
   const parts = [];
   if (properties.name) parts.push(properties.name);
-  if (properties.housenumber) parts.push(properties.housenumber);
-  if (properties.street) parts.push(properties.street);
+  if (properties.housenumber && properties.street) {
+    parts.push(`${properties.housenumber} ${properties.street}`);
+  } else if (properties.street) {
+    parts.push(properties.street);
+  }
+  if (properties.suburb) parts.push(properties.suburb);
+  else if (properties.locality) parts.push(properties.locality);
   if (properties.district) parts.push(properties.district);
+  else if (properties.county) parts.push(properties.county);
   if (properties.city) parts.push(properties.city);
-  if (properties.state) parts.push(properties.state);
-  return parts.join(', ') || 'Vị trí không xác định';
+  else if (properties.state) parts.push(properties.state);
+  const unique = [];
+  parts.forEach(p => { if (!unique.includes(p)) unique.push(p); });
+  return unique.join(', ') || 'Vị trí không xác định';
 };
 
 const MapController = ({ setMapCenter, setIsDragging }) => {
@@ -173,14 +181,16 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       let isPhoton = true;
       try {
         // Áp dụng Location Biasing: Quét ưu tiên quanh toạ độ mapCenter hiện tại
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=5&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}&lang=vi`);
         if (!res.ok) throw new Error('Photon error');
         const photonData = await res.json();
         data = photonData.features || [];
       } catch (err) {
         isPhoton = false;
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=vn`);
+          const delta = 0.3;
+          const viewbox = `${mapCenter[1]-delta},${mapCenter[0]+delta},${mapCenter[1]+delta},${mapCenter[0]-delta}`;
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&countrycodes=vn&accept-language=vi&viewbox=${viewbox}&bounded=0`);
           data = await res.json() || [];
         } catch (fallbackErr) {
           console.error('Cả hai hệ thống tìm kiếm đều lỗi:', fallbackErr);
@@ -239,7 +249,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       } catch (error) {
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${mapCenter[0]}&lon=${mapCenter[1]}`
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${mapCenter[0]}&lon=${mapCenter[1]}&accept-language=vi`
           );
           const data = await res.json();
           if (data && data.display_name) {

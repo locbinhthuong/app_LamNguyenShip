@@ -5,12 +5,33 @@ const formatPhotonAddress = (properties) => {
   if (!properties) return 'Vị trí không xác định';
   const parts = [];
   if (properties.name) parts.push(properties.name);
-  if (properties.housenumber) parts.push(properties.housenumber);
-  if (properties.street) parts.push(properties.street);
+  if (properties.housenumber && properties.street) {
+    parts.push(`${properties.housenumber} ${properties.street}`);
+  } else if (properties.street) {
+    parts.push(properties.street);
+  }
+  // Phường/Xã
+  if (properties.suburb) parts.push(properties.suburb);
+  else if (properties.locality) parts.push(properties.locality);
+  // Quận/Huyện
   if (properties.district) parts.push(properties.district);
+  else if (properties.county) parts.push(properties.county);
+  // Thành phố
   if (properties.city) parts.push(properties.city);
-  if (properties.state) parts.push(properties.state);
-  return parts.join(', ') || 'Vị trí không xác định';
+  else if (properties.state) parts.push(properties.state);
+  // Loại bỏ phần trùng (VD: "Cần Thơ, Cần Thơ")
+  const unique = [];
+  parts.forEach(p => { if (!unique.includes(p)) unique.push(p); });
+  return unique.join(', ') || 'Vị trí không xác định';
+};
+
+// Tính khoảng cách (km) giữa 2 tọa độ (Haversine)
+const haversineKm = (lat1, lon1, lat2, lon2) => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 };
 
 export default function AddressAutocompleteInput({ 
@@ -25,7 +46,7 @@ export default function AddressAutocompleteInput({
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  // Default mapCenter. Will be updated by GPS shortly after mount.
+  // Default mapCenter (Cần Thơ). Will be updated by GPS shortly after mount.
   const [mapCenter, setMapCenter] = useState([10.045162, 105.746854]);
   const wrapperRef = useRef(null);
   const isSelecting = useRef(false);
@@ -68,39 +89,63 @@ export default function AddressAutocompleteInput({
     const delayDebounce = setTimeout(async () => {
       setIsSearching(true);
       
-      let data = [];
-      let isPhoton = true;
+      // Gộp kết quả từ cả Photon + Nominatim rồi sắp xếp theo khoảng cách GPS
+      let allResults = [];
+
+      // 1. Photon (tiếng Việt + GPS bias)
       try {
-        // Biasing search to current mapCenter (Device GPS)
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=5&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
-        if (!res.ok) throw new Error();
-        const photonData = await res.json();
-        data = photonData.features || [];
-      } catch (err) {
-        isPhoton = false;
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}&lang=vi`);
+        if (res.ok) {
+          const photonData = await res.json();
+          (photonData.features || []).forEach(item => {
+            allResults.push({
+              display_name: formatPhotonAddress(item.properties),
+              lat: parseFloat(item.geometry.coordinates[1]),
+              lon: parseFloat(item.geometry.coordinates[0]),
+              source: 'photon'
+            });
+          });
+        }
+      } catch (err) {}
+
+      // 2. Nominatim fallback/bổ sung (viewbox GPS bias + tiếng Việt)
+      if (allResults.length < 3) {
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=vn`);
-          data = await res.json() || [];
+          // Tạo viewbox ~30km xung quanh GPS hiện tại
+          const delta = 0.3; // ~30km
+          const viewbox = `${mapCenter[1]-delta},${mapCenter[0]+delta},${mapCenter[1]+delta},${mapCenter[0]-delta}`;
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=vn&accept-language=vi&viewbox=${viewbox}&bounded=0`);
+          const nomData = await res.json() || [];
+          nomData.forEach(item => {
+            allResults.push({
+              display_name: item.display_name,
+              lat: parseFloat(item.lat),
+              lon: parseFloat(item.lon),
+              source: 'nominatim'
+            });
+          });
         } catch (e) {}
       }
-      
-      const normalizedSuggestions = data.map(item => {
-        if (isPhoton) {
-          return {
-            display_name: formatPhotonAddress(item.properties),
-            lat: parseFloat(item.geometry.coordinates[1]),
-            lon: parseFloat(item.geometry.coordinates[0])
-          };
-        } else {
-          return {
-            display_name: item.display_name,
-            lat: parseFloat(item.lat),
-            lon: parseFloat(item.lon)
-          };
-        }
+
+      // 3. Loại bỏ trùng lặp (cùng tên hoặc cùng tọa độ gần nhau)
+      const seen = new Set();
+      const unique = allResults.filter(item => {
+        const key = item.display_name.toLowerCase().replace(/\s+/g, ' ').trim();
+        const coordKey = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
+        if (seen.has(key) || seen.has(coordKey)) return false;
+        seen.add(key);
+        seen.add(coordKey);
+        return true;
+      });
+
+      // 4. Sắp xếp theo khoảng cách từ GPS (gần nhất lên trước)
+      unique.sort((a, b) => {
+        const distA = haversineKm(mapCenter[0], mapCenter[1], a.lat, a.lon);
+        const distB = haversineKm(mapCenter[0], mapCenter[1], b.lat, b.lon);
+        return distA - distB;
       });
       
-      setSuggestions(normalizedSuggestions);
+      setSuggestions(unique.slice(0, 7));
       setIsSearching(false);
     }, 600);
 
