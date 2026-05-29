@@ -104,7 +104,7 @@ export default function AddressAutocompleteInput({
 
       // 1. Photon (tiếng Việt + GPS bias)
       try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}&lang=vi`);
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
         if (res.ok) {
           const photonData = await res.json();
           (photonData.features || []).forEach(item => {

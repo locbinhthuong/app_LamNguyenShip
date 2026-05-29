@@ -190,7 +190,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       let isPhoton = true;
       try {
         // Áp dụng Location Biasing: Quét ưu tiên quanh toạ độ mapCenter hiện tại
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}&lang=vi`);
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(searchQuery)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
         if (!res.ok) throw new Error('Photon error');
         const photonData = await res.json();
         data = photonData.features || [];
