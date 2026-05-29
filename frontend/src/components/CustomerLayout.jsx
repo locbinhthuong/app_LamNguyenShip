@@ -50,11 +50,15 @@ const CustomerLayout = () => {
   ];
 
   const handleNavClick = (item) => {
+    const currIndex = navItems.findIndex(n => n.path === location.pathname || (n.path === '/' && location.pathname === '/customer'));
+    const targetIndex = navItems.findIndex(n => n.path === item.path);
+    const direction = targetIndex > currIndex ? 1 : -1;
+
     if (item.requiresAuth && !isAuthenticated) {
       localStorage.setItem('intendedService', 'home');
-      navigate('/login');
+      navigate('/login', { state: { direction: 1 } });
     } else {
-      navigate(item.path);
+      navigate(item.path, { state: { direction } });
     }
   };
 

@@ -1,14 +1,18 @@
 import React from 'react';
 import { motion, useDragControls } from 'framer-motion';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
 
 const CUSTOMER_TABS = ['/', '/customer/activity', '/customer/notifications', '/customer/profile'];
 const SHOP_TABS = ['/shop', '/shop/activity', '/shop/notifications', '/shop/profile'];
 
 export default function AnimatedPage({ children }) {
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
+  const navType = useNavigationType();
   const dragControls = useDragControls();
+  
+  // Xác định hướng vuốt (Mặc định vuốt sang phải/Next là 1, vuốt trái/Back là -1)
+  let direction = location.state?.direction || (navType === 'POP' ? -1 : 1);
 
   const handlePointerDown = (e) => {
     const target = e.target;
@@ -50,7 +54,7 @@ export default function AnimatedPage({ children }) {
     if (currentTabs.length > 0) {
       const currentIndex = currentTabs.indexOf(location.pathname);
       if (currentIndex < currentTabs.length - 1) {
-        navigate(currentTabs[currentIndex + 1]);
+        navigate(currentTabs[currentIndex + 1], { state: { direction: 1 } });
       }
     }
   };
@@ -63,10 +67,10 @@ export default function AnimatedPage({ children }) {
     if (currentTabs.length > 0) {
       const currentIndex = currentTabs.indexOf(location.pathname);
       if (currentIndex > 0) {
-        navigate(currentTabs[currentIndex - 1]);
+        navigate(currentTabs[currentIndex - 1], { state: { direction: -1 } });
       }
     } else {
-      navigate(-1);
+      navigate(-1, { state: { direction: -1 } });
     }
   };
 
@@ -80,9 +84,9 @@ export default function AnimatedPage({ children }) {
       dragElastic={0.2}
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
-      initial={{ x: '100%' }}
+      initial={{ x: direction > 0 ? '100%' : '-100%' }}
       animate={{ x: 0 }}
-      exit={{ x: '-100%' }}
+      exit={{ x: direction > 0 ? '-100%' : '100%' }}
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onPointerDown={handlePointerDown}
       style={{ touchAction: 'pan-y' }}
