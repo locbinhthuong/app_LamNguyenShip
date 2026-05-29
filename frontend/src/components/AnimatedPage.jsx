@@ -20,8 +20,8 @@ export default function AnimatedPage({ children }) {
       target.closest('.leaflet-container') ||
       target.closest('input') ||
       target.closest('textarea') ||
-      target.closest('button') ||
-      target.closest('select')
+      target.closest('select') ||
+      target.closest('a')
     ) {
       return;
     }
@@ -72,22 +72,22 @@ export default function AnimatedPage({ children }) {
 
   return (
     <motion.div
-      className="w-full h-full bg-gray-50 overflow-hidden relative"
+      className="absolute top-0 left-0 w-full h-full bg-gray-50 overflow-hidden"
       drag="x"
       dragControls={dragControls}
-      dragListener={false} // Khóa tự động, chỉ kích hoạt khi qua bộ lọc handlePointerDown
-      dragDirectionLock // Nếu đang cuộn dọc thì khóa cứng kéo ngang
+      dragListener={false} 
+      dragDirectionLock 
       dragElastic={0.2}
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
-      initial={{ x: 50, opacity: 0 }}
-      animate={{ x: 0, opacity: 1 }}
-      exit={{ x: -50, opacity: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      initial={{ x: '100%' }}
+      animate={{ x: 0 }}
+      exit={{ x: '-100%' }}
+      transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onPointerDown={handlePointerDown}
+      style={{ touchAction: 'pan-y' }}
     >
-      {/* Vùng này chứa nội dung có thể cuộn dọc thoải mái mà không lo bị kéo ngang */}
-      <div className="w-full h-full overflow-y-auto no-scrollbar pb-24">
+      <div className="w-full h-full overflow-y-auto no-scrollbar pb-24 bg-gray-50">
         {children}
       </div>
     </motion.div>
