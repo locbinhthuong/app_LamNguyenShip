@@ -13,7 +13,8 @@ async function main() {
   const Driver = require('./models/Driver');
   const DebtTransaction = require('./models/DebtTransaction');
 
-  const driver = await Driver.findOne({ phone: '0935278494' }).lean();
+  const phone = process.argv[2] || '0935278494';
+  const driver = await Driver.findOne({ phone }).lean();
   if (!driver) { console.log('Không tìm thấy tài xế!'); process.exit(1); }
 
   console.log(`🚗 ${driver.name} | ${driver.phone}`);
