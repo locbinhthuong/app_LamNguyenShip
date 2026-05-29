@@ -1,6 +1,7 @@
 const Driver = require('../models/Driver');
 const DebtTransaction = require('../models/DebtTransaction');
 const { emitDebtPaymentRequest, emitToDriver } = require('../sockets/index');
+const { getTodayVN } = require('../utils/debtUtils');
 
 const debtController = {
   // Lấy chi tiết ví công nợ và lịch sử giao dịch của 1 tài xế (Admin)
@@ -37,19 +38,27 @@ const debtController = {
       });
 
       let unpaidDays = [];
+      const todayStr = getTodayVN();
       if (driver.walletDebt > 0) {
         let firstDate = null;
+        let firstDateAmount = 0;
         const sortedDates = Object.keys(netDebtByDate).sort((a, b) => new Date(a) - new Date(b));
         for (const dateStr of sortedDates) {
-          if (netDebtByDate[dateStr] > 0) {
+          // CHỈ hiển thị nợ ngày CŨ (trước hôm nay) — nợ hôm nay chưa cần thu
+          if (netDebtByDate[dateStr] > 0 && dateStr < todayStr) {
             firstDate = dateStr;
+            firstDateAmount = Math.round(netDebtByDate[dateStr]);
             break;
           }
         }
-        if (!firstDate) firstDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        
-        unpaidDays = [{ date: firstDate, amount: driver.walletDebt }];
+        if (firstDate) {
+          // Hiển thị đúng số tiền NỢ CŨ, không phải walletDebt tổng
+          unpaidDays = [{ date: firstDate, amount: firstDateAmount }];
+        }
       }
+
+      // Tính nợ hôm nay riêng để Admin tham khảo (chỉ hiển thị, không thu)
+      const todayDebt = Math.max(0, Math.round(netDebtByDate[todayStr] || 0));
 
       res.status(200).json({
         success: true,
@@ -57,6 +66,7 @@ const debtController = {
           driver,
           totalPaid,
           totalUnpaid: driver.walletDebt > 0 ? driver.walletDebt : 0,
+          todayDebt,
           unpaidDays,
           pendingDays: Array.from(pendingDays),
           transactions
@@ -365,19 +375,22 @@ const debtController = {
         }
       });
 
-      const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const todayStr = getTodayVN();
       let unpaidDays = [];
       if (driver.walletDebt > 0) {
         let firstDate = null;
+        let firstDateAmount = 0;
         const sortedDates = Object.keys(netDebtByDate).sort((a, b) => new Date(a) - new Date(b));
         for (const dateStr of sortedDates) {
-          if (netDebtByDate[dateStr] > 0 && dateStr !== todayStr) {
+          // CHỈ hiển thị nợ ngày CŨ (trước hôm nay) — nợ hôm nay chưa cần thu
+          if (netDebtByDate[dateStr] > 0 && dateStr < todayStr) {
             firstDate = dateStr;
+            firstDateAmount = Math.round(netDebtByDate[dateStr]);
             break;
           }
         }
         if (firstDate) {
-          unpaidDays = [{ date: firstDate, amount: driver.walletDebt }];
+          unpaidDays = [{ date: firstDate, amount: firstDateAmount }];
         }
       }
 

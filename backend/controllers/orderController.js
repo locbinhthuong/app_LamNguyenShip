@@ -6,6 +6,7 @@ const { validationResult } = require('express-validator');
 const { emitNewOrder, emitOrderAccepted, emitOrderPickedUp, emitOrderDelivering, emitOrderCompleted, emitOrderCancelled } = require('../sockets/index');
 const { startOfTodayVietnam } = require('../utils/todayVietnam');
 const DebtTransaction = require('../models/DebtTransaction');
+const { checkDriverDebtBlock, getTodayVN } = require('../utils/debtUtils');
 const { sendNotification, sendMultipleNotifications } = require('../utils/notification');
 const Config = require('../models/Config');
 const { getDrivingDistance } = require('../utils/distance');
@@ -233,54 +234,18 @@ const orderController = {
 
       if (forceAssignDriverId) {
         const Driver = require('../models/Driver');
-        const DebtTransaction = require('../models/DebtTransaction');
 
         const driver = await Driver.findById(forceAssignDriverId);
         if (!driver || driver.status !== 'active') {
           return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
         }
 
-        let hasUnpaidDebt = false;
-        if (driver.walletDebt > 0) {
-          const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-          let totalPaid = 0;
-          const grossDebtByDate = {};
-          transactions.forEach(tx => {
-            const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-            if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-              if (tx.amount < 0) {
-                totalPaid += Math.abs(tx.amount);
-              } else if (tx.amount > 0) {
-                if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
-                grossDebtByDate[dateStr] += tx.amount;
-              }
-            }
-          });
-
-          const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
-          for (const dateStr of sortedDates) {
-            if (totalPaid >= grossDebtByDate[dateStr]) {
-              totalPaid -= grossDebtByDate[dateStr];
-              grossDebtByDate[dateStr] = 0;
-            } else {
-              grossDebtByDate[dateStr] -= totalPaid;
-              totalPaid = 0;
-            }
-          }
-
-          const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
-            if (amount > 0 && dateStr !== todayStr) {
-              hasUnpaidDebt = true;
-              break;
-            }
-          }
-        }
-
-        if (hasUnpaidDebt) {
+        // Kiểm tra công nợ (dùng hàm chung — chỉ chặn nợ CŨ, bỏ qua nợ hôm nay)
+        const debtCheck = await checkDriverDebtBlock(forceAssignDriverId);
+        if (debtCheck.blocked) {
           return res.status(400).json({
             success: false,
-            message: 'Tài xế này đang MẮC NỢ CÓ CHƯA THANH TOÁN. Hệ thống đã chặn gán đơn!'
+            message: `Tài xế này đang MẮC NỢ CŨ CHƯA THANH TOÁN (${debtCheck.details.oldDebtDate}). Hệ thống đã chặn gán đơn!`
           });
         }
 
@@ -548,55 +513,18 @@ const orderController = {
       let forceAssignedDriverFcm = null;
       if (forceAssignDriverId && forceAssignDriverId !== orderToUpdate.assignedTo?.toString()) {
         const Driver = require('../models/Driver');
-        const DebtTransaction = require('../models/DebtTransaction');
 
         const driver = await Driver.findById(forceAssignDriverId);
         if (!driver || driver.status !== 'active') {
           return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
         }
 
-        // Tường lửa Đòi Nợ y chang App Tài Xế (Không nể nang)
-        let hasUnpaidDebt = false;
-        if (driver.walletDebt > 0) {
-          const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-          let totalPaid = 0;
-          const grossDebtByDate = {};
-          transactions.forEach(tx => {
-            const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-            if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-              if (tx.amount < 0) {
-                totalPaid += Math.abs(tx.amount);
-              } else if (tx.amount > 0) {
-                if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
-                grossDebtByDate[dateStr] += tx.amount;
-              }
-            }
-          });
-
-          const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
-          for (const dateStr of sortedDates) {
-            if (totalPaid >= grossDebtByDate[dateStr]) {
-              totalPaid -= grossDebtByDate[dateStr];
-              grossDebtByDate[dateStr] = 0;
-            } else {
-              grossDebtByDate[dateStr] -= totalPaid;
-              totalPaid = 0;
-            }
-          }
-
-          const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
-            if (amount > 0 && dateStr !== todayStr) {
-              hasUnpaidDebt = true;
-              break;
-            }
-          }
-        }
-
-        if (hasUnpaidDebt) {
+        // Kiểm tra công nợ (dùng hàm chung — chỉ chặn nợ CŨ, bỏ qua nợ hôm nay)
+        const debtCheck = await checkDriverDebtBlock(forceAssignDriverId);
+        if (debtCheck.blocked) {
           return res.status(400).json({
             success: false,
-            message: 'Tài xế này đang MẮC NỢ CŨ CHƯA THANH TOÁN. Hệ thống đã chặn gán đơn!'
+            message: `Tài xế này đang MẮC NỢ CŨ CHƯA THANH TOÁN (${debtCheck.details.oldDebtDate}). Hệ thống đã chặn gán đơn!`
           });
         }
 
@@ -701,49 +629,12 @@ const orderController = {
         return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
       }
 
-      let hasUnpaidDebt = false;
-
-      if (driver.walletDebt > 0) {
-        // Luôn kiểm tra chi tiết từng ngày (Chỉ chặn nếu có nợ CŨ chưa thanh toán)
-        const transactions = await DebtTransaction.find({ driverId: req.driver._id }).select('amount targetDate createdAt status').lean();
-        let totalPaid = 0;
-        const grossDebtByDate = {};
-        transactions.forEach(tx => {
-          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-            if (tx.amount < 0) {
-              totalPaid += Math.abs(tx.amount);
-            } else if (tx.amount > 0) {
-              if (!grossDebtByDate[dateStr]) grossDebtByDate[dateStr] = 0;
-              grossDebtByDate[dateStr] += tx.amount;
-            }
-          }
-        });
-
-        const sortedDates = Object.keys(grossDebtByDate).sort((a, b) => new Date(a) - new Date(b));
-        for (const dateStr of sortedDates) {
-          if (totalPaid >= grossDebtByDate[dateStr]) {
-            totalPaid -= grossDebtByDate[dateStr];
-            grossDebtByDate[dateStr] = 0;
-          } else {
-            grossDebtByDate[dateStr] -= totalPaid;
-            totalPaid = 0;
-          }
-        }
-
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        for (const [dateStr, amount] of Object.entries(grossDebtByDate)) {
-          if (amount > 0 && dateStr !== todayStr) {
-            hasUnpaidDebt = true;
-            break;
-          }
-        }
-      }
-
-      if (hasUnpaidDebt) {
+      // Kiểm tra công nợ (dùng hàm chung — chỉ chặn nợ CŨ, bỏ qua nợ hôm nay)
+      const debtCheck = await checkDriverDebtBlock(req.driver._id);
+      if (debtCheck.blocked) {
         return res.status(200).json({
           success: false,
-          message: 'Bạn chưa thanh toán công nợ'
+          message: debtCheck.message || 'Bạn chưa thanh toán công nợ'
         });
       }
 
@@ -900,8 +791,8 @@ const orderController = {
       const debtAmount = Math.round(deliveryFee * (commissionRate / 100));
 
       if (debtAmount > 0) {
-        // Lưu Lịch sử Giao Dịch
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }); // 'YYYY-MM-DD' local time VN
+        // Lưu Lịch sử Giao Dịch + Cộng walletDebt NGAY SÁT NHAU (tránh lệch dữ liệu)
+        const todayStr = getTodayVN();
         const debtTx = new DebtTransaction({
           driverId: driver._id,
           orderId: order._id,
@@ -911,11 +802,15 @@ const orderController = {
           targetDate: todayStr
         });
         await debtTx.save();
+        // $inc walletDebt ngay sau khi lưu DebtTransaction thành công
+        await Driver.findByIdAndUpdate(req.driver._id, { $inc: { walletDebt: debtAmount } });
+        console.log(`[DEBT ADD] Tài xế ${driver.name} (${driver._id}): +${debtAmount}đ cho đơn ${order.orderCode}. Ngày: ${todayStr}`);
       }
 
       // Nếu đơn hàng có tiền thưởng, cộng ngay vào Ví
       const adminBonus = order.adminBonus || 0;
-      let walletInc = { 'stats.completedOrders': 1, walletDebt: debtAmount };
+      // walletDebt đã được $inc ở trên rồi, KHÔNG inc lại ở đây
+      let walletInc = { 'stats.completedOrders': 1 };
 
       const WalletTransaction = require('../models/WalletTransaction');
 
