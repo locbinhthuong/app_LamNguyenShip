@@ -2,7 +2,19 @@ import React from 'react';
 import { motion, useDragControls } from 'framer-motion';
 import { useNavigate, useLocation, useNavigationType } from 'react-router-dom';
 
-const DRIVER_TABS = ['/', '/activity', '/wallet', '/profile'];
+const DRIVER_TABS = ['/', '/my-orders', '/earnings'];
+
+const pageVariants = {
+  enter: (direction) => ({
+    x: direction > 0 ? '100%' : '-100%',
+  }),
+  center: {
+    x: 0,
+  },
+  exit: (direction) => ({
+    x: direction > 0 ? '-100%' : '100%',
+  })
+};
 
 export default function AnimatedPage({ children }) {
   const location = useLocation();
@@ -81,9 +93,11 @@ export default function AnimatedPage({ children }) {
       dragElastic={0.2}
       dragConstraints={{ left: 0, right: 0 }}
       onDragEnd={handleDragEnd}
-      initial={{ x: direction > 0 ? '100%' : '-100%' }}
-      animate={{ x: 0 }}
-      exit={{ x: direction > 0 ? '-100%' : '100%' }}
+      custom={direction}
+      variants={pageVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onPointerDown={handlePointerDown}
       style={{ touchAction: 'pan-y' }}
