@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Loader2 } from 'lucide-react';
+import { Search, Loader2, Clock, X } from 'lucide-react';
 
 const formatPhotonAddress = (properties) => {
   if (!properties) return 'Vị trí không xác định';
@@ -46,6 +46,16 @@ export default function AddressAutocompleteInput({
   const [suggestions, setSuggestions] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [recentSearches, setRecentSearches] = useState([]);
+  
+  // Load lịch sử từ localStorage khi mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('aloshipp_recent_addresses');
+      if (saved) setRecentSearches(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
+
   // Default mapCenter (Cần Thơ). Will be updated by GPS shortly after mount.
   const [mapCenter, setMapCenter] = useState([10.045162, 105.746854]);
   const wrapperRef = useRef(null);
@@ -147,7 +157,7 @@ export default function AddressAutocompleteInput({
       
       setSuggestions(unique.slice(0, 7));
       setIsSearching(false);
-    }, 600);
+    }, 1000); // Đã tăng delay lên 1 giây (1000ms) để tiết kiệm API
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
@@ -164,7 +174,26 @@ export default function AddressAutocompleteInput({
     if (onChangeText) onChangeText(selectedText);
     if (onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
     
+    // Lưu vào lịch sử tìm kiếm
+    try {
+      const saved = JSON.parse(localStorage.getItem('aloshipp_recent_addresses') || '[]');
+      // Bỏ địa chỉ bị trùng nếu đã có trong lịch sử
+      const newHistory = saved.filter(h => h.display_name !== selectedText);
+      newHistory.unshift({ display_name: selectedText, lat, lon });
+      const limitedHistory = newHistory.slice(0, 5); // Chỉ lưu 5 địa chỉ gần nhất
+      localStorage.setItem('aloshipp_recent_addresses', JSON.stringify(limitedHistory));
+      setRecentSearches(limitedHistory);
+    } catch (e) {}
+    
     setTimeout(() => { isSelecting.current = false; setIsFocused(false); }, 200);
+  };
+
+  const removeRecentSearch = (e, index) => {
+    e.stopPropagation();
+    const updated = [...recentSearches];
+    updated.splice(index, 1);
+    setRecentSearches(updated);
+    localStorage.setItem('aloshipp_recent_addresses', JSON.stringify(updated));
   };
 
   const handleInputChange = (e) => {
@@ -203,7 +232,7 @@ export default function AddressAutocompleteInput({
         )}
       </div>
 
-      {isFocused && (suggestions.length > 0 || isSearching) && (
+      {isFocused && (
         <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl overflow-hidden z-[9999] flex flex-col animate-[slideDown_0.2s_ease-out]">
           
           {isSearching && (
@@ -212,12 +241,37 @@ export default function AddressAutocompleteInput({
             </div>
           )}
 
-          {/* DANH SÁCH GỢI Ý */}
-          {!isSearching && suggestions.length > 0 && (
+          {/* LỊCH SỬ TÌM KIẾM (Chỉ hiện khi chưa nhập gì và có lịch sử) */}
+          {!isSearching && query.trim().length < 2 && recentSearches.length > 0 && (
+            <div className="max-h-60 overflow-y-auto bg-white">
+              <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
+                Tìm kiếm gần đây
+              </div>
+              {recentSearches.map((item, idx) => (
+                <div 
+                  key={`recent-${idx}`} 
+                  className="p-3 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-b-0 flex gap-3 items-center transition-colors group"
+                  onClick={() => handleSelect(item)}
+                >
+                  <div className="text-slate-400 shrink-0"><Clock size={16} /></div>
+                  <p className="text-xs text-slate-700 font-medium leading-relaxed flex-1 line-clamp-2">{item.display_name}</p>
+                  <button 
+                    onClick={(e) => removeRecentSearch(e, idx)}
+                    className="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* DANH SÁCH GỢI Ý API */}
+          {!isSearching && query.trim().length >= 2 && suggestions.length > 0 && (
             <div className="max-h-60 overflow-y-auto bg-white">
               {suggestions.map((item, idx) => (
                 <div 
-                  key={idx} 
+                  key={`sug-${idx}`} 
                   className="p-3 hover:bg-blue-50 cursor-pointer border-b border-slate-50 last:border-b-0 flex gap-3 items-start transition-colors"
                   onClick={() => handleSelect(item)}
                 >

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { MapPin, X, Target, Loader2, Search, Layers } from 'lucide-react';
+import { MapPin, X, Target, Loader2, Search, Layers, Clock } from 'lucide-react';
 import { Geolocation } from '@capacitor/geolocation';
 
 const formatPhotonAddress = (properties) => {
@@ -59,7 +59,16 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
   const [isDragging, setIsDragging] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
   const [flyPos, setFlyPos] = useState(initialPosition);
-  const [mapType, setMapType] = useState('m'); // 'm' for standard, 'y' for hybrid/satellite
+  const [mapType, setMapType] = useState('m'); // m = standard, s = satellite
+  const [recentSearches, setRecentSearches] = useState([]);
+
+  // Load lịch sử từ localStorage khi mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('aloshipp_recent_addresses');
+      if (saved) setRecentSearches(JSON.parse(saved));
+    } catch (e) {}
+  }, []);
 
   // Search State
   const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
@@ -215,17 +224,36 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
       
       setSuggestions(normalizedSuggestions);
       setIsSearching(false);
-    }, 600);
+    }, 1000); // Tăng delay lên 1 giây để tiết kiệm API
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
 
   const handleSelectSuggestion = (place) => {
     const lon = place.lon;
     const lat = place.lat;
+    
+    // Lưu vào lịch sử tìm kiếm
+    try {
+      const saved = JSON.parse(localStorage.getItem('aloshipp_recent_addresses') || '[]');
+      const newHistory = saved.filter(h => h.display_name !== place.display_name);
+      newHistory.unshift({ display_name: place.display_name, lat, lon });
+      const limitedHistory = newHistory.slice(0, 5);
+      localStorage.setItem('aloshipp_recent_addresses', JSON.stringify(limitedHistory));
+      setRecentSearches(limitedHistory);
+    } catch (e) {}
+
     setFlyPos([lat, lon]);
     setMapCenter([lat, lon]);
     setSearchQuery(''); // Ẩn suggestions menu đi
     setSuggestions([]);
+  };
+
+  const removeRecentSearch = (e, index) => {
+    e.stopPropagation();
+    const updated = [...recentSearches];
+    updated.splice(index, 1);
+    setRecentSearches(updated);
+    localStorage.setItem('aloshipp_recent_addresses', JSON.stringify(updated));
   };
 
   // Xử lý Reverse Geocoding khi map dừng di chuyển
@@ -356,6 +384,31 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
               >
                 <MapPin size={18} className="text-gray-400 mt-0.5 flex-shrink-0" />
                 <p className="text-sm text-gray-700 font-medium line-clamp-2 leading-relaxed">{p.display_name}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* LỊCH SỬ TÌM KIẾM (Chỉ hiện khi focus vào ô tìm kiếm nhưng chưa gõ) */}
+        {!isSearching && searchQuery.trim().length < 2 && recentSearches.length > 0 && (
+          <div className="absolute left-4 right-4 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 max-h-60 overflow-y-auto z-[2000] divide-y divide-gray-50">
+            <div className="px-4 py-2 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50">
+              Tìm kiếm gần đây
+            </div>
+            {recentSearches.map((p, index) => (
+              <div 
+                key={`recent-${index}`} 
+                className="flex items-center gap-3 p-3 active:bg-blue-50 hover:bg-gray-50 cursor-pointer group"
+                onClick={() => handleSelectSuggestion(p)}
+              >
+                <Clock size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-gray-700 font-medium line-clamp-2 flex-1 leading-relaxed">{p.display_name}</p>
+                <button 
+                  onClick={(e) => removeRecentSearch(e, index)}
+                  className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all"
+                >
+                  <X size={14} />
+                </button>
               </div>
             ))}
           </div>
