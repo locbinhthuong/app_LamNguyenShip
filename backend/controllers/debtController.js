@@ -155,24 +155,48 @@ const debtController = {
 
       if (!amount || amount <= 0) return res.status(400).json({ success: false, message: 'Số tiền nạp không hợp lệ' });
 
-      // Lưu giao dịch
+      const finalTargetDate = targetDate || getTodayVN();
+
+      // CHỐNG TRÙNG: Nếu tài xế đã có PENDING cho ngày này → duyệt luôn cái PENDING đó thay vì tạo mới
+      const existingPending = await DebtTransaction.findOne({
+        driverId,
+        type: 'PAYMENT',
+        status: 'PENDING',
+        targetDate: finalTargetDate
+      });
+
+      if (existingPending) {
+        // Duyệt PENDING có sẵn thay vì tạo mới (tránh trừ tiền 2 lần)
+        existingPending.status = 'SUCCESS';
+        existingPending.createdByAdminId = adminId;
+        existingPending.description = (existingPending.description || '') + ' [Admin duyệt qua nút Thu Nợ]';
+        await existingPending.save();
+
+        const dr = await Driver.findByIdAndUpdate(driverId, { $inc: { walletDebt: existingPending.amount } }, { new: true });
+        if (req.io) emitToDriver(req.io, driverId, 'debt_updated', { debt: dr.walletDebt, message: 'Thanh toán THÀNH CÔNG!' });
+
+        console.log(`[DEBT] Admin duyệt PENDING có sẵn cho tài xế ${driverId}, ngày ${finalTargetDate}, số tiền ${existingPending.amount}đ`);
+        return res.status(200).json({ success: true, message: `Đã duyệt yêu cầu thanh toán PENDING có sẵn (${Math.abs(existingPending.amount).toLocaleString()}đ)`, data: dr.walletDebt });
+      }
+
+      // Không có PENDING → tạo mới (Admin thu thủ công)
       const tx = new DebtTransaction({
         driverId,
         type: 'PAYMENT',
-        amount: -Number(amount), // Âm vì đây là khoản trả
-        description: description || `Thu tiền nợ ngày ${targetDate || 'cũ'}`,
-        targetDate: targetDate || new Date().toLocaleDateString('en-CA'),
+        amount: -Number(amount),
+        description: description || `Thu tiền nợ ngày ${finalTargetDate}`,
+        targetDate: finalTargetDate,
         createdByAdminId: adminId
       });
       await tx.save();
 
-      // Cập nhật ví nợ tài xế
       const dr = await Driver.findByIdAndUpdate(driverId, { $inc: { walletDebt: -Number(amount) } }, { new: true });
-
       if (req.io) emitToDriver(req.io, driverId, 'debt_updated', { debt: dr.walletDebt });
 
+      console.log(`[DEBT] Admin thu thủ công tài xế ${driverId}, ngày ${finalTargetDate}, số tiền -${amount}đ`);
       res.status(201).json({ success: true, message: 'Thu tiền Công Nợ Thành Công!', data: dr.walletDebt });
     } catch (e) {
+      console.error('Lỗi addPayment:', e);
       res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   },
@@ -311,21 +335,36 @@ const debtController = {
       const driver = await Driver.findById(driverId).select('name phone driverCode');
       if (!driver) return res.status(404).json({ success: false, message: 'Tài xế không tồn tại' });
 
-      // Chống spam: Kiểm tra xem tài xế đã có lệnh PENDING nào chưa
+      const finalTargetDate = targetDate || getTodayVN();
+
+      // CHỐNG SPAM 1: Kiểm tra xem tài xế đã có lệnh PENDING nào chưa (bất kỳ ngày nào)
       const existingPending = await DebtTransaction.findOne({ driverId, type: 'PAYMENT', status: 'PENDING' });
       if (existingPending) {
         return res.status(400).json({ success: false, message: 'Bạn đang có một yêu cầu thanh toán chờ duyệt. Vui lòng đợi Admin xử lý trước khi gửi yêu cầu mới.' });
       }
 
+      // CHỐNG TRÙNG 2: Kiểm tra xem ngày này đã có thanh toán SUCCESS rồi chưa
+      const alreadyPaid = await DebtTransaction.findOne({
+        driverId,
+        type: 'PAYMENT',
+        status: 'SUCCESS',
+        targetDate: finalTargetDate,
+        amount: { $lt: 0 } // Chỉ kiểm tra khoản trả (số âm)
+      });
+      if (alreadyPaid) {
+        return res.status(400).json({ success: false, message: `Bạn đã thanh toán cho ngày ${finalTargetDate} rồi. Không thể gửi lại.` });
+      }
+
       const tx = new DebtTransaction({
         driverId,
         type: 'PAYMENT',
-        amount: -Number(amount), // Âm là khoản nạp/thanh toán nợ. Khi pending chưa trừ ví.
+        amount: -Number(amount),
         status: 'PENDING',
-        targetDate: targetDate || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' }),
-        description: `Yêu cầu xác nhận chuyển khoản cho nợ ngày ${targetDate || 'cũ'}`
+        targetDate: finalTargetDate,
+        description: `Yêu cầu xác nhận chuyển khoản cho nợ ngày ${finalTargetDate}`
       });
       await tx.save();
+      console.log(`[DEBT REQUEST] Tài xế ${driver.name} (${driverId}): yêu cầu thanh toán ${amount}đ cho ngày ${finalTargetDate}`);
 
       // Phát lệnh hú còi lên tất cả socket Admin
       const payload = {

@@ -65,7 +65,7 @@ export default function Earnings() {
   }, [showQRModal]);
 
   const handleRequestPayment = async () => {
-    if (!selectedDebt) return;
+    if (!selectedDebt || isRequesting) return;
     try {
       setIsRequesting(true);
       const res = await requestDebtPayment(driver._id, selectedDebt.amount, selectedDebt.date);
@@ -75,9 +75,11 @@ export default function Earnings() {
         fetchEarnings(); // Refresh UI to change to PENDING status
       }
     } catch (error) {
-      alert('Lỗi khi gửi yêu cầu. Vui lòng thử lại sau.');
+      const msg = error?.response?.data?.message || 'Lỗi khi gửi yêu cầu. Vui lòng thử lại sau.';
+      alert('❌ ' + msg);
     } finally {
-      setIsRequesting(false);
+      // Cooldown 3 giây chống spam
+      setTimeout(() => setIsRequesting(false), 3000);
     }
   };
 
