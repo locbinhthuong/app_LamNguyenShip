@@ -110,8 +110,6 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
               }
             }
           }
-            }
-          }
         } finally {
           setIsSearching(false);
         }
