@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">LamNguyenDriver</string>
-    <string name="title_activity_main">LamNguyenDriver</string>
+    <string name="app_name">AloShipp Driver</string>
+    <string name="title_activity_main">AloShipp Driver</string>
     <string name="package_name">vn.lamnguyenship.driver</string>
     <string name="custom_url_scheme">vn.lamnguyenship.driver</string>
 </resources>

@@ -196,6 +196,8 @@ export default function Home() {
   const watchIdRef = useRef(null);
   const lastLocationEmitRef = useRef(0); // Bộ đếm thời gian gửi GPS
   const [isToggling, setIsToggling] = useState(false); // Ngăn chống spam nút
+  const [showLocationDisclosure, setShowLocationDisclosure] = useState(false);
+  const [pendingGpsAction, setPendingGpsAction] = useState(null); // Lưu hành động xin quyền GPS đang chờ duyệt
 
   // WAKELOCK (Chống tắt màn hình)
   const wakeLockRef = useRef(null);
@@ -234,6 +236,31 @@ export default function Home() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [driver?.isOnline]);
+
+  // XỬ LÝ CHÍNH SÁCH GOOGLE: PROMINENT DISCLOSURE
+  const requestGpsWithDisclosure = (actionCallback) => {
+    if (localStorage.getItem('location_disclosure_accepted') === 'true') {
+      actionCallback();
+    } else {
+      setPendingGpsAction(() => actionCallback);
+      setShowLocationDisclosure(true);
+    }
+  };
+
+  const handleAcceptDisclosure = () => {
+    localStorage.setItem('location_disclosure_accepted', 'true');
+    setShowLocationDisclosure(false);
+    if (pendingGpsAction) {
+      pendingGpsAction();
+      setPendingGpsAction(null);
+    }
+  };
+
+  const handleDeclineDisclosure = () => {
+    setShowLocationDisclosure(false);
+    setPendingGpsAction(null);
+    showNotification('Bạn cần cấp quyền vị trí để nhận và giao đơn hàng', 'error');
+  };
 
   // VŨ KHÍ HẠNG NẶNG: Định vị Background Ngầm (Chỉ kích hoạt nếu là App Native Android/iOS, Web thì xài GPS thường)
   const startGpsTracking = (onSuccess, onError) => {
@@ -308,31 +335,35 @@ export default function Home() {
       return;
     }
 
-    setGpsStatus('FINDING');
-    startGpsTracking(
-      (pos) => {
-        setGpsStatus('TRACKING');
-        requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
-        
-        const now = Date.now();
-        // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
-        if (now - lastLocationEmitRef.current >= 6000) {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
+    const executeGps = () => {
+      setGpsStatus('FINDING');
+      startGpsTracking(
+        (pos) => {
+          setGpsStatus('TRACKING');
+          requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
           
-          if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
-            window.driverSocket.emit('update_location', { lat, lng });
-          } else {
-            updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
+          const now = Date.now();
+          // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
+          if (now - lastLocationEmitRef.current >= 6000) {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+            
+            if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
+              window.driverSocket.emit('update_location', { lat, lng });
+            } else {
+              updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
+            }
+            lastLocationEmitRef.current = now;
           }
-          lastLocationEmitRef.current = now;
+        },
+        (err) => {
+          setGpsStatus('ERROR');
+          showNotification('Lỗi cấp quyền: Cần bật Vị Trí (Location/Luôn Luôn)!', 'error');
         }
-      },
-      (err) => {
-        setGpsStatus('ERROR');
-        showNotification('Lỗi cấp quyền: Cần bật Vị Trí (Location/Luôn Luôn)!', 'error');
-      }
-    );
+      );
+    };
+
+    requestGpsWithDisclosure(executeGps);
   };
 
   // Tự động quản lý Bật/Tắt định vị dựa theo trạng thái Online của Tài Xế
@@ -343,36 +374,42 @@ export default function Home() {
         setGpsStatus('ERROR');
         return;
       }
-      setGpsStatus('FINDING');
+      
+      const executeAutoGps = () => {
+        setGpsStatus('FINDING');
 
-      const handleSuccess = (pos) => {
-        setGpsStatus('TRACKING');
-        requestWakeLock(); // Ép sáng màn hình
-        
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
-        
-        if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
-          window.driverSocket.emit('update_location', { lat, lng });
-        } else {
-          updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
+        const handleSuccess = (pos) => {
+          setGpsStatus('TRACKING');
+          requestWakeLock(); // Ép sáng màn hình
+          
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          
+          if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
+            window.driverSocket.emit('update_location', { lat, lng });
+          } else {
+            updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
+          }
+        };
+
+        const handleError = (err) => {
+          console.error("GPS Error:", err);
+          setGpsStatus('ERROR');
+        };
+
+        // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên (khắc phục lỗi xoay hoài lúc mới load trên web)
+        if (!Capacitor.isNativePlatform()) {
+          navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
+            enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
+          });
         }
+
+        // Sau đó khởi động máy quét liên tục Chạy Ngầm (Native) hoặc Web
+        startGpsTracking(handleSuccess, handleError);
       };
 
-      const handleError = (err) => {
-        console.error("GPS Error:", err);
-        setGpsStatus('ERROR');
-      };
-
-      // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên (khắc phục lỗi xoay hoài lúc mới load trên web)
-      if (!Capacitor.isNativePlatform()) {
-        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
-          enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
-        });
-      }
-
-      // Sau đó khởi động máy quét liên tục Chạy Ngầm (Native) hoặc Web
-      startGpsTracking(handleSuccess, handleError);
+      // Chỉ hiển thị hộp thoại nếu họ vừa bấm Online hoặc app khởi động lúc họ đang online
+      requestGpsWithDisclosure(executeAutoGps);
     } 
     // 2. Tự động tắt GPS, huỷ vệ tinh nếu chuyển sang trạng thái Offline
     else if (!driver?.isOnline && gpsStatus !== 'OFF') {
@@ -924,6 +961,37 @@ export default function Home() {
         cancelText="Đóng"
         isDestructive={false}
       />
+
+      {/* PROMINENT DISCLOSURE MODAL FOR GOOGLE PLAY */}
+      {showLocationDisclosure && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-fade-in-up">
+            <div className="bg-blue-600 p-4 text-center">
+              <MapPin size={48} className="mx-auto text-white mb-2" />
+              <h3 className="text-lg font-black text-white uppercase tracking-wide">Yêu Cầu Quyền Vị Trí</h3>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-slate-700 leading-relaxed mb-4 text-justify font-medium">
+                Ứng dụng <b>AloShipp Driver</b> thu thập dữ liệu vị trí để cho phép hệ thống điều phối đơn hàng, tính toán quãng đường và theo dõi lộ trình giao hàng <b className="text-blue-600">ngay cả khi ứng dụng bị đóng hoặc không sử dụng.</b>
+              </p>
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={handleDeclineDisclosure}
+                  className="flex-1 py-3 px-4 bg-slate-100 text-slate-600 font-bold rounded-xl active:bg-slate-200 transition-colors"
+                >
+                  Từ chối
+                </button>
+                <button
+                  onClick={handleAcceptDisclosure}
+                  className="flex-1 py-3 px-4 bg-blue-600 text-white font-bold rounded-xl active:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30"
+                >
+                  Đồng ý
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -29,9 +29,7 @@
         </provider>
 
         <!-- Google Play Developer Verification Token -->
-        <meta-data
-            android:name="com.android.vending.developer.id.token"
-            android:value="D37CF3TWCBLVOAAAAAAAAAAAAA" />
+        <meta-data android:name="com.android.vending.developer.id.token" android:value="D37CF3TWCBLVOAAAAAAAAAAAAA" />
     </application>
 
     <!-- Permissions -->
