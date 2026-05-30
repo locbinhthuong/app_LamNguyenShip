@@ -258,7 +258,7 @@ function AppContent() {
       });
       window.driverSocket = socketRef.current;
       
-      socketRef.current.emit('driver_join', driver._id);
+      socketRef.current.emit('driver_join', driver._id || driver.id);
 
       socketRef.current.on('force_logout', (data) => {
         setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');

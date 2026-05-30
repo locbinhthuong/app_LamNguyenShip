@@ -699,7 +699,7 @@ const orderController = {
       if (!order) {
         return res.status(400).json({
           success: false,
-          message: 'Không thể cập nhật trạng thái'
+          message: 'Đơn hàng không còn hợp lệ (có thể đã bị huỷ hoặc trạng thái đã thay đổi).'
         });
       }
 
@@ -737,7 +737,7 @@ const orderController = {
       if (!order) {
         return res.status(400).json({
           success: false,
-          message: 'Không thể cập nhật trạng thái'
+          message: 'Đơn hàng không còn hợp lệ (có thể đã bị huỷ hoặc trạng thái đã thay đổi).'
         });
       }
 

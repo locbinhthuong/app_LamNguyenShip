@@ -68,7 +68,7 @@ export default function Earnings() {
     if (!selectedDebt || isRequesting) return;
     try {
       setIsRequesting(true);
-      const res = await requestDebtPayment(driver._id, selectedDebt.amount, selectedDebt.date);
+      const res = await requestDebtPayment(driver._id || driver.id, selectedDebt.amount, selectedDebt.date);
       if (res.success) {
         alert('✅ Đã gửi yêu cầu xác nhận bù điểm đến Tổng đài. Vui lòng chờ Sếp kiểm tra.');
         setShowQRModal(false);
