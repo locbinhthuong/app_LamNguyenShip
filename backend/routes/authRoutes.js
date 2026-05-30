@@ -28,6 +28,9 @@ router.put('/driver/me', verifyToken, onlyDriver, authController.updateOwnProfil
 // DELETE /api/auth/driver/me
 router.delete('/driver/me', verifyToken, onlyDriver, authController.deleteDriverAccount);
 
+// PUT /api/auth/driver/location - Cập nhật vị trí GPS bằng API
+router.put('/driver/location', verifyToken, onlyDriver, authController.updateDriverLocation);
+
 // PUT /api/auth/driver/status
 router.put('/driver/status', verifyToken, onlyDriver, authController.updateDriverStatus);
 

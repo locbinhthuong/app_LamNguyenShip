@@ -65,6 +65,11 @@ export const updateDriverStatus = async (isOnline, lat, lng) => {
   return response.data;
 };
 
+export const updateDriverLocationApi = async (lat, lng) => {
+  const response = await api.put('/api/auth/driver/location', { lat, lng });
+  return response.data;
+};
+
 export const updateMyProfile = async (profileData) => {
   const response = await api.put('/api/auth/driver/me', profileData);
   return response.data;

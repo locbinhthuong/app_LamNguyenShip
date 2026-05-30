@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
-import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue } from '../services/api';
+import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi } from '../services/api';
 import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass } from 'lucide-react';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
@@ -313,16 +313,19 @@ export default function Home() {
       (pos) => {
         setGpsStatus('TRACKING');
         requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
-        if (window.driverSocket && window.driverSocket.connected) {
-          const now = Date.now();
-          // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
-          if (now - lastLocationEmitRef.current >= 6000) {
-            window.driverSocket.emit('update_location', {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude
-            });
-            lastLocationEmitRef.current = now;
+        
+        const now = Date.now();
+        // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
+        if (now - lastLocationEmitRef.current >= 6000) {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          
+          if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
+            window.driverSocket.emit('update_location', { lat, lng });
+          } else {
+            updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
           }
+          lastLocationEmitRef.current = now;
         }
       },
       (err) => {
@@ -345,11 +348,14 @@ export default function Home() {
       const handleSuccess = (pos) => {
         setGpsStatus('TRACKING');
         requestWakeLock(); // Ép sáng màn hình
-        if (window.driverSocket && window.driverSocket.connected) {
-          window.driverSocket.emit('update_location', {
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude
-          });
+        
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        
+        if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
+          window.driverSocket.emit('update_location', { lat, lng });
+        } else {
+          updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
         }
       };
 

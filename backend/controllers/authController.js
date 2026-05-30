@@ -265,6 +265,33 @@ const authController = {
     }
   },
 
+  // PUT /api/auth/driver/location - Cập nhật vị trí tài xế qua API
+  updateDriverLocation: async (req, res) => {
+    try {
+      const { lat, lng } = req.body;
+      const driverId = req.driver._id;
+
+      const driver = await Driver.findByIdAndUpdate(driverId, {
+        currentLocation: { lat, lng, updatedAt: new Date() }
+      }, { new: true });
+      
+      if (req.io && driver) {
+        req.io.to('admins').emit('driver_location_update', {
+          driverId: driverId,
+          name: driver.name,
+          lat,
+          lng,
+          timestamp: Date.now()
+        });
+      }
+
+      res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error updateDriverLocation API:', error);
+      res.status(500).json({ success: false });
+    }
+  },
+
   // DELETE /api/auth/driver/me - Yêu cầu xóa tài khoản tài xế
   deleteDriverAccount: async (req, res) => {
     try {
