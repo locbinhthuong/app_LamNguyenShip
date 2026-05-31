@@ -72,13 +72,7 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Tăng giới hạn chống Spam (2000req / 15phut) khi dùng realtime mượt
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100000, // Tăng limit lên rất lớn để không bị block
-  message: { success: false, message: 'Quá nhiều yêu cầu, vui lòng thử lại sau.' }
-});
-app.use('/api/', apiLimiter);
+// Đã gỡ bỏ rate limit toàn cục để không ảnh hưởng đăng nhập
 
 // ==================== BODY PARSER ====================
 app.use(compression());

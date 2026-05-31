@@ -155,9 +155,6 @@ export default function Login() {
           </form>
         </div>
 
-        <div className="text-center mt-6 text-slate-500 text-sm">
-          <p>Tài khoản demo: 0909123456 / admin123</p>
-        </div>
       </div>
     </div>
   );
