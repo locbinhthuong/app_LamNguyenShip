@@ -24,30 +24,49 @@ export default function OrderDetail() {
   const [showToast, setShowToast] = useState(null);
 
   // Logic vuốt màn hình có hiệu ứng
-  const [touchStart, setTouchStart] = useState(null);
+  const [touchStart, setTouchStart] = useState({ x: null, y: null });
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
 
   const handleTouchStart = (e) => {
-    // Chỉ kích hoạt khi vuốt từ sát mép trái (< 50px) để không ảnh hưởng cuộn trang
-    if (e.targetTouches[0].clientX < 50) {
-      setTouchStart(e.targetTouches[0].clientX);
-      setSwipeOffset(0);
-    }
+    setTouchStart({
+      x: e.targetTouches[0].clientX,
+      y: e.targetTouches[0].clientY
+    });
+    setSwipeOffset(0);
+    setIsSwiping(false);
   };
 
   const handleTouchMove = (e) => {
-    if (touchStart === null) return;
-    const currentX = e.targetTouches[0].clientX;
-    const distance = currentX - touchStart;
+    if (touchStart.x === null) return;
     
-    // Chỉ kéo sang phải
-    if (distance > 0) {
-      setSwipeOffset(distance);
+    const currentX = e.targetTouches[0].clientX;
+    const currentY = e.targetTouches[0].clientY;
+    
+    const deltaX = currentX - touchStart.x;
+    const deltaY = currentY - touchStart.y;
+    
+    // Xác định chủ đích người dùng (vuốt ngang hay cuộn dọc)
+    if (!isSwiping) {
+      // Nếu có xu hướng cuộn dọc rõ rệt hơn vuốt ngang -> Hủy theo dõi vuốt
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        setTouchStart({ x: null, y: null });
+        return;
+      }
+      // Nếu vuốt ngang rõ rệt -> Khóa là đang vuốt ngang
+      if (Math.abs(deltaX) > 10) {
+        setIsSwiping(true);
+      }
+    }
+    
+    // Chỉ kích hoạt khi đã xác nhận vuốt ngang và hướng sang phải
+    if (isSwiping && deltaX > 0) {
+      setSwipeOffset(deltaX);
     }
   };
 
   const handleTouchEnd = () => {
-    if (touchStart === null) return;
+    if (touchStart.x === null) return;
     
     // Kéo > 80px thì chuyển trang, không thì hồi lại
     if (swipeOffset > 80) {
@@ -55,7 +74,8 @@ export default function OrderDetail() {
     } else {
       setSwipeOffset(0);
     }
-    setTouchStart(null);
+    setTouchStart({ x: null, y: null });
+    setIsSwiping(false);
   };
 
   const showNotification = (message, type = 'success') => {
@@ -195,7 +215,7 @@ export default function OrderDetail() {
       onTouchEnd={handleTouchEnd}
       style={{
         transform: `translateX(${swipeOffset}px)`,
-        transition: touchStart !== null ? 'none' : 'transform 0.2s ease-out'
+        transition: touchStart.x !== null ? 'none' : 'transform 0.2s ease-out'
       }}
     >
       {showToast && (
