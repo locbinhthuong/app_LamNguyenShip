@@ -1,6 +1,6 @@
 {
   "appId": "vn.lamnguyenship.driver",
-  "appName": "LamNguyenDriver",
+  "appName": "AloShipp Driver",
   "webDir": "dist",
   "ios": {
     "allowsBackForwardNavigationGestures": true
