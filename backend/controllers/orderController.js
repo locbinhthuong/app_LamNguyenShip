@@ -364,7 +364,7 @@ const orderController = {
         financialDetails: financialDetails || {},
         codAmount: codAmount || 0,
         deliveryFee: req.body.deliveryFee || 0,
-        status: (req.body.deliveryFee > 0) ? 'PENDING' : 'DRAFT', // Nếu đã có phí ship tự động thì đẩy luôn cho tài xế, nếu không thì chờ Admin
+        status: 'DRAFT', // Mặc định luôn là DRAFT để bắt buộc Admin duyệt và Treo đơn
         ipAddress: req.ip
       });
 
@@ -439,6 +439,9 @@ const orderController = {
       if (!orderToUpdate) {
         return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
       }
+
+      // Đánh dấu là Admin đã xem/chỉnh sửa đơn này
+      orderToUpdate.adminReviewed = true;
 
       // 1. CẬP NHẬT TRẠNG THÁI (STATUS) THEO YÊU CẦU
       let isDraftToPending = false;
@@ -998,7 +1001,7 @@ const orderController = {
       }
 
       const order = await Order.findOneAndUpdate(
-        { _id: id, customerId: req.customer._id, status: 'DRAFT' },
+        { _id: id, customerId: req.customer._id, status: 'DRAFT', adminReviewed: true },
         { status: 'PENDING' },
         { new: true }
       );

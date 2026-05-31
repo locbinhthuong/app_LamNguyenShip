@@ -115,6 +115,10 @@ const orderSchema = new mongoose.Schema({
     default: 'PENDING',
     index: true
   },
+  adminReviewed: {
+    type: Boolean,
+    default: false
+  },
 
   // Thông tin tài xế
   assignedTo: {

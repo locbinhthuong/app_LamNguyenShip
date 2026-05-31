@@ -166,7 +166,7 @@ export default function OrderDetail() {
                         {step.label}
                       </p>
                       {isCurrent && order.status === 'PENDING' && <p className="text-[10px] text-slate-500">Đang tìm tài xế gần nhất...</p>}
-                      {isCurrent && order.status === 'DRAFT' && <p className="text-[10px] text-slate-500">Tổng đài đang tính toán cước phí...</p>}
+                      {isCurrent && order.status === 'DRAFT' && <p className="text-[10px] text-slate-500">Đang chờ tổng đài xét duyệt...</p>}
                     </div>
                   </div>
                 )
@@ -361,12 +361,18 @@ export default function OrderDetail() {
               <button 
                 onClick={handleCancelOrder}
                 disabled={loading}
-                className={`w-full bg-red-50 text-red-600 font-bold border border-red-200 py-3.5 rounded-2xl active:bg-red-100 transition-colors ${order.status === 'DRAFT' && order.deliveryFee > 0 ? '' : 'col-span-2'}`}
+                className={`w-full bg-red-50 text-red-600 font-bold border border-red-200 py-3.5 rounded-2xl active:bg-red-100 transition-colors ${order.status === 'DRAFT' && order.deliveryFee > 0 && order.adminReviewed ? '' : 'col-span-2'}`}
               >
                 HỦY ĐƠN HÀNG
               </button>
               
-              {order.status === 'DRAFT' && order.deliveryFee > 0 && (
+              {order.status === 'DRAFT' && order.deliveryFee > 0 && !order.adminReviewed && (
+                <div className="w-full bg-orange-50 text-orange-600 font-bold border border-orange-200 py-3.5 rounded-2xl text-center col-span-2">
+                  ĐANG CHỜ TỔNG ĐÀI XÉT DUYỆT...
+                </div>
+              )}
+
+              {order.status === 'DRAFT' && order.deliveryFee > 0 && order.adminReviewed && (
                 <button 
                   onClick={async () => {
                     if (window.confirm('Xác nhận đặt xe/giao hàng với cước phí này?')) {
@@ -384,9 +390,9 @@ export default function OrderDetail() {
                     }
                   }}
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                  className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:bg-blue-700 transition-colors shadow-lg shadow-blue-200 col-span-2"
                 >
-                  XÁC NHẬN
+                  XÁC NHẬN ĐẶT XE VỚI CƯỚC PHÍ NÀY
                 </button>
               )}
             </div>
