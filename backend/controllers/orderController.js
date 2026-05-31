@@ -638,6 +638,19 @@ const orderController = {
         });
       }
 
+      // KIỂM TRA SỐ LƯỢNG ĐƠN HÀNG ĐANG THỰC HIỆN
+      const activeOrdersCount = await Order.countDocuments({
+        assignedTo: req.driver._id,
+        status: { $in: ['ACCEPTED', 'PICKED_UP', 'DELIVERING'] }
+      });
+
+      if (activeOrdersCount >= 3) {
+        return res.status(200).json({
+          success: false,
+          message: 'hiện tại bạn đang có 3 đơn hàng hãy đảm bảo thời gian giao hàng'
+        });
+      }
+
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
       const order = await Order.findOneAndUpdate(
         { _id: id, status: 'PENDING' },

@@ -23,6 +23,41 @@ export default function OrderDetail() {
   const [actionLoading, setActionLoading] = useState(false);
   const [showToast, setShowToast] = useState(null);
 
+  // Logic vuốt màn hình có hiệu ứng
+  const [touchStart, setTouchStart] = useState(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+
+  const handleTouchStart = (e) => {
+    // Chỉ kích hoạt khi vuốt từ sát mép trái (< 50px) để không ảnh hưởng cuộn trang
+    if (e.targetTouches[0].clientX < 50) {
+      setTouchStart(e.targetTouches[0].clientX);
+      setSwipeOffset(0);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (touchStart === null) return;
+    const currentX = e.targetTouches[0].clientX;
+    const distance = currentX - touchStart;
+    
+    // Chỉ kéo sang phải
+    if (distance > 0) {
+      setSwipeOffset(distance);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart === null) return;
+    
+    // Kéo > 80px thì chuyển trang, không thì hồi lại
+    if (swipeOffset > 80) {
+      navigate(-1);
+    } else {
+      setSwipeOffset(0);
+    }
+    setTouchStart(null);
+  };
+
   const showNotification = (message, type = 'success') => {
     setShowToast({ message, type });
     setTimeout(() => setShowToast(null), 3000);
@@ -153,7 +188,16 @@ export default function OrderDetail() {
   if (!order) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-36 sm:pb-40">
+    <div 
+      className="min-h-screen bg-slate-50 pb-36 sm:pb-40"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      style={{
+        transform: `translateX(${swipeOffset}px)`,
+        transition: touchStart !== null ? 'none' : 'transform 0.2s ease-out'
+      }}
+    >
       {showToast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
           showToast.type === 'error' ? 'bg-red-500' : 'bg-green-500'
