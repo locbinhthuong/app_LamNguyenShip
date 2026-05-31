@@ -21,75 +21,84 @@ const revenueController = {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const startOfYear = new Date(today.getFullYear(), 0, 1);
 
-      // 1. Lấy tất cả đơn hoàn thành (Có doanh thu thực)
-      const completedOrders = await Order.find({ status: 'COMPLETED' })
-        .populate('assignedTo', 'name phone')
-        .sort({ createdAt: -1 });
+      // Dùng Aggregation để đẩy tải tính toán xuống MongoDB (tránh tràn RAM)
+      const statsAgg = await Order.aggregate([
+        { $match: { status: 'COMPLETED' } },
+        {
+          $project: {
+            fee: { $ifNull: ['$deliveryFee', 0] },
+            bonus: { $add: [{ $ifNull: ['$adminBonus', 0] }, { $ifNull: ['$kpiBonus', 0] }] },
+            date: { $ifNull: ['$deliveredAt', '$updatedAt'] },
+            driverId: '$assignedTo'
+          }
+        },
+        {
+          $group: {
+            _id: '$driverId',
+            totalOrders: { $sum: 1 },
+            totalFee: { $sum: '$fee' },
+            totalBonus: { $sum: '$bonus' },
+            todayOrders: { $sum: { $cond: [{ $and: [{ $gte: ['$date', today] }, { $lte: ['$date', endOfDay] }] }, 1, 0] } },
+            todayFee: { $sum: { $cond: [{ $and: [{ $gte: ['$date', today] }, { $lte: ['$date', endOfDay] }] }, '$fee', 0] } },
+            todayBonus: { $sum: { $cond: [{ $and: [{ $gte: ['$date', today] }, { $lte: ['$date', endOfDay] }] }, '$bonus', 0] } },
+            weekOrders: { $sum: { $cond: [{ $gte: ['$date', startOfWeek] }, 1, 0] } },
+            weekFee: { $sum: { $cond: [{ $gte: ['$date', startOfWeek] }, '$fee', 0] } },
+            weekBonus: { $sum: { $cond: [{ $gte: ['$date', startOfWeek] }, '$bonus', 0] } },
+            monthOrders: { $sum: { $cond: [{ $gte: ['$date', startOfMonth] }, 1, 0] } },
+            monthFee: { $sum: { $cond: [{ $gte: ['$date', startOfMonth] }, '$fee', 0] } },
+            monthBonus: { $sum: { $cond: [{ $gte: ['$date', startOfMonth] }, '$bonus', 0] } },
+            yearOrders: { $sum: { $cond: [{ $gte: ['$date', startOfYear] }, 1, 0] } },
+            yearFee: { $sum: { $cond: [{ $gte: ['$date', startOfYear] }, '$fee', 0] } },
+            yearBonus: { $sum: { $cond: [{ $gte: ['$date', startOfYear] }, '$bonus', 0] } }
+          }
+        }
+      ]);
 
       let totalRevenue = 0;
       let dailyRevenue = 0;
       let weeklyRevenue = 0;
       let monthlyRevenue = 0;
 
-      const driverDebts = {}; 
+      // Lấy danh sách ID tài xế để truy vấn thông tin
+      const driverIds = statsAgg.map(s => s._id).filter(id => id != null);
+      const Driver = require('../models/Driver');
+      const driversInfo = await Driver.find({ _id: { $in: driverIds } }).select('name phone walletDebt');
+      const driverMap = {};
+      driversInfo.forEach(d => {
+        driverMap[d._id.toString()] = d;
+      });
 
-      // 2. Chạy vòng lặp cộng dồn (Do dữ liệu MongoDB đã cache in-memory nhanh)
-      completedOrders.forEach(order => {
-        const fee = order.deliveryFee || 0;
-        const bonus = (order.adminBonus || 0) + (order.kpiBonus || 0);
-        const date = order.deliveredAt || order.updatedAt;
-        
-        // Cộng dồn thống kê Admin
-        totalRevenue += fee;
-        if (date >= today && date <= endOfDay) dailyRevenue += fee;
-        if (date >= startOfWeek) weeklyRevenue += fee;
-        if (date >= startOfMonth) monthlyRevenue += fee;
+      const driversResult = statsAgg.filter(s => s._id != null).map(stat => {
+        const dId = stat._id.toString();
+        const info = driverMap[dId];
 
-        // Quản lý Công Nợ Tài Xế (Mảng) theo ngày
-        if (order.assignedTo) {
-          const driverId = order.assignedTo._id.toString();
-          if (!driverDebts[driverId]) {
-            driverDebts[driverId] = {
-              driverId: driverId,
-              name: order.assignedTo.name,
-              phone: order.assignedTo.phone,
-              totalOrders: 0, totalFee: 0, totalBonus: 0,
-              todayOrders: 0, todayFee: 0, todayBonus: 0,
-              weekOrders: 0, weekFee: 0, weekBonus: 0,
-              monthOrders: 0, monthFee: 0, monthBonus: 0,
-              yearOrders: 0, yearFee: 0, yearBonus: 0,
-              debt: 0  // Đây sẽ là công nợ HÔM NAY
-            };
-          }
-          
-          // Tổng số đơn và tổng doanh thu mọi thời đại
-          driverDebts[driverId].totalOrders += 1;
-          driverDebts[driverId].totalFee += fee;
-          driverDebts[driverId].totalBonus += bonus;
+        // Cộng dồn tổng doanh thu toàn hệ thống
+        totalRevenue += stat.totalFee;
+        dailyRevenue += stat.todayFee;
+        weeklyRevenue += stat.weekFee;
+        monthlyRevenue += stat.monthFee;
 
-          // Cập nhật các KPI con
-          if (date >= today && date <= endOfDay) {
-            driverDebts[driverId].todayOrders += 1;
-            driverDebts[driverId].todayFee += fee;
-            driverDebts[driverId].todayBonus += bonus;
-            driverDebts[driverId].debt += fee * 0.15; // Công nợ
-          }
-          if (date >= startOfWeek) {
-            driverDebts[driverId].weekOrders += 1;
-            driverDebts[driverId].weekFee += fee;
-            driverDebts[driverId].weekBonus += bonus;
-          }
-          if (date >= startOfMonth) {
-            driverDebts[driverId].monthOrders += 1;
-            driverDebts[driverId].monthFee += fee;
-            driverDebts[driverId].monthBonus += bonus;
-          }
-          if (date >= startOfYear) {
-            driverDebts[driverId].yearOrders += 1;
-            driverDebts[driverId].yearFee += fee;
-            driverDebts[driverId].yearBonus += bonus;
-          }
-        }
+        return {
+          driverId: dId,
+          name: info ? info.name : 'Tài xế đã xóa',
+          phone: info ? info.phone : '',
+          totalOrders: stat.totalOrders,
+          totalFee: stat.totalFee,
+          totalBonus: stat.totalBonus,
+          todayOrders: stat.todayOrders,
+          todayFee: stat.todayFee,
+          todayBonus: stat.todayBonus,
+          weekOrders: stat.weekOrders,
+          weekFee: stat.weekFee,
+          weekBonus: stat.weekBonus,
+          monthOrders: stat.monthOrders,
+          monthFee: stat.monthFee,
+          monthBonus: stat.monthBonus,
+          yearOrders: stat.yearOrders,
+          yearFee: stat.yearFee,
+          yearBonus: stat.yearBonus,
+          debt: info && info.walletDebt > 0 ? info.walletDebt : 0
+        };
       });
 
       res.status(200).json({
@@ -101,7 +110,7 @@ const revenueController = {
             weeklyRevenue,
             monthlyRevenue
           },
-          drivers: Object.values(driverDebts).sort((a, b) => b.debt - a.debt) // Sắp xếp ai nợ nhiều lên đầu
+          drivers: driversResult.sort((a, b) => b.debt - a.debt)
         }
       });
       

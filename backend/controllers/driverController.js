@@ -28,10 +28,19 @@ const driverController = {
         ];
       }
 
-      const drivers = await Driver.find(query)
-        .select('-password')
-        .sort({ createdAt: -1 })
-        .lean();
+      const limit = parseInt(req.query.limit) || 1000;
+      const page = parseInt(req.query.page) || 1;
+      const skip = (page - 1) * limit;
+
+      const [drivers, total] = await Promise.all([
+        Driver.find(query)
+          .select('-password')
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Driver.countDocuments(query)
+      ]);
 
       // Aggregate today's orders (or a specific date)
       let filterDate = new Date();
@@ -102,7 +111,12 @@ const driverController = {
       res.status(200).json({
         success: true,
         count: driversWithStats.length,
-        data: driversWithStats
+        data: driversWithStats,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total
+        }
       });
     } catch (error) {
       console.error('Error getAllDrivers:', error);

@@ -140,6 +140,7 @@ const orderController = {
       const orders = await Order.find(query)
         .populate('createdBy', 'name')
         .sort({ createdAt: -1 })
+        .limit(200)
         .lean();
 
       res.status(200).json({

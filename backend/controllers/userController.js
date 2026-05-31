@@ -5,8 +5,29 @@ const userController = {
   // Quản lý Khách Hàng cho Admin
   getUsers: async (req, res) => {
     try {
-      const users = await User.find({ role: { $in: ['CUSTOMER', 'SHOP'] } }).sort({ createdAt: -1 }).select('-password');
-      res.json({ success: true, data: users });
+      const limit = parseInt(req.query.limit) || 1000;
+      const page = parseInt(req.query.page) || 1;
+      const skip = (page - 1) * limit;
+
+      const [users, total] = await Promise.all([
+        User.find({ role: { $in: ['CUSTOMER', 'SHOP'] } })
+          .sort({ createdAt: -1 })
+          .select('-password')
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] } })
+      ]);
+
+      res.status(200).json({
+        success: true,
+        data: users,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total
+        }
+      });
     } catch (error) {
       console.error(error);
       res.status(500).json({ success: false, message: 'Lỗi server' });
