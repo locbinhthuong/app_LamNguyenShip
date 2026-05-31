@@ -343,17 +343,6 @@ const debtController = {
         return res.status(400).json({ success: false, message: 'Bạn đang có một yêu cầu thanh toán chờ duyệt. Vui lòng đợi Admin xử lý trước khi gửi yêu cầu mới.' });
       }
 
-      // CHỐNG TRÙNG 2: Kiểm tra xem ngày này đã có thanh toán SUCCESS rồi chưa
-      const alreadyPaid = await DebtTransaction.findOne({
-        driverId,
-        type: 'PAYMENT',
-        status: 'SUCCESS',
-        targetDate: finalTargetDate,
-        amount: { $lt: 0 } // Chỉ kiểm tra khoản trả (số âm)
-      });
-      if (alreadyPaid) {
-        return res.status(400).json({ success: false, message: `Bạn đã thanh toán cho ngày ${finalTargetDate} rồi. Không thể gửi lại.` });
-      }
 
       const tx = new DebtTransaction({
         driverId,
