@@ -64,8 +64,8 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 // ==================== SECURITY & RATE LIMITING ====================
-// Thiết lập trust proxy để lấy chuẩn IP đằng sau Nginx
-app.set('trust proxy', 1);
+// Thiết lập trust proxy để lấy chuẩn IP đằng sau Nginx/Cloudflare
+app.set('trust proxy', true);
 
 app.use(helmet({ 
   contentSecurityPolicy: false,
@@ -75,7 +75,7 @@ app.use(helmet({
 // Tăng giới hạn chống Spam (2000req / 15phut) khi dùng realtime mượt
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 2000,
+  max: 100000, // Tăng limit lên rất lớn để không bị block
   message: { success: false, message: 'Quá nhiều yêu cầu, vui lòng thử lại sau.' }
 });
 app.use('/api/', apiLimiter);
