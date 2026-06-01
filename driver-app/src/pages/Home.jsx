@@ -86,6 +86,15 @@ function OrderCard({ order, onAccept, loading }) {
         <span className="shrink-0">📞 {order.customerPhone}</span>
       </div>
 
+      {order.items && order.items.length > 0 && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 mb-3">
+          <p className="text-xs font-bold text-slate-500 mb-1">📦 Hàng hóa:</p>
+          <ul className="text-sm font-medium text-slate-800 list-disc list-inside space-y-0.5">
+            {order.items.map((item, idx) => <li key={idx} className="line-clamp-2">{item}</li>)}
+          </ul>
+        </div>
+      )}
+
       {order.note && (
         <div className="bg-white border border-slate-200 rounded-lg p-2 mb-3 text-sm text-slate-900 font-bold whitespace-pre-wrap">
           📝 {order.note}
@@ -181,6 +190,29 @@ function ActiveOrderCard({ order, onAction, loading }) {
             GỌI
           </a>
         </div>
+      </div>
+
+      {order.items && order.items.length > 0 && (
+        <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 mb-3">
+          <p className="text-xs font-bold text-slate-500 mb-1">📦 Hàng hóa:</p>
+          <ul className="text-sm font-medium text-slate-800 list-disc list-inside space-y-0.5">
+            {order.items.map((item, idx) => <li key={idx} className="line-clamp-2">{item}</li>)}
+          </ul>
+        </div>
+      )}
+
+      {order.note && (
+        <div className="bg-white border border-slate-200 rounded-lg p-2 mb-3 text-sm text-slate-900 font-bold whitespace-pre-wrap">
+          📝 {order.note}
+        </div>
+      )}
+
+      <div className="flex flex-col items-center gap-1.5 mt-2 border-t border-slate-100 pt-3">
+        <span className="text-green-600 font-black text-sm w-full text-center tracking-wide flex flex-col items-center">
+          <span>💵 GIÁ CƯỚC: +{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ</span>
+          {order.packageDetails?.bulkyFee > 0 && <span className="text-[10px] text-orange-600 font-bold tracking-normal mt-0.5">( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )</span>}
+          {order.rideDetails?.surcharge > 0 && <span className="text-[10px] text-purple-600 font-bold tracking-normal mt-0.5">( đã cộng phí lái hộ: {order.rideDetails.surcharge.toLocaleString()}đ )</span>}
+        </span>
       </div>
       
       {order.adminBonus > 0 && (

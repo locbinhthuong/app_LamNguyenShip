@@ -59,6 +59,12 @@ const orderSchema = new mongoose.Schema({
     default: '',
     trim: true
   },
+  
+  // Danh sách hàng hóa
+  items: {
+    type: [String],
+    default: []
+  },
   deliveryAddress: {
     type: String,
     default: '',

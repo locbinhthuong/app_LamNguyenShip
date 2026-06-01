@@ -18,6 +18,7 @@ export default function CreateOrder() {
     driverReminder: '',
     codAmount: '',
     deliveryFee: '',
+    bulkyFee: '',
     adminBonus: '',
     scheduledPublishAt: '',
     forceAssignDriverId: '',
@@ -280,6 +281,11 @@ export default function CreateOrder() {
         }
       } else if (form.serviceType === 'MUA_HO') {
         packageDetails = { description: 'MUA HỘ' };
+      }
+      
+      if (form.bulkyFee && parseInt(form.bulkyFee) > 0) {
+        if (!packageDetails) packageDetails = {};
+        packageDetails.bulkyFee = parseInt(form.bulkyFee);
       }
 
       await createOrder({
@@ -606,6 +612,19 @@ export default function CreateOrder() {
                 value={form.deliveryFee}
                 onChange={handleChange}
                 placeholder="20.000"
+                className="input-field"
+              />
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">Phí cồng kềnh (Tùy chọn)</label>
+              <CurrencyInput
+                name="bulkyFee"
+                value={form.bulkyFee}
+                onChange={handleChange}
+                placeholder="VD: 10.000"
                 className="input-field"
               />
             </div>
