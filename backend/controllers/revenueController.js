@@ -110,7 +110,13 @@ const revenueController = {
             weeklyRevenue,
             monthlyRevenue
           },
-          drivers: driversResult.sort((a, b) => b.debt - a.debt)
+          drivers: driversResult.sort((a, b) => {
+            if (b.todayOrders !== a.todayOrders) return b.todayOrders - a.todayOrders;
+            if (b.todayFee !== a.todayFee) return b.todayFee - a.todayFee;
+            if (b.monthOrders !== a.monthOrders) return b.monthOrders - a.monthOrders;
+            if (b.monthFee !== a.monthFee) return b.monthFee - a.monthFee;
+            return b.totalOrders - a.totalOrders;
+          })
         }
       });
       
