@@ -134,7 +134,6 @@ function ActiveOrderCard({ order, onAction, loading }) {
   const nextAction = getNextAction();
 
   return (
-  return (
     <div className="card mb-3 border-2 border-blue-500 relative overflow-hidden" onClick={() => navigate(`/order/${order._id}`)}>
       <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
          {config.label}
