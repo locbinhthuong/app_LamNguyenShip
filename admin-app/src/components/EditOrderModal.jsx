@@ -27,6 +27,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     adminBonus: 0,
     forceAssignDriverId: '',
     commissionRate: null,
+    items: '',
     scheduledPublishAt: ''
   });
 
@@ -70,6 +71,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         adminBonus: order.adminBonus || 0,
         forceAssignDriverId: order.assignedTo?._id || order.assignedTo || '',
         commissionRate: order.commissionRate || null,
+        items: order.items ? order.items.join('\n') : '',
         scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''
       });
     }
@@ -91,7 +93,11 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
        const confirmSchedule = window.confirm('Thông tin đơn có vẻ chưa đầy đủ (Cước xe đang là 0đ). Bạn có chắc chắn muốn Hẹn Giờ Lên Đơn không? \n\n(Bạn có thể sửa lại thông tin trước hoặc sau khi đơn được treo lên)');
        if (!confirmSchedule) return;
     }
-    onSave(order._id, formData);
+    const payload = {
+      ...formData,
+      items: formData.items ? formData.items.split('\n').filter(i => i.trim()) : []
+    };
+    onSave(order._id, payload);
   };
 
   const pickupLink = order.pickupCoordinates?.lat 
@@ -338,6 +344,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               * Hệ thống sẽ ngầm đếm ngược và tự động đẩy đơn cho Tài xế khi đến đúng giờ hẹn. Đơn này không bị dính cảnh báo "5 phút chưa xử lý".
             </p>
           </div>
+
+          {order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Hàng hóa (mỗi dòng 1 món)</label>
+              <textarea name="items" value={formData.items} onChange={handleChange} rows="3" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" placeholder={"2x Bánh mì thịt\n1x Trà sữa"}></textarea>
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Ghi chú (Nội bộ / Khách)</label>
