@@ -583,10 +583,8 @@ const orderController = {
           if (forceAssignedDriverFcm) {
             const { sendMultipleNotifications } = require('../utils/notification');
             const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
-            let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
-            if (payload.driverReminder) {
-              msgBody += `\n⚠️ ${payload.driverReminder}`;
-            }
+            let msgBody = payload.driverReminder ? `⚠️ ${payload.driverReminder}\n` : '';
+            msgBody += `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
           }
         } else if (isDraftToPending) {

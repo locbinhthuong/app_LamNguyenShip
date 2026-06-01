@@ -134,42 +134,59 @@ function ActiveOrderCard({ order, onAction, loading }) {
   const nextAction = getNextAction();
 
   return (
-    <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-4 mb-4 shadow-xl" onClick={() => navigate(`/order/${order._id}`)}>
-      <div className="flex justify-between items-start mb-2">
+  return (
+    <div className="card mb-3 border-2 border-blue-500 relative overflow-hidden" onClick={() => navigate(`/order/${order._id}`)}>
+      <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+         {config.label}
+      </div>
+      <div className="flex justify-between items-start mb-3">
         <div className="flex flex-col gap-1">
-          <span className="font-bold text-slate-800 bg-white/50 px-2 py-0.5 rounded inline-block text-xs">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-          <div className="mt-0.5">{getServiceBadge(order)}</div>
+          <span className="text-xs text-slate-500 line-clamp-1">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+          <div>{getServiceBadge(order)}</div>
         </div>
-        <span className={`status-badge ${config.color} text-slate-800`}>{config.label}</span>
+        <span className="text-sm font-bold text-blue-600 mr-20">
+          {order.codAmount?.toLocaleString()}đ COD
+        </span>
       </div>
 
       {order.driverReminder && (
-        <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap shadow-inner">
+        <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap">
           ⚠️ {order.driverReminder}
         </div>
       )}
 
-      <div className="space-y-1 mb-3">
-        <p className="text-sm text-green-100">
-          <span className="opacity-70">{order.serviceType === 'DAT_XE' ? 'Đón:' : order.serviceType === 'DIEU_PHOI' ? 'Gặp:' : order.serviceType === 'MUA_HO' ? 'Mua tại:' : 'Lấy:'}</span> {order.pickupAddress?.slice(0, 40)}...
-        </p>
+      <div className="space-y-2 mb-3">
+        <div className="flex items-start gap-2">
+          <span className="text-slate-400 mt-1">{order.serviceType === 'DAT_XE' ? <MapPin size={16}/> : <Package size={16}/>}</span>
+          <div className="flex-1">
+            <p className="text-xs text-slate-500">{order.serviceType === 'DAT_XE' ? 'Điểm đón' : order.serviceType === 'DIEU_PHOI' ? 'Gặp mặt tại' : 'Lấy hàng'}</p>
+            <p className="text-sm text-slate-800 font-medium line-clamp-2">{order.pickupAddress}</p>
+          </div>
+        </div>
         {order.serviceType !== 'DIEU_PHOI' && (
-          <p className="text-sm text-green-100">
-            <span className="opacity-70">{order.serviceType === 'DAT_XE' ? 'Đến:' : 'Giao:'}</span> {order.deliveryAddress?.slice(0, 40)}...
-          </p>
+          <div className="flex items-start gap-2">
+            <span className="text-slate-400 mt-1"><CheckCircle2 size={16}/></span>
+            <div className="flex-1">
+              <p className="text-xs text-slate-500">{order.serviceType === 'DAT_XE' ? 'Điểm đến' : 'Giao hàng'}</p>
+              <p className="text-sm text-slate-800 font-medium line-clamp-2">{order.deliveryAddress}</p>
+            </div>
+          </div>
         )}
       </div>
 
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-green-200 text-sm">👤 {order.customerName}</span>
-        <a href={`tel:${order.customerPhone}`} onClick={(e) => e.stopPropagation()} className="bg-white/20 px-3 py-1 rounded-full text-sm">
-          📞 Gọi
-        </a>
+      <div className="mb-3 flex flex-col gap-1 text-sm text-slate-500 sm:flex-row sm:justify-between">
+        <span className="truncate">👤 {order.customerName}</span>
+        <div className="flex justify-between sm:justify-end items-center gap-3">
+          <span className="shrink-0">📞 {order.customerPhone}</span>
+          <a href={`tel:${order.customerPhone}`} onClick={(e) => e.stopPropagation()} className="bg-green-100 text-green-700 px-3 py-0.5 rounded-full text-xs font-bold border border-green-200">
+            GỌI
+          </a>
+        </div>
       </div>
       
       {order.adminBonus > 0 && (
-        <div className="mb-2 bg-slate-800/20 rounded-lg p-2 text-center border border-slate-400/20 flex items-center justify-center gap-1">
-           <Gift size={14} className="text-white"/> <span className="text-white font-bold text-xs tracking-wide">THƯỞNG HIỆU SUẤT HOÀN THÀNH ĐƠN HÀNG: +{order.adminBonus?.toLocaleString()}đ</span>
+        <div className="mb-2 bg-slate-50 rounded-lg p-2 text-center border border-slate-200 flex items-center justify-center gap-1">
+           <Gift size={14} className="text-slate-600"/> <span className="text-slate-700 font-bold text-xs tracking-wide">THƯỞNG HIỆU SUẤT HOÀN THÀNH ĐƠN HÀNG: +{order.adminBonus?.toLocaleString()}đ</span>
         </div>
       )}
 
@@ -177,7 +194,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
         <button
           onClick={(e) => { e.stopPropagation(); onAction(order._id, nextAction.action); }}
           disabled={loading}
-          className={`${nextAction.color} mt-3 py-2 text-white font-bold w-full rounded-xl`}
+          className={`${nextAction.color} mt-2 py-2.5 text-white font-bold w-full rounded-xl uppercase tracking-wider text-sm`}
         >
           {loading ? 'Đang xử lý...' : nextAction.label}
         </button>

@@ -197,10 +197,8 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
       
       if (tokens.length > 0) {
         const feeResponse = order.deliveryFee ? `${order.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
-        let msgBody = `📍 Từ: ${order.pickupAddress}\n🎯 Đến: ${order.deliveryAddress || 'Chưa cập nhật'}\n💵 Phí: ${feeResponse}`;
-        if (order.driverReminder) {
-          msgBody += `\n⚠️ ${order.driverReminder}`;
-        }
+        let msgBody = order.driverReminder ? `⚠️ ${order.driverReminder}\n` : '';
+        msgBody += `📍 Từ: ${order.pickupAddress}\n🎯 Đến: ${order.deliveryAddress || 'Chưa cập nhật'}\n💵 Phí: ${feeResponse}`;
         await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}` });
       }
     } catch (e) {
