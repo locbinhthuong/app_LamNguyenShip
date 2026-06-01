@@ -435,6 +435,17 @@ export default function OrderDetail() {
             </div>
           )}
 
+          {/* LỜI NHẮN TỪ ADMIN */}
+          {order.driverReminder && (
+            <div className="bg-red-50 rounded-xl p-3.5 sm:p-4 border-2 border-red-300 mb-4 shadow-md overflow-hidden relative">
+              <div className="absolute right-0 top-0 text-red-100 opacity-20 transform translate-x-4 -translate-y-4">
+                 <AlertTriangle size={80} />
+              </div>
+              <p className="text-red-700 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-1.5 flex items-center gap-1.5 relative z-10"><AlertTriangle size={16}/> NHẮC NHỞ TÀI XẾ TỪ ĐIỀU PHỐI</p>
+              <p className="text-red-900 text-base sm:text-lg font-bold whitespace-pre-wrap leading-snug relative z-10">{order.driverReminder}</p>
+            </div>
+          )}
+
           {/* GHI CHÚ CHUNG */}
           {order.note && (
             <div className="bg-rose-50 rounded-xl p-3.5 sm:p-4 border-2 border-rose-200 mb-4 shadow-sm">

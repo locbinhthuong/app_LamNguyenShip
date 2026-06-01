@@ -80,6 +80,12 @@ function OrderCard({ order, onAccept, loading }) {
         <span className="shrink-0">📞 {order.customerPhone}</span>
       </div>
 
+      {order.driverReminder && (
+        <div className="bg-red-100 border border-red-200 rounded-lg p-2 mb-3 text-xs text-red-700 font-bold whitespace-pre-wrap">
+          ⚠️ {order.driverReminder}
+        </div>
+      )}
+
       {order.note && (
         <div className="bg-slate-700 rounded-lg p-2 mb-3 text-xs text-yellow-300 whitespace-pre-wrap">
           📝 {order.note}
@@ -136,6 +142,12 @@ function ActiveOrderCard({ order, onAction, loading }) {
         </div>
         <span className={`status-badge ${config.color} text-slate-800`}>{config.label}</span>
       </div>
+
+      {order.driverReminder && (
+        <div className="bg-white/20 rounded-lg p-2 mb-3 text-xs text-white font-bold whitespace-pre-wrap shadow-inner border border-white/30">
+          ⚠️ {order.driverReminder}
+        </div>
+      )}
 
       <div className="space-y-1 mb-3">
         <p className="text-sm text-green-100">

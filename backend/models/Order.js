@@ -80,6 +80,12 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: ''
   },
+  
+  // Lời nhắn nhắc nhở tài xế (Admin ghi riêng)
+  driverReminder: {
+    type: String,
+    default: ''
+  },
 
   // Chi tiết dịch vụ: MUA_HO / GIAO_HANG
   packageDetails: {

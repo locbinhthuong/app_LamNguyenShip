@@ -22,6 +22,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     bankAccountName: '',
     transactionAmount: 0,
     note: '',
+    driverReminder: '',
     packageDescription: '',
     adminBonus: 0,
     forceAssignDriverId: '',
@@ -64,6 +65,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         bankAccountName: order.financialDetails?.bankAccountName || '',
         transactionAmount: order.financialDetails?.transactionAmount || 0,
         note: order.note || '',
+        driverReminder: order.driverReminder || '',
         packageDescription: order.packageDetails?.description || '',
         adminBonus: order.adminBonus || 0,
         forceAssignDriverId: order.assignedTo?._id || order.assignedTo || '',
@@ -331,8 +333,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Ghi chú</label>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Ghi chú (Nội bộ / Khách)</label>
             <textarea name="note" value={formData.note} onChange={handleChange} rows="2" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" placeholder="Lưu ý khi giao..."></textarea>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-red-600 mb-1">Nhắc nhở Tài xế (Ghim đầu Đơn)</label>
+            <textarea name="driverReminder" value={formData.driverReminder} onChange={handleChange} rows="2" className="w-full rounded-lg border border-red-200 p-2 text-sm bg-red-50 text-red-700 focus:border-red-500 focus:bg-white focus:outline-none placeholder-red-300" placeholder="Thu đủ tiền nhé, cẩn thận hàng dễ vỡ..."></textarea>
           </div>
 
           <div className="pt-4 flex justify-end gap-3">

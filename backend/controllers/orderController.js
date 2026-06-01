@@ -225,7 +225,7 @@ const orderController = {
 
       const { 
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, 
-        items, note, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, 
+        items, note, driverReminder, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, 
         scheduledPublishAt, forceAssignDriverId, commissionRate, serviceType, subServiceType,
         senderPhone, receiverPhone, receiverPhone2, rideDetails, financialDetails, packageDetails
       } = req.body;
@@ -264,6 +264,7 @@ const orderController = {
         deliveryAddress,
         items: items || [],
         note: note || '',
+        driverReminder: driverReminder || '',
         codAmount: codAmount || 0,
         deliveryFee: deliveryFee || 0,
         adminBonus: adminBonus || 0,
@@ -426,7 +427,7 @@ const orderController = {
       const { id } = req.params;
       const {
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, senderPhone, receiverPhone, receiverPhone2,
-        items, note, codAmount, deliveryFee, status, adminBonus,
+        items, note, driverReminder, codAmount, deliveryFee, status, adminBonus,
         bulkyFee, surcharge, // Các phí mới
         packageDescription, // Chi tiết Hàng hóa / Mua hộ
         vehicleClass, // Cập nhật loại xe nếu cần
@@ -477,6 +478,7 @@ const orderController = {
       if (deliveryAddress !== undefined) orderToUpdate.deliveryAddress = deliveryAddress;
       if (items !== undefined) orderToUpdate.items = items;
       if (note !== undefined) orderToUpdate.note = note;
+      if (driverReminder !== undefined) orderToUpdate.driverReminder = driverReminder;
       if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
       
       let isDeliveryFeeChanged = false;

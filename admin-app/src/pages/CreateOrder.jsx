@@ -15,6 +15,7 @@ export default function CreateOrder() {
     deliveryAddress: '',
     items: '',
     note: '',
+    driverReminder: '',
     codAmount: '',
     deliveryFee: '',
     adminBonus: '',
@@ -291,6 +292,7 @@ export default function CreateOrder() {
         deliveryAddress: form.deliveryAddress,
         items,
         note: form.note,
+        driverReminder: form.driverReminder,
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
         deliveryFee: form.deliveryFee ? parseInt(form.deliveryFee) : 0,
         adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0,
@@ -322,7 +324,7 @@ export default function CreateOrder() {
           <span>🤖 Dán Nhanh Đơn Zalo / Facebook</span>
           <button 
             type="button" 
-            onClick={() => { setSmartText(''); setForm(prev => ({ ...prev, customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null })); }}
+            onClick={() => { setSmartText(''); setForm(prev => ({ ...prev, customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', driverReminder: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null })); }}
             className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
           >
             🔄 Tạo Mới Lại
@@ -574,14 +576,26 @@ export default function CreateOrder() {
           )}
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-slate-600">Ghi chú</label>
+            <label className="mb-1.5 block text-sm font-medium text-slate-600">Ghi chú (Nội bộ / Khách)</label>
             <textarea
               name="note"
               value={form.note}
               onChange={handleChange}
-              rows={3}
+              rows={2}
               placeholder="Giao nhanh giúp em"
               className="input-field resize-y whitespace-pre-wrap"
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-red-600">Nhắc nhở Tài xế (Ghim đầu Đơn)</label>
+            <textarea
+              name="driverReminder"
+              value={form.driverReminder}
+              onChange={handleChange}
+              rows={2}
+              placeholder="Thu đủ tiền nhé, cẩn thận hàng dễ vỡ..."
+              className="input-field resize-y whitespace-pre-wrap border-red-200 bg-red-50 focus:border-red-500 focus:bg-white text-red-700 placeholder-red-300"
             />
           </div>
 
