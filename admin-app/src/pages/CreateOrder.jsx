@@ -611,16 +611,18 @@ export default function CreateOrder() {
             </div>
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-red-600">Nhắc nhở Tài xế (Ghim đầu Đơn)</label>
-            <textarea
-              name="driverReminder"
-              value={form.driverReminder}
-              onChange={handleChange}
-              rows={2}
-              placeholder="Thu đủ tiền nhé, cẩn thận hàng dễ vỡ..."
-              className="input-field resize-y whitespace-pre-wrap border-red-200 bg-red-50 focus:border-red-500 focus:bg-white text-red-700 placeholder-red-300"
-            />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-red-600">Nhắc nhở Tài xế (Ghim đầu Đơn)</label>
+              <textarea
+                name="driverReminder"
+                value={form.driverReminder}
+                onChange={handleChange}
+                rows={2}
+                placeholder="Thu đủ tiền nhé..."
+                className="input-field resize-y whitespace-pre-wrap border-red-200 bg-red-50 focus:border-red-500 focus:bg-white text-red-700 placeholder-red-300"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

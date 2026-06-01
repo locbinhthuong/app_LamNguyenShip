@@ -56,6 +56,12 @@ function OrderCard({ order, onAccept, loading }) {
         </span>
       </div>
 
+      {order.driverReminder && (
+        <div className="bg-red-100 border border-red-200 rounded-lg p-2 mb-3 text-xs text-red-700 font-bold whitespace-pre-wrap">
+          ⚠️ {order.driverReminder}
+        </div>
+      )}
+
       <div className="space-y-2 mb-3">
         <div className="flex items-start gap-2">
           <span className="text-slate-400 mt-1">{order.serviceType === 'DAT_XE' ? <MapPin size={16}/> : <Package size={16}/>}</span>
@@ -79,12 +85,6 @@ function OrderCard({ order, onAccept, loading }) {
         <span className="truncate">👤 {order.customerName}</span>
         <span className="shrink-0">📞 {order.customerPhone}</span>
       </div>
-
-      {order.driverReminder && (
-        <div className="bg-red-100 border border-red-200 rounded-lg p-2 mb-3 text-xs text-red-700 font-bold whitespace-pre-wrap">
-          ⚠️ {order.driverReminder}
-        </div>
-      )}
 
       {order.note && (
         <div className="bg-slate-700 rounded-lg p-2 mb-3 text-xs text-yellow-300 whitespace-pre-wrap">
