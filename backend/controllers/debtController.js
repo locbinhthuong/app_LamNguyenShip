@@ -42,7 +42,7 @@ const debtController = {
       if (driver.walletDebt > 0) {
         let remainingDebt = driver.walletDebt;
         const sortedDatesDesc = Object.keys(netDebtByDate)
-          .filter(d => netDebtByDate[d] > 0)
+          .filter(d => netDebtByDate[d] > 0 && d < todayStr)
           .sort((a, b) => (a < b ? 1 : (a > b ? -1 : 0)));
 
         for (const dateStr of sortedDatesDesc) {
@@ -408,7 +408,7 @@ const debtController = {
       if (driver.walletDebt > 0) {
         let remainingDebt = driver.walletDebt;
         const sortedDatesDesc = Object.keys(netDebtByDate)
-          .filter(d => netDebtByDate[d] > 0)
+          .filter(d => netDebtByDate[d] > 0 && d < todayStr)
           .sort((a, b) => (a < b ? 1 : (a > b ? -1 : 0)));
 
         for (const dateStr of sortedDatesDesc) {
