@@ -57,7 +57,7 @@ function OrderCard({ order, onAccept, loading }) {
       </div>
 
       {order.driverReminder && (
-        <div className="bg-red-100 border border-red-200 rounded-lg p-2 mb-3 text-xs text-red-700 font-bold whitespace-pre-wrap">
+        <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap">
           ⚠️ {order.driverReminder}
         </div>
       )}
@@ -87,7 +87,7 @@ function OrderCard({ order, onAccept, loading }) {
       </div>
 
       {order.note && (
-        <div className="bg-slate-700 rounded-lg p-2 mb-3 text-xs text-yellow-300 whitespace-pre-wrap">
+        <div className="bg-white border border-slate-200 rounded-lg p-2 mb-3 text-sm text-slate-900 font-bold whitespace-pre-wrap">
           📝 {order.note}
         </div>
       )}
@@ -144,7 +144,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
       </div>
 
       {order.driverReminder && (
-        <div className="bg-white/20 rounded-lg p-2 mb-3 text-xs text-white font-bold whitespace-pre-wrap shadow-inner border border-white/30">
+        <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap shadow-inner">
           ⚠️ {order.driverReminder}
         </div>
       )}
