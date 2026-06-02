@@ -39,33 +39,29 @@ const debtController = {
 
       let unpaidDays = [];
       const todayStr = getTodayVN();
-      if (driver.walletDebt > 0) {
-        let remainingDebt = driver.walletDebt;
-        const sortedDatesDesc = Object.keys(netDebtByDate)
-          .filter(d => netDebtByDate[d] > 0 && d < todayStr)
-          .sort((a, b) => (a < b ? 1 : (a > b ? -1 : 0)));
+      
+      const sortedDatesAsc = Object.keys(netDebtByDate)
+        .filter(d => netDebtByDate[d] > 0 && d < todayStr)
+        .sort((a, b) => (a > b ? 1 : (a < b ? -1 : 0)));
 
-        for (const dateStr of sortedDatesDesc) {
-          if (remainingDebt <= 0) break;
-          const allocated = Math.min(remainingDebt, netDebtByDate[dateStr]);
-          if (allocated > 0) {
-            unpaidDays.push({ date: dateStr, amount: Math.round(allocated) });
-          }
-          remainingDebt -= allocated;
-        }
-        
-        unpaidDays.sort((a, b) => (a.date > b.date ? 1 : (a.date < b.date ? -1 : 0)));
+      for (const dateStr of sortedDatesAsc) {
+        unpaidDays.push({ date: dateStr, amount: Math.round(netDebtByDate[dateStr]) });
       }
 
       // Tính nợ hôm nay riêng để Admin tham khảo (chỉ hiển thị, không thu)
       const todayDebt = Math.max(0, Math.round(netDebtByDate[todayStr] || 0));
+
+      // Tính tổng nợ phải thu (CÒN PHẢI THU) bao gồm cả hôm nay và các ngày cũ
+      const totalUnpaid = Object.keys(netDebtByDate)
+        .filter(d => netDebtByDate[d] > 0)
+        .reduce((sum, d) => sum + Math.round(netDebtByDate[d]), 0);
 
       res.status(200).json({
         success: true,
         data: {
           driver,
           totalPaid,
-          totalUnpaid: driver.walletDebt > 0 ? driver.walletDebt : 0,
+          totalUnpaid: totalUnpaid,
           todayDebt,
           unpaidDays,
           pendingDays: Array.from(pendingDays),

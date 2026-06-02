@@ -113,30 +113,18 @@ async function checkDriverDebtBlock(driverId) {
     };
   }
 
-  // 5. Áp dụng FIFO: Phân bổ tổng nợ (correctedDebt) từ ngày mới nhất lùi về quá khứ
-  let remainingDebt = correctedDebt;
+  // 5. Nợ ngày nào là của ngày đó: Lọc ngày CŨ (< todayStr) có NỢ (amount > 0)
   let oldDebtDate = null;
   let oldDebtAmount = 0;
 
-  // Lọc các ngày CÓ NỢ (amount > 0) và sắp xếp giảm dần (Mới nhất -> Cũ nhất)
-  const sortedDatesDesc = Object.keys(netDebtByDate)
-    .filter(dateStr => netDebtByDate[dateStr] > 0)
-    .sort((a, b) => (a < b ? 1 : (a > b ? -1 : 0)));
+  // Lấy ngày cũ nhất bị nợ để thông báo
+  const sortedPastDatesAsc = Object.keys(netDebtByDate)
+    .filter(dateStr => dateStr < todayStr && netDebtByDate[dateStr] > 0)
+    .sort((a, b) => (a > b ? 1 : (a < b ? -1 : 0))); // Sắp xếp Tăng dần (Cũ nhất -> Mới hơn)
 
-  for (const dateStr of sortedDatesDesc) {
-    if (remainingDebt <= 0) break;
-
-    const debtOfThisDay = netDebtByDate[dateStr];
-    const allocatedToThisDay = Math.min(remainingDebt, debtOfThisDay);
-    
-    // Nếu ngày này là ngày cũ (< todayStr) và bị gán nợ, thì tài xế BỊ CHẶN!
-    if (dateStr < todayStr && allocatedToThisDay > 0) {
-      oldDebtDate = dateStr;
-      oldDebtAmount = Math.round(allocatedToThisDay);
-      break; 
-    }
-
-    remainingDebt -= allocatedToThisDay;
+  if (sortedPastDatesAsc.length > 0) {
+    oldDebtDate = sortedPastDatesAsc[0];
+    oldDebtAmount = Math.round(netDebtByDate[oldDebtDate]);
   }
 
   // 6. Có nợ cũ → CHẶN + ghi log chi tiết
