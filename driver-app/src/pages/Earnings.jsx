@@ -40,29 +40,19 @@ export default function Earnings() {
   const [paymentQRData, setPaymentQRData] = useState(null);
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState(false);
-
-  const fetchQRInfo = async () => {
-    try {
-      setQrLoading(true);
-      setQrError(false);
-      const resTerms = await getActiveAnnouncements();
-      if (resTerms.success && resTerms.data) {
-        const qrInfo = resTerms.data.find(item => item.type === 'PAYMENT_QR');
-        if (qrInfo) setPaymentQRData(qrInfo);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      // Small delay to make the spinner visible if loading is too fast
-      setTimeout(() => setQrLoading(false), 500);
-    }
-  };
+  const [qrImageLoaded, setQrImageLoaded] = useState(false);
 
   useEffect(() => {
-    if (showQRModal) {
-      fetchQRInfo();
+    // Nếu đã có thông tin QR và danh sách ngày nợ, ta tải ngầm (preload) trước các ảnh QR
+    // Để khi tài xế bấm vào là ảnh hiện ra TỨC THÌ (0ms chờ đợi)
+    if (paymentQRData && unpaidDays.length > 0 && driver) {
+      unpaidDays.forEach(debt => {
+        const url = `https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(debt.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (debt.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`;
+        const img = new Image();
+        img.src = url;
+      });
     }
-  }, [showQRModal]);
+  }, [paymentQRData, unpaidDays, driver]);
 
   const handleRequestPayment = async () => {
     if (!selectedDebt || isRequesting) return;
@@ -292,6 +282,8 @@ export default function Earnings() {
                       <button 
                         onClick={() => {
                            setSelectedDebt(debt);
+                           setQrImageLoaded(false);
+                           setQrError(false);
                            setShowQRModal(true);
                         }}
                         className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
@@ -501,34 +493,43 @@ export default function Earnings() {
               </div>
 
               <div className="bg-white p-3 rounded-2xl border border-slate-200 relative mb-4">
-                {qrLoading ? (
-                  <div className="w-56 h-56 flex flex-col items-center justify-center bg-slate-50 text-slate-400 rounded-xl">
-                     <RefreshCw size={32} className="animate-spin mb-3 text-sky-500" />
-                     <p className="text-sm font-semibold text-slate-600">Đang tạo mã QR...</p>
-                     <p className="text-xs text-slate-400 text-center mt-1 px-2">Hệ thống đang đồng bộ dữ liệu với Admin</p>
-                  </div>
-                ) : qrError ? (
+                {qrError ? (
                   <div className="w-56 h-56 flex flex-col items-center justify-center bg-red-50 text-red-500 rounded-xl p-4 text-center">
                     <AlertCircle size={32} className="mb-2" />
                     <p className="text-xs font-bold mb-1">Không tạo được mã</p>
                     <p className="text-[10px]">Sai mã Ngân hàng (VD: ICB, VCB). Xin thử lại sau!</p>
                   </div>
                 ) : (
-                  <img 
-                    src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
-                    alt="QR Code Bù Điểm" 
-                    className="w-56 h-56 object-contain mix-blend-multiply"
-                    onError={() => setQrError(true)}
-                  />
+                  <div className="relative w-56 h-56">
+                    {!qrImageLoaded && (
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400 rounded-xl z-10">
+                         <RefreshCw size={32} className="animate-spin mb-3 text-sky-500" />
+                         <p className="text-sm font-semibold text-slate-600">Đang tải ảnh mã QR...</p>
+                      </div>
+                    )}
+                    <img 
+                      id="qr-payment-img"
+                      src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
+                      alt="QR Code Bù Điểm" 
+                      className={`w-56 h-56 object-contain mix-blend-multiply transition-opacity duration-300 ${qrImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                      onLoad={() => setQrImageLoaded(true)}
+                      onError={() => setQrError(true)}
+                    />
+                  </div>
                 )}
                 
                 <button 
-                  onClick={fetchQRInfo}
-                  disabled={qrLoading}
-                  className="absolute top-2 right-2 bg-slate-100/80 backdrop-blur shadow-sm p-2 rounded-full text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition-colors disabled:opacity-50"
+                  onClick={() => {
+                    setQrImageLoaded(false);
+                    setQrError(false);
+                    // Force re-render of image by appending a timestamp
+                    const img = document.getElementById('qr-payment-img');
+                    if (img) img.src = img.src.split('&t=')[0] + '&t=' + new Date().getTime();
+                  }}
+                  className="absolute top-2 right-2 bg-slate-100/80 backdrop-blur shadow-sm p-2 rounded-full text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition-colors"
                   title="Cập nhật lại mã QR"
                 >
-                  <RefreshCw size={16} className={qrLoading ? 'animate-spin' : ''} />
+                  <RefreshCw size={16} />
                 </button>
               </div>
 
