@@ -580,6 +580,7 @@ export default function Home() {
                   id: Math.floor(Math.random() * 1000000),
                   schedule: { at: new Date(Date.now() + 100) },
                   sound: "default",
+                  channelId: "aloshipp_local_channel",
                   smallIcon: "ic_stat_icon_config_sample",
                 }
               ]

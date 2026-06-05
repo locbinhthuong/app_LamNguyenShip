@@ -25,7 +25,13 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         ...data
       },
       android: {
-        priority: "high"
+        priority: "high",
+        notification: {
+          sound: "default",
+          channelId: "aloshipp_push_channel",
+          defaultSound: true,
+          defaultVibrateTimings: true
+        }
       },
       webpush: {
         headers: { Urgency: "high", TTL: "60" },
@@ -78,7 +84,13 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
         ...data
       },
       android: {
-        priority: "high"
+        priority: "high",
+        notification: {
+          sound: "default",
+          channelId: "aloshipp_push_channel",
+          defaultSound: true,
+          defaultVibrateTimings: true
+        }
       },
       webpush: {
         headers: { Urgency: "high", TTL: "60" },
