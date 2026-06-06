@@ -10,7 +10,8 @@ export default defineConfig({
       injectRegister: 'script-defer',
       manifest: false,
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp}'],
+        navigateFallbackDenylist: [/^\/privacy-policy\.html$/]
       },
       devOptions: {
         enabled: false
