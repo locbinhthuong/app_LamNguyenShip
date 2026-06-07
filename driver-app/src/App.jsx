@@ -41,6 +41,7 @@ function AppContent() {
   const audioCtxRef = useRef(null);
   const audioBufferRef = useRef(null);
   const sourceNodeRef = useRef(null);
+  const fallbackAudioRef = useRef(null);
   const intervalRef = useRef(null);
 
   const driverRef = useRef(driver);
@@ -78,6 +79,9 @@ function AppContent() {
       }
     };
     
+    // Khởi tạo tải trước file mp3 (nhưng chưa phát)
+    initAudio();
+    
     const resumeAudioContext = () => {
       initAudio();
       if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
@@ -105,6 +109,13 @@ function AppContent() {
       try { sourceNodeRef.current.disconnect(); } catch(e){}
       sourceNodeRef.current = null;
     }
+    if (fallbackAudioRef.current) {
+      try { 
+        fallbackAudioRef.current.pause(); 
+        fallbackAudioRef.current.currentTime = 0; 
+      } catch(e){}
+      fallbackAudioRef.current = null;
+    }
   }, []);
 
   const startAlarm = useCallback(() => {
@@ -131,10 +142,11 @@ function AppContent() {
         try { 
           const audio = new Audio('/chuong.mp3');
           audio.loop = true;
-          audio.play();
+          audio.play().catch(e => console.error('Audio play blocked:', e));
+          fallbackAudioRef.current = audio;
           
           intervalRef.current = setTimeout(() => {
-            audio.pause();
+            stopAlarm();
           }, 30000);
         } catch(e) {}
     }
@@ -237,10 +249,6 @@ function AppContent() {
         LocalNotifications.addListener('localNotificationActionPerformed', () => {
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
         });
-      }).catch(console.error);
-
-      import('@capacitor/push-notifications').then(({ PushNotifications }) => {
-        // Bỏ việc tự tạo channel trên Android đối với PushNotifications vì dễ trùng lặp với FirebaseMessaging
       }).catch(console.error);
 
       import('@capacitor-firebase/messaging').then(({ FirebaseMessaging }) => {

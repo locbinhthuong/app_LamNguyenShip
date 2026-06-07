@@ -1,7 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { Capacitor } from '@capacitor/core';
-import { PushNotifications } from '@capacitor/push-notifications';
 import { FirebaseMessaging } from '@capacitor-firebase/messaging';
 
 const firebaseConfig = {
@@ -29,46 +28,18 @@ export const requestFirebaseToken = async () => {
   if (Capacitor.isNativePlatform()) {
     if (Capacitor.getPlatform() === 'ios') {
       try {
-        // 1. Đăng ký nhận push từ HĐH
-        let permStatus = await PushNotifications.checkPermissions();
+        let permStatus = await FirebaseMessaging.checkPermissions();
         if (permStatus.receive === 'prompt') {
-          permStatus = await PushNotifications.requestPermissions();
+          permStatus = await FirebaseMessaging.requestPermissions();
         }
         
         if (permStatus.receive !== 'granted') {
           console.warn("LỖI_QUYỀN NATIVE: Người dùng từ chối quyền push");
           return null;
         }
-        return new Promise((resolve) => {
-          // Lắng nghe sự kiện đăng ký thành công từ APNs
-          PushNotifications.addListener('registration', async (apnsToken) => {
-            try {
-              // Khi APNs đã trả về token, AppDelegate đã map nó sang Firebase.
-              // Đợi thêm 500ms cho chắc ăn rồi lấy FCM token
-              await new Promise(r => setTimeout(r, 500));
-              const { token } = await FirebaseMessaging.getToken();
-              resolve(token);
-            } catch (err) {
-              console.error("Lỗi lấy FCM token sau khi có APNs:", err);
-              resolve(null);
-            }
-          });
-
-          // Lắng nghe lỗi APNs
-          PushNotifications.addListener('registrationError', (error) => {
-            console.error("Lỗi APNs:", error);
-            resolve(null);
-          });
-
-          // Xin Apple cấp Token
-          PushNotifications.register();
-          
-          // Cầu chì an toàn: Nếu Apple không trả lời sau 10 giây thì bỏ qua để không treo App
-          setTimeout(() => {
-            resolve(null);
-          }, 10000);
-        });
         
+        const { token } = await FirebaseMessaging.getToken();
+        return token;
       } catch (err) {
         console.error("LỖI NATIVE PUSH iOS: ", err);
         return null;

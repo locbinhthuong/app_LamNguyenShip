@@ -34,10 +34,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom'],
-          capacitor: ['@capacitor/core', '@capacitor/push-notifications', '@capacitor-firebase/messaging'],
-          firebase: ['firebase/app', 'firebase/messaging'],
-          ui: ['lucide-react']
+          vendor: ['react', 'react-dom', 'react-router-dom', 'framer-motion'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/messaging'],
+          capacitor: ['@capacitor/core', '@capacitor-firebase/messaging'],
+          icons: ['lucide-react']
         }
       }
     }
