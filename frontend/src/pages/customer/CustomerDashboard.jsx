@@ -107,6 +107,33 @@ const CustomerDashboard = () => {
     setAddress(shortAddress);
   };
 
+  const [customerName, setCustomerName] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (isAuthenticated) {
+        try {
+          const { api } = await import('../../services/api');
+          const res = await api.get('/auth/customer/me');
+          if (res.data && res.data.success) {
+            setCustomerName(res.data.data.name);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    };
+    fetchProfile();
+  }, [isAuthenticated]);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Chào buổi sáng';
+    if (hour >= 12 && hour < 14) return 'Chào buổi trưa';
+    if (hour >= 14 && hour < 18) return 'Chào buổi chiều';
+    return 'Chào buổi tối';
+  };
+
   const handleServiceClick = (serviceType) => {
     if (!isAuthenticated) {
       localStorage.setItem('intendedService', serviceType);
@@ -136,6 +163,24 @@ const CustomerDashboard = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* LỜI CHÀO GREETING & 3D TEXT */}
+      <div className="mb-6 px-1">
+        <h2 className="text-xl font-medium text-gray-600">
+          {getGreeting()}, <span className="font-bold text-blue-600">{customerName || 'Khách hàng'}</span>!
+        </h2>
+        <h1 
+          className="text-3xl font-extrabold mt-1 tracking-tight"
+          style={{
+            background: 'linear-gradient(to right, #2563eb, #7c3aed)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.1), 4px 4px 8px rgba(37, 99, 235, 0.2)'
+          }}
+        >
+          Chào mừng đến với AloShipp
+        </h1>
       </div>
 
       {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}
@@ -400,6 +445,36 @@ const CustomerDashboard = () => {
         </div>
       )}
 
+      {/* FOOTER */}
+      <div className="mt-8 mb-6 pt-6 border-t border-gray-200/60 text-center">
+        <p className="text-sm font-medium text-gray-500 mb-4">Chúng tôi hân hạnh phục vụ quý khách tại:</p>
+        <div className="flex justify-center items-center gap-6">
+          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 group">
+            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </div>
+            <span className="text-[10px] font-semibold text-gray-500">Facebook</span>
+          </a>
+          <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 group">
+            <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center group-hover:bg-slate-800 group-hover:text-white transition-all shadow-sm">
+              <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
+            </div>
+            <span className="text-[10px] font-semibold text-gray-500">TikTok</span>
+          </a>
+          <a href="https://zalo.me" target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-1 group">
+            <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all shadow-sm font-bold text-sm">
+              Zalo
+            </div>
+            <span className="text-[10px] font-semibold text-gray-500">Zalo</span>
+          </a>
+          <a href="tel:1900xxxx" className="flex flex-col items-center gap-1 group">
+            <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-all shadow-sm">
+              <Phone size={18} />
+            </div>
+            <span className="text-[10px] font-semibold text-gray-500">Hotline</span>
+          </a>
+        </div>
+      </div>
       
     </div>
   );

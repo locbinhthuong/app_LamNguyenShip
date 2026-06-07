@@ -134,101 +134,95 @@ const CustomerProfile = () => {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 overflow-hidden relative">
-      {/* ẢNH BÌA & AVATAR */}
-      <div className="relative h-[250px] shrink-0">
-        {/* Ảnh bìa */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 to-indigo-800 shadow-lg rounded-b-[40px] overflow-hidden">
-           {/* Pattern trang trí cho giống cover xịn */}
-           <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.4) 0%, transparent 40%)' }}></div>
+      {/* ẢNH BÌA & AVATAR MỚI - STYLE GỌN GÀNG */}
+      <div className="bg-[#3b82f6] pt-12 pb-20 px-6 shrink-0 flex items-center gap-4">
+        <div className="w-[72px] h-[72px] bg-white rounded-full flex items-center justify-center border-[3px] border-white shadow-md relative overflow-hidden shrink-0">
+           {profile?.avatar ? (
+              <img src={getFullImageUrl(profile.avatar)} alt="Avatar" className="w-full h-full object-cover" />
+           ) : (
+              <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-400">
+                  <User size={32} className="text-gray-400" />
+              </div>
+           )}
         </div>
-
-        <h1 className="absolute left-6 text-xl font-bold mb-4 text-white" style={{ top: 'max(env(safe-area-inset-top), 24px)' }}>Hồ sơ khách hàng</h1>
-        
-        {/* Thông tin phía dưới ảnh bìa */}
-        <div className="absolute bottom-4 left-6 right-6 flex items-end gap-4 z-10">
-          <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center border-4 border-white shadow-md relative overflow-hidden">
-             {profile?.avatar ? (
-                <img src={getFullImageUrl(profile.avatar)} alt="Avatar" className="w-full h-full object-cover" />
-             ) : (
-                <div className="bg-gray-100 w-full h-full flex items-center justify-center text-gray-400">
-                    <User size={36} className="text-gray-400" />
-                </div>
-             )}
-          </div>
-          <div className="pb-1 text-white text-shadow-sm ">
-            <h2 className="text-2xl font-bold tracking-tight">{profile ? profile.name : 'Đang tải...'}</h2>
-            <div className="flex items-center gap-1.5 mt-1 font-medium text-blue-50 opacity-90">
-              <Phone size={14} />
-              <span className="text-sm">{profile?.phone}</span>
-            </div>
+        <div className="text-white">
+          <h2 className="text-[19px] font-bold tracking-tight mb-1">{profile ? profile.name : 'Đang tải...'}</h2>
+          <div className="flex items-center gap-1.5 opacity-90">
+            <Phone size={13} />
+            <span className="text-sm font-medium">{profile?.phone}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 pb-24">
+      <div className="flex-1 overflow-y-auto px-5 space-y-4 pb-24 -mt-8 relative z-10">
+        {/* Cập nhật thông tin card */}
         <div 
           onClick={openEditModal}
-          className="bg-white rounded-2xl p-4 border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform"
+          className="bg-white rounded-[16px] p-4 border border-gray-100 flex items-center justify-between cursor-pointer active:scale-[0.98] shadow-[0_2px_10px_rgba(0,0,0,0.04)] transition-transform"
         >
            <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-               <User size={20} />
+             <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+               <User size={16} />
              </div>
-             <span className="font-semibold text-gray-800">Cập nhật thông tin</span>
+             <span className="font-semibold text-gray-800 text-[15px]">Cập nhật thông tin</span>
            </div>
            <ChevronRight size={18} className="text-gray-400" />
         </div>
 
-        <div>
-          <h3 className="font-extrabold text-gray-400 text-[11px] uppercase tracking-wider mb-2 px-1 mt-4">Hệ thống</h3>
-          <div className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-sm">
+        {/* Hệ thống */}
+        <div className="pt-2">
+          <h3 className="font-bold text-gray-500 text-[11px] uppercase tracking-wider mb-3 px-1">Hệ thống</h3>
+          <div className="bg-white rounded-[16px] border border-gray-100 overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
             <div onClick={() => fetchTerms('TERMS_CUSTOMER_USAGE', 'Điều khoản sử dụng')} className="p-4 flex items-center justify-between border-b border-gray-100 cursor-pointer active:bg-gray-50 transition-colors">
                <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
-                   <ScrollText size={20} />
+                 <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
+                   <ScrollText size={16} />
                  </div>
-                 <span className="font-semibold text-gray-800">Điều khoản sử dụng</span>
+                 <span className="font-medium text-gray-800 text-[15px]">Điều khoản sử dụng</span>
                </div>
                <ChevronRight size={18} className="text-gray-400" />
             </div>
 
             <div onClick={() => fetchTerms('TERMS_CUSTOMER_PRIVACY', 'Chính sách bảo mật')} className="p-4 flex items-center justify-between border-b border-gray-100 cursor-pointer active:bg-gray-50 transition-colors">
                <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
-                   <ShieldCheck size={20} />
+                 <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
+                   <ShieldCheck size={16} />
                  </div>
-                 <span className="font-semibold text-gray-800">Chính sách bảo mật</span>
+                 <span className="font-medium text-gray-800 text-[15px]">Chính sách bảo mật</span>
                </div>
                <ChevronRight size={18} className="text-gray-400" />
             </div>
 
             <div onClick={() => fetchTerms('SUPPORT_CONTACT', 'Trung Tâm Hỗ Trợ')} className="p-4 flex items-center justify-between cursor-pointer active:bg-gray-50 transition-colors">
                <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600">
-                   <HelpCircle size={20} />
+                 <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500">
+                   <HelpCircle size={16} />
                  </div>
-                 <span className="font-semibold text-gray-800">Hỗ trợ / Liên hệ</span>
+                 <span className="font-medium text-gray-800 text-[15px]">Hỗ trợ / Liên hệ</span>
                </div>
                <ChevronRight size={18} className="text-gray-400" />
             </div>
           </div>
         </div>
 
-        <button 
-          onClick={handleLogout}
-          className="w-full bg-white mt-8 p-4 rounded-2xl text-red-500 font-bold border border-red-50 flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
-        >
-          <LogOut size={20} />
-          ĐĂNG XUẤT TÀI KHOẢN
-        </button>
+        {/* Action Buttons */}
+        <div className="pt-6 space-y-3">
+          <button 
+            onClick={handleLogout}
+            className="w-full bg-white p-3.5 rounded-[12px] text-[#ef4444] font-medium border border-[#fee2e2] flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
+          >
+            <LogOut size={18} />
+            ĐĂNG XUẤT TÀI KHOẢN
+          </button>
 
-        <button 
-          onClick={() => setShowDeleteConfirm(true)}
-          className="w-full bg-white mt-3 p-4 rounded-2xl text-red-600 font-bold border border-red-100 flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
-        >
-          <Trash2 size={20} />
-          YÊU CẦU XÓA TÀI KHOẢN
-        </button>
+          <button 
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full bg-white p-3.5 rounded-[12px] text-[#ef4444] font-medium border border-[#fee2e2] flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
+          >
+            <Trash2 size={18} />
+            YÊU CẦU XÓA TÀI KHOẢN
+          </button>
+        </div>
       </div>
 
       {/* Edit Modal */}
