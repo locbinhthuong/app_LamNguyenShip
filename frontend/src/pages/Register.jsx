@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { MapPin } from 'lucide-react';
+import { MapPin, Home } from 'lucide-react';
 import { registerCustomer } from '../services/api';
 import LocationPicker from '../components/LocationPicker';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -67,21 +68,54 @@ const Register = () => {
     }
   };
 
+  const fadeUpVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="flex flex-col items-center min-h-screen p-4 bg-blue-50 pt-10 pb-10">
-      <div className="w-full max-w-sm bg-white p-6 sm:p-8 rounded-3xl shadow-xl transition-all">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Tạo tài khoản</h1>
-          <p className="text-sm text-gray-500 mt-1">Cùng trải nghiệm giao hàng thần tốc</p>
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white relative overflow-hidden py-12">
+      {/* Background decoration */}
+      <div className="absolute top-[10%] left-[-10%] w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+      <div className="absolute bottom-[20%] right-[-10%] w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-sm bg-white/80 backdrop-blur-xl p-8 rounded-[32px] shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-white relative z-10"
+      >
+        <div className="text-center mb-8">
+          <motion.h1 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-[28px] font-extrabold text-slate-800 tracking-tight"
+          >
+            Tạo tài khoản
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-[13px] font-medium text-slate-500 mt-2 tracking-wide"
+          >
+            Cùng trải nghiệm giao hàng thần tốc
+          </motion.p>
         </div>
 
         {/* Chọn Vai Trò */}
-        <div className="flex gap-2 mb-6 bg-gray-100 p-1 rounded-2xl">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex gap-2 mb-8 bg-[#f0f4ff] p-1.5 rounded-[20px]"
+        >
           <button
             type="button"
             onClick={() => handleRoleSelect('CUSTOMER')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              formData.role === 'CUSTOMER' ? 'bg-white text-blue-600' : 'text-gray-500'
+            className={`flex-1 py-3 rounded-[16px] text-[13px] font-bold transition-all relative ${
+              formData.role === 'CUSTOMER' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Khách Cá Nhân
@@ -89,99 +123,118 @@ const Register = () => {
           <button
             type="button"
             onClick={() => handleRoleSelect('SHOP')}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-              formData.role === 'SHOP' ? 'bg-white text-blue-600' : 'text-gray-500'
+            className={`flex-1 py-3 rounded-[16px] text-[13px] font-bold transition-all relative ${
+              formData.role === 'SHOP' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'
             }`}
           >
             Chủ Cửa Hàng
           </button>
-        </div>
+        </motion.div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
-            {error}
-          </div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-5 p-3 bg-red-50/80 border border-red-100 text-red-600 rounded-2xl text-sm text-center font-medium"
+            >
+              {error}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <form onSubmit={handleRegister} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tôi cần gọi bạn là gì?</label>
+          <motion.div variants={fadeUpVariant} initial="hidden" animate="visible" transition={{ delay: 0.4 }}>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Tôi cần gọi bạn là gì?</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
               placeholder="Ví dụ: Anh Tiến Đẹp Trai"
               required
             />
-          </div>
+          </motion.div>
 
-          {formData.role === 'SHOP' && (
-            <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-3">
-              <h3 className="font-semibold text-blue-800 text-sm">Thông tin Cửa Hàng (Bắt buộc)</h3>
-              <div>
-                <input
-                  type="text"
-                  name="shopName"
-                  value={formData.shopName}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none text-sm"
-                  placeholder="Tên shop/quán ăn (Vd: Quán Ốc 99)"
-                />
-              </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="shopAddress"
-                  value={formData.shopAddress}
-                  onChange={handleInputChange}
-                  className="w-full pl-3 pr-24 py-2.5 rounded-xl border border-blue-200 focus:border-blue-500 outline-none text-sm"
-                  placeholder="Địa chỉ quán cố định lấy hàng"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowLocationPicker(true)}
-                  className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-blue-200 active:scale-95 transition-all"
-                >
-                  <MapPin size={14} /> Bản đồ
-                </button>
-              </div>
-            </div>
-          )}
+          <AnimatePresence mode="wait">
+            {formData.role === 'SHOP' && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                exit={{ opacity: 0, height: 0, scale: 0.95 }}
+                className="p-5 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 rounded-2xl border border-blue-100 space-y-3 overflow-hidden"
+              >
+                <h3 className="font-bold text-blue-800 text-[13px] mb-2">Thông tin Cửa Hàng (Bắt buộc)</h3>
+                <div>
+                  <input
+                    type="text"
+                    name="shopName"
+                    value={formData.shopName}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 bg-white rounded-xl border border-blue-100 focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal text-[13px]"
+                    placeholder="Tên shop/quán ăn (Vd: Quán Ốc 99)"
+                  />
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    name="shopAddress"
+                    value={formData.shopAddress}
+                    onChange={handleInputChange}
+                    className="w-full pl-4 pr-24 py-3 bg-white rounded-xl border border-blue-100 focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal text-[13px]"
+                    placeholder="Địa chỉ lấy hàng"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLocationPicker(true)}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-blue-100/80 text-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 hover:bg-blue-200 active:scale-95 transition-all"
+                  >
+                    <MapPin size={14} /> Bản đồ
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại đăng nhập</label>
+          <motion.div variants={fadeUpVariant} initial="hidden" animate="visible" transition={{ delay: 0.5 }}>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Số điện thoại đăng nhập</label>
             <input
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
               placeholder="Ví dụ: 0901234567"
               required
             />
-          </div>
+          </motion.div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu (ít nhất 6 ký tự)</label>
+          <motion.div variants={fadeUpVariant} initial="hidden" animate="visible" transition={{ delay: 0.6 }}>
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Mật khẩu (ít nhất 6 ký tự)</label>
             <input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
               placeholder="Nhập mật khẩu"
               required
               minLength={6}
             />
-          </div>
+          </motion.div>
 
-          <button
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading}
-            className={`w-full py-3.5 mt-4 rounded-xl text-white font-semibold flex justify-center items-center shadow-md active:scale-95 transition-all ${
-              loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-500'
+            className={`w-full py-4 mt-6 rounded-2xl text-white font-bold text-[15px] flex justify-center items-center shadow-[0_8px_20px_rgba(37,99,235,0.2)] transition-all ${
+              loading ? 'bg-blue-400' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:shadow-[0_8px_25px_rgba(37,99,235,0.3)]'
             }`}
           >
             {loading ? (
@@ -192,30 +245,45 @@ const Register = () => {
             ) : (
               'Tham Gia Ngay'
             )}
-          </button>
+          </motion.button>
         </form>
 
-        <p className="mt-8 text-center text-sm text-gray-600">
-          Đã có tài khoản?{' '}
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
-            Đăng nhập
-          </Link>
-        </p>
-      </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="mt-8 space-y-5"
+        >
+          <p className="text-center text-[13px] text-slate-500">
+            Đã có tài khoản?{' '}
+            <Link to="/login" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
+              Đăng nhập
+            </Link>
+          </p>
+          <div className="flex justify-center border-t border-slate-100 pt-5">
+            <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-semibold text-sm bg-slate-50 px-4 py-2 rounded-full">
+              <Home size={16} />
+              <span>Trang chủ</span>
+            </Link>
+          </div>
+        </motion.div>
+      </motion.div>
 
-      {showLocationPicker && (
-        <LocationPicker
-          onLocationSelect={(loc) => {
-            setFormData({
-              ...formData,
-              shopAddress: loc.address,
-              defaultLocation: loc
-            });
-            setShowLocationPicker(false);
-          }}
-          onClose={() => setShowLocationPicker(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showLocationPicker && (
+          <LocationPicker
+            onLocationSelect={(loc) => {
+              setFormData({
+                ...formData,
+                shopAddress: loc.address,
+                defaultLocation: loc
+              });
+              setShowLocationPicker(false);
+            }}
+            onClose={() => setShowLocationPicker(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };

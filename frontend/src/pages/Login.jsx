@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Home } from 'lucide-react';
 import { loginCustomer } from '../services/api';
+import { motion } from 'framer-motion';
 
 const Login = () => {
   const [phone, setPhone] = useState('');
@@ -51,51 +52,89 @@ const Login = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-blue-50">
-      <div className="w-full max-w-sm bg-white p-8 rounded-3xl shadow-xl transition-all">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-b from-blue-50 to-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob"></div>
+      <div className="absolute top-[20%] right-[-10%] w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
+
+      <motion.div 
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-sm bg-white/80 backdrop-blur-xl p-8 rounded-[32px] shadow-[0_8px_40px_rgba(0,0,0,0.08)] border border-white relative z-10"
+      >
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
-            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="w-56 h-auto object-contain scale-125 origin-center" />
-          </div>
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5, type: 'spring' }}
+            className="inline-flex items-center justify-center mb-2"
+          >
+            <img src="/logoALOSHIPP.png" alt="AloShipp Logo" className="w-56 object-contain" />
+          </motion.div>
           <h1 className="hidden">AloShipp</h1>
-          <p className="text-sm text-gray-500 mt-1">Nhanh chóng & An toàn</p>
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-[13px] font-medium text-slate-500 mt-2 tracking-wide"
+          >
+            Nhanh chóng & An toàn
+          </motion.p>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mb-5 p-3 bg-red-50/80 border border-red-100 text-red-600 rounded-2xl text-sm text-center font-medium"
+          >
             {error}
-          </div>
+          </motion.div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Số điện thoại</label>
             <input
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
               placeholder="Nhập số điện thoại"
               required
             />
-          </div>
+          </motion.div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Mật khẩu</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
               placeholder="Nhập mật khẩu"
               required
             />
-          </div>
+          </motion.div>
 
-          <button
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={loading}
-            className={`w-full py-3.5 mt-2 rounded-xl text-white font-semibold flex justify-center items-center shadow-md active:scale-95 transition-all ${loading ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-500'
+            className={`w-full py-4 mt-4 rounded-2xl text-white font-bold text-[15px] flex justify-center items-center shadow-[0_8px_20px_rgba(37,99,235,0.2)] transition-all ${loading ? 'bg-blue-400' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:shadow-[0_8px_25px_rgba(37,99,235,0.3)]'
               }`}
           >
             {loading ? (
@@ -106,24 +145,29 @@ const Login = () => {
             ) : (
               'Đăng Nhập'
             )}
-          </button>
+          </motion.button>
         </form>
 
-        <div className="mt-8 space-y-4">
-          <p className="text-center text-sm text-gray-600">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="mt-8 space-y-5"
+        >
+          <p className="text-center text-[13px] text-slate-500">
             Chưa có tài khoản?{' '}
-            <Link to="/register" className="text-blue-600 font-semibold hover:underline">
+            <Link to="/register" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
               Đăng ký ngay
             </Link>
           </p>
-          <div className="flex justify-center border-t border-gray-100 pt-4">
-            <Link to="/" className="flex items-center gap-2 text-gray-500 hover:text-blue-600 transition-colors font-medium">
-              <Home size={18} />
+          <div className="flex justify-center border-t border-slate-100 pt-5">
+            <Link to="/" className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-semibold text-sm bg-slate-50 px-4 py-2 rounded-full">
+              <Home size={16} />
               <span>Trang chủ</span>
             </Link>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
