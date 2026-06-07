@@ -108,53 +108,11 @@ const CustomerLayout = () => {
             )
           })}
         </div>
-        
-        {/* SIDEBAR BOTTOM OPTIONS */}
-        <div className="p-5 flex flex-col gap-2 border-t border-gray-100/60">
-          <button className="w-full bg-[#0a192f] text-white py-3.5 rounded-xl font-semibold text-sm shadow-md hover:bg-[#112240] transition-colors">
-            Đặt đơn mới
-          </button>
-          
-          <button className="w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50 hover:text-gray-800 mt-2">
-            <HelpCircle size={20} strokeWidth={1.5} />
-            <span className="text-[14px]">Trợ giúp</span>
-          </button>
-          
-          <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all font-medium text-gray-500 hover:bg-gray-50 hover:text-red-500">
-            <LogOut size={20} strokeWidth={1.5} />
-            <span className="text-[14px]">Đăng xuất</span>
-          </button>
-        </div>
       </div>
 
       {/* VÙNG CHỨA APP CHÍNH */}
-      <div className="flex-1 h-[100dvh] relative flex flex-col overflow-hidden bg-[#f8fafc]">
+      <div className="flex-1 h-[100dvh] relative flex flex-col overflow-hidden bg-slate-50">
         
-        {/* DESKTOP TOP HEADER (Bắt chước ảnh mẫu) */}
-        <div className="hidden md:flex h-[72px] bg-white/60 backdrop-blur-md border-b border-gray-100/50 px-8 items-center justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-8">
-            <button className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Tra cứu</button>
-            <button className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Bưu cục</button>
-            <button className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors">Khuyến mãi</button>
-          </div>
-          
-          <div className="flex items-center gap-5">
-            <button className="text-gray-500 hover:text-gray-900 transition-colors relative">
-              <Bell size={20} strokeWidth={1.5} />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-            </button>
-            <button className="text-gray-500 hover:text-gray-900 transition-colors">
-              <MapPin size={20} strokeWidth={1.5} />
-            </button>
-            <button className="flex items-center gap-2 bg-gray-100/80 hover:bg-gray-200 pl-3 pr-1 py-1 rounded-full transition-colors ml-2">
-              <span className="text-xs font-semibold text-gray-700">Tài khoản</span>
-              <div className="w-7 h-7 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm">
-                <User size={14} />
-              </div>
-            </button>
-          </div>
-        </div>
-
         {/* CONTAINER NỘI DUNG WEB */}
         <div className="relative w-full h-full overflow-hidden flex flex-col z-10 transition-all">
 

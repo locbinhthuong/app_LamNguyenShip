@@ -119,42 +119,59 @@ const CustomerDashboard = () => {
   return (
     <div className="flex flex-col min-h-screen pb-20 relative font-sans w-full max-w-6xl mx-auto px-6 pt-6">
       
-      {/* SEARCH / LOCATION BAR (Như mẫu) */}
+      {/* HEADER: Địa điểm của tôi */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white rounded-2xl p-2.5 flex items-center justify-between cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100 mb-8"
+        className="bg-white/90 backdrop-blur-md px-5 pb-4 pt-3 safe-pt sticky top-0 z-50 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform duration-300 ease-out mb-4 rounded-xl shadow-sm border border-gray-100"
       >
-        <div className="flex items-center gap-3 pl-3">
-          <MapPin size={20} className="text-gray-400" />
-          <span className="text-gray-500 text-sm font-medium">{address === 'Đang tải...' ? 'Nhập địa chỉ giao hàng của bạn...' : address}</span>
+        <div className="flex flex-col flex-1 overflow-hidden mr-4">
+          <div className="flex items-center gap-1 text-gray-500 mb-1">
+            <span className="text-xs font-medium bg-gray-100/80 px-2.5 py-0.5 rounded-full text-gray-600">📍 Kéo ghim</span>
+            <ChevronRight size={14} className="opacity-50" />
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[13px] font-bold text-gray-800 line-clamp-1 truncate block leading-tight">{address}</span>
+            <div className="bg-blue-100/80 text-blue-600 px-1.5 py-0.5 rounded shadow-sm">
+              <span className="text-[10px] uppercase font-bold tracking-wider">Chọn</span>
+            </div>
+          </div>
         </div>
-        <button className="bg-[#0a192f] text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-[#112240] transition-colors">
-          CHỌN
-        </button>
       </div>
 
-      {/* HERO BANNER (Như mẫu) */}
-      <div className="w-full bg-[#0a192f] rounded-[24px] overflow-hidden relative mb-12 shadow-[0_12px_40px_rgba(10,25,47,0.2)]">
-        {/* Abstract background elements */}
-        <div className="absolute inset-0 opacity-40 mix-blend-overlay bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400 via-[#0a192f] to-[#0a192f]"></div>
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/20 to-transparent"></div>
-        <div className="absolute bottom-0 left-0 w-full h-1/3 bg-gradient-to-t from-[#0a192f] to-transparent"></div>
-        
-        <div className="relative z-10 p-10 md:p-14 md:w-2/3">
-          <span className="inline-block bg-orange-500 text-white text-[11px] font-bold px-3 py-1 rounded-full mb-6 uppercase tracking-wider">
-            Dịch vụ siêu tốc
-          </span>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white leading-[1.15] mb-4 tracking-tight">
-            Giao Nhận Nhanh Chóng,<br/> An Tâm Mọi Lúc
-          </h1>
-          <p className="text-gray-300 text-sm md:text-base font-medium mb-8 max-w-md leading-relaxed">
-            Nền tảng logistics công nghệ cao giúp bạn quản lý và điều phối đơn hàng hiệu quả chỉ với vài thao tác.
-          </p>
-          <button className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-8 py-3.5 rounded-xl shadow-[0_8px_20px_rgba(249,115,22,0.3)] transition-all transform hover:-translate-y-0.5">
-            Đặt Đơn Ngay
-          </button>
+      {/* SLIDER BANNER TỪ ADMIN */}
+      {banners.length > 0 && (
+        <div className="mb-8">
+          <div className="relative w-full h-48 sm:h-[320px] rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-slate-50 group flex items-center justify-center">
+            <div 
+              className="flex w-full h-full transition-transform duration-500 ease-out items-center"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {banners.map(banner => (
+                <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-0">
+                  {banner.imageUrl && (
+                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-cover object-center" />
+                  )}
+                  {banner.videoUrl && (
+                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-cover object-center" autoPlay muted loop playsInline />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Nút điều hướng Slider */}
+            {banners.length > 1 && (
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+                {banners.map((_, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setCurrentSlide(index)}
+                    className={`h-2 rounded-full transition-all ${currentSlide === index ? 'w-6 bg-white shadow' : 'w-2 bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* DỊCH VỤ NỔI BẬT (Như mẫu) */}
       <div className="mb-12">
@@ -225,7 +242,7 @@ const CustomerDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {promotions.length > 0 ? promotions.slice(0, 2).map((promo, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(promo)} className="bg-gradient-to-br from-[#1a2b4c] to-[#0a192f] rounded-[20px] h-48 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
-                <img src={promo.imageUrl || '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                <img src={promo.imageUrl ? `https://api.aloshipp.com${promo.imageUrl}` : '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-5 left-5 right-5">
                   <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">GIẢM 50%</span>
@@ -265,7 +282,7 @@ const CustomerDashboard = () => {
             {news.length > 0 ? news.slice(0, 3).map((item, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(item)} className="flex gap-4 cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                  <img src={item.imageUrl || '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                  <img src={item.imageUrl ? `https://api.aloshipp.com${item.imageUrl}` : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
                 </div>
                 <div className="flex flex-col justify-center">
                   <h4 className="text-[13px] font-bold text-gray-800 mb-1 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
