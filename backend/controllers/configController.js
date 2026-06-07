@@ -25,6 +25,21 @@ exports.getConfig = async (req, res) => {
       } else if (key === 'REGION_CONFIG') {
         config = new Config({ key, value: ['Cần Thơ', 'Vĩnh Long'] });
         await config.save();
+      } else if (key === 'APP_VERSION_CONFIG') {
+        const defaultAppVersion = {
+          driverApp: {
+            minVersion: "1.0.0",
+            storeUrlAndroid: "market://details?id=vn.lamnguyenship.driver",
+            storeUrlIos: "itms-apps://itunes.apple.com/app/idYOUR_ID"
+          },
+          customerApp: {
+            minVersion: "1.0.0",
+            storeUrlAndroid: "market://details?id=vn.lamnguyenship.customer",
+            storeUrlIos: "itms-apps://itunes.apple.com/app/idYOUR_ID"
+          }
+        };
+        config = new Config({ key, value: defaultAppVersion });
+        await config.save();
       } else {
         return res.status(404).json({ success: false, message: 'Không tìm thấy cấu hình' });
       }

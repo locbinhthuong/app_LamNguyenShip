@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig } from '../services/configService';
+import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig } from '../services/configService';
 import { Trash2, Plus } from 'lucide-react';
 
 export default function Settings() {
@@ -10,6 +10,11 @@ export default function Settings() {
 
   const [regions, setRegions] = useState([]);
   const [newRegion, setNewRegion] = useState('');
+
+  const [appVersion, setAppVersion] = useState({
+    driverApp: { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" },
+    customerApp: { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" }
+  });
 
   const [config, setConfig] = useState({
     tiers: [
@@ -33,9 +38,10 @@ export default function Settings() {
   const fetchConfig = async () => {
     try {
       setLoading(true);
-      const [pricingRes, regionRes] = await Promise.all([
+      const [pricingRes, regionRes, appVersionRes] = await Promise.all([
         getPricingConfig(),
-        getRegionConfig().catch(() => null)
+        getRegionConfig().catch(() => null),
+        getAppVersionConfig().catch(() => null)
       ]);
 
       if (pricingRes.success && pricingRes.data && pricingRes.data.value && Array.isArray(pricingRes.data.value.tiers)) {
@@ -52,6 +58,14 @@ export default function Settings() {
       } else {
         setRegions(['Cần Thơ', 'Vĩnh Long']);
       }
+
+      if (appVersionRes && appVersionRes.success && appVersionRes.data && appVersionRes.data.value) {
+        setAppVersion({
+          driverApp: appVersionRes.data.value.driverApp || { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" },
+          customerApp: appVersionRes.data.value.customerApp || { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" }
+        });
+      }
+
     } catch (err) {
       setErrorMsg('Không thể tải cấu hình');
       console.error(err);
@@ -100,6 +114,7 @@ export default function Settings() {
     try {
       const res = await updatePricingConfig(config);
       await updateRegionConfig(regions);
+      await updateAppVersionConfig(appVersion);
       
       if (res.success) {
         setSuccessMsg('Đã lưu cấu hình thành công!');
@@ -368,6 +383,81 @@ export default function Settings() {
                     ))}
                   </div>
                 )}
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Cấu Hình Bắt Buộc Cập Nhật Ứng Dụng</h3>
+              <p className="text-sm text-slate-500 mb-6">Tính năng Ép Buộc Cập Nhật: Nếu phiên bản app trên điện thoại của Tài xế thấp hơn "Mã Phiên Bản Bắt Buộc", app sẽ bị khóa và bắt buộc họ phải tải bản mới từ App Store/CH Play.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                {/* Driver App */}
+                <div className="space-y-4">
+                  <h4 className="font-bold text-blue-800 text-lg flex items-center gap-2">
+                    <span className="bg-blue-100 text-blue-600 p-2 rounded-lg">🛵</span> App Tài Xế (Driver)
+                  </h4>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Mã Phiên Bản Bắt Buộc (VD: 1.0.0)</label>
+                    <input
+                      type="text"
+                      value={appVersion?.driverApp?.minVersion || ''}
+                      onChange={(e) => setAppVersion({ ...appVersion, driverApp: { ...appVersion.driverApp, minVersion: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Link tải Android (CH Play)</label>
+                    <input
+                      type="text"
+                      value={appVersion?.driverApp?.storeUrlAndroid || ''}
+                      onChange={(e) => setAppVersion({ ...appVersion, driverApp: { ...appVersion.driverApp, storeUrlAndroid: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm text-slate-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Link tải iOS (App Store)</label>
+                    <input
+                      type="text"
+                      value={appVersion?.driverApp?.storeUrlIos || ''}
+                      onChange={(e) => setAppVersion({ ...appVersion, driverApp: { ...appVersion.driverApp, storeUrlIos: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm text-slate-600"
+                    />
+                  </div>
+                </div>
+
+                {/* Customer App */}
+                <div className="space-y-4">
+                  <h4 className="font-bold text-emerald-800 text-lg flex items-center gap-2">
+                    <span className="bg-emerald-100 text-emerald-600 p-2 rounded-lg">👤</span> App Khách Hàng (Customer)
+                  </h4>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Mã Phiên Bản Bắt Buộc (VD: 1.0.0)</label>
+                    <input
+                      type="text"
+                      value={appVersion?.customerApp?.minVersion || ''}
+                      onChange={(e) => setAppVersion({ ...appVersion, customerApp: { ...appVersion.customerApp, minVersion: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Link tải Android (CH Play)</label>
+                    <input
+                      type="text"
+                      value={appVersion?.customerApp?.storeUrlAndroid || ''}
+                      onChange={(e) => setAppVersion({ ...appVersion, customerApp: { ...appVersion.customerApp, storeUrlAndroid: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm text-slate-600"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Link tải iOS (App Store)</label>
+                    <input
+                      type="text"
+                      value={appVersion?.customerApp?.storeUrlIos || ''}
+                      onChange={(e) => setAppVersion({ ...appVersion, customerApp: { ...appVersion.customerApp, storeUrlIos: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm text-slate-600"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

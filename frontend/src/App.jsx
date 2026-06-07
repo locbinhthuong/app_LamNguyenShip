@@ -16,8 +16,24 @@ import ShopBookingFlow from './pages/shop/ShopBookingFlow';
 import ShopProfile from './pages/shop/ShopProfile';
 import ShopActivity from './pages/shop/ShopActivity';
 import { useAuthSocket } from './hooks/useAuthSocket';
+import ForceUpdateModal from './components/ForceUpdateModal';
+import { getAppVersionConfig } from './services/api';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { useEffect, useState } from 'react';
 
-import { useEffect } from 'react';
+const compareVersions = (v1, v2) => {
+  if (!v1 || !v2) return 0;
+  const p1 = v1.split('.').map(Number);
+  const p2 = v2.split('.').map(Number);
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const n1 = p1[i] || 0;
+    const n2 = p2[i] || 0;
+    if (n1 > n2) return 1;
+    if (n1 < n2) return -1;
+  }
+  return 0;
+};
 
 const IndexRoute = () => {
   const userRole = localStorage.getItem('customerRole');
@@ -30,6 +46,7 @@ const IndexRoute = () => {
 function App() {
   useAuthSocket();
   const location = useLocation();
+  const [forceUpdateConfig, setForceUpdateConfig] = useState(null);
 
   useEffect(() => {
     const splashScreen = document.getElementById('splash-screen');
@@ -41,12 +58,33 @@ function App() {
         setTimeout(() => splashScreen.remove(), 400);
       }, remainingTime);
     }
+    
+    // Check App Version
+    const checkAppVersion = async () => {
+      try {
+        const res = await getAppVersionConfig();
+        if (res && res.data && res.data.value && res.data.value.customerApp) {
+          const config = res.data.value.customerApp;
+          if (Capacitor.isNativePlatform()) {
+            const info = await CapacitorApp.getInfo();
+            if (compareVersions(info.version, config.minVersion) < 0) {
+              setForceUpdateConfig(config);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi kiểm tra phiên bản app:", err);
+      }
+    };
+    checkAppVersion();
   }, []);
 
   return (
-    <div className="h-[100dvh] bg-gray-50 flex flex-col font-sans overflow-hidden relative">
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+    <>
+      {forceUpdateConfig && <ForceUpdateModal config={forceUpdateConfig} />}
+      <div className="h-[100dvh] bg-gray-50 flex flex-col font-sans overflow-hidden relative">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
           {/* Các màn hình con của Khách hàng (Được dính Footer Layout) */}
           <Route element={<CustomerLayout />}>
             {/* Trang chủ mặc định là màn hình 4 dịch vụ (Cho phép Guest xem, nhưng SHOP thì chuyển qua /shop) */}
@@ -145,7 +183,8 @@ function App() {
           />
         </Routes>
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 }
 

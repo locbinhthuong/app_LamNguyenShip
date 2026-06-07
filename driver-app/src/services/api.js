@@ -164,3 +164,4 @@ export const getActiveAnnouncements = async () => {
 };
 
 export default api;
+export const getAppVersionConfig = async () => { const response = await api.get('/api/config/APP_VERSION_CONFIG'); return response.data; };

@@ -44,6 +44,13 @@ api.interceptors.response.use(
   }
 );
 
+// ==================== CONFIG API ====================
+export const getAppVersionConfig = async () => {
+  // Config endpoint starts with /config not /api/config because baseURL already has /api
+  const response = await api.get('/config/APP_VERSION_CONFIG');
+  return response.data;
+};
+
 // ==================== AUTH API ====================
 export const registerCustomer = async (userData) => {
   const response = await api.post('/auth/customer/register', userData);

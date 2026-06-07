@@ -12,10 +12,26 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import AlertModal from './components/AlertModal';
 import { AnimatePresence } from 'framer-motion';
 import AnimatedPage from './components/AnimatedPage';
-import api from './services/api';
+import api, { getAppVersionConfig } from './services/api';
 import { requestFirebaseToken, setupForegroundListener } from './utils/firebase';
+import ForceUpdateModal from './components/ForceUpdateModal';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
+
+const compareVersions = (v1, v2) => {
+  if (!v1 || !v2) return 0;
+  const p1 = v1.split('.').map(Number);
+  const p2 = v2.split('.').map(Number);
+  for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+    const n1 = p1[i] || 0;
+    const n2 = p2[i] || 0;
+    if (n1 > n2) return 1;
+    if (n1 < n2) return -1;
+  }
+  return 0;
+};
 
 const PrivateRoute = ({ children }) => {
   const { driver, loading } = useAuth();
@@ -36,6 +52,8 @@ function AppContent() {
   const direction = location.state?.direction || (navType === 'POP' ? -1 : 1);
   const [logoutAlert, setLogoutAlert] = useState(null);
   const [pushMessage, setPushMessage] = useState(null);
+  
+  const [forceUpdateConfig, setForceUpdateConfig] = useState(null);
 
   // Audio Alarm Global Array
   const audioCtxRef = useRef(null);
@@ -97,6 +115,27 @@ function AppContent() {
       document.removeEventListener('touchstart', resumeAudioContext);
       document.removeEventListener('click', resumeAudioContext);
     };
+  }, []);
+
+  // Force Update Check
+  useEffect(() => {
+    const checkAppVersion = async () => {
+      try {
+        const res = await getAppVersionConfig();
+        if (res && res.success && res.data && res.data.value && res.data.value.driverApp) {
+          const config = res.data.value.driverApp;
+          if (Capacitor.isNativePlatform()) {
+            const info = await CapacitorApp.getInfo();
+            if (compareVersions(info.version, config.minVersion) < 0) {
+              setForceUpdateConfig(config);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi khi kiểm tra phiên bản app:", err);
+      }
+    };
+    checkAppVersion();
   }, []);
 
   const stopAlarm = useCallback(() => {
@@ -339,7 +378,9 @@ function AppContent() {
   };
 
   return (
-    <div className="h-[100dvh] w-full relative overflow-hidden bg-gray-50">
+    <>
+      {forceUpdateConfig && <ForceUpdateModal config={forceUpdateConfig} />}
+      <div className="h-[100dvh] w-full relative overflow-hidden bg-gray-50">
       <AnimatePresence mode="popLayout" initial={false} custom={direction}>
         <Routes location={location} key={location.pathname}>
           <Route path="/login" element={driver ? <Navigate to="/" /> : <AnimatedPage direction={direction}><Login /></AnimatedPage>} />
@@ -383,6 +424,7 @@ function AppContent() {
         </div>
       )}
     </div>
+    </>
   );
 }
 

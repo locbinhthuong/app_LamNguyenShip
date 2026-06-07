@@ -19,3 +19,13 @@ export const updateRegionConfig = async (configData) => {
   const response = await api.put('/api/config/REGION_CONFIG', { value: configData });
   return response.data;
 };
+
+export const getAppVersionConfig = async () => {
+  const response = await api.get('/api/config/APP_VERSION_CONFIG');
+  return response.data;
+};
+
+export const updateAppVersionConfig = async (configData) => {
+  const response = await api.put('/api/config/APP_VERSION_CONFIG', { value: configData });
+  return response.data;
+};
