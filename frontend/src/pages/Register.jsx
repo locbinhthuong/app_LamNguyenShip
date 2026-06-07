@@ -187,9 +187,13 @@ const Register = () => {
               className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all cursor-pointer appearance-none"
               required
             >
-              {regions.map((reg, idx) => (
-                <option key={idx} value={reg}>{reg}</option>
-              ))}
+              {regions.length > 0 ? (
+                regions.map((reg, idx) => (
+                  <option key={idx} value={reg}>{reg}</option>
+                ))
+              ) : (
+                <option value="" disabled>Chưa có khu vực (Vui lòng thêm ở Admin)</option>
+              )}
             </select>
             {/* Custom arrow for select */}
             <div className="absolute right-4 top-[44px] pointer-events-none text-slate-400">
