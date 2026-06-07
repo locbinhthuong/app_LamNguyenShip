@@ -281,7 +281,9 @@ export default function Dashboard() {
             <span className="text-xl">🏆</span> Xếp hạng tuần
           </h2>
           <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[10px] font-bold text-orange-600 uppercase tracking-wide">
-            Từ đầu tuần đến nay
+            {stats?.weekRange 
+              ? `Từ ${new Date(stats.weekRange.start).toLocaleDateString('vi-VN')} đến ${new Date(stats.weekRange.end).toLocaleDateString('vi-VN')}`
+              : 'Từ đầu tuần đến nay'}
           </span>
         </div>
         

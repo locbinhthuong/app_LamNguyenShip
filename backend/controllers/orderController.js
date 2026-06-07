@@ -1149,6 +1149,10 @@ const orderController = {
       const startOfWeek = new Date(startOfToday);
       startOfWeek.setDate(diffToMonday);
 
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
       const weeklyDriverStats = await Order.aggregate([
         { 
           $match: { 
@@ -1194,7 +1198,11 @@ const orderController = {
           },
           topDrivers,
           recentOrders,
-          weeklyDriverStats
+          weeklyDriverStats,
+          weekRange: {
+            start: startOfWeek,
+            end: endOfWeek
+          }
         }
       });
     } catch (error) {
