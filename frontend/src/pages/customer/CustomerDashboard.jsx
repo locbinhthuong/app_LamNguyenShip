@@ -138,6 +138,22 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
+      {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ */}
+      <div className="mb-6">
+        <div className="bg-blue-50/80 border border-blue-100/50 rounded-[20px] p-4 flex items-start gap-3.5 relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] backdrop-blur-sm">
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-blue-500 rounded-l-full"></div>
+          <div className="mt-0.5 text-blue-500 bg-white p-1.5 rounded-full shadow-sm animate-bounce">
+            <MapPin size={18} />
+          </div>
+          <div>
+            <h4 className="text-[11px] font-extrabold text-blue-800 uppercase tracking-wider mb-1">Lưu ý trước khi Đặt Đơn</h4>
+            <p className="text-[11px] text-blue-700/90 leading-relaxed font-medium">
+              Vui lòng chạm vào thanh <strong>"📍 Kéo ghim"</strong> ở trên cùng để kiểm tra và định vị chính xác vị trí của bạn trên bản đồ giúp tài xế tìm đến nhanh hơn nhé!
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* SLIDER BANNER TỪ ADMIN */}
       {banners.length > 0 && (
         <div className="mb-8">
