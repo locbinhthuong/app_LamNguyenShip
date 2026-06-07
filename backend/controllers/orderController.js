@@ -1075,27 +1075,37 @@ const orderController = {
   // GET /api/orders/stats/dashboard - Thống kê dashboard (Admin)
   getDashboardStats: async (req, res) => {
     try {
-      // Đầu ngày theo giờ Việt Nam (Render chạy UTC — setHours(0) local sẽ lệch 7h)
-      const startOfToday = startOfTodayVietnam();
+      const { date, weekOffset } = req.query;
+
+      // Đầu ngày theo giờ Việt Nam
+      let startOfToday;
+      if (date) {
+        startOfToday = new Date(`${date}T00:00:00+07:00`);
+      } else {
+        startOfToday = startOfTodayVietnam();
+      }
+
+      const endOfToday = new Date(startOfToday);
+      endOfToday.setHours(23, 59, 59, 999);
 
       // Đơn hoàn thành / doanh thu "trong ngày" = theo thời điểm giao (deliveredAt), không phải ngày tạo đơn
       const completedTodayMatch = {
         status: 'COMPLETED',
         $or: [
-          { deliveredAt: { $gte: startOfToday } },
-          { deliveredAt: null, updatedAt: { $gte: startOfToday } },
+          { deliveredAt: { $gte: startOfToday, $lte: endOfToday } },
+          { deliveredAt: null, updatedAt: { $gte: startOfToday, $lte: endOfToday } },
         ],
       };
       const cancelledTodayMatch = {
         status: 'CANCELLED',
         $or: [
-          { cancelledAt: { $gte: startOfToday } },
-          { cancelledAt: null, updatedAt: { $gte: startOfToday } },
+          { cancelledAt: { $gte: startOfToday, $lte: endOfToday } },
+          { cancelledAt: null, updatedAt: { $gte: startOfToday, $lte: endOfToday } },
         ],
       };
 
-      // Đơn tạo "hôm nay" VN: sử dụng $gte bình thường vì timestamps: true tự động sinh Date obj
-      const todayCreatedQuery = Order.countDocuments({ createdAt: { $gte: startOfToday } });
+      // Đơn tạo "hôm nay" VN
+      const todayCreatedQuery = Order.countDocuments({ createdAt: { $gte: startOfToday, $lte: endOfToday } });
 
       const [
         totalOrders,
@@ -1129,11 +1139,11 @@ const orderController = {
 
       const revenueToday = todayRevenue[0]?.total || 0;
 
-      // Top drivers
-      const topDrivers = await Driver.find()
+      // Online drivers
+      const topDrivers = await Driver.find({ isOnline: true })
         .select('name phone stats driverCode')
         .sort({ 'stats.completedOrders': -1 })
-        .limit(5)
+        .limit(10)
         .lean();
 
       // Recent orders
@@ -1144,10 +1154,14 @@ const orderController = {
         .lean();
 
       // Xếp hạng tài xế trong tuần (từ Thứ 2)
-      const dayOfWeek = startOfToday.getDay();
-      const diffToMonday = startOfToday.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-      const startOfWeek = new Date(startOfToday);
+      const referenceDate = startOfTodayVietnam();
+      const dayOfWeek = referenceDate.getDay();
+      const offsetDays = Number(weekOffset) || 0;
+      const diffToMonday = referenceDate.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1) + (offsetDays * 7);
+      
+      const startOfWeek = new Date(referenceDate);
       startOfWeek.setDate(diffToMonday);
+      startOfWeek.setHours(0, 0, 0, 0);
 
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);

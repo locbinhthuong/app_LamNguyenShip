@@ -76,8 +76,13 @@ export const getOrders = async (params) => {
   throw new Error(body?.message || 'Không tải danh sách đơn');
 };
 
-export const getDashboardStats = async () => {
-  const response = await api.get('/api/orders/stats/dashboard');
+export const getDashboardStats = async (options = {}) => {
+  const { date, weekOffset } = options;
+  const params = new URLSearchParams();
+  if (date) params.append('date', date);
+  if (weekOffset !== undefined) params.append('weekOffset', weekOffset);
+
+  const response = await api.get(`/api/orders/stats/dashboard?${params.toString()}`);
   const body = response.data;
   if (body?.success && body?.data != null) return body.data;
   throw new Error(body?.message || 'Không tải được thống kê');
