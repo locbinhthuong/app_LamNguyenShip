@@ -1171,8 +1171,8 @@ const orderController = {
           $match: { 
             status: 'COMPLETED',
             $or: [
-              { deliveredAt: { $gte: startOfWeek } },
-              { deliveredAt: null, updatedAt: { $gte: startOfWeek } }
+              { deliveredAt: { $gte: startOfWeek, $lte: endOfWeek } },
+              { deliveredAt: null, updatedAt: { $gte: startOfWeek, $lte: endOfWeek } }
             ]
           } 
         },
