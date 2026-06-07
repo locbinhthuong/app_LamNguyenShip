@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX, Bike, ShoppingCart, Newspaper, Gift, Phone } from 'lucide-react';
 import LocationPicker from '../../components/LocationPicker';
 import AnnouncementSlider from '../../components/AnnouncementSlider';
-import { getActiveAnnouncements } from '../../services/api';
+import { getActiveAnnouncements, api } from '../../services/api';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -113,7 +113,6 @@ const CustomerDashboard = () => {
     const fetchProfile = async () => {
       if (isAuthenticated) {
         try {
-          const { api } = await import('../../services/api');
           const res = await api.get('/auth/customer/me');
           if (res.data && res.data.success) {
             setCustomerName(res.data.data.name);
