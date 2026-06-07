@@ -274,6 +274,66 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* Bảng xếp hạng tuần */}
+      <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="flex items-center gap-1.5 font-bold text-slate-800">
+            <span className="text-xl">🏆</span> Xếp hạng tuần
+          </h2>
+          <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[10px] font-bold text-orange-600 uppercase tracking-wide">
+            Từ đầu tuần đến nay
+          </span>
+        </div>
+        
+        <div className="overflow-x-auto rounded-xl border border-slate-100">
+          <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
+            <thead className="bg-slate-50/80 text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <tr>
+                <th className="px-4 py-3 text-center w-16">Hạng</th>
+                <th className="px-4 py-3">Tài xế</th>
+                <th className="px-4 py-3 text-center">Số đơn</th>
+                <th className="px-4 py-3 text-right">Tổng cước</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {(stats?.weeklyDriverStats || []).length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="px-4 py-12 text-center text-sm text-slate-500">
+                    <p className="text-2xl mb-2">📭</p>
+                    <p>Chưa có dữ liệu tuần này</p>
+                  </td>
+                </tr>
+              ) : (
+                stats?.weeklyDriverStats?.map((driver, index) => (
+                  <tr key={driver._id?._id || index} className="group hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-3 text-center">
+                      {index === 0 ? <span className="text-xl drop-shadow-sm">🥇</span> : 
+                       index === 1 ? <span className="text-xl drop-shadow-sm">🥈</span> : 
+                       index === 2 ? <span className="text-xl drop-shadow-sm">🥉</span> : 
+                       <span className="text-sm font-bold text-slate-400 group-hover:text-slate-600">#{index + 1}</span>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-bold text-slate-800 text-sm">{driver._id?.name || 'Không rõ'}</div>
+                      <div className="text-[10px] sm:text-xs font-medium text-slate-500 mt-0.5">{driver._id?.phone || '---'}</div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex h-6 min-w-[28px] items-center justify-center rounded-full bg-blue-50 border border-blue-100 px-2 text-xs font-black text-blue-600 shadow-sm">
+                        {driver.totalOrders}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="font-bold text-green-600 sm:text-base text-sm bg-green-50/50 px-2 py-1 rounded-lg">
+                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(driver.totalMoney || 0)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Dọn dẹp dữ liệu */}
       <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">

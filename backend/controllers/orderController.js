@@ -1143,6 +1143,35 @@ const orderController = {
         .limit(10)
         .lean();
 
+      // Xếp hạng tài xế trong tuần (từ Thứ 2)
+      const dayOfWeek = startOfToday.getDay();
+      const diffToMonday = startOfToday.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+      const startOfWeek = new Date(startOfToday);
+      startOfWeek.setDate(diffToMonday);
+
+      const weeklyDriverStats = await Order.aggregate([
+        { 
+          $match: { 
+            status: 'COMPLETED',
+            $or: [
+              { deliveredAt: { $gte: startOfWeek } },
+              { deliveredAt: null, updatedAt: { $gte: startOfWeek } }
+            ]
+          } 
+        },
+        { 
+          $group: { 
+            _id: '$assignedTo', 
+            totalOrders: { $sum: 1 }, 
+            totalMoney: { $sum: '$deliveryFee' }
+          } 
+        },
+        { $sort: { totalOrders: -1, totalMoney: -1 } }
+      ]);
+
+      const DriverModel = require('../models/Driver');
+      await DriverModel.populate(weeklyDriverStats, { path: '_id', select: 'name phone driverCode' });
+
       res.status(200).json({
         success: true,
         data: {
@@ -1164,7 +1193,8 @@ const orderController = {
             active: activeDrivers
           },
           topDrivers,
-          recentOrders
+          recentOrders,
+          weeklyDriverStats
         }
       });
     } catch (error) {
