@@ -1143,7 +1143,6 @@ const orderController = {
       const topDrivers = await Driver.find({ isOnline: true })
         .select('name phone stats driverCode')
         .sort({ 'stats.completedOrders': -1 })
-        .limit(10)
         .lean();
 
       // Recent orders
