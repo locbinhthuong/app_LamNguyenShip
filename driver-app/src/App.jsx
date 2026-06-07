@@ -111,7 +111,7 @@ function AppContent() {
     stopAlarm();
     
     if (audioCtxRef.current && audioBufferRef.current) {
-        if (audioCtxRef.current.state === 'suspended') {
+        if (audioCtxRef.current.state !== 'running') {
             audioCtxRef.current.resume();
         }
         
@@ -128,7 +128,15 @@ function AppContent() {
         }, 30000);
     } else {
         // Fallback nhẹ nếu chưa tương tác (hên xui)
-        try { new Audio('/chuong.mp3').play(); } catch(e) {}
+        try { 
+          const audio = new Audio('/chuong.mp3');
+          audio.loop = true;
+          audio.play();
+          
+          intervalRef.current = setTimeout(() => {
+            audio.pause();
+          }, 30000);
+        } catch(e) {}
     }
   }, [stopAlarm]);
 
@@ -200,7 +208,7 @@ function AppContent() {
       setPushMessage({ title: e.detail.title, message: e.detail.body });
       // PHÁT CHUÔNG NGAY LẬP TỨC (Chống delay Socket)
       if (e.detail.title && e.detail.title.toUpperCase().includes('MỚI')) {
-         window.dispatchEvent(new CustomEvent('driver_new_order')); 
+         window.dispatchEvent(new CustomEvent('driver_new_order', { detail: { pickupAddress: "Vào xem chi tiết ngay" } })); 
       }
     };
     window.addEventListener('fcm_foreground_alert', handlePush);
@@ -232,17 +240,7 @@ function AppContent() {
       }).catch(console.error);
 
       import('@capacitor/push-notifications').then(({ PushNotifications }) => {
-        if (Capacitor.getPlatform() === 'android') {
-          PushNotifications.createChannel({
-            id: 'aloshipp_push_channel',
-            name: 'Thông báo hệ thống',
-            description: 'Kênh báo tin nhắn từ tổng đài',
-            importance: 5,
-            visibility: 1,
-            sound: 'default',
-            vibration: true
-          });
-        }
+        // Bỏ việc tự tạo channel trên Android đối với PushNotifications vì dễ trùng lặp với FirebaseMessaging
       }).catch(console.error);
 
       import('@capacitor-firebase/messaging').then(({ FirebaseMessaging }) => {
