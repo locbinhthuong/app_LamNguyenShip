@@ -264,6 +264,8 @@ export default function Revenue() {
                 <th className="px-4 py-4 font-bold">Tài xế</th>
                 <th className="px-4 py-4 font-bold">Đơn Ngày</th>
                 <th className="px-4 py-4 font-bold">Ship Ngày</th>
+                <th className="px-4 py-4 font-bold text-indigo-600 bg-indigo-50/50">Đơn Tuần</th>
+                <th className="px-4 py-4 font-bold text-indigo-600 bg-indigo-50/50">Ship Tuần</th>
                 <th className="px-4 py-4 font-bold">Đơn Tháng</th>
                 <th className="px-4 py-4 font-bold">Bonus tháng</th>
                 <th className="px-4 py-4 font-bold">Ship tháng</th>
@@ -288,6 +290,10 @@ export default function Revenue() {
                       <span className="text-lg">☀️</span> {d.todayOrders || 0}
                     </td>
                     <td className="px-4 py-4 text-emerald-500 font-bold whitespace-nowrap">{formatCurrency(d.todayFee || 0)}</td>
+                    <td className="px-4 py-4 text-indigo-600 font-bold whitespace-nowrap bg-indigo-50/30 flex items-center gap-1.5">
+                      <span className="text-lg">📊</span> {d.weekOrders || 0}
+                    </td>
+                    <td className="px-4 py-4 text-indigo-600 font-bold whitespace-nowrap bg-indigo-50/30">{formatCurrency(d.weekFee || 0)}</td>
                     <td className="px-4 py-4 text-orange-500 font-bold whitespace-nowrap flex items-center gap-1.5">
                       <span className="text-lg">📅</span> {d.monthOrders || 0}
                     </td>

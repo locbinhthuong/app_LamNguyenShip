@@ -21,6 +21,16 @@ const revenueController = {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const startOfYear = new Date(today.getFullYear(), 0, 1);
 
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+
+      const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      endOfMonth.setHours(23, 59, 59, 999);
+
+      const endOfYear = new Date(today.getFullYear(), 11, 31);
+      endOfYear.setHours(23, 59, 59, 999);
+
       // Dùng Aggregation để đẩy tải tính toán xuống MongoDB (tránh tràn RAM)
       const statsAgg = await Order.aggregate([
         { $match: { status: 'COMPLETED' } },
@@ -41,15 +51,15 @@ const revenueController = {
             todayOrders: { $sum: { $cond: [{ $and: [{ $gte: ['$date', today] }, { $lte: ['$date', endOfDay] }] }, 1, 0] } },
             todayFee: { $sum: { $cond: [{ $and: [{ $gte: ['$date', today] }, { $lte: ['$date', endOfDay] }] }, '$fee', 0] } },
             todayBonus: { $sum: { $cond: [{ $and: [{ $gte: ['$date', today] }, { $lte: ['$date', endOfDay] }] }, '$bonus', 0] } },
-            weekOrders: { $sum: { $cond: [{ $gte: ['$date', startOfWeek] }, 1, 0] } },
-            weekFee: { $sum: { $cond: [{ $gte: ['$date', startOfWeek] }, '$fee', 0] } },
-            weekBonus: { $sum: { $cond: [{ $gte: ['$date', startOfWeek] }, '$bonus', 0] } },
-            monthOrders: { $sum: { $cond: [{ $gte: ['$date', startOfMonth] }, 1, 0] } },
-            monthFee: { $sum: { $cond: [{ $gte: ['$date', startOfMonth] }, '$fee', 0] } },
-            monthBonus: { $sum: { $cond: [{ $gte: ['$date', startOfMonth] }, '$bonus', 0] } },
-            yearOrders: { $sum: { $cond: [{ $gte: ['$date', startOfYear] }, 1, 0] } },
-            yearFee: { $sum: { $cond: [{ $gte: ['$date', startOfYear] }, '$fee', 0] } },
-            yearBonus: { $sum: { $cond: [{ $gte: ['$date', startOfYear] }, '$bonus', 0] } }
+            weekOrders: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfWeek] }, { $lte: ['$date', endOfWeek] }] }, 1, 0] } },
+            weekFee: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfWeek] }, { $lte: ['$date', endOfWeek] }] }, '$fee', 0] } },
+            weekBonus: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfWeek] }, { $lte: ['$date', endOfWeek] }] }, '$bonus', 0] } },
+            monthOrders: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfMonth] }, { $lte: ['$date', endOfMonth] }] }, 1, 0] } },
+            monthFee: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfMonth] }, { $lte: ['$date', endOfMonth] }] }, '$fee', 0] } },
+            monthBonus: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfMonth] }, { $lte: ['$date', endOfMonth] }] }, '$bonus', 0] } },
+            yearOrders: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfYear] }, { $lte: ['$date', endOfYear] }] }, 1, 0] } },
+            yearFee: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfYear] }, { $lte: ['$date', endOfYear] }] }, '$fee', 0] } },
+            yearBonus: { $sum: { $cond: [{ $and: [{ $gte: ['$date', startOfYear] }, { $lte: ['$date', endOfYear] }] }, '$bonus', 0] } }
           }
         }
       ]);
