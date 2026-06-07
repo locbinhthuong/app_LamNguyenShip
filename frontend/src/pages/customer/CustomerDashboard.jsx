@@ -248,45 +248,45 @@ const CustomerDashboard = () => {
           {/* GIAO HÀNG */}
           <div 
             onClick={() => handleServiceClick('GIAO_HANG')}
-            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+            className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
-              <Package size={20} strokeWidth={1.5} />
+            <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
+              <Package size={22} strokeWidth={1.5} />
             </div>
-            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Giao<br/>hàng</h3>
+            <h3 className="text-[13px] font-bold text-gray-900 text-center">Giao hàng</h3>
           </div>
 
           {/* ĐẶT XE */}
           <div 
             onClick={() => handleServiceClick('DAT_XE')}
-            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+            className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
           >
-            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center mb-2.5 text-orange-600">
-              <CarFront size={20} strokeWidth={1.5} />
+            <div className="w-11 h-11 rounded-full bg-orange-50 flex items-center justify-center mb-2.5 text-orange-600">
+              <CarFront size={22} strokeWidth={1.5} />
             </div>
-            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Đặt<br/>xe</h3>
+            <h3 className="text-[13px] font-bold text-gray-900 text-center">Đặt xe</h3>
           </div>
 
           {/* MUA HỘ */}
           <div 
             onClick={() => handleServiceClick('MUA_HO')}
-            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+            className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
-              <ShoppingBag size={20} strokeWidth={1.5} />
+            <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
+              <ShoppingBag size={22} strokeWidth={1.5} />
             </div>
-            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Mua<br/>hộ</h3>
+            <h3 className="text-[13px] font-bold text-gray-900 text-center">Mua hộ</h3>
           </div>
 
           {/* ĐIỀU PHỐI */}
           <div 
             onClick={() => handleServiceClick('DIEU_PHOI')}
-            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+            className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
           >
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
-              <Headset size={20} strokeWidth={1.5} />
+            <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
+              <Headset size={22} strokeWidth={1.5} />
             </div>
-            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Điều<br/>phối</h3>
+            <h3 className="text-[13px] font-bold text-gray-900 text-center">Điều phối</h3>
           </div>
 
         </div>
