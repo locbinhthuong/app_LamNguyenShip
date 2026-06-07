@@ -15,6 +15,12 @@
       "showSpinner": false,
       "splashFullScreen": true,
       "splashImmersive": true
+    },
+    "FirebaseMessaging": {
+      "presentationOptions": ["badge"]
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge"]
     }
   }
 }
