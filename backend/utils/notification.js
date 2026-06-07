@@ -73,7 +73,8 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
  * Gửi thông báo đến nhiều thiết bị cùng lúc (Phát sóng)
  */
 const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
-  const validTokens = tokens.filter(t => t);
+  // Lọc bỏ token rỗng và token trùng lặp
+  const validTokens = [...new Set(tokens.filter(t => t))];
   if (validTokens.length === 0) return null;
 
   try {
