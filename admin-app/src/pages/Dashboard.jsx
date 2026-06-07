@@ -49,7 +49,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedDate, weekOffset]);
 
   useEffect(() => {
     // Load lần đầu và mỗi khi đổi bộ lọc
@@ -271,18 +271,54 @@ export default function Dashboard() {
               <p className="text-xs text-slate-500">Chưa có đơn hàng nào</p>
             </div>
           ) : (
-            <div className="space-y-1.5">
-              {stats?.recentOrders?.slice(0, 8).map(order => (
-                <div key={order._id} className="flex items-center justify-between rounded-xl bg-blue-50 hover:bg-blue-100/40 px-3 py-2.5">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-mono text-xs font-bold text-blue-600">
-                      #{order.orderCode || order._id?.slice(-8).toUpperCase()}
+            <div className="space-y-2 overflow-y-auto max-h-[400px] pr-1">
+              {stats?.recentOrders?.map(order => (
+                <div key={order._id} className="flex flex-col rounded-xl bg-blue-50/50 hover:bg-blue-100/50 p-3 transition-colors border border-blue-100/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-xs font-bold text-blue-600">
+                        #{order.orderCode || order._id?.slice(-8).toUpperCase()}
+                      </p>
+                      <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold text-slate-800 ${STATUS_COLORS[order.status]}`}>
+                        {STATUS_LABELS[order.status] || order.status}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-green-600">
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.deliveryFee || 0)}
                     </p>
-                    <p className="truncate text-[10px] text-slate-500">{order.customerName} · {order.customerPhone}</p>
                   </div>
-                  <span className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold text-slate-800 ${STATUS_COLORS[order.status]}`}>
-                    {STATUS_LABELS[order.status] || order.status}
-                  </span>
+                  
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-2 text-[10px]">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-slate-400">👤</span>
+                        <div className="min-w-0">
+                          <span className="font-semibold text-slate-700">Khách: </span>
+                          <span className="text-slate-600 truncate block sm:inline">{order.customerName} - {order.customerPhone}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-slate-400">🛵</span>
+                        <div className="min-w-0">
+                          <span className="font-semibold text-slate-700">Tài xế: </span>
+                          <span className={order.assignedTo?.name ? "text-blue-600 font-medium truncate block sm:inline" : "text-slate-400 italic block sm:inline"}>
+                            {order.assignedTo?.name || 'Chưa có tài xế nhận'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-orange-400 font-bold w-3 text-center">A</span>
+                        <span className="text-slate-600 truncate" title={order.pickupAddress}>{order.pickupAddress || 'N/A'}</span>
+                      </div>
+                      <div className="flex items-start gap-1.5">
+                        <span className="text-blue-500 font-bold w-3 text-center">B</span>
+                        <span className="text-slate-600 truncate" title={order.deliveryAddress}>{order.deliveryAddress || 'N/A'}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
