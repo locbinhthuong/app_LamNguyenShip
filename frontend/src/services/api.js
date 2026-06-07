@@ -21,6 +21,29 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor - Handle 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const originalRequest = error.config;
+    // Bỏ qua lỗi 401 khi đang thực hiện api đăng nhập
+    if (error.response?.status === 401 && originalRequest && !originalRequest.url.includes('/login')) {
+      if (localStorage.getItem('customerToken')) {
+        localStorage.removeItem('customerToken');
+        localStorage.removeItem('customerRole');
+        
+        window.dispatchEvent(new CustomEvent('api_unauthorized', { 
+          detail: { message: 'Phiên đăng nhập đã hết hạn hoặc được đăng nhập ở thiết bị khác. Vui lòng đăng nhập lại!' } 
+        }));
+        
+        // Điều hướng thẳng về trang đăng nhập
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // ==================== AUTH API ====================
 export const registerCustomer = async (userData) => {
   const response = await api.post('/auth/customer/register', userData);

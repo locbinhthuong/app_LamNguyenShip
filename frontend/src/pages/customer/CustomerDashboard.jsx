@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX, Bike, ShoppingCart, Newspaper, Gift } from 'lucide-react';
 import LocationPicker from '../../components/LocationPicker';
 import AnnouncementSlider from '../../components/AnnouncementSlider';
@@ -163,19 +164,25 @@ const CustomerDashboard = () => {
       </div>
 
       {/* DANH SÁCH DỊCH VỤ (GRID HÀNG NGANG) */}
-      <div className="px-5 mb-6">
+      <div className="px-5 mb-6" style={{ perspective: 1000 }}>
         <div className="grid grid-cols-4 gap-3 sm:gap-5">
-          {services.map((svc) => (
-            <div 
+          {services.map((svc, index) => (
+            <motion.div 
               key={svc.id} 
               onClick={() => handleServiceClick(svc.id)}
-              className={`flex flex-col items-center justify-start gap-2.5 py-4 rounded-[20px] cursor-pointer active:scale-[0.92] transition-transform duration-300 ease-out hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)] ${svc.color}`}
+              initial={{ opacity: 0, y: 30, rotateX: 45 }}
+              animate={{ opacity: 1, y: 0, rotateX: 0 }}
+              transition={{ delay: index * 0.1, type: "spring", stiffness: 200, damping: 15 }}
+              whileHover={{ scale: 1.05, rotateX: 15, rotateY: -15, z: 30, boxShadow: "0 20px 40px rgba(0,0,0,0.12)" }}
+              whileTap={{ scale: 0.95, rotateX: 0, rotateY: 0, z: 0 }}
+              className="flex flex-col items-center justify-start gap-2.5 py-4 rounded-[20px] cursor-pointer bg-white shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-slate-100/80"
+              style={{ transformStyle: "preserve-3d" }}
             >
-              <div className="text-slate-600 scale-90 sm:scale-100 drop-shadow-sm">
+              <div className="text-slate-600 scale-90 sm:scale-100 drop-shadow-md" style={{ transform: "translateZ(20px)" }}>
                 {svc.icon}
               </div>
-              <span className="text-[10px] sm:text-[13px] font-bold text-slate-700 text-center leading-tight px-1">{svc.name}</span>
-            </div>
+              <span className="text-[10px] sm:text-[13px] font-bold text-slate-700 text-center leading-tight px-1" style={{ transform: "translateZ(10px)" }}>{svc.name}</span>
+            </motion.div>
           ))}
         </div>
       </div>

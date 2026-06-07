@@ -113,7 +113,7 @@ const CustomerLayout = () => {
         <div className="relative w-full h-full bg-white overflow-hidden flex flex-col z-10 transition-all">
 
           {/* VÙNG RENDER COMPONENT CON THỰC TẾ CỦA APP */}
-          <div className="absolute top-0 left-0 right-0 bottom-[64px] md:bottom-0 pb-[env(safe-area-inset-bottom)] overflow-x-hidden flex flex-col z-0 bg-gray-50">
+          <div className="absolute top-0 left-0 right-0 bottom-0 pb-[calc(5rem+env(safe-area-inset-bottom)+1rem)] md:pb-0 overflow-x-hidden flex flex-col z-0 bg-gray-50">
             <AnimatePresence mode="popLayout" initial={false} custom={direction}>
               <AnimatedPage key={location.pathname} direction={direction}>
                 {outlet}
@@ -122,25 +122,28 @@ const CustomerLayout = () => {
           </div>
 
           {/* THANH ĐIỀU HƯỚNG DƯỚI CÙNG (CHỈ XUẤT HIỆN Ở MOBILE) */}
-          <div className="md:hidden absolute bottom-0 left-0 w-full bg-white border-t border-gray-100 flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+          <div className="md:hidden absolute bottom-4 left-4 right-4 glass-panel rounded-3xl flex justify-around items-center h-[4.5rem] z-50 shadow-xl shadow-blue-900/5">
             {navItems.map((item, index) => {
               const isActive = location.pathname === item.path || (item.path === '/' && location.pathname === '/customer');
               return (
                 <button
                   key={index}
                   onClick={() => handleNavClick(item)}
-                  className={`flex flex-col items-center justify-center w-full h-full relative transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-blue-500'
+                  className={`flex flex-col items-center justify-center w-full h-full relative transition-all duration-300 ${isActive ? 'text-blue-600 scale-105' : 'text-gray-400 hover:text-blue-500'
                     }`}
                 >
-                  <div className={`mb-1 transition-transform ${isActive ? 'scale-110' : ''}`}>
+                  <div className={`mb-1 transition-transform duration-300 ${isActive ? '-translate-y-1' : ''}`}>
                     {item.icon}
                   </div>
-                  <span className={`text-[10px] ${isActive ? 'font-bold' : 'font-medium'}`}>
+                  <span className={`text-[10px] transition-all duration-300 ${isActive ? 'font-bold opacity-100' : 'font-medium opacity-70'}`}>
                     {item.name}
                   </span>
 
                   {item.badge && (
-                    <span className="absolute top-2 right-6 w-2 h-2 bg-red-500 rounded-full"></span>
+                    <span className="absolute top-2 right-6 w-2 h-2 bg-red-500 rounded-full shadow-[0_0_8px_rgba(239,68,68,0.6)]"></span>
+                  )}
+                  {isActive && (
+                    <span className="absolute -bottom-1 w-1 h-1 bg-blue-600 rounded-full"></span>
                   )}
                 </button>
               )
