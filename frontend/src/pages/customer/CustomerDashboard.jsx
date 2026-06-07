@@ -136,6 +136,218 @@ const CustomerDashboard = () => {
   const handleServiceClick = (serviceType) => {
     if (!isAuthenticated) {
       localStorage.setItem('intendedService', serviceType);
+      navigate('/login');
+    } else {
+      navigate(`/customer/book/${serviceType}`);
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.3 }}
+      className="pb-24 pt-4 px-4 md:px-8 max-w-7xl mx-auto bg-[#fafafa] min-h-screen relative"
+    >
+      
+      {/* HEADER: Địa điểm của tôi */}
+      <div 
+        onClick={() => setShowLocationPicker(true)}
+        className="bg-white/90 backdrop-blur-md px-5 pb-4 pt-3 safe-pt sticky top-0 z-50 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform duration-300 ease-out mb-4 rounded-xl shadow-sm border border-gray-100"
+      >
+        <div className="flex flex-col flex-1 overflow-hidden mr-4">
+          <div className="flex items-center gap-1 text-gray-500 mb-1">
+            <span className="text-xs font-medium bg-gray-100/80 px-2.5 py-0.5 rounded-full text-gray-600">📍 Kéo ghim</span>
+            <ChevronRight size={14} className="opacity-50" />
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[13px] font-bold text-gray-800 line-clamp-1 truncate block leading-tight">{address}</span>
+            <div className="bg-blue-100/80 text-blue-600 px-1.5 py-0.5 rounded shadow-sm">
+              <span className="text-[10px] uppercase font-bold tracking-wider">Chọn</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* LỜI CHÀO GREETING & THÔNG BÁO - DESKTOP CHIA CỘT */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-2 items-center">
+        <div className="px-1">
+          <h2 className="text-xl md:text-2xl font-medium text-gray-600">
+            {getGreeting()}, <span className="font-bold text-blue-600">{customerName || 'Khách hàng'}</span>!
+          </h2>
+          <h1 
+            className="text-3xl md:text-4xl font-extrabold mt-2 tracking-tight leading-tight"
+            style={{
+              background: 'linear-gradient(to right, #2563eb, #7c3aed)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.1), 4px 4px 8px rgba(37, 99, 235, 0.2)'
+            }}
+          >
+            Chào mừng đến với AloShipp
+          </h1>
+        </div>
+
+        <div>
+          <div className="bg-blue-50/80 border border-blue-100/50 rounded-[20px] p-4 md:p-5 flex items-start gap-3.5 relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-blue-500 rounded-l-full"></div>
+            <div className="mt-0.5 text-blue-500 bg-white p-2 rounded-full shadow-sm animate-bounce">
+              <MapPin size={20} />
+            </div>
+            <div>
+              <h4 className="text-[12px] md:text-sm font-extrabold text-blue-800 uppercase tracking-wider mb-1.5">Lưu ý trước khi Đặt Đơn</h4>
+              <p className="text-[11px] md:text-xs text-blue-700/90 leading-relaxed font-medium">
+                Vui lòng chạm vào thanh <strong className="bg-blue-100 px-1 py-0.5 rounded">📍 Kéo ghim</strong> ở trên cùng để kiểm tra và định vị chính xác vị trí của bạn trên bản đồ giúp tài xế tìm đến nhanh hơn nhé!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* SLIDER BANNER TỪ ADMIN */}
+      {banners.length > 0 && (
+        <div className="mb-10">
+          <div className="relative w-full h-48 sm:h-[320px] md:h-[400px] lg:h-[460px] rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-slate-50 group flex items-center justify-center">
+            <div 
+              className="flex w-full h-full transition-transform duration-500 ease-out items-center"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {banners.map(banner => (
+                <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-0">
+                  {banner.imageUrl && (
+                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-cover object-center" />
+                  )}
+                  {banner.videoUrl && (
+                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-cover object-center" autoPlay muted loop playsInline />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Nút điều hướng Slider */}
+            {banners.length > 1 && (
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+                {banners.map((_, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setCurrentSlide(index)}
+                    className={`h-2 rounded-full transition-all ${currentSlide === index ? 'w-6 bg-white shadow' : 'w-2 bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* DỊCH VỤ NỔI BẬT (Như mẫu) */}
+      <div className="mb-14">
+        <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Dịch vụ nổi bật</h2>
+        <div className="grid grid-cols-4 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
+          
+          {/* GIAO HÀNG */}
+          <div 
+            onClick={() => handleServiceClick('GIAO_HANG')}
+            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+          >
+            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
+              <Package size={20} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Giao<br/>hàng</h3>
+          </div>
+
+          {/* ĐẶT XE */}
+          <div 
+            onClick={() => handleServiceClick('DAT_XE')}
+            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+          >
+            <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center mb-2.5 text-orange-600">
+              <CarFront size={20} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Đặt<br/>xe</h3>
+          </div>
+
+          {/* MUA HỘ */}
+          <div 
+            onClick={() => handleServiceClick('MUA_HO')}
+            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+          >
+            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
+              <ShoppingBag size={20} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Mua<br/>hộ</h3>
+          </div>
+
+          {/* ĐIỀU PHỐI */}
+          <div 
+            onClick={() => handleServiceClick('DIEU_PHOI')}
+            className="bg-white rounded-[24px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.02)] border border-gray-50 hover:-translate-y-1 transition-transform h-[120px]"
+          >
+            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
+              <Headset size={20} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[12px] font-bold text-gray-900 leading-tight text-center">Điều<br/>phối</h3>
+          </div>
+
+        </div>
+      </div>
+
+      {/* KHUYẾN MÃI & TIN TỨC (SPLIT LAYOUT) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+        
+        {/* CỘT KHUYẾN MÃI (Bên trái, rộng hơn) */}
+        <div className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Khuyến mãi</h2>
+            <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Xem tất cả ›</button>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
+            {promotions.length > 0 ? promotions.slice(0, 2).map((promo, idx) => (
+              <div key={idx} onClick={() => setSelectedAnnouncement(promo)} className="bg-gradient-to-br from-[#1a2b4c] to-[#0a192f] rounded-[20px] h-48 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+                <img src={promo.imageUrl ? `https://api.aloshipp.com${promo.imageUrl}` : '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div className="absolute bottom-5 left-5 right-5">
+                  <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">GIẢM 50%</span>
+                  <h3 className="text-white font-bold text-lg leading-tight">{promo.title || 'Đồng giá 15k nội thành'}</h3>
+                </div>
+              </div>
+            )) : (
+              // Mẫu mặc định nếu không có từ API
+              <>
+                <div className="bg-gradient-to-br from-[#3b4b6b] to-[#1e2a45] rounded-[20px] h-48 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a192f] to-transparent opacity-80"></div>
+                  <div className="absolute bottom-5 left-5 right-5">
+                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">GIẢM 50%</span>
+                    <h3 className="text-white font-bold text-lg leading-tight">Đồng giá 15k nội thành</h3>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-br from-[#2a3b5c] to-[#0a192f] rounded-[20px] h-48 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#0a192f] to-transparent opacity-80"></div>
+                  <div className="absolute bottom-5 left-5 right-5">
+                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">HOÀN TIỀN</span>
+                    <h3 className="text-white font-bold text-lg leading-tight">Thanh toán qua ví AloPay</h3>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* CỘT TIN TỨC (Bên phải) */}
+        <div className="lg:col-span-1">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800">Tin tức</h2>
+            <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Chi tiết ›</button>
+          </div>
+          
+          <div className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-6 h-[calc(100%-4rem)] justify-center">
+            {news.length > 0 ? news.slice(0, 3).map((item, idx) => (
+              <div key={idx} onClick={() => setSelectedAnnouncement(item)} className="flex gap-4 cursor-pointer group">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                  <img src={item.imageUrl ? `https://api.aloshipp.com${item.imageUrl}` : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                </div>
+                <div className="flex flex-col justify-center">
                   <h4 className="text-[13px] font-bold text-gray-800 mb-1 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
                     {item.title}
                   </h4>
