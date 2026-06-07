@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
-import { getPricingConfig, updatePricingConfig } from '../services/configService';
+import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig } from '../services/configService';
+import { Trash2, Plus } from 'lucide-react';
 
 export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+
+  const [regions, setRegions] = useState([]);
+  const [newRegion, setNewRegion] = useState('');
 
   const [config, setConfig] = useState({
     tiers: [
@@ -29,17 +33,27 @@ export default function Settings() {
   const fetchConfig = async () => {
     try {
       setLoading(true);
-      const res = await getPricingConfig();
-      if (res.success && res.data && res.data.value && Array.isArray(res.data.value.tiers)) {
+      const [pricingRes, regionRes] = await Promise.all([
+        getPricingConfig(),
+        getRegionConfig().catch(() => null)
+      ]);
+
+      if (pricingRes.success && pricingRes.data && pricingRes.data.value && Array.isArray(pricingRes.data.value.tiers)) {
         setConfig({
-          tiers: res.data.value.tiers,
-          xeOm: res.data.value.xeOm || { pricePerKm: 5000 },
-          laiHoXeMay: res.data.value.laiHoXeMay || { initialKm: 2, initialPrice: 50000, pricePerKm: 10000 },
-          laiHoOto: res.data.value.laiHoOto || { initialKm: 2, initialPrice: 100000, pricePerKm: 20000 }
+          tiers: pricingRes.data.value.tiers,
+          xeOm: pricingRes.data.value.xeOm || { pricePerKm: 5000 },
+          laiHoXeMay: pricingRes.data.value.laiHoXeMay || { initialKm: 2, initialPrice: 50000, pricePerKm: 10000 },
+          laiHoOto: pricingRes.data.value.laiHoOto || { initialKm: 2, initialPrice: 100000, pricePerKm: 20000 }
         });
       }
+
+      if (regionRes && regionRes.success && regionRes.data && Array.isArray(regionRes.data.value)) {
+        setRegions(regionRes.data.value);
+      } else {
+        setRegions(['Cần Thơ', 'Vĩnh Long']);
+      }
     } catch (err) {
-      setErrorMsg('Không thể tải cấu hình giá');
+      setErrorMsg('Không thể tải cấu hình');
       console.error(err);
     } finally {
       setLoading(false);
@@ -65,6 +79,19 @@ export default function Settings() {
     });
   };
 
+  const handleAddRegion = () => {
+    if (newRegion.trim() && !regions.includes(newRegion.trim())) {
+      setRegions([...regions, newRegion.trim()]);
+      setNewRegion('');
+    }
+  };
+
+  const handleRemoveRegion = (index) => {
+    const updated = [...regions];
+    updated.splice(index, 1);
+    setRegions(updated);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
@@ -72,6 +99,8 @@ export default function Settings() {
     setErrorMsg('');
     try {
       const res = await updatePricingConfig(config);
+      await updateRegionConfig(regions);
+      
       if (res.success) {
         setSuccessMsg('Đã lưu cấu hình thành công!');
         setTimeout(() => setSuccessMsg(''), 3000);
@@ -297,6 +326,48 @@ export default function Settings() {
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 font-bold"
                   />
                 </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-8">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Quản Lý Khu Vực Hoạt Động</h3>
+              <div className="bg-white p-6 rounded-xl border border-slate-200">
+                <div className="flex gap-3 mb-6">
+                  <input
+                    type="text"
+                    value={newRegion}
+                    onChange={(e) => setNewRegion(e.target.value)}
+                    placeholder="Nhập tên khu vực mới (VD: Cần Thơ)"
+                    className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddRegion}
+                    className="px-6 py-3 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-2"
+                  >
+                    <Plus size={18} /> Thêm
+                  </button>
+                </div>
+
+                {regions.length === 0 ? (
+                  <p className="text-slate-500 italic">Chưa có khu vực nào.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-3">
+                    {regions.map((region, idx) => (
+                      <div key={idx} className="flex items-center gap-2 bg-blue-50 text-blue-800 px-4 py-2 rounded-full border border-blue-100">
+                        <span className="font-bold">{region}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveRegion(idx)}
+                          className="text-blue-400 hover:text-red-500 transition-colors p-1"
+                          title="Xóa khu vực"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

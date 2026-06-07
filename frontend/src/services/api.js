@@ -60,6 +60,11 @@ export const getCustomerProfile = async () => {
   return response.data;
 };
 
+export const getRegionConfig = async () => {
+  const response = await api.get('/config/REGION_CONFIG');
+  return response.data;
+};
+
 export const deleteMyAccount = async () => {
   const response = await api.delete('/auth/customer/me');
   return response.data;

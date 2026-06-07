@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Users, Plus, Edit2, Trash2, Search, X, Loader2, Calendar } from 'lucide-react';
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer, getFullImageUrl, uploadDriverAvatar } from '../services/api';
+import { getRegionConfig } from '../services/configService';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
+  const [regions, setRegions] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   
@@ -16,18 +18,41 @@ const Customers = () => {
     phone: '',
     password: '',
     isActive: true,
-    avatar: ''
+    avatar: '',
+    region: ''
   });
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetchCustomers();
+    fetchData();
   }, []);
 
-  const fetchCustomers = async () => {
+  const fetchData = async () => {
     setLoading(true);
+    try {
+      const [custRes, regRes] = await Promise.all([
+        getCustomers(),
+        getRegionConfig().catch(() => null)
+      ]);
+      if (custRes.success) {
+        setCustomers(custRes.data);
+      }
+      if (regRes && regRes.success && regRes.data && Array.isArray(regRes.data.value)) {
+        setRegions(regRes.data.value);
+      } else {
+        setRegions(['Cần Thơ', 'Vĩnh Long']);
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Lỗi khi tải dữ liệu');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCustomers = async () => {
     try {
       const res = await getCustomers();
       if (res.success) {
@@ -35,9 +60,6 @@ const Customers = () => {
       }
     } catch (error) {
       console.error(error);
-      alert('Lỗi khi tải danh sách khách hàng');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -50,13 +72,14 @@ const Customers = () => {
         phone: customer.phone,
         password: '', // Chừa trống bớt nguy hiểm
         isActive: customer.isActive,
-        avatar: customer.avatar || ''
+        avatar: customer.avatar || '',
+        region: customer.region || ''
       });
       setAvatarPreview(customer.avatar || null);
     } else {
       setIsEditing(false);
       setCurrentId(null);
-      setFormData({ name: '', phone: '', password: '', isActive: true, avatar: '' });
+      setFormData({ name: '', phone: '', password: '', isActive: true, avatar: '', region: '' });
       setAvatarPreview(null);
     }
     setAvatarFile(null);
@@ -190,6 +213,7 @@ const Customers = () => {
             <th className="py-3 px-4 font-medium whitespace-nowrap">Số Điện Thoại</th>
             <th className="py-3 px-4 font-medium whitespace-nowrap">Vai Trò</th>
             <th className="py-3 px-4 font-medium whitespace-nowrap">Ngày Tham Gia</th>
+            <th className="py-3 px-4 font-medium whitespace-nowrap">Khu Vực</th>
             <th className="py-3 px-4 font-medium text-center whitespace-nowrap">Trạng Thái</th>
             <th className="py-3 px-4 font-medium text-right whitespace-nowrap">Thao Tác</th>
           </tr>
@@ -227,6 +251,9 @@ const Customers = () => {
                       <Calendar size={14} />
                       {new Date(customer.createdAt).toLocaleDateString()}
                     </div>
+                </td>
+                <td className="py-3 px-4 text-sm font-semibold text-blue-600 whitespace-nowrap">
+                  {customer.region || '-'}
                 </td>
                 <td className="py-3 px-4 text-center">
                   <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${customer.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -376,6 +403,20 @@ const Customers = () => {
                   value={formData.password}
                   onChange={e => setFormData({...formData, password: e.target.value})}
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Khu vực hoạt động</label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg p-2.5 outline-none focus:border-blue-500 font-medium bg-white"
+                  value={formData.region || ''}
+                  onChange={e => setFormData({...formData, region: e.target.value})}
+                >
+                  <option value="">-- Chọn khu vực --</option>
+                  {regions.map((reg, idx) => (
+                    <option key={idx} value={reg}>{reg}</option>
+                  ))}
+                </select>
               </div>
 
               {isEditing && (

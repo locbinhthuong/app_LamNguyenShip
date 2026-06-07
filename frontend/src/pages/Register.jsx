@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { MapPin, Home } from 'lucide-react';
-import { registerCustomer } from '../services/api';
+import { registerCustomer, getRegionConfig } from '../services/api';
 import LocationPicker from '../components/LocationPicker';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -11,14 +11,34 @@ const Register = () => {
     phone: '',
     password: '',
     role: 'CUSTOMER',
+    region: '',
     shopName: '',
     shopAddress: '',
     defaultLocation: null
   });
+  const [regions, setRegions] = useState([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchRegions();
+  }, []);
+
+  const fetchRegions = async () => {
+    try {
+      const res = await getRegionConfig();
+      if (res && res.success && res.data && Array.isArray(res.data.value)) {
+        setRegions(res.data.value);
+        if (res.data.value.length > 0) {
+          setFormData(prev => ({ ...prev, region: res.data.value[0] }));
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch regions', err);
+    }
+  };
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -156,6 +176,25 @@ const Register = () => {
               placeholder="Ví dụ: Anh Tiến Đẹp Trai"
               required
             />
+          </motion.div>
+
+          <motion.div variants={fadeUpVariant} initial="hidden" animate="visible" transition={{ delay: 0.45 }} className="relative">
+            <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Khu vực hoạt động</label>
+            <select
+              name="region"
+              value={formData.region}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all cursor-pointer appearance-none"
+              required
+            >
+              {regions.map((reg, idx) => (
+                <option key={idx} value={reg}>{reg}</option>
+              ))}
+            </select>
+            {/* Custom arrow for select */}
+            <div className="absolute right-4 top-[44px] pointer-events-none text-slate-400">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+            </div>
           </motion.div>
 
           <AnimatePresence mode="wait">

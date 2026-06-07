@@ -42,6 +42,8 @@ const CustomerProfile = () => {
     }
   };
 
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   const fetchProfile = async () => {
     try {
       const res = await api.get('/auth/customer/me');
@@ -57,9 +59,10 @@ const CustomerProfile = () => {
     fetchProfile();
   }, []);
 
-  const handleLogout = () => {
+  const executeLogout = () => {
     localStorage.clear();
-    window.location.href = '/login';
+    // navigate('/login') will be handled by Router redirect or just window location
+    navigate('/login');
   };
 
   const openEditModal = () => {
@@ -208,7 +211,7 @@ const CustomerProfile = () => {
         {/* Action Buttons */}
         <div className="pt-6 space-y-3">
           <button 
-            onClick={handleLogout}
+            onClick={() => setShowLogoutConfirm(true)}
             className="w-full bg-white p-3.5 rounded-[12px] text-[#ef4444] font-medium border border-[#fee2e2] flex items-center justify-center gap-2 active:bg-red-50 transition-colors"
           >
             <LogOut size={18} />
@@ -304,6 +307,36 @@ const CustomerProfile = () => {
                 </button>
               </div>
            </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Confirm Logout Modal */}
+      {showLogoutConfirm && createPortal(
+        <div className="fixed inset-0 z-[999] bg-black/60 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl animate-slideUp text-center">
+            <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <LogOut size={32} className="text-blue-500" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Đăng xuất?</h3>
+            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              Bạn có chắc chắn muốn đăng xuất khỏi tài khoản này?
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 py-3 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={executeLogout}
+                className="flex-1 py-3 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+              >
+                Đăng xuất
+              </button>
+            </div>
+          </div>
         </div>,
         document.body
       )}

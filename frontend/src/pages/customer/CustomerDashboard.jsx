@@ -143,7 +143,13 @@ const CustomerDashboard = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen pb-20 relative font-sans w-full max-w-6xl mx-auto px-6 pt-6">
+    <motion.div 
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: 20 }}
+      transition={{ duration: 0.3 }}
+      className="pb-24 pt-4 px-4 max-w-lg mx-auto bg-[#fafafa] min-h-screen relative"
+    >
       
       {/* HEADER: Địa điểm của tôi */}
       <div 
@@ -470,8 +476,7 @@ const CustomerDashboard = () => {
           </a>
         </div>
       </div>
-      
-    </div>
+    </motion.div>
   );
 };
 

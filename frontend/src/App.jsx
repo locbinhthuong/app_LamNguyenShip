@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import CustomerDashboard from './pages/customer/CustomerDashboard';
@@ -28,6 +29,7 @@ const IndexRoute = () => {
 
 function App() {
   useAuthSocket();
+  const location = useLocation();
 
   useEffect(() => {
     const splashScreen = document.getElementById('splash-screen');
@@ -43,105 +45,106 @@ function App() {
 
   return (
     <div className="h-[100dvh] bg-gray-50 flex flex-col font-sans overflow-hidden relative">
-      <Routes>
-        {/* Các màn hình con của Khách hàng (Được dính Footer Layout) */}
-        <Route element={<CustomerLayout />}>
-          {/* Trang chủ mặc định là màn hình 4 dịch vụ (Cho phép Guest xem, nhưng SHOP thì chuyển qua /shop) */}
-          <Route path="/" element={<IndexRoute />} />
-          
-          <Route 
-            path="/customer/activity" 
-            element={
-              <ProtectedRoute allowedRole="CUSTOMER">
-                <ActivityList />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Các màn hình con của Khách hàng (Được dính Footer Layout) */}
+          <Route element={<CustomerLayout />}>
+            {/* Trang chủ mặc định là màn hình 4 dịch vụ (Cho phép Guest xem, nhưng SHOP thì chuyển qua /shop) */}
+            <Route path="/" element={<IndexRoute />} />
+            
+            <Route 
+              path="/customer/activity" 
+              element={
+                <ProtectedRoute allowedRole="CUSTOMER">
+                  <ActivityList />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/profile" 
+              element={
+                <ProtectedRoute allowedRole="CUSTOMER">
+                  <CustomerProfile />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/notifications" 
+              element={
+                <ProtectedRoute allowedRole="CUSTOMER">
+                  <CustomerNotifications />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/book/:serviceType" 
+              element={
+                <ProtectedRoute allowedRole="CUSTOMER">
+                  <BookingFlow />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/customer/order/:id" 
+              element={
+                <ProtectedRoute allowedRole="CUSTOMER">
+                  <OrderDetail />
+                </ProtectedRoute>
+              } 
+            />
+          </Route>
+
+          {/* Các màn hình KHÔNG có Footer (Ví dụ: Form Lên Đơn, Đăng nhập, Shop) */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+
+          {/* Cửa Hàng (Shop) */}
+          <Route element={<ShopLayout />}>
+            <Route path="/shop" element={
+              <ProtectedRoute allowedRole="SHOP">
+                <ShopDashboard />
               </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/customer/profile" 
-            element={
-              <ProtectedRoute allowedRole="CUSTOMER">
-                <CustomerProfile />
+            } />
+            <Route path="/shop/activity" element={
+              <ProtectedRoute allowedRole="SHOP">
+                <ShopActivity />
               </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/customer/notifications" 
-            element={
-              <ProtectedRoute allowedRole="CUSTOMER">
+            } />
+            <Route path="/shop/notifications" element={
+              <ProtectedRoute allowedRole="SHOP">
                 <CustomerNotifications />
               </ProtectedRoute>
-            } 
-          />
+            } />
+            <Route path="/shop/profile" element={
+              <ProtectedRoute allowedRole="SHOP">
+                <ShopProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/shop/order/:id" element={
+              <ProtectedRoute allowedRole="SHOP">
+                <OrderDetail />
+              </ProtectedRoute>
+            } />
+          </Route>
+
           <Route 
-            path="/customer/book/:serviceType" 
+            path="/shop/book" 
             element={
-              <ProtectedRoute allowedRole="CUSTOMER">
-                <BookingFlow />
+              <ProtectedRoute allowedRole="SHOP">
+                <ShopBookingFlow />
               </ProtectedRoute>
             } 
           />
           <Route 
-            path="/customer/order/:id" 
+            path="/shop/order/:id" 
             element={
-              <ProtectedRoute allowedRole="CUSTOMER">
+              <ProtectedRoute allowedRole="SHOP">
                 <OrderDetail />
               </ProtectedRoute>
             } 
           />
-        </Route>
-
-        {/* Các màn hình KHÔNG có Footer (Ví dụ: Form Lên Đơn, Đăng nhập, Shop) */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-
-        {/* Cửa Hàng (Shop) */}
-        <Route element={<ShopLayout />}>
-          <Route path="/shop" element={
-            <ProtectedRoute allowedRole="SHOP">
-              <ShopDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/shop/activity" element={
-            <ProtectedRoute allowedRole="SHOP">
-              <ShopActivity />
-            </ProtectedRoute>
-          } />
-          <Route path="/shop/notifications" element={
-            <ProtectedRoute allowedRole="SHOP">
-              <CustomerNotifications />
-            </ProtectedRoute>
-          } />
-          <Route path="/shop/profile" element={
-            <ProtectedRoute allowedRole="SHOP">
-              <ShopProfile />
-            </ProtectedRoute>
-          } />
-          <Route path="/shop/order/:id" element={
-            <ProtectedRoute allowedRole="SHOP">
-              <OrderDetail />
-            </ProtectedRoute>
-          } />
-        </Route>
-
-        <Route 
-          path="/shop/book" 
-          element={
-            <ProtectedRoute allowedRole="SHOP">
-              <ShopBookingFlow />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/shop/order/:id" 
-          element={
-            <ProtectedRoute allowedRole="SHOP">
-              <OrderDetail />
-            </ProtectedRoute>
-          } 
-        />
-
-      </Routes>
+        </Routes>
+      </AnimatePresence>
     </div>
   );
 }

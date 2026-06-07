@@ -556,7 +556,7 @@ const authController = {
   // POST /api/auth/customer/register
   registerCustomer: async (req, res) => {
     try {
-      const { name, phone, password, role, shopName, shopAddress, defaultLocation } = req.body;
+      const { name, phone, password, role, shopName, shopAddress, defaultLocation, region } = req.body;
 
       // Check phone exists
       const existingUser = await User.findOne({ phone });
@@ -578,6 +578,7 @@ const authController = {
         phone,
         password: hashedPassword,
         role: userRole,
+        region: region || null,
         shopName: userRole === 'SHOP' ? shopName : null,
         shopAddress: userRole === 'SHOP' ? shopAddress : null,
         defaultLocation: userRole === 'SHOP' ? defaultLocation : undefined

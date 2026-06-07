@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema({
     enum: ['CUSTOMER', 'SHOP'],
     default: 'CUSTOMER'
   },
+  region: {
+    type: String,
+    default: null
+  },
   // Fields for SHOP role
   shopName: {
     type: String,

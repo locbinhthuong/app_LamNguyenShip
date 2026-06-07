@@ -7,7 +7,7 @@ exports.getConfig = async (req, res) => {
     let config = await Config.findOne({ key });
     
     if (!config) {
-      // Nếu chưa có, trả về giá trị mặc định cho PRICING_CONFIG
+      // Nếu chưa có, trả về giá trị mặc định cho cấu hình
       if (key === 'PRICING_CONFIG') {
         const defaultPricing = {
           tiers: [
@@ -21,6 +21,9 @@ exports.getConfig = async (req, res) => {
           ]
         };
         config = new Config({ key, value: defaultPricing });
+        await config.save();
+      } else if (key === 'REGION_CONFIG') {
+        config = new Config({ key, value: ['Cần Thơ', 'Vĩnh Long'] });
         await config.save();
       } else {
         return res.status(404).json({ success: false, message: 'Không tìm thấy cấu hình' });
