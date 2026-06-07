@@ -163,27 +163,87 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* DANH SÁCH DỊCH VỤ (GRID HÀNG NGANG) */}
+      {/* DANH SÁCH DỊCH VỤ (BENTO GRID CHUẨN XỊN) */}
       <div className="px-5 mb-6" style={{ perspective: 1000 }}>
-        <div className="grid grid-cols-4 gap-3 sm:gap-5">
-          {services.map((svc, index) => (
-            <motion.div 
-              key={svc.id} 
-              onClick={() => handleServiceClick(svc.id)}
-              initial={{ opacity: 0, y: 30, rotateX: 45 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ delay: index * 0.1, type: "spring", stiffness: 200, damping: 15 }}
-              whileHover={{ scale: 1.05, rotateX: 15, rotateY: -15, z: 30, boxShadow: "0 20px 40px rgba(0,0,0,0.12)" }}
-              whileTap={{ scale: 0.95, rotateX: 0, rotateY: 0, z: 0 }}
-              className="flex flex-col items-center justify-start gap-2.5 py-4 rounded-[20px] cursor-pointer bg-white shadow-[0_4px_16px_rgba(0,0,0,0.05)] border border-slate-100/80"
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              <div className="text-slate-600 scale-90 sm:scale-100 drop-shadow-md" style={{ transform: "translateZ(20px)" }}>
-                {svc.icon}
-              </div>
-              <span className="text-[10px] sm:text-[13px] font-bold text-slate-700 text-center leading-tight px-1" style={{ transform: "translateZ(10px)" }}>{svc.name}</span>
-            </motion.div>
-          ))}
+        <div className="grid grid-cols-2 gap-4">
+          
+          {/* GIAO HÀNG (Hero Card - Col Span 2) */}
+          <motion.div 
+            onClick={() => handleServiceClick('GIAO_HANG')}
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.1, type: "spring", stiffness: 200, damping: 20 }}
+            whileHover={{ scale: 1.02, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="col-span-2 bg-gradient-to-br from-orange-400 to-orange-600 rounded-[24px] p-6 flex flex-row items-center justify-between cursor-pointer shadow-[0_15px_35px_-10px_rgba(249,115,22,0.4)] border border-orange-300/30 overflow-hidden relative"
+          >
+            {/* Hiệu ứng kính (Glass shine) */}
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/20 to-transparent opacity-50 pointer-events-none"></div>
+            
+            <div className="z-10 relative">
+              <h3 className="text-2xl font-black text-white tracking-tight mb-1">Giao hàng</h3>
+              <p className="text-orange-100/90 text-[13px] font-medium">Nhanh chóng & An toàn</p>
+            </div>
+            <div className="z-10 relative bg-white/20 p-3 rounded-[18px] backdrop-blur-md">
+              <Package size={40} className="text-white drop-shadow-md" strokeWidth={1.5} />
+            </div>
+          </motion.div>
+
+          {/* ĐẶT XE (Square Card) */}
+          <motion.div 
+            onClick={() => handleServiceClick('DAT_XE')}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, type: "spring" }}
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="col-span-1 bg-gradient-to-b from-blue-500 to-blue-700 rounded-[24px] p-5 flex flex-col justify-between cursor-pointer shadow-[0_15px_30px_-10px_rgba(59,130,246,0.4)] border border-blue-400/30 relative overflow-hidden h-36"
+          >
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            <Bike size={34} className="text-white drop-shadow-md z-10" strokeWidth={1.5} />
+            <div className="z-10 mt-auto">
+              <h3 className="text-lg font-bold text-white tracking-tight">Đặt xe</h3>
+              <p className="text-blue-100/80 text-[11px] font-medium mt-0.5">Tiện lợi, giá rẻ</p>
+            </div>
+          </motion.div>
+
+          {/* MUA HỘ (Square Card) */}
+          <motion.div 
+            onClick={() => handleServiceClick('MUA_HO')}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, type: "spring" }}
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="col-span-1 bg-gradient-to-b from-emerald-400 to-emerald-600 rounded-[24px] p-5 flex flex-col justify-between cursor-pointer shadow-[0_15px_30px_-10px_rgba(16,185,129,0.4)] border border-emerald-300/30 relative overflow-hidden h-36"
+          >
+            <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            <ShoppingCart size={34} className="text-white drop-shadow-md z-10" strokeWidth={1.5} />
+            <div className="z-10 mt-auto">
+              <h3 className="text-lg font-bold text-white tracking-tight">Mua hộ</h3>
+              <p className="text-emerald-100/80 text-[11px] font-medium mt-0.5">Đi chợ thay bạn</p>
+            </div>
+          </motion.div>
+
+          {/* ĐIỀU PHỐI (Bottom wide card) */}
+          <motion.div 
+            onClick={() => handleServiceClick('DIEU_PHOI')}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, type: "spring" }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="col-span-2 bg-white rounded-[20px] p-4 flex items-center gap-4 cursor-pointer shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-100"
+          >
+            <div className="bg-purple-50 p-3 rounded-[16px]">
+              <Headset size={28} className="text-purple-600" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="text-[15px] font-extrabold text-gray-800 tracking-tight">Điều phối xe tải</h3>
+              <p className="text-gray-500 text-[12px] font-medium">Vận chuyển hàng hóa cồng kềnh</p>
+            </div>
+          </motion.div>
+
         </div>
       </div>
 

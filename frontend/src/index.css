@@ -35,13 +35,32 @@
 }
 
 @layer components {
+  /* Mesh Gradient Background */
+  .mesh-bg {
+    background-color: #f0f4ff;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(220,100%,76%,1) 0, transparent 50%), 
+      radial-gradient(at 100% 0%, hsla(340,100%,76%,0.8) 0, transparent 50%), 
+      radial-gradient(at 100% 100%, hsla(240,100%,82%,1) 0, transparent 50%), 
+      radial-gradient(at 0% 100%, hsla(200,100%,75%,0.9) 0, transparent 50%);
+    background-attachment: fixed;
+  }
+
   /* Modern Glassmorphism Panels */
   .glass-panel {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+  
+  .glass-pill {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
   }
 
   /* 3D Tilt Card Base */
