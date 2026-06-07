@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapPin, X, Target, Loader2, Search, Layers, Clock } from 'lucide-react';
@@ -340,7 +341,7 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[999] bg-white flex flex-col font-sans">
       {/* MAP HEADER */}
       <div className="bg-white py-3 px-4 safe-pt relative z-[1000] border-b border-gray-100 flex items-center justify-between">
@@ -509,7 +510,8 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
           XÁC NHẬN ĐIỂM NÀY
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
