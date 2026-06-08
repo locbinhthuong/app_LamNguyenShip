@@ -27,9 +27,9 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
       android: {
         priority: "high",
         notification: {
-          sound: "default",
+          sound: "chuong",
           channelId: "aloshipp_push_channel",
-          defaultSound: true,
+          defaultSound: false,
           defaultVibrateTimings: true
         }
       },
@@ -52,7 +52,7 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         payload: {
           aps: { 
             alert: { title, body },
-            sound: "default",
+            sound: "chuong.mp3",
             badge: 1
           }
         }
@@ -87,9 +87,9 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
       android: {
         priority: "high",
         notification: {
-          sound: "default",
+          sound: "chuong",
           channelId: "aloshipp_push_channel",
-          defaultSound: true,
+          defaultSound: false,
           defaultVibrateTimings: true
         }
       },
@@ -112,7 +112,7 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
         payload: {
           aps: { 
             alert: { title, body },
-            sound: "default",
+            sound: "chuong.mp3",
             badge: 1
           }
         }

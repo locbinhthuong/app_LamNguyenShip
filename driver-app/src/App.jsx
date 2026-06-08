@@ -17,6 +17,7 @@ import { requestFirebaseToken, setupForegroundListener } from './utils/firebase'
 import ForceUpdateModal from './components/ForceUpdateModal';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { NativeAudio } from '@capacitor-community/native-audio';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
 
@@ -82,6 +83,17 @@ function AppContent() {
 
     const initAudio = async () => {
       try {
+        if (Capacitor.isNativePlatform()) {
+           try {
+              await NativeAudio.preload({
+                  assetId: 'chuong_aloshipp',
+                  assetPath: 'chuong.mp3',
+                  audioChannelNum: 1,
+                  isUrl: false
+              });
+           } catch(e) { console.log('NativeAudio preload error', e); }
+        }
+
         if (!audioCtxRef.current) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (!AudioContext) return;
@@ -143,6 +155,9 @@ function AppContent() {
       clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
+    if (Capacitor.isNativePlatform()) {
+      NativeAudio.stop({ assetId: 'chuong_aloshipp' }).catch(e => {});
+    }
     if (sourceNodeRef.current) {
       try { sourceNodeRef.current.stop(); } catch(e){}
       try { sourceNodeRef.current.disconnect(); } catch(e){}
@@ -160,6 +175,12 @@ function AppContent() {
   const startAlarm = useCallback(() => {
     stopAlarm();
     
+    if (Capacitor.isNativePlatform()) {
+        NativeAudio.loop({ assetId: 'chuong_aloshipp' }).catch(e => console.log('Native play err', e));
+        intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
+        return;
+    }
+
     if (audioCtxRef.current && audioBufferRef.current) {
         if (audioCtxRef.current.state !== 'running') {
             audioCtxRef.current.resume();
@@ -198,26 +219,28 @@ function AppContent() {
     };
     window.addEventListener('stop_alarm_event', handleStopEvent);
     
-    let lastNewOrderTime = 0;
+    let lastOrderIds = new Set();
     const handleNewOrderEvent = (e) => {
        if (!driverRef.current?.isOnline) return; // BỎ QUA NẾU ĐANG OFFLINE
 
        const order = e.detail;
-       if (order) {
+       if (order && order._id) {
+           // Ngăn hú đúp khi FCM và Socket cùng báo về 1 đơn
+           if (lastOrderIds.has(order._id)) return;
+           lastOrderIds.add(order._id);
+           if (lastOrderIds.size > 20) {
+               const firstId = lastOrderIds.values().next().value;
+               lastOrderIds.delete(firstId);
+           }
+
            setPushMessage({ 
                title: '🔥 TING TING', 
                message: order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Có Đơn Hàng Mới Cho Bạn!'
            });
        }
 
-       const now = Date.now();
-       if (now - lastNewOrderTime < 2000) return; // Chỉ Debounce tiếng chuông để chống hú Spam
-       lastNewOrderTime = now;
-       
-       // CHỈ BẬT CHUÔNG VÀ CÒI KHI TÀI XẾ ĐANG MỞ APP TRÊN MÀN HÌNH
-       if (document.visibilityState === 'visible') {
-           startAlarm();
-       }
+       // Luôn kích hoạt báo động không cần quan tâm đang ẩn hay mở
+       startAlarm();
     };
     window.addEventListener('driver_new_order', handleNewOrderEvent);
     window.addEventListener('driver_order_accepted', handleStopEvent);
@@ -256,10 +279,13 @@ function AppContent() {
     window.addEventListener('api_unauthorized', handleUnauthorized);
 
     const handlePush = (e) => {
-      setPushMessage({ title: e.detail.title, message: e.detail.body });
-      // PHÁT CHUÔNG NGAY LẬP TỨC (Chống delay Socket)
+      // Nếu là sự kiện đơn mới thì FCM_foreground sẽ nổ trực tiếp driver_new_order để xử lý chung
       if (e.detail.title && e.detail.title.toUpperCase().includes('MỚI')) {
-         window.dispatchEvent(new CustomEvent('driver_new_order', { detail: { pickupAddress: "Vào xem chi tiết ngay" } })); 
+         // Truyền fake order id hoặc không truyền để xử lý fallback chuông,
+         // Nếu Firebase có mang theo payload order id thì truyền vào, ở đây truyền rỗng tạm.
+         window.dispatchEvent(new CustomEvent('driver_new_order', { detail: { pickupAddress: "Vào xem chi tiết ngay", _id: e.detail.orderId || null } })); 
+      } else {
+         setPushMessage({ title: e.detail.title, message: e.detail.body });
       }
     };
     window.addEventListener('fcm_foreground_alert', handlePush);
@@ -319,8 +345,9 @@ function AppContent() {
         console.log('[FCM] FOREGROUND ALERT:', payload);
         const title = payload.notification?.title || 'Thông báo';
         const body = payload.notification?.body || '';
+        const orderId = payload.data?.orderId || null;
         // Phát tín hiệu ra toàn App thay vì che màn hình ngay
-        window.dispatchEvent(new CustomEvent('fcm_foreground_alert', { detail: { title, body } }));
+        window.dispatchEvent(new CustomEvent('fcm_foreground_alert', { detail: { title, body, orderId } }));
       });
 
       socketRef.current = io(SOCKET_URL, { 

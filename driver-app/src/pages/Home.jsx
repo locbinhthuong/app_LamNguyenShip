@@ -563,29 +563,8 @@ export default function Home() {
        // Global Alarm in App.jsx tự động lo khoản chuông
        
        if (Capacitor.isNativePlatform() && document.visibilityState !== 'visible') {
-          const order = e?.detail;
-          let bodyText = "🔔 CÓ ĐƠN HÀNG MỚI! Bấm vào đây để xem và giật đơn ngay!";
-          if (order && order.pickupAddress) {
-              const totalFee = (order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0);
-              const fee = totalFee > 0 ? totalFee.toLocaleString() + 'đ' : 'Thỏa thuận';
-              bodyText = `📍 Từ: ${order.pickupAddress}\n💵 Phí: ${fee}\nBấm để nhận ngay!`;
-          }
-
-          import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
-            LocalNotifications.schedule({
-              notifications: [
-                {
-                  title: "📱 CÓ ĐƠN HÀNG MỚI!",
-                  body: bodyText,
-                  id: Math.floor(Math.random() * 1000000),
-                  schedule: { at: new Date(Date.now() + 100) },
-                  sound: "default",
-                  channelId: "aloshipp_local_channel",
-                  smallIcon: "ic_stat_icon_config_sample",
-                }
-              ]
-            });
-          }).catch(console.error);
+          // Bỏ qua tạo LocalNotification thủ công vì Firebase Push đã làm việc này
+          // để tránh lỗi nhảy đúp 2 thông báo.
        }
     };
 

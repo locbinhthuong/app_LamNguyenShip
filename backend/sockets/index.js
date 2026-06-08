@@ -199,7 +199,7 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
         const feeResponse = order.deliveryFee ? `${order.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
         let msgBody = order.driverReminder ? `⚠️ ${order.driverReminder}\n` : '';
         msgBody += `📍 Từ: ${order.pickupAddress}\n🎯 Đến: ${order.deliveryAddress || 'Chưa cập nhật'}\n💵 Phí: ${feeResponse}`;
-        await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}` });
+        await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}`, orderId: order._id.toString() });
       }
     } catch (e) {
       console.log('[FCM-DEBUG] Lời nổ Push emitNewOrder bị lỗi thảm hại:', e.message);
