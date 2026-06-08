@@ -87,7 +87,7 @@ function AppContent() {
            try {
               await NativeAudio.preload({
                   assetId: 'chuong_aloshipp',
-                  assetPath: 'chuong.mp3',
+                  assetPath: 'public/chuong.mp3',
                   audioChannelNum: 1,
                   isUrl: false
               });
@@ -174,41 +174,41 @@ function AppContent() {
 
   const startAlarm = useCallback(() => {
     stopAlarm();
+
+    const playWebAudio = () => {
+        if (audioCtxRef.current && audioBufferRef.current) {
+            if (audioCtxRef.current.state !== 'running') {
+                audioCtxRef.current.resume();
+            }
+            const source = audioCtxRef.current.createBufferSource();
+            source.buffer = audioBufferRef.current;
+            source.connect(audioCtxRef.current.destination);
+            source.loop = true;
+            source.start(0);
+            sourceNodeRef.current = source;
+            intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
+        } else {
+            try { 
+              const audio = new Audio('/chuong.mp3');
+              audio.loop = true;
+              audio.play().catch(e => console.error('Audio play blocked:', e));
+              fallbackAudioRef.current = audio;
+              intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
+            } catch(e) {}
+        }
+    };
     
     if (Capacitor.isNativePlatform()) {
-        NativeAudio.loop({ assetId: 'chuong_aloshipp' }).catch(e => console.log('Native play err', e));
-        intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
-        return;
-    }
-
-    if (audioCtxRef.current && audioBufferRef.current) {
-        if (audioCtxRef.current.state !== 'running') {
-            audioCtxRef.current.resume();
-        }
-        
-        const source = audioCtxRef.current.createBufferSource();
-        source.buffer = audioBufferRef.current;
-        source.connect(audioCtxRef.current.destination);
-        source.loop = true;
-        source.start(0);
-        sourceNodeRef.current = source;
-        
-        // Tự ngắt chuông sau 30 giây
-        intervalRef.current = setTimeout(() => {
-            stopAlarm();
-        }, 30000);
+        NativeAudio.loop({ assetId: 'chuong_aloshipp' })
+          .then(() => {
+              intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
+          })
+          .catch(e => {
+              console.log('Native play err, fallback to web', e);
+              playWebAudio();
+          });
     } else {
-        // Fallback nhẹ nếu chưa tương tác (hên xui)
-        try { 
-          const audio = new Audio('/chuong.mp3');
-          audio.loop = true;
-          audio.play().catch(e => console.error('Audio play blocked:', e));
-          fallbackAudioRef.current = audio;
-          
-          intervalRef.current = setTimeout(() => {
-            stopAlarm();
-          }, 30000);
-        } catch(e) {}
+        playWebAudio();
     }
   }, [stopAlarm]);
 
