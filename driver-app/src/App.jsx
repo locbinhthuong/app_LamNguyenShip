@@ -219,18 +219,22 @@ function AppContent() {
     };
     window.addEventListener('stop_alarm_event', handleStopEvent);
     
-    let lastOrderIds = new Set();
+    let lastOrderIds = new Map();
     const handleNewOrderEvent = (e) => {
-       if (!driverRef.current?.isOnline) return; // BỎ QUA NẾU ĐANG OFFLINE
+       if (!driverRef.current?.isOnline) return;
 
        const order = e.detail;
        if (order && order._id) {
-           // Ngăn hú đúp khi FCM và Socket cùng báo về 1 đơn
-           if (lastOrderIds.has(order._id)) return;
-           lastOrderIds.add(order._id);
+           // Ngăn hú đúp khi FCM và Socket cùng báo về 1 đơn (Chỉ chặn nếu cùng 1 đơn đến trong vòng 5 giây)
+           if (lastOrderIds.has(order._id)) {
+               const lastTime = lastOrderIds.get(order._id);
+               if (Date.now() - lastTime < 5000) return;
+           }
+           lastOrderIds.set(order._id, Date.now());
+           
            if (lastOrderIds.size > 20) {
-               const firstId = lastOrderIds.values().next().value;
-               lastOrderIds.delete(firstId);
+               const firstKey = lastOrderIds.keys().next().value;
+               lastOrderIds.delete(firstKey);
            }
 
            setPushMessage({ 
