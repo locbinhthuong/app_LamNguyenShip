@@ -60,6 +60,7 @@ export default function AddressAutocompleteInput({
   const [mapCenter, setMapCenter] = useState([10.045162, 105.746854]);
   const wrapperRef = useRef(null);
   const isSelecting = useRef(false);
+  const isTyping = useRef(false);
 
   // Lấy toạ độ GPS thực tế của thiết bị ngay khi Component được tải
   useEffect(() => {
@@ -74,6 +75,7 @@ export default function AddressAutocompleteInput({
 
   useEffect(() => {
     if (!isSelecting.current && value !== query) {
+      isTyping.current = false; // Parent updated value (e.g. Map Pin), user is not typing
       setQuery(value || '');
     }
   }, [value]);
@@ -87,9 +89,9 @@ export default function AddressAutocompleteInput({
     const handleClickOutside = (event) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
         setIsFocused(false);
-        // Tự động chọn kết quả đầu tiên nếu người dùng click ra ngoài mà chưa chọn
-        if (!isSelecting.current && latestSuggestions.current.length > 0) {
-          handleSelect(latestSuggestions.current[0]);
+        // Soft select: Chỉ lấy tọa độ, giữ nguyên text NẾU người dùng vừa gõ chữ
+        if (isTyping.current && !isSelecting.current && latestSuggestions.current.length > 0) {
+          handleSoftSelect(latestSuggestions.current[0]);
         }
       }
     };
@@ -169,6 +171,7 @@ export default function AddressAutocompleteInput({
 
   const handleSelect = (item) => {
     isSelecting.current = true;
+    isTyping.current = false;
     const selectedText = item.display_name;
     const lon = item.lon;
     const lat = item.lat;
@@ -193,6 +196,7 @@ export default function AddressAutocompleteInput({
 
   const handleSoftSelect = (item) => {
     isSelecting.current = true;
+    isTyping.current = false;
     const lon = item.lon;
     const lat = item.lat;
     
@@ -204,20 +208,6 @@ export default function AddressAutocompleteInput({
     setTimeout(() => { isSelecting.current = false; setIsFocused(false); }, 200);
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-        setIsFocused(false);
-        // Soft select: Chỉ lấy tọa độ, giữ nguyên text
-        if (!isSelecting.current && latestSuggestions.current.length > 0) {
-          handleSoftSelect(latestSuggestions.current[0]);
-        }
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
   const removeRecentSearch = (e, index) => {
     e.stopPropagation();
     const updated = [...recentSearches];
@@ -228,6 +218,7 @@ export default function AddressAutocompleteInput({
 
   const handleInputChange = (e) => {
     isSelecting.current = false;
+    isTyping.current = true;
     setQuery(e.target.value);
     if (onChangeText) onChangeText(e.target.value);
     // Clear parent coordinates when user modifies text (fee will hide until confirmed)
