@@ -196,7 +196,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 </div>
               </div>
 
-              <div className="flex-1 w-full flex flex-col justify-between overflow-hidden">
+              <div className="flex-1 w-full flex flex-col justify-between">
                 {/* Điểm lấy */}
                 <div className="h-[60px]">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
