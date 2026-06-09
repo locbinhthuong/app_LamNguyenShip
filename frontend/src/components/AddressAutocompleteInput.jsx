@@ -157,12 +157,8 @@ export default function AddressAutocompleteInput({
         return true;
       });
 
-      // 4. Sắp xếp theo khoảng cách từ GPS (gần nhất lên trước)
-      unique.sort((a, b) => {
-        const distA = haversineKm(mapCenter[0], mapCenter[1], a.lat, a.lon);
-        const distB = haversineKm(mapCenter[0], mapCenter[1], b.lat, b.lon);
-        return distA - distB;
-      });
+      // 4. Không sắp xếp cứng nhắc theo khoảng cách nữa, vì sẽ làm mất độ chính xác của API
+      // API đã tự động ưu tiên vị trí gần nhờ vào truyền lat/lon
       
       setSuggestions(unique.slice(0, 7));
       setIsSearching(false);

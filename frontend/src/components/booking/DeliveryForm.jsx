@@ -31,7 +31,7 @@ const MapUpdater = ({ pickup, delivery, routeLine }) => {
       // Zoom out slightly more by increasing bottom padding to ensure route is centered in the visible area
       map.fitBounds(bounds, { 
         paddingTopLeft: [40, 180], 
-        paddingBottomRight: [40, 60], 
+        paddingBottomRight: [40, 120], 
         animate: true, 
         duration: 1.2 
       });
