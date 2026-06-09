@@ -154,51 +154,34 @@ const CustomerDashboard = () => {
       {/* HEADER: Địa điểm của tôi */}
       <div 
         onClick={() => setShowLocationPicker(true)}
-        className="bg-white/90 backdrop-blur-md px-5 pb-4 pt-3 safe-pt sticky top-0 z-50 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-transform duration-300 ease-out mb-4 rounded-xl shadow-sm border border-gray-100"
+        className="bg-white/90 backdrop-blur-md p-4 safe-pt sticky top-0 z-50 flex items-center gap-4 cursor-pointer active:scale-[0.98] transition-transform duration-300 ease-out mb-4 rounded-xl shadow-sm border border-gray-100"
       >
-        <div className="flex flex-col flex-1 overflow-hidden mr-4">
-          <div className="flex items-center gap-1 text-gray-500 mb-1">
-            <span className="text-xs font-medium bg-gray-100/80 px-2.5 py-0.5 rounded-full text-gray-600">📍 Kéo ghim</span>
-            <ChevronRight size={14} className="opacity-50" />
+        <div className="text-blue-500 bg-blue-50 p-2.5 rounded-full shadow-sm flex-shrink-0 animate-bounce">
+          <MapPin size={22} strokeWidth={2.5} />
+        </div>
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="flex items-center gap-1 text-gray-500 mb-0.5">
+            <span className="text-xs font-bold text-blue-600 tracking-wider uppercase">Vị trí của bạn</span>
+            <ChevronRight size={14} className="opacity-50 text-blue-600" />
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-[13px] font-bold text-gray-800 line-clamp-1 truncate block leading-tight">{address}</span>
-            <div className="bg-blue-100/80 text-blue-600 px-1.5 py-0.5 rounded shadow-sm">
-              <span className="text-[10px] uppercase font-bold tracking-wider">Chọn</span>
-            </div>
+            <span className="text-[14px] font-bold text-gray-800 line-clamp-1 truncate block leading-tight">{address}</span>
           </div>
         </div>
       </div>
 
-      {/* LỜI CHÀO GREETING & THÔNG BÁO - DESKTOP CHIA CỘT */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 mt-1 items-center">
-        <div className="px-1">
-          <h2 className="text-lg md:text-xl font-medium text-gray-600 leading-tight">
-            {getGreeting()}, <span className="font-bold text-blue-600">{customerName || 'Khách hàng'}</span>!
-          </h2>
-          <motion.div 
-            className="text-[13px] md:text-[15px] font-extrabold mt-0.5 tracking-tight bg-gradient-to-r from-blue-600 via-orange-500 to-blue-600 bg-[length:200%_auto] text-transparent bg-clip-text drop-shadow-sm"
-            animate={{ backgroundPosition: ['0% center', '200% center'] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-          >
-            Chúng tôi luôn sẵn sàng phục vụ bạn mọi lúc, mọi nơi 🚀
-          </motion.div>
-        </div>
-
-        <div>
-          <div className="bg-blue-50/80 border border-blue-100/50 rounded-xl p-3 flex items-center gap-3 relative overflow-hidden shadow-sm backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-500 rounded-l-full"></div>
-            <div className="text-blue-500 bg-white p-1.5 rounded-full shadow-sm flex-shrink-0 animate-bounce">
-              <MapPin size={16} />
-            </div>
-            <div>
-              <h4 className="text-[11px] md:text-xs font-extrabold text-blue-800 uppercase tracking-wider mb-0.5">Lưu ý khi đặt đơn</h4>
-              <p className="text-[10px] md:text-[11px] text-blue-700/90 leading-snug font-medium">
-                Chạm thanh <strong className="bg-blue-100 px-1 py-0.5 rounded">📍 Kéo ghim</strong> ở trên để định vị chính xác vị trí của bạn!
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* LỜI CHÀO GREETING */}
+      <div className="mb-6 mt-1 px-1">
+        <h2 className="text-lg md:text-xl font-medium text-gray-600 leading-tight">
+          {getGreeting()}, <span className="font-bold text-blue-600">{customerName || 'Khách hàng'}</span>!
+        </h2>
+        <motion.div 
+          className="text-[13px] md:text-[15px] font-extrabold mt-0.5 tracking-tight bg-gradient-to-r from-blue-600 via-orange-500 to-blue-600 bg-[length:200%_auto] text-transparent bg-clip-text drop-shadow-sm"
+          animate={{ backgroundPosition: ['0% center', '200% center'] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        >
+          Chúng tôi luôn sẵn sàng phục vụ bạn mọi lúc, mọi nơi 🚀
+        </motion.div>
       </div>
 
       {/* SLIDER BANNER TỪ ADMIN */}
