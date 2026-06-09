@@ -171,18 +171,18 @@ const CustomerDashboard = () => {
       </div>
 
       {/* LỜI CHÀO GREETING & THÔNG BÁO - DESKTOP CHIA CỘT */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 mt-2 items-center">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 mt-1 items-center">
         <div className="px-1">
-          <h2 className="text-xl md:text-2xl font-medium text-gray-600">
+          <h2 className="text-lg md:text-xl font-medium text-gray-600 leading-tight">
             {getGreeting()}, <span className="font-bold text-blue-600">{customerName || 'Khách hàng'}</span>!
           </h2>
-          <motion.h1 
-            className="text-lg md:text-xl font-bold mt-2 tracking-tight text-blue-600"
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          <motion.div 
+            className="text-[13px] md:text-[15px] font-extrabold mt-0.5 tracking-tight bg-gradient-to-r from-blue-600 via-orange-500 to-blue-600 bg-[length:200%_auto] text-transparent bg-clip-text drop-shadow-sm"
+            animate={{ backgroundPosition: ['0% center', '200% center'] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
           >
-            Chúng tôi luôn sẵn sàng phục vụ bạn mọi lúc, mọi nơi
-          </motion.h1>
+            Chúng tôi luôn sẵn sàng phục vụ bạn mọi lúc, mọi nơi 🚀
+          </motion.div>
         </div>
 
         <div>
