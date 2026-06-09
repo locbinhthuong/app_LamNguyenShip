@@ -156,7 +156,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     <form onSubmit={handleSubmit} className="flex flex-col bg-gray-50 relative -mx-4 -mt-4 md:-mx-0 min-h-full">
       
       {/* KHU VỰC BẢN ĐỒ INLINE (CỐ ĐỊNH PHÍA TRÊN) */}
-      <div className="sticky top-0 w-full h-[55vh] z-0 shrink-0">
+      <div className="sticky top-0 w-full h-[70vh] md:h-[75vh] z-0 shrink-0">
         <MapContainer 
           center={form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : [10.045162, 105.746854]} 
           zoom={14} 
