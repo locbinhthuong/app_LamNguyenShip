@@ -266,9 +266,9 @@ export default function AddressAutocompleteInput({
               setIsFocused(false);
               onClickMapIcon(query);
             }}
-            className="flex shrink-0 items-center justify-center bg-blue-100 text-blue-600 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-colors hover:bg-blue-200 ml-2"
+            className="flex shrink-0 items-center justify-center bg-gray-100 text-gray-600 px-3 py-2 rounded-xl text-[11px] font-bold uppercase transition-colors hover:bg-gray-200 ml-2"
           >
-            🗺️ MỞ TO
+            📍 BẢN ĐỒ
           </button>
         )}
       </div>

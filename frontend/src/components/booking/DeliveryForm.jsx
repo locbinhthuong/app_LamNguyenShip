@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check, Map as MapOutlineIcon, X } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import CurrencyInput from '../CurrencyInput';
@@ -23,12 +23,13 @@ const deliveryIcon = L.divIcon({
 });
 
 // --- MAP HELPER COMPONENT ---
-const MapUpdater = ({ pickup, delivery, routeLine }) => {
+const MapUpdater = ({ pickup, delivery, routeLine, mapSelectMode }) => {
   const map = useMap();
   useEffect(() => {
+    if (mapSelectMode) return; // Don't auto-fit bounds when user is manually selecting on map
+
     if (pickup && delivery) {
       const bounds = L.latLngBounds([pickup, delivery]);
-      // Zoom out slightly more by increasing bottom padding to ensure route is centered in the visible area
       map.fitBounds(bounds, { 
         paddingTopLeft: [40, 180], 
         paddingBottomRight: [40, 120], 
@@ -40,7 +41,20 @@ const MapUpdater = ({ pickup, delivery, routeLine }) => {
     } else if (delivery) {
       map.flyTo(delivery, 16, { animate: true, duration: 1 });
     }
-  }, [pickup, delivery, routeLine, map]);
+  }, [pickup, delivery, routeLine, map, mapSelectMode]);
+  return null;
+};
+
+// --- MAP PICKER LISTENER ---
+const MapPickerListener = ({ mode, onLocationChange }) => {
+  const map = useMapEvents({
+    moveend: () => {
+      if (mode) {
+        const center = map.getCenter();
+        onLocationChange({ lat: center.lat, lng: center.lng });
+      }
+    }
+  });
   return null;
 };
 
@@ -66,6 +80,12 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const [distanceKm, setDistanceKm] = useState(null);
   const [estimating, setEstimating] = useState(false);
   const [routeLine, setRouteLine] = useState([]);
+
+  // MAP SELECTION STATE
+  const [mapSelectMode, setMapSelectMode] = useState(null); // 'pickup' | 'delivery' | null
+  const [tempLocation, setTempLocation] = useState({ lat: null, lng: null, address: '' });
+  const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+  const fetchAddressTimeout = useRef(null);
 
   useEffect(() => {
     if (defaultLocation?.address) {
@@ -118,14 +138,13 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       }
     };
     
-    const timer = setTimeout(() => {
-      fetchEstimateAndRoute();
-    }, 800);
-    
-    return () => clearTimeout(timer);
-  }, [form.pickupCoordinates, form.deliveryCoordinates]);
+    if (!mapSelectMode) {
+      const timer = setTimeout(() => fetchEstimateAndRoute(), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [form.pickupCoordinates, form.deliveryCoordinates, mapSelectMode]);
 
-  const handleSubmit = (e) => {
+  const handleBookingClick = (e) => {
     e.preventDefault();
 
     onBooking({
@@ -152,14 +171,70 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     });
   };
 
+  const openMapSelect = (mode) => {
+    setMapSelectMode(mode);
+    let initialCoords = null;
+    if (mode === 'pickup' && form.pickupCoordinates) initialCoords = form.pickupCoordinates;
+    if (mode === 'delivery' && form.deliveryCoordinates) initialCoords = form.deliveryCoordinates;
+    
+    if (initialCoords) {
+      setTempLocation({ ...initialCoords, address: mode === 'pickup' ? form.pickupAddress : form.deliveryAddress });
+    } else {
+      setTempLocation({ lat: 10.045162, lng: 105.746854, address: 'Đang tải...' }); // Mặc định Cần Thơ
+    }
+  };
+
+  const handleMapLocationChange = (coords) => {
+    setTempLocation(prev => ({ ...prev, lat: coords.lat, lng: coords.lng }));
+    setIsFetchingAddress(true);
+    
+    if (fetchAddressTimeout.current) clearTimeout(fetchAddressTimeout.current);
+    
+    fetchAddressTimeout.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=18&addressdetails=1`);
+        const data = await res.json();
+        if (data && data.display_name) {
+          setTempLocation(prev => ({ ...prev, address: data.display_name }));
+        } else {
+          setTempLocation(prev => ({ ...prev, address: "Không xác định được địa chỉ" }));
+        }
+      } catch (e) {
+        setTempLocation(prev => ({ ...prev, address: "Lỗi kết nối khi tải địa chỉ" }));
+      }
+      setIsFetchingAddress(false);
+    }, 600); // delay 600ms to avoid spamming API on drag
+  };
+
+  const confirmMapSelection = () => {
+    if (mapSelectMode === 'pickup') {
+      setForm(prev => ({
+        ...prev,
+        pickupAddress: tempLocation.address,
+        pickupCoordinates: { lat: tempLocation.lat, lng: tempLocation.lng }
+      }));
+    } else if (mapSelectMode === 'delivery') {
+      setForm(prev => ({
+        ...prev,
+        deliveryAddress: tempLocation.address,
+        deliveryCoordinates: { lat: tempLocation.lat, lng: tempLocation.lng }
+      }));
+    }
+    setMapSelectMode(null);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col bg-gray-50 relative -mx-4 -mt-4 md:-mx-0 min-h-full">
+    <form onSubmit={(e) => e.preventDefault()} className="flex flex-col bg-gray-50 relative -mx-4 -mt-4 md:-mx-0 min-h-full">
       
       {/* KHU VỰC BẢN ĐỒ INLINE (CỐ ĐỊNH PHÍA TRÊN) */}
-      <div className="sticky top-0 w-full h-[70vh] md:h-[75vh] z-0 shrink-0">
+      <div className={`sticky top-0 w-full z-0 shrink-0 ${mapSelectMode ? 'h-[100dvh]' : 'h-[70vh] md:h-[75vh]'}`}>
         <MapContainer 
-          center={form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : [10.045162, 105.746854]} 
-          zoom={14} 
+          center={
+            mapSelectMode ? [tempLocation.lat || 10.045162, tempLocation.lng || 105.746854] : 
+            form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : 
+            [10.045162, 105.746854]
+          } 
+          zoom={15} 
           zoomControl={false} 
           className="w-full h-full z-0"
         >
@@ -167,179 +242,243 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             attribution='&copy; Google Maps'
             url={`https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}`}
           />
-          {form.pickupCoordinates && <Marker position={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} icon={pickupIcon} />}
-          {form.deliveryCoordinates && <Marker position={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} icon={deliveryIcon} />}
-          {routeLine.length > 0 && <Polyline positions={routeLine} color="#2563EB" weight={5} opacity={0.8} />}
+          
+          {/* Markers when NOT in map select mode */}
+          {!mapSelectMode && form.pickupCoordinates && <Marker position={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} icon={pickupIcon} />}
+          {!mapSelectMode && form.deliveryCoordinates && <Marker position={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} icon={deliveryIcon} />}
+          {!mapSelectMode && routeLine.length > 0 && <Polyline positions={routeLine} color="#2563EB" weight={5} opacity={0.8} />}
+          
           <MapUpdater 
             pickup={form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null}
             delivery={form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null}
             routeLine={routeLine}
+            mapSelectMode={mapSelectMode}
           />
+
+          {mapSelectMode && <MapPickerListener mode={mapSelectMode} onLocationChange={handleMapLocationChange} />}
         </MapContainer>
 
-        {/* Ô NHẬP LIỆU NỔI BẬT NẰM TRÊN BẢN ĐỒ */}
-        <div className="absolute top-4 left-4 right-4 z-[1000] space-y-3 pointer-events-none">
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-gray-100/50 pointer-events-auto space-y-0 relative">
+        {/* TRUNG TÂM BẢN ĐỒ (KHI CHỌN ĐIỂM) */}
+        {mapSelectMode && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[1000] pointer-events-none pb-10">
+            <div className="relative flex flex-col items-center">
+              <div className={`px-3 py-1.5 rounded-full text-[11px] font-bold text-white shadow-lg mb-2 whitespace-nowrap animate-bounce ${mapSelectMode === 'pickup' ? 'bg-blue-600' : 'bg-sky-500'}`}>
+                {isFetchingAddress ? 'Đang tải...' : (mapSelectMode === 'pickup' ? 'Lấy hàng tại đây' : 'Giao hàng tại đây')}
+              </div>
+              <MapPinIcon size={42} className={`drop-shadow-xl ${mapSelectMode === 'pickup' ? 'fill-blue-600' : 'fill-sky-500'} text-white`} />
+              <div className="w-2 h-1 bg-black/30 rounded-[100%] absolute bottom-1 mt-1 blur-[1px]"></div>
+            </div>
+          </div>
+        )}
+
+        {/* BẢNG CHỌN ĐIỂM TRÊN BẢN ĐỒ */}
+        {mapSelectMode && (
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] z-[2000] p-5 pb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-extrabold text-gray-800 flex items-center gap-2">
+                <MapOutlineIcon size={20} className={mapSelectMode === 'pickup' ? 'text-blue-600' : 'text-sky-500'} />
+                Chọn {mapSelectMode === 'pickup' ? 'Điểm Lấy Hàng' : 'Điểm Giao Hàng'}
+              </h3>
+              <button onClick={() => setMapSelectMode(null)} className="p-2 bg-gray-100 rounded-full text-gray-500 active:scale-90 transition-transform">
+                <X size={18} />
+              </button>
+            </div>
             
-            <div className="flex items-start gap-4">
-              <div className="flex flex-col items-center mt-1.5 shrink-0">
-                <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
-                </div>
-                <div className="w-[2px] h-14 bg-gray-200 mt-1 mb-1 rounded-full"></div>
-                <div className="w-4 h-4 rounded-full bg-sky-100 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
-                </div>
-              </div>
-
-              <div className="flex-1 w-full flex flex-col justify-between">
-                {/* Điểm lấy */}
-                <div className="h-[60px]">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
-                    ĐIỂM LẤY HÀNG (NGƯỜI GỬI)
-                  </label>
-                  <AddressAutocompleteInput 
-                    value={form.pickupAddress}
-                    onChangeText={txt => setForm(prev => ({...prev, pickupAddress: txt}))}
-                    onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
-                    placeholder="Nhập địa chỉ lấy hàng..."
-                    className="w-full text-[14px] font-bold text-gray-800 -ml-2 !w-[calc(100%+16px)]"
-                  />
-                </div>
-
-                <div className="h-[1px] w-[calc(100%+16px)] bg-gray-100/80 -ml-4 my-1"></div>
-
-                {/* Điểm giao */}
-                <div className="h-[60px] flex flex-col justify-end">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
-                    ĐIỂM GIAO HÀNG
-                  </label>
-                  <AddressAutocompleteInput 
-                    value={form.deliveryAddress}
-                    onChangeText={txt => setForm(prev => ({...prev, deliveryAddress: txt}))}
-                    onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
-                    placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
-                    className="w-full text-[14px] font-bold text-gray-800 -ml-2 !w-[calc(100%+16px)]"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* KHU VỰC ĐIỀN THÔNG TIN BÊN DƯỚI (Cuộn trượt lên đè bản đồ) */}
-      <div className="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.12)] relative z-[100] px-5 pt-6 pb-24 flex-1 flex flex-col -mt-6 mx-0 min-h-[60vh]">
-        <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
-
-        <div className="space-y-6">
-          
-          {/* Thông tin liên hệ */}
-          <div className="space-y-3">
-            <h4 className="text-[11px] font-extrabold text-gray-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-              <MapPinIcon size={14} className="text-gray-400" /> THÔNG TIN LIÊN LẠC
-            </h4>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <input 
-                  type="tel"
-                  placeholder="SĐT Lấy Hàng"
-                  className="w-full text-[13px] font-bold text-blue-600 p-3.5 bg-gray-50/80 border border-gray-100 rounded-2xl outline-none focus:border-blue-400 focus:bg-white transition-colors"
-                  value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
-                />
-              </div>
-              <div>
-                <input 
-                  type="tel"
-                  placeholder="SĐT Giao Hàng"
-                  className="w-full text-[13px] font-bold text-sky-600 p-3.5 bg-gray-50/80 border border-gray-100 rounded-2xl outline-none focus:border-sky-400 focus:bg-white transition-colors"
-                  value={form.receiverPhone} onChange={e => setForm({...form, receiverPhone: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <div>
-              <input 
-                type="text" 
-                placeholder="Tên người nhận (Tùy chọn)"
-                className="w-full text-[13px] bg-gray-50/80 border border-gray-100 p-3.5 rounded-2xl outline-none font-bold text-slate-800 focus:border-sky-400 focus:bg-white transition-colors"
-                value={form.receiverName} onChange={e => setForm({...form, receiverName: e.target.value})}
-              />
-            </div>
-          </div>
-
-          {/* Thu hộ và Ghi chú */}
-          <div className="bg-white p-4 md:p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 space-y-5">
-            <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
-                <DollarSign size={14} className="text-yellow-500" /> THU HỘ TIỀN HÀNG (COD)
-              </label>
-              <CurrencyInput 
-                name="codAmount"
-                placeholder="Ví dụ: 250.000"
-                className="w-full text-[14px] font-bold text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-2xl outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100/50 focus:bg-white transition-all duration-300"
-                value={form.codAmount}
-                onChange={e => setForm({...form, codAmount: e.target.value})}
-              />
-              <p className="text-[10px] text-gray-400 mt-1.5 ml-1">Nhập 0 hoặc bỏ trống nếu không cần thu hộ.</p>
-            </div>
-
-            <div>
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
-                <Package size={14} className="text-blue-500" /> GHI CHÚ ĐƠN HÀNG
-              </label>
-              <textarea 
-                rows="2"
-                placeholder="Lưu ý cho tài xế (mặt hàng dễ vỡ, giao hẻm...)"
-                className="w-full text-[13px] text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-2xl outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 focus:bg-white transition-all duration-300 resize-none font-medium"
-                value={form.note}
-                onChange={e => setForm({...form, note: e.target.value})}
-              ></textarea>
-            </div>
-          </div>
-
-          {/* KHUYẾN CÁO GIÁ & BUTTON TẠO ĐƠN */}
-          <div className="mt-4 space-y-4">
-            <div className={`border p-4 rounded-[20px] flex items-start gap-3 transition-colors duration-300 ${estimatedFee !== null ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}>
-              <div className={`mt-0.5 ${estimatedFee !== null ? 'text-blue-500' : 'text-gray-400'}`}>
-                <Navigation size={20} />
-              </div>
-              <div className="flex-1">
-                <p className={`text-[13px] leading-relaxed font-bold ${estimatedFee !== null ? 'text-blue-800' : 'text-gray-500'}`}>
-                  {estimatedFee !== null ? (
-                    <>Cước tạm tính: <strong className="text-lg text-blue-600 block sm:inline sm:ml-1 mt-1 sm:mt-0">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? <span className="text-blue-500 font-bold opacity-80 ml-1">({distanceKm.toFixed(1)}km)</span> : ''}</>
-                  ) : (
-                    'Vui lòng chọn đầy đủ cả điểm lấy và điểm giao để xem giá.'
-                  )}
-                </p>
-                {estimatedFee !== null && (
-                  <p className="text-[10px] font-semibold text-blue-500/80 mt-1">Tổng đài có thể phụ thu phí cồng kềnh (nếu có).</p>
+            <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-5">
+              <p className="text-sm font-medium text-gray-700 line-clamp-2">
+                {isFetchingAddress ? (
+                  <span className="flex items-center gap-2 text-gray-400">
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin"></div>
+                    Đang tải địa chỉ...
+                  </span>
+                ) : (
+                  tempLocation.address || "Di chuyển bản đồ để chọn vị trí"
                 )}
-              </div>
+              </p>
             </div>
 
             <button 
-              disabled={loading}
-              type="submit"
-              className="w-full bg-blue-600 active:bg-blue-700 text-white font-extrabold text-[15px] sm:text-base py-4 rounded-2xl shadow-[0_8px_20px_rgba(37,99,235,0.24)] active:scale-[0.98] transition-transform duration-300 ease-out disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2 mt-2"
+              onClick={confirmMapSelection}
+              disabled={isFetchingAddress || !tempLocation.address}
+              className={`w-full py-4 rounded-2xl font-extrabold text-white flex items-center justify-center gap-2 transition-all shadow-lg active:scale-[0.98]
+                ${(isFetchingAddress || !tempLocation.address) ? 'bg-gray-300 shadow-none' : (mapSelectMode === 'pickup' ? 'bg-blue-600 shadow-blue-600/30' : 'bg-sky-500 shadow-sky-500/30')}
+              `}
             >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  <span>ĐANG XỬ LÝ...</span>
-                </>
-              ) : (
-                <>
-                  <Check size={20} />
-                  <span>XÁC NHẬN TẠO ĐƠN</span>
-                </>
-              )}
+              <Check size={20} /> XÁC NHẬN VỊ TRÍ NÀY
             </button>
           </div>
+        )}
 
-        </div>
+        {/* Ô NHẬP LIỆU NỔI BẬT NẰM TRÊN BẢN ĐỒ (ẨN KHI ĐANG CHỌN MAP) */}
+        {!mapSelectMode && (
+          <div className="absolute top-4 left-4 right-4 z-[1000] space-y-3 pointer-events-none">
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-gray-100/50 pointer-events-auto space-y-0 relative">
+              
+              <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center mt-1.5 shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
+                  </div>
+                  <div className="w-[2px] h-14 bg-gray-200 mt-1 mb-1 rounded-full"></div>
+                  <div className="w-4 h-4 rounded-full bg-sky-100 flex items-center justify-center">
+                    <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
+                  </div>
+                </div>
+
+                <div className="flex-1 w-full flex flex-col justify-between">
+                  {/* Điểm lấy */}
+                  <div className="h-[60px]">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+                      ĐIỂM LẤY HÀNG (NGƯỜI GỬI)
+                    </label>
+                    <AddressAutocompleteInput 
+                      value={form.pickupAddress}
+                      onChangeText={txt => setForm(prev => ({...prev, pickupAddress: txt}))}
+                      onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
+                      placeholder="Nhập địa chỉ lấy hàng..."
+                      className="w-full text-[14px] font-bold text-gray-800 -ml-2 !w-[calc(100%+16px)]"
+                      onClickMapIcon={() => openMapSelect('pickup')}
+                    />
+                  </div>
+
+                  <div className="h-[1px] w-[calc(100%+16px)] bg-gray-100/80 -ml-4 my-1"></div>
+
+                  {/* Điểm giao */}
+                  <div className="h-[60px] flex flex-col justify-end">
+                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+                      ĐIỂM GIAO HÀNG
+                    </label>
+                    <AddressAutocompleteInput 
+                      value={form.deliveryAddress}
+                      onChangeText={txt => setForm(prev => ({...prev, deliveryAddress: txt}))}
+                      onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
+                      placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
+                      className="w-full text-[14px] font-bold text-gray-800 -ml-2 !w-[calc(100%+16px)]"
+                      onClickMapIcon={() => openMapSelect('delivery')}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* KHU VỰC ĐIỀN THÔNG TIN BÊN DƯỚI (Ẩn khi đang chọn map) */}
+      {!mapSelectMode && (
+        <div className="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.12)] relative z-[100] px-5 pt-6 pb-24 flex-1 flex flex-col -mt-6 mx-0 min-h-[60vh]">
+          <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+
+          <div className="space-y-6">
+            
+            {/* Thông tin liên hệ */}
+            <div className="space-y-3">
+              <h4 className="text-[11px] font-extrabold text-gray-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <MapPinIcon size={14} className="text-gray-400" /> THÔNG TIN LIÊN LẠC
+              </h4>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <input 
+                    type="tel"
+                    placeholder="SĐT Lấy Hàng"
+                    className="w-full text-[13px] font-bold text-blue-600 p-3.5 bg-gray-50/80 border border-gray-100 rounded-2xl outline-none focus:border-blue-400 focus:bg-white transition-colors"
+                    value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <input 
+                    type="tel"
+                    placeholder="SĐT Giao Hàng"
+                    className="w-full text-[13px] font-bold text-sky-600 p-3.5 bg-gray-50/80 border border-gray-100 rounded-2xl outline-none focus:border-sky-400 focus:bg-white transition-colors"
+                    value={form.receiverPhone} onChange={e => setForm({...form, receiverPhone: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <input 
+                  type="text" 
+                  placeholder="Tên người nhận (Tùy chọn)"
+                  className="w-full text-[13px] bg-gray-50/80 border border-gray-100 p-3.5 rounded-2xl outline-none font-bold text-slate-800 focus:border-sky-400 focus:bg-white transition-colors"
+                  value={form.receiverName} onChange={e => setForm({...form, receiverName: e.target.value})}
+                />
+              </div>
+            </div>
+
+            {/* Thu hộ và Ghi chú */}
+            <div className="bg-white p-4 md:p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 space-y-5">
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
+                  <DollarSign size={14} className="text-yellow-500" /> THU HỘ TIỀN HÀNG (COD)
+                </label>
+                <CurrencyInput 
+                  name="codAmount"
+                  placeholder="Ví dụ: 250.000"
+                  className="w-full text-[14px] font-bold text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-2xl outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100/50 focus:bg-white transition-all duration-300"
+                  value={form.codAmount}
+                  onChange={e => setForm({...form, codAmount: e.target.value})}
+                />
+                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">Nhập 0 hoặc bỏ trống nếu không cần thu hộ.</p>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
+                  <Package size={14} className="text-blue-500" /> GHI CHÚ ĐƠN HÀNG
+                </label>
+                <textarea 
+                  rows="2"
+                  placeholder="Lưu ý cho tài xế (mặt hàng dễ vỡ, giao hẻm...)"
+                  className="w-full text-[13px] text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-2xl outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 focus:bg-white transition-all duration-300 resize-none font-medium"
+                  value={form.note}
+                  onChange={e => setForm({...form, note: e.target.value})}
+                ></textarea>
+              </div>
+            </div>
+
+            {/* KHUYẾN CÁO GIÁ & BUTTON TẠO ĐƠN */}
+            <div className="mt-4 space-y-4">
+              <div className={`border p-4 rounded-[20px] flex items-start gap-3 transition-colors duration-300 ${estimatedFee !== null ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}>
+                <div className={`mt-0.5 ${estimatedFee !== null ? 'text-blue-500' : 'text-gray-400'}`}>
+                  <Navigation size={20} />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-[13px] leading-relaxed font-bold ${estimatedFee !== null ? 'text-blue-800' : 'text-gray-500'}`}>
+                    {estimatedFee !== null ? (
+                      <>Cước tạm tính: <strong className="text-lg text-blue-600 block sm:inline sm:ml-1 mt-1 sm:mt-0">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? <span className="text-blue-500 font-bold opacity-80 ml-1">({distanceKm.toFixed(1)}km)</span> : ''}</>
+                    ) : (
+                      'Vui lòng chọn đầy đủ cả điểm lấy và điểm giao để xem giá.'
+                    )}
+                  </p>
+                  {estimatedFee !== null && (
+                    <p className="text-[10px] font-semibold text-blue-500/80 mt-1">Tổng đài có thể phụ thu phí cồng kềnh (nếu có).</p>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                onClick={handleBookingClick}
+                disabled={loading}
+                type="button"
+                className="w-full bg-blue-600 active:bg-blue-700 text-white font-extrabold text-[15px] sm:text-base py-4 rounded-2xl shadow-[0_8px_20px_rgba(37,99,235,0.24)] active:scale-[0.98] transition-transform duration-300 ease-out disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2 mt-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>ĐANG XỬ LÝ...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={20} />
+                    <span>XÁC NHẬN TẠO ĐƠN</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
     </form>
   );
 }
