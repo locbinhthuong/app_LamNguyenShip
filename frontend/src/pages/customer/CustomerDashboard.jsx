@@ -148,7 +148,7 @@ const CustomerDashboard = () => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3 }}
-      className="pb-24 pt-4 px-4 md:px-8 max-w-7xl mx-auto bg-[#fafafa] min-h-screen relative"
+      className="pb-10 pt-4 px-4 md:px-8 max-w-7xl mx-auto bg-[#fafafa] min-h-full relative"
     >
       
       {/* HEADER: Địa điểm của tôi */}
@@ -289,10 +289,10 @@ const CustomerDashboard = () => {
       </div>
 
       {/* KHUYẾN MÃI & TIN TỨC (SPLIT LAYOUT) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
         
-        {/* CỘT KHUYẾN MÃI (Bên trái, rộng hơn) */}
-        <div className="lg:col-span-2">
+        {/* CỘT KHUYẾN MÃI (Bên trái) */}
+        <div className="lg:col-span-1">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl md:text-2xl font-bold text-gray-800">Khuyến mãi</h2>
             <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Xem tất cả ›</button>
@@ -337,7 +337,7 @@ const CustomerDashboard = () => {
             <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Chi tiết ›</button>
           </div>
           
-          <div className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-6 h-[calc(100%-4rem)] justify-center">
+          <div className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-6 h-auto">
             {news.length > 0 ? news.slice(0, 3).map((item, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(item)} className="flex gap-4 cursor-pointer group">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
