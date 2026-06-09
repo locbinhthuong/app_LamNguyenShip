@@ -179,19 +179,44 @@ export default function AddressAutocompleteInput({
     if (onChangeText) onChangeText(selectedText);
     if (onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
     
-    // Lưu vào lịch sử tìm kiếm
     try {
       const saved = JSON.parse(localStorage.getItem('aloshipp_recent_addresses') || '[]');
-      // Bỏ địa chỉ bị trùng nếu đã có trong lịch sử
       const newHistory = saved.filter(h => h.display_name !== selectedText);
       newHistory.unshift({ display_name: selectedText, lat, lon });
-      const limitedHistory = newHistory.slice(0, 5); // Chỉ lưu 5 địa chỉ gần nhất
+      const limitedHistory = newHistory.slice(0, 5);
       localStorage.setItem('aloshipp_recent_addresses', JSON.stringify(limitedHistory));
       setRecentSearches(limitedHistory);
     } catch (e) {}
     
     setTimeout(() => { isSelecting.current = false; setIsFocused(false); }, 200);
   };
+
+  const handleSoftSelect = (item) => {
+    isSelecting.current = true;
+    const lon = item.lon;
+    const lat = item.lat;
+    
+    setSuggestions([]);
+    
+    // KHÔNG ghi đè text của người dùng, chỉ lấy tọa độ để tính tiền
+    if (onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
+    
+    setTimeout(() => { isSelecting.current = false; setIsFocused(false); }, 200);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setIsFocused(false);
+        // Soft select: Chỉ lấy tọa độ, giữ nguyên text
+        if (!isSelecting.current && latestSuggestions.current.length > 0) {
+          handleSoftSelect(latestSuggestions.current[0]);
+        }
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const removeRecentSearch = (e, index) => {
     e.stopPropagation();
@@ -213,7 +238,7 @@ export default function AddressAutocompleteInput({
     if (e.key === 'Enter') {
       e.preventDefault();
       if (suggestions.length > 0) {
-        handleSelect(suggestions[0]);
+        handleSoftSelect(suggestions[0]);
       }
     }
   };
