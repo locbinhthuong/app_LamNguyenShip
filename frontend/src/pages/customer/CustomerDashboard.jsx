@@ -148,7 +148,7 @@ const CustomerDashboard = () => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3 }}
-      className="pb-10 pt-4 px-4 md:px-8 max-w-7xl mx-auto bg-[#fafafa] min-h-full relative"
+      className="pb-6 pt-4 px-4 md:px-8 max-w-7xl mx-auto bg-[#fafafa] relative"
     >
       
       {/* HEADER: Địa điểm của tôi */}
@@ -289,7 +289,7 @@ const CustomerDashboard = () => {
       </div>
 
       {/* KHUYẾN MÃI & TIN TỨC (SPLIT LAYOUT) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
         
         {/* CỘT KHUYẾN MÃI (Bên trái) */}
         <div className="lg:col-span-1">
@@ -298,9 +298,9 @@ const CustomerDashboard = () => {
             <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Xem tất cả ›</button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-6">
+          <div className="grid grid-cols-1 gap-5 lg:gap-6">
             {promotions.length > 0 ? promotions.slice(0, 2).map((promo, idx) => (
-              <div key={idx} onClick={() => setSelectedAnnouncement(promo)} className="bg-gradient-to-br from-[#1a2b4c] to-[#0a192f] rounded-[20px] h-48 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+              <div key={idx} onClick={() => setSelectedAnnouncement(promo)} className="bg-gradient-to-br from-[#1a2b4c] to-[#0a192f] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
                 <img src={promo.imageUrl ? `https://api.aloshipp.com${promo.imageUrl}` : '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-5 left-5 right-5">
@@ -311,14 +311,14 @@ const CustomerDashboard = () => {
             )) : (
               // Mẫu mặc định nếu không có từ API
               <>
-                <div className="bg-gradient-to-br from-[#3b4b6b] to-[#1e2a45] rounded-[20px] h-48 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+                <div className="bg-gradient-to-br from-[#3b4b6b] to-[#1e2a45] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a192f] to-transparent opacity-80"></div>
                   <div className="absolute bottom-5 left-5 right-5">
                     <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">GIẢM 50%</span>
                     <h3 className="text-white font-bold text-lg leading-tight">Đồng giá 15k nội thành</h3>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-[#2a3b5c] to-[#0a192f] rounded-[20px] h-48 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+                <div className="bg-gradient-to-br from-[#2a3b5c] to-[#0a192f] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a192f] to-transparent opacity-80"></div>
                   <div className="absolute bottom-5 left-5 right-5">
                     <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">HOÀN TIỀN</span>
@@ -337,47 +337,38 @@ const CustomerDashboard = () => {
             <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Chi tiết ›</button>
           </div>
           
-          <div className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-6 h-auto">
-            {news.length > 0 ? news.slice(0, 3).map((item, idx) => (
+          <div className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-6 h-full justify-between">
+            {news.length > 0 ? news.slice(0, 2).map((item, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(item)} className="flex gap-4 cursor-pointer group">
-                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-                  <img src={item.imageUrl ? `https://api.aloshipp.com${item.imageUrl}` : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-110 transition-transform" />
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm">
+                  <img src={item.imageUrl ? `https://api.aloshipp.com${item.imageUrl}` : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 </div>
-                <div className="flex flex-col justify-center">
-                  <h4 className="text-[13px] font-bold text-gray-800 mb-1 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">
+                <div className="flex flex-col justify-center flex-1">
+                  <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">
                     {item.title}
                   </h4>
-                  <span className="text-[10px] text-gray-400 font-medium">2 giờ trước</span>
+                  <span className="text-[11px] text-gray-400 font-medium">2 giờ trước</span>
                 </div>
               </div>
             )) : (
               // Mẫu mặc định nếu API rỗng
               <>
                 <div className="flex gap-4 cursor-pointer group">
-                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400">
-                    <Newspaper size={20} />
+                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 shadow-sm">
+                    <Newspaper size={32} />
                   </div>
-                  <div className="flex flex-col justify-center">
-                    <h4 className="text-[13px] font-bold text-gray-800 mb-1 leading-tight group-hover:text-blue-600 transition-colors">Cập nhật tính năng theo dõi đơn hàng thời gian thực</h4>
-                    <span className="text-[10px] text-gray-400 font-medium mt-1">2 giờ trước</span>
-                  </div>
-                </div>
-                <div className="flex gap-4 cursor-pointer group">
-                  <div className="w-14 h-14 rounded-xl bg-slate-800 flex-shrink-0 flex items-center justify-center text-white">
-                    <Package size={20} />
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <h4 className="text-[13px] font-bold text-gray-800 mb-1 leading-tight group-hover:text-blue-600 transition-colors">Mở rộng mạng lưới phủ sóng thêm 15 tỉnh thành mới</h4>
-                    <span className="text-[10px] text-gray-400 font-medium mt-1">Hôm qua</span>
+                  <div className="flex flex-col justify-center flex-1">
+                    <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">Cập nhật tính năng theo dõi đơn hàng thời gian thực</h4>
+                    <span className="text-[11px] text-gray-400 font-medium mt-1">2 giờ trước</span>
                   </div>
                 </div>
                 <div className="flex gap-4 cursor-pointer group">
-                  <div className="w-14 h-14 rounded-xl bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400">
-                    <Bell size={20} />
+                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-slate-800 flex-shrink-0 flex items-center justify-center text-white shadow-sm">
+                    <Package size={32} />
                   </div>
-                  <div className="flex flex-col justify-center">
-                    <h4 className="text-[13px] font-bold text-gray-800 mb-1 leading-tight group-hover:text-blue-600 transition-colors">Thông báo bảo trì hệ thống định kỳ vào cuối tuần</h4>
-                    <span className="text-[10px] text-gray-400 font-medium mt-1">3 ngày trước</span>
+                  <div className="flex flex-col justify-center flex-1">
+                    <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">Mở rộng mạng lưới phủ sóng thêm 15 tỉnh thành mới</h4>
+                    <span className="text-[11px] text-gray-400 font-medium mt-1">Hôm qua</span>
                   </div>
                 </div>
               </>
