@@ -176,29 +176,26 @@ const CustomerDashboard = () => {
           <h2 className="text-xl md:text-2xl font-medium text-gray-600">
             {getGreeting()}, <span className="font-bold text-blue-600">{customerName || 'Khách hàng'}</span>!
           </h2>
-          <h1 
-            className="text-3xl md:text-4xl font-extrabold mt-2 tracking-tight leading-tight"
-            style={{
-              background: 'linear-gradient(to right, #2563eb, #7c3aed)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.1), 4px 4px 8px rgba(37, 99, 235, 0.2)'
-            }}
+          <motion.h1 
+            className="text-lg md:text-xl font-bold mt-2 tracking-tight text-blue-600"
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
           >
-            Chào mừng đến với AloShipp
-          </h1>
+            Chúng tôi luôn sẵn sàng phục vụ bạn mọi lúc, mọi nơi
+          </motion.h1>
         </div>
 
         <div>
-          <div className="bg-blue-50/80 border border-blue-100/50 rounded-[20px] p-4 md:p-5 flex items-start gap-3.5 relative overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] backdrop-blur-sm">
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-blue-400 to-blue-500 rounded-l-full"></div>
-            <div className="mt-0.5 text-blue-500 bg-white p-2 rounded-full shadow-sm animate-bounce">
-              <MapPin size={20} />
+        <div>
+          <div className="bg-blue-50/80 border border-blue-100/50 rounded-xl p-3 flex items-center gap-3 relative overflow-hidden shadow-sm backdrop-blur-sm">
+            <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-500 rounded-l-full"></div>
+            <div className="text-blue-500 bg-white p-1.5 rounded-full shadow-sm flex-shrink-0 animate-bounce">
+              <MapPin size={16} />
             </div>
             <div>
-              <h4 className="text-[12px] md:text-sm font-extrabold text-blue-800 uppercase tracking-wider mb-1.5">Lưu ý trước khi Đặt Đơn</h4>
-              <p className="text-[11px] md:text-xs text-blue-700/90 leading-relaxed font-medium">
-                Vui lòng chạm vào thanh <strong className="bg-blue-100 px-1 py-0.5 rounded">📍 Kéo ghim</strong> ở trên cùng để kiểm tra và định vị chính xác vị trí của bạn trên bản đồ giúp tài xế tìm đến nhanh hơn nhé!
+              <h4 className="text-[11px] md:text-xs font-extrabold text-blue-800 uppercase tracking-wider mb-0.5">Lưu ý khi đặt đơn</h4>
+              <p className="text-[10px] md:text-[11px] text-blue-700/90 leading-snug font-medium">
+                Chạm thanh <strong className="bg-blue-100 px-1 py-0.5 rounded">📍 Kéo ghim</strong> ở trên để định vị chính xác vị trí của bạn!
               </p>
             </div>
           </div>
@@ -447,29 +444,7 @@ const CustomerDashboard = () => {
         </div>
       )}
 
-      {/* FOOTER */}
-      <div className="mt-4 mb-6 py-4 px-6 md:px-8 rounded-2xl bg-gradient-to-r from-blue-50/30 to-slate-50/30 border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <img src="/logoALOSHIPP.png" alt="AloShipp" className="h-6 w-auto grayscale opacity-60" />
-          <p className="text-[13px] font-medium text-gray-400 border-l border-gray-200 pl-3">
-            Hân hạnh phục vụ quý khách
-          </p>
-        </div>
-        <div className="flex justify-center items-center gap-3">
-          <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-blue-50/80 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white hover:-translate-y-1 transition-all shadow-sm" title="Facebook">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          </a>
-          <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-slate-100 text-slate-800 flex items-center justify-center hover:bg-slate-800 hover:text-white hover:-translate-y-1 transition-all shadow-sm" title="TikTok">
-            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/></svg>
-          </a>
-          <a href="https://zalo.me" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-blue-50/80 text-blue-500 flex items-center justify-center hover:bg-blue-500 hover:text-white hover:-translate-y-1 transition-all shadow-sm font-bold text-[10px]" title="Zalo">
-            Zalo
-          </a>
-          <a href="tel:1900xxxx" className="w-9 h-9 rounded-full bg-red-50/80 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-white hover:-translate-y-1 transition-all shadow-sm" title="Hotline">
-            <Phone size={14} strokeWidth={2.5} />
-          </a>
-        </div>
-      </div>
+
     </motion.div>
   );
 };
