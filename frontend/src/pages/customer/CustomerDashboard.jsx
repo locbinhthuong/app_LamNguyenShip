@@ -186,7 +186,6 @@ const CustomerDashboard = () => {
         </div>
 
         <div>
-        <div>
           <div className="bg-blue-50/80 border border-blue-100/50 rounded-xl p-3 flex items-center gap-3 relative overflow-hidden shadow-sm backdrop-blur-sm">
             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-400 to-blue-500 rounded-l-full"></div>
             <div className="text-blue-500 bg-white p-1.5 rounded-full shadow-sm flex-shrink-0 animate-bounce">
