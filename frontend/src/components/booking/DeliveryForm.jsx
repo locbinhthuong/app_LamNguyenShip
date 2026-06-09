@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import CurrencyInput from '../CurrencyInput';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
 import { estimateFee } from '../../services/api';
+import { motion, useDragControls } from 'framer-motion';
 
 // --- CUSTOM ICONS ---
 const pickupIcon = L.divIcon({
@@ -23,20 +24,26 @@ const deliveryIcon = L.divIcon({
 });
 
 // --- MAP HELPER COMPONENT ---
-const MapUpdater = ({ pickup, delivery, routeLine }) => {
+const MapUpdater = ({ pickup, delivery, routeLine, isSheetExpanded }) => {
   const map = useMap();
   useEffect(() => {
+    // Dynamic bottom padding based on sheet state to ensure route is always visible
+    const bottomPadding = isSheetExpanded ? window.innerHeight * 0.55 : 100;
+    
     if (pickup && delivery) {
-      // Create bounds that include both points
       const bounds = L.latLngBounds([pickup, delivery]);
-      // Use padding to prevent points from hiding under the floating inputs at top
-      map.fitBounds(bounds, { paddingTopLeft: [40, 160], paddingBottomRight: [40, 40], animate: true, duration: 1.5 });
+      map.fitBounds(bounds, { 
+        paddingTopLeft: [40, 180], 
+        paddingBottomRight: [40, bottomPadding], 
+        animate: true, 
+        duration: 1.2 
+      });
     } else if (pickup) {
       map.flyTo(pickup, 16, { animate: true, duration: 1 });
     } else if (delivery) {
       map.flyTo(delivery, 16, { animate: true, duration: 1 });
     }
-  }, [pickup, delivery, routeLine, map]);
+  }, [pickup, delivery, routeLine, map, isSheetExpanded]);
   return null;
 };
 
@@ -63,6 +70,18 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const [estimating, setEstimating] = useState(false);
   const [routeLine, setRouteLine] = useState([]);
 
+  // Bottom Sheet State
+  const [isSheetExpanded, setIsSheetExpanded] = useState(true);
+  const dragControls = useDragControls();
+
+  const handleDragEnd = (event, info) => {
+    if (info.offset.y > 50) {
+      setIsSheetExpanded(false); // Vuốt xuống -> thu nhỏ
+    } else if (info.offset.y < -50) {
+      setIsSheetExpanded(true); // Vuốt lên -> mở rộng
+    }
+  };
+
   useEffect(() => {
     if (defaultLocation?.address) {
       setForm(prev => ({ 
@@ -78,22 +97,17 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       if (form.pickupCoordinates && form.deliveryCoordinates && form.pickupCoordinates.lat && form.deliveryCoordinates.lat) {
         setEstimating(true);
         try {
-          // 1. Lấy tuyến đường từ OSRM (OpenStreetMap Routing)
           try {
             const routeRes = await fetch(`https://router.project-osrm.org/route/v1/driving/${form.pickupCoordinates.lng},${form.pickupCoordinates.lat};${form.deliveryCoordinates.lng},${form.deliveryCoordinates.lat}?overview=full&geometries=geojson`);
             const routeData = await routeRes.json();
             if (routeData.routes && routeData.routes[0]) {
-              // Chuyển đổi [lng, lat] từ GeoJSON sang [lat, lng] cho Leaflet
               const coordinates = routeData.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
               setRouteLine(coordinates);
             }
           } catch (routeErr) {
-            console.error('Lỗi lấy tuyến đường OSRM:', routeErr);
-            // Fallback: vẽ đường thẳng
             setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
           }
 
-          // 2. Lấy giá phí giao hàng từ hệ thống
           const res = await estimateFee({
             pickupCoordinates: form.pickupCoordinates,
             deliveryCoordinates: form.deliveryCoordinates,
@@ -107,7 +121,6 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             setDistanceKm(null);
           }
         } catch (error) {
-          console.error('Lỗi tính phí:', error);
           setEstimatedFee(null);
           setDistanceKm(null);
         } finally {
@@ -120,7 +133,6 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       }
     };
     
-    // Thêm debounce 800ms để tránh call API liên tục khi tọa độ nhảy
     const timer = setTimeout(() => {
       fetchEstimateAndRoute();
     }, 800);
@@ -131,7 +143,6 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Gửi payload lên Component Cha (BookingFlow)
     onBooking({
       serviceType: 'GIAO_HANG',
       senderName: form.senderName.trim() || 'Khách đặt qua App',
@@ -141,7 +152,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       receiverPhone: form.receiverPhone.trim(),
       receiverPhone2: form.receiverPhone2.trim(),
       pickupAddress: form.pickupAddress.trim(),
-      pickupCoordinates: form.pickupCoordinates || null, // Tọa độ thật hoặc rỗng
+      pickupCoordinates: form.pickupCoordinates || null,
       deliveryAddress: form.deliveryAddress.trim(),
       deliveryCoordinates: form.deliveryCoordinates || null,
       note: form.note.trim(),
@@ -157,10 +168,10 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full bg-gray-50 relative -mx-4 -mt-4 md:-mx-0 pb-10">
+    <form onSubmit={handleSubmit} className="flex flex-col h-[calc(100dvh-60px)] bg-gray-50 relative -mx-4 -mt-4 md:-mx-0 overflow-hidden">
       
-      {/* KHU VỰC BẢN ĐỒ INLINE (Nửa trên) */}
-      <div className="relative h-[55vh] md:h-[60vh] w-full shrink-0 z-0">
+      {/* KHU VỰC BẢN ĐỒ INLINE (FULL SCREEN BACKGROUND) */}
+      <div className="absolute inset-0 w-full h-full z-0">
         <MapContainer 
           center={form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : [10.045162, 105.746854]} 
           zoom={14} 
@@ -178,6 +189,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             pickup={form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null}
             delivery={form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null}
             routeLine={routeLine}
+            isSheetExpanded={isSheetExpanded}
           />
         </MapContainer>
 
@@ -232,11 +244,29 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         </div>
       </div>
 
-      {/* KHU VỰC ĐIỀN THÔNG TIN BÊN DƯỚI (Bottom Sheet Effect) */}
-      <div className="bg-white rounded-t-3xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] relative z-[100] px-5 pt-6 pb-12 flex-1 flex flex-col -mt-6 mx-0 md:rounded-[30px] md:mt-2 md:shadow-sm md:border md:border-gray-100/50">
-        <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 md:hidden"></div>
+      {/* DRAGGABLE BOTTOM SHEET */}
+      <motion.div 
+        drag="y"
+        dragControls={dragControls}
+        dragListener={false} // Chỉ cho phép drag khi nắm vào thanh gạt
+        dragConstraints={{ top: 0, bottom: window.innerHeight * 0.4 }} // Vuốt xuống tối đa 40vh
+        dragElastic={0.1}
+        onDragEnd={handleDragEnd}
+        animate={{ y: isSheetExpanded ? 0 : window.innerHeight * 0.4 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.15)] absolute bottom-0 left-0 right-0 z-[100] flex flex-col md:rounded-[30px] md:shadow-lg md:border md:border-gray-100/50 md:relative md:h-auto"
+        style={{ height: '65vh' }}
+      >
+        {/* DRAG HANDLE */}
+        <div 
+          className="w-full pt-4 pb-2 flex justify-center cursor-grab active:cursor-grabbing shrink-0"
+          onPointerDown={(e) => dragControls.start(e)}
+        >
+          <div className="w-12 h-1.5 bg-gray-300 hover:bg-gray-400 rounded-full transition-colors"></div>
+        </div>
 
-        <div className="space-y-6">
+        {/* NỘI DUNG CUỘN ĐƯỢC (SCROLLABLE AREA) */}
+        <div className="overflow-y-auto px-5 pb-12 flex-1 space-y-6 scrollbar-hide">
           
           {/* Thông tin liên hệ */}
           <div className="space-y-3">
@@ -304,7 +334,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           </div>
 
           {/* KHUYẾN CÁO GIÁ & BUTTON TẠO ĐƠN */}
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 space-y-4 pb-8">
             <div className={`border p-4 rounded-[20px] flex items-start gap-3 transition-colors duration-300 ${estimatedFee !== null ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}>
               <div className={`mt-0.5 ${estimatedFee !== null ? 'text-blue-500' : 'text-gray-400'}`}>
                 <Navigation size={20} />
@@ -343,7 +373,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           </div>
 
         </div>
-      </div>
+      </motion.div>
     </form>
   );
 }
