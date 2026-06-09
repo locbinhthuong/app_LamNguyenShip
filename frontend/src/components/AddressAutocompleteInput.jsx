@@ -78,10 +78,19 @@ export default function AddressAutocompleteInput({
     }
   }, [value]);
 
+  const latestSuggestions = useRef([]);
+  useEffect(() => {
+    latestSuggestions.current = suggestions;
+  }, [suggestions]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
         setIsFocused(false);
+        // Tự động chọn kết quả đầu tiên nếu người dùng click ra ngoài mà chưa chọn
+        if (!isSelecting.current && latestSuggestions.current.length > 0) {
+          handleSelect(latestSuggestions.current[0]);
+        }
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -204,6 +213,15 @@ export default function AddressAutocompleteInput({
     if (onSelectCoordinates) onSelectCoordinates(null);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (suggestions.length > 0) {
+        handleSelect(suggestions[0]);
+      }
+    }
+  };
+
   // Remove handleMapMoveEnd since we don't want to auto-capture on map drag either
 
   return (
@@ -214,6 +232,7 @@ export default function AddressAutocompleteInput({
           value={query}
           onChange={handleInputChange}
           onFocus={() => setIsFocused(true)}
+          onKeyDown={handleKeyDown}
           placeholder={placeholder || "Nhập địa chỉ..."}
           className="w-full text-sm font-medium outline-none px-2 py-1 text-slate-800 bg-transparent flex-1"
         />
