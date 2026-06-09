@@ -101,6 +101,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     const fetchEstimateAndRoute = async () => {
       if (form.pickupCoordinates && form.deliveryCoordinates && form.pickupCoordinates.lat && form.deliveryCoordinates.lat) {
         setEstimating(true);
+        setRouteLine([]); // Xóa đường đi cũ ngay lập tức
+
         try {
           try {
             const routeRes = await fetch(`https://router.project-osrm.org/route/v1/driving/${form.pickupCoordinates.lng},${form.pickupCoordinates.lat};${form.deliveryCoordinates.lng},${form.deliveryCoordinates.lat}?overview=full&geometries=geojson`);
@@ -108,6 +110,9 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             if (routeData.routes && routeData.routes[0]) {
               const coordinates = routeData.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
               setRouteLine(coordinates);
+            } else {
+              // Fallback: Vẽ đường chim bay nếu không tìm thấy đường đi (do ghim sâu trong hẻm)
+              setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
             }
           } catch (routeErr) {
             setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
