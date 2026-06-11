@@ -101,7 +101,7 @@ export default function AddressAutocompleteInput({
   }, []);
 
   useEffect(() => {
-    if (isSelecting.current) return;
+    if (isSelecting.current || !isTyping.current) return;
     
     if (query.trim().length < 4) {
       setSuggestions([]);
