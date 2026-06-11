@@ -24,7 +24,7 @@ router.get('/autocomplete', async (req, res) => {
     }
 
     const response = await axios.get(url, {
-      headers: { 'Referer': 'https://aloshipp.com' }
+      headers: { 'Referer': 'https://api.aloshipp.com/' }
     });
     res.json(response.data);
   } catch (error) {
@@ -40,7 +40,7 @@ router.get('/place', async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: 'Missing Goong API Key on server' });
 
     const response = await axios.get(`https://rsapi.goong.io/Place/Detail?place_id=${place_id}&api_key=${apiKey}`, {
-      headers: { 'Referer': 'https://aloshipp.com' }
+      headers: { 'Referer': 'https://api.aloshipp.com/' }
     });
     res.json(response.data);
   } catch (error) {
@@ -56,7 +56,7 @@ router.get('/geocode', async (req, res) => {
     if (!apiKey) return res.status(500).json({ error: 'Missing Goong API Key on server' });
 
     const response = await axios.get(`https://rsapi.goong.io/Geocode?latlng=${latlng}&api_key=${apiKey}`, {
-      headers: { 'Referer': 'https://aloshipp.com' }
+      headers: { 'Referer': 'https://api.aloshipp.com/' }
     });
     res.json(response.data);
   } catch (error) {
