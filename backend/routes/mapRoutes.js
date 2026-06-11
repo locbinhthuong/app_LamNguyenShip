@@ -29,7 +29,23 @@ router.get('/autocomplete', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('Error Goong Autocomplete:', error?.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to fetch autocomplete from map service' });
+    try {
+      console.log("Fallback to Nominatim Autocomplete");
+      const { input } = req.query;
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(input)}&format=json&addressdetails=1&limit=7&countrycodes=vn`;
+      const fallbackRes = await axios.get(nominatimUrl, { headers: { 'User-Agent': 'AloShipp/1.0' } });
+      const predictions = fallbackRes.data.map(item => ({
+        description: item.display_name,
+        place_id: item.place_id.toString(),
+        source: 'nominatim',
+        lat: item.lat,
+        lon: item.lon
+      }));
+      return res.json({ predictions });
+    } catch (fallbackError) {
+      console.error('Error Nominatim Autocomplete:', fallbackError?.message);
+      res.status(500).json({ error: 'Failed to fetch autocomplete from map service' });
+    }
   }
 });
 
@@ -61,7 +77,21 @@ router.get('/geocode', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('Error Goong Geocode:', error?.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to fetch geocode from map service' });
+    try {
+      console.log("Fallback to Nominatim Geocode");
+      const { latlng } = req.query;
+      const [lat, lon] = latlng.split(',');
+      const nominatimUrl = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`;
+      const fallbackRes = await axios.get(nominatimUrl, { headers: { 'User-Agent': 'AloShipp/1.0' } });
+      return res.json({
+        results: [
+          { formatted_address: fallbackRes.data.display_name }
+        ]
+      });
+    } catch (fallbackError) {
+      console.error('Error Nominatim Geocode:', fallbackError?.message);
+      res.status(500).json({ error: 'Failed to fetch geocode from map service' });
+    }
   }
 });
 
