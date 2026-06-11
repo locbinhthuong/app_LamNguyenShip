@@ -144,4 +144,21 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Hiệu ứng đường chạy (animated route) */
+  .animated-route-line {
+    stroke-dasharray: 12 12;
+    animation: flowRoute 1s linear infinite;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  @keyframes flowRoute {
+    from {
+      stroke-dashoffset: 24;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
 }

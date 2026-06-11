@@ -256,7 +256,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           {/* Markers when NOT in map select mode */}
           {!mapSelectMode && form.pickupCoordinates && <Marker position={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} icon={pickupIcon} />}
           {!mapSelectMode && form.deliveryCoordinates && <Marker position={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} icon={deliveryIcon} />}
-          {!mapSelectMode && routeLine.length > 0 && <Polyline positions={routeLine} color="#2563EB" weight={5} opacity={0.8} />}
+          {!mapSelectMode && routeLine.length > 0 && <Polyline positions={routeLine} color="#2563EB" weight={5} opacity={0.8} className="animated-route-line" />}
           
           <MapUpdater 
             pickup={form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null}
