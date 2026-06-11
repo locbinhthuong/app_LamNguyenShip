@@ -48,15 +48,37 @@ const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
       }
     }
 
-    // Fallback nếu Goong lỗi
-    console.warn('Goong Direction không tìm thấy đường, sử dụng đường chim bay x 1.3');
-    const d = getHaversineDistance(lat1, lng1, lat2, lng2) * 1.3;
-    return {
-      distanceKm: Number(d.toFixed(2)),
-      routeLine: [[lat1, lng1], [lat2, lng2]]
-    };
+    // Nếu không có API Key hoặc Goong không trả về kết quả
+    throw new Error('Goong API không trả về kết quả hoặc thiếu API Key');
   } catch (error) {
     console.error('Lỗi khi gọi API Goong Direction:', error?.response?.data || error.message);
+    
+    // FALLBACK: Chuyển sang dùng OSRM Miễn phí nếu Goong xịt
+    try {
+      console.warn('Đang chuyển hướng sang OSRM miễn phí vì Goong bị lỗi/hết request...');
+      const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
+      const osrmResponse = await axios.get(osrmUrl);
+
+      if (osrmResponse.data && osrmResponse.data.routes && osrmResponse.data.routes.length > 0) {
+        const route = osrmResponse.data.routes[0];
+        const distanceKm = route.distance / 1000;
+        const coordinates = route.geometry.coordinates.map(coord => [coord[1], coord[0]]); // Đổi [lng, lat] thành [lat, lng]
+        
+        // Nối điểm thực tế vào đầu và cuối
+        coordinates.unshift([lat1, lng1]);
+        coordinates.push([lat2, lng2]);
+
+        return {
+          distanceKm: Number(distanceKm.toFixed(2)),
+          routeLine: coordinates
+        };
+      }
+    } catch (osrmError) {
+      console.error('Lỗi khi gọi OSRM Fallback:', osrmError.message);
+    }
+
+    // Nếu cả Goong và OSRM đều xịt, dùng đường chim bay
+    console.warn('Cả Goong và OSRM đều lỗi, sử dụng đường chim bay x 1.3');
     const d = getHaversineDistance(lat1, lng1, lat2, lng2) * 1.3;
     return {
       distanceKm: Number(d.toFixed(2)),
