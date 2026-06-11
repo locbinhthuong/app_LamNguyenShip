@@ -109,6 +109,9 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             const routeData = await routeRes.json();
             if (routeData.routes && routeData.routes[0]) {
               const coordinates = routeData.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+              // Nối điểm thực tế vào đầu và cuối để tránh bị hở đường màu xanh khi ghim sâu trong hẻm
+              coordinates.unshift([form.pickupCoordinates.lat, form.pickupCoordinates.lng]);
+              coordinates.push([form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]);
               setRouteLine(coordinates);
             } else {
               // Fallback: Vẽ đường chim bay nếu không tìm thấy đường đi (do ghim sâu trong hẻm)
