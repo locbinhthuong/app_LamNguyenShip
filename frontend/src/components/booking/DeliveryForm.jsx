@@ -318,49 +318,48 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
         {/* Ô NHẬP LIỆU NỔI BẬT NẰM TRÊN BẢN ĐỒ (ẨN KHI ĐANG CHỌN MAP) */}
         {!mapSelectMode && (
-          <div className="absolute top-4 left-4 right-4 z-[1000] space-y-3 pointer-events-none">
-            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-4 shadow-xl border border-gray-100/50 pointer-events-auto space-y-0 relative">
-              
-              <div className="flex items-start gap-4">
-                <div className="flex flex-col items-center mt-1.5 shrink-0">
-                  <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center">
+          <div className="absolute top-3 left-3 right-3 z-[1000] pointer-events-none">
+            <div className="bg-white/95 backdrop-blur-md rounded-[20px] p-3 shadow-xl border border-gray-100/50 pointer-events-auto relative">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center shrink-0">
+                  <div className="w-3.5 h-3.5 rounded-full bg-blue-100 flex items-center justify-center">
                     <div className="w-1.5 h-1.5 rounded-full bg-blue-600"></div>
                   </div>
-                  <div className="w-[2px] h-14 bg-gray-200 mt-1 mb-1 rounded-full"></div>
-                  <div className="w-4 h-4 rounded-full bg-sky-100 flex items-center justify-center">
+                  <div className="w-[1.5px] h-10 bg-gray-200 my-0.5 rounded-full"></div>
+                  <div className="w-3.5 h-3.5 rounded-full bg-sky-100 flex items-center justify-center">
                     <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
                   </div>
                 </div>
 
-                <div className="flex-1 w-full flex flex-col justify-between">
+                <div className="flex-1 w-full flex flex-col justify-between space-y-1">
                   {/* Điểm lấy */}
-                  <div className="h-[60px]">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
-                      ĐIỂM LẤY HÀNG (NGƯỜI GỬI)
+                  <div className="flex flex-col justify-center">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+                      ĐIỂM LẤY HÀNG
                     </label>
                     <AddressAutocompleteInput 
                       value={form.pickupAddress}
                       onChangeText={txt => setForm(prev => ({...prev, pickupAddress: txt}))}
                       onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
                       placeholder="Nhập địa chỉ lấy hàng..."
-                      className="w-full text-[14px] font-bold text-gray-800 -ml-2 !w-[calc(100%+16px)]"
+                      className="w-full text-[13px] font-bold text-gray-800 -ml-1.5 !w-[calc(100%+12px)]"
                       onClickMapIcon={() => openMapSelect('pickup')}
                     />
                   </div>
 
-                  <div className="h-[1px] w-[calc(100%+16px)] bg-gray-100/80 -ml-4 my-1"></div>
+                  <div className="h-[1px] w-[calc(100%+12px)] bg-gray-100/80 -ml-3 my-0.5"></div>
 
                   {/* Điểm giao */}
-                  <div className="h-[60px] flex flex-col justify-end">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
+                  <div className="flex flex-col justify-center mt-0.5">
+                    <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-0.5">
                       ĐIỂM GIAO HÀNG
                     </label>
                     <AddressAutocompleteInput 
                       value={form.deliveryAddress}
                       onChangeText={txt => setForm(prev => ({...prev, deliveryAddress: txt}))}
                       onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
-                      placeholder="Nhập địa chỉ nhận hoặc chừa trống..."
-                      className="w-full text-[14px] font-bold text-gray-800 -ml-2 !w-[calc(100%+16px)]"
+                      placeholder="Nhập địa chỉ giao hoặc chừa trống..."
+                      className="w-full text-[13px] font-bold text-gray-800 -ml-1.5 !w-[calc(100%+12px)]"
                       onClickMapIcon={() => openMapSelect('delivery')}
                     />
                   </div>
@@ -377,6 +376,25 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
 
           <div className="space-y-6">
+            
+            {/* CƯỚC TẠM TÍNH (ĐƯỢC ĐƯA LÊN TRÊN CÙNG) */}
+            <div className={`border p-4 rounded-[20px] flex items-start gap-3 transition-colors duration-300 ${estimatedFee !== null ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}>
+              <div className={`mt-0.5 ${estimatedFee !== null ? 'text-blue-500' : 'text-gray-400'}`}>
+                <Navigation size={20} />
+              </div>
+              <div className="flex-1">
+                <p className={`text-[13px] leading-relaxed font-bold ${estimatedFee !== null ? 'text-blue-800' : 'text-gray-500'}`}>
+                  {estimatedFee !== null ? (
+                    <>Cước tạm tính: <strong className="text-lg text-blue-600 block sm:inline sm:ml-1 mt-1 sm:mt-0">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? <span className="text-blue-500 font-bold opacity-80 ml-1">({distanceKm.toFixed(1)}km)</span> : ''}</>
+                  ) : (
+                    'Vui lòng chọn đầy đủ cả điểm lấy và điểm giao để xem giá.'
+                  )}
+                </p>
+                {estimatedFee !== null && (
+                  <p className="text-[10px] font-semibold text-blue-500/80 mt-1">Tổng đài có thể phụ thu phí cồng kềnh (nếu có).</p>
+                )}
+              </div>
+            </div>
             
             {/* Thông tin liên hệ */}
             <div className="space-y-3">
@@ -443,26 +461,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
               </div>
             </div>
 
-            {/* KHUYẾN CÁO GIÁ & BUTTON TẠO ĐƠN */}
-            <div className="mt-4 space-y-4">
-              <div className={`border p-4 rounded-[20px] flex items-start gap-3 transition-colors duration-300 ${estimatedFee !== null ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-100'}`}>
-                <div className={`mt-0.5 ${estimatedFee !== null ? 'text-blue-500' : 'text-gray-400'}`}>
-                  <Navigation size={20} />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-[13px] leading-relaxed font-bold ${estimatedFee !== null ? 'text-blue-800' : 'text-gray-500'}`}>
-                    {estimatedFee !== null ? (
-                      <>Cước tạm tính: <strong className="text-lg text-blue-600 block sm:inline sm:ml-1 mt-1 sm:mt-0">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? <span className="text-blue-500 font-bold opacity-80 ml-1">({distanceKm.toFixed(1)}km)</span> : ''}</>
-                    ) : (
-                      'Vui lòng chọn đầy đủ cả điểm lấy và điểm giao để xem giá.'
-                    )}
-                  </p>
-                  {estimatedFee !== null && (
-                    <p className="text-[10px] font-semibold text-blue-500/80 mt-1">Tổng đài có thể phụ thu phí cồng kềnh (nếu có).</p>
-                  )}
-                </div>
-              </div>
-
+            {/* BUTTON TẠO ĐƠN */}
+            <div className="mt-4">
               <button 
                 onClick={handleBookingClick}
                 disabled={loading}
