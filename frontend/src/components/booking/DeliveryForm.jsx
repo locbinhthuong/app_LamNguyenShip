@@ -197,7 +197,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     
     fetchAddressTimeout.current = setTimeout(async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
         const res = await fetch(`${apiUrl}/maps/geocode?latlng=${coords.lat},${coords.lng}`);
         const data = await res.json();
         if (data && data.results && data.results.length > 0) {

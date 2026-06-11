@@ -118,7 +118,8 @@ export default function AddressAutocompleteInput({
         return;
       }
       
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
       let allResults = [];
 
       try {
@@ -202,7 +203,8 @@ export default function AddressAutocompleteInput({
     
     let lon = item.lon;
     let lat = item.lat;
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
 
     if (item.source === 'goong' && item.place_id) {
       try {
@@ -237,7 +239,8 @@ export default function AddressAutocompleteInput({
     
     let lon = item.lon;
     let lat = item.lat;
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
 
     if (item.source === 'goong' && item.place_id) {
       try {
