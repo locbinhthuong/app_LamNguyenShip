@@ -110,82 +110,111 @@ export default function AddressAutocompleteInput({
     const delayDebounce = setTimeout(async () => {
       setIsSearching(true);
       
-      // Gộp kết quả từ cả Photon + Nominatim rồi sắp xếp theo khoảng cách GPS
+      const goongApiKey = import.meta.env.VITE_GOONG_API_KEY;
       let allResults = [];
 
-      // 1. Photon (tiếng Việt + GPS bias)
-      try {
-        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
-        if (res.ok) {
-          const photonData = await res.json();
-          (photonData.features || []).forEach(item => {
-            allResults.push({
-              display_name: formatPhotonAddress(item.properties),
-              lat: parseFloat(item.geometry.coordinates[1]),
-              lon: parseFloat(item.geometry.coordinates[0]),
-              source: 'photon'
-            });
-          });
-        }
-      } catch (err) {}
-
-      // 2. Nominatim fallback/bổ sung (viewbox GPS bias + tiếng Việt)
-      if (allResults.length < 3) {
+      if (goongApiKey) {
         try {
-          // Tạo viewbox ~30km xung quanh GPS hiện tại
-          const delta = 0.3; // ~30km
-          const viewbox = `${mapCenter[1]-delta},${mapCenter[0]+delta},${mapCenter[1]+delta},${mapCenter[0]-delta}`;
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=vn&accept-language=vi&viewbox=${viewbox}&bounded=0`);
-          const nomData = await res.json() || [];
-          nomData.forEach(item => {
-            allResults.push({
-              display_name: item.display_name,
-              lat: parseFloat(item.lat),
-              lon: parseFloat(item.lon),
-              source: 'nominatim'
-            });
-          });
-        } catch (e) {}
+          const res = await fetch(`https://rsapi.goong.io/Place/AutoComplete?api_key=${goongApiKey}&location=${mapCenter[0]},${mapCenter[1]}&limit=7&input=${encodeURIComponent(query)}`);
+          const data = await res.json();
+          if (data && data.predictions) {
+            allResults = data.predictions.map(item => ({
+              display_name: item.description,
+              place_id: item.place_id,
+              source: 'goong'
+            }));
+          }
+        } catch (err) {
+          console.error("Lỗi lấy dữ liệu từ Goong:", err);
+        }
       }
 
-      // 3. Loại bỏ trùng lặp (cùng tên hoặc cùng tọa độ gần nhau)
+      // Fallback nếu không có API key hoặc lỗi Goong
+      if (allResults.length === 0) {
+        // 1. Photon (tiếng Việt + GPS bias)
+        try {
+          const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
+          if (res.ok) {
+            const photonData = await res.json();
+            (photonData.features || []).forEach(item => {
+              allResults.push({
+                display_name: formatPhotonAddress(item.properties),
+                lat: parseFloat(item.geometry.coordinates[1]),
+                lon: parseFloat(item.geometry.coordinates[0]),
+                source: 'photon'
+              });
+            });
+          }
+        } catch (err) {}
+
+        // 2. Nominatim fallback/bổ sung (viewbox GPS bias + tiếng Việt)
+        if (allResults.length < 3) {
+          try {
+            const delta = 0.3; // ~30km
+            const viewbox = `${mapCenter[1]-delta},${mapCenter[0]+delta},${mapCenter[1]+delta},${mapCenter[0]-delta}`;
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=vn&accept-language=vi&viewbox=${viewbox}&bounded=0`);
+            const nomData = await res.json() || [];
+            nomData.forEach(item => {
+              allResults.push({
+                display_name: item.display_name,
+                lat: parseFloat(item.lat),
+                lon: parseFloat(item.lon),
+                source: 'nominatim'
+              });
+            });
+          } catch (e) {}
+        }
+      }
+
+      // 3. Loại bỏ trùng lặp
       const seen = new Set();
       const unique = allResults.filter(item => {
         const key = item.display_name.toLowerCase().replace(/\s+/g, ' ').trim();
-        const coordKey = `${item.lat.toFixed(4)},${item.lon.toFixed(4)}`;
-        if (seen.has(key) || seen.has(coordKey)) return false;
+        if (seen.has(key)) return false;
         seen.add(key);
-        seen.add(coordKey);
         return true;
       });
-
-      // 4. Không sắp xếp cứng nhắc theo khoảng cách nữa, vì sẽ làm mất độ chính xác của API
-      // API đã tự động ưu tiên vị trí gần nhờ vào truyền lat/lon
       
       setSuggestions(unique.slice(0, 7));
       setIsSearching(false);
-    }, 1000); // Đã tăng delay lên 1 giây (1000ms) để tiết kiệm API
+    }, 1000);
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
 
-  const handleSelect = (item) => {
+  const handleSelect = async (item) => {
     isSelecting.current = true;
     isTyping.current = false;
     const selectedText = item.display_name;
-    const lon = item.lon;
-    const lat = item.lat;
     
     setQuery(selectedText);
     setSuggestions([]);
     
     if (onChangeText) onChangeText(selectedText);
-    if (onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
+    
+    let lon = item.lon;
+    let lat = item.lat;
+    const goongApiKey = import.meta.env.VITE_GOONG_API_KEY;
+
+    if (item.source === 'goong' && item.place_id && goongApiKey) {
+      try {
+        const res = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${item.place_id}&api_key=${goongApiKey}`);
+        const data = await res.json();
+        if (data && data.result && data.result.geometry) {
+          lat = data.result.geometry.location.lat;
+          lon = data.result.geometry.location.lng;
+        }
+      } catch (e) {
+        console.error("Lỗi lấy chi tiết địa điểm Goong:", e);
+      }
+    }
+
+    if (lat && lon && onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
     
     try {
       const saved = JSON.parse(localStorage.getItem('aloshipp_recent_addresses') || '[]');
       const newHistory = saved.filter(h => h.display_name !== selectedText);
-      newHistory.unshift({ display_name: selectedText, lat, lon });
+      newHistory.unshift({ display_name: selectedText, lat, lon, place_id: item.place_id, source: item.source });
       const limitedHistory = newHistory.slice(0, 5);
       localStorage.setItem('aloshipp_recent_addresses', JSON.stringify(limitedHistory));
       setRecentSearches(limitedHistory);
@@ -194,16 +223,31 @@ export default function AddressAutocompleteInput({
     setTimeout(() => { isSelecting.current = false; setIsFocused(false); }, 200);
   };
 
-  const handleSoftSelect = (item) => {
+  const handleSoftSelect = async (item) => {
     isSelecting.current = true;
     isTyping.current = false;
-    const lon = item.lon;
-    const lat = item.lat;
+    
+    let lon = item.lon;
+    let lat = item.lat;
+    const goongApiKey = import.meta.env.VITE_GOONG_API_KEY;
+
+    if (item.source === 'goong' && item.place_id && goongApiKey) {
+      try {
+        const res = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${item.place_id}&api_key=${goongApiKey}`);
+        const data = await res.json();
+        if (data && data.result && data.result.geometry) {
+          lat = data.result.geometry.location.lat;
+          lon = data.result.geometry.location.lng;
+        }
+      } catch (e) {
+        console.error("Lỗi lấy chi tiết địa điểm Goong:", e);
+      }
+    }
     
     setSuggestions([]);
     
     // KHÔNG ghi đè text của người dùng, chỉ lấy tọa độ để tính tiền
-    if (onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
+    if (lat && lon && onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
     
     setTimeout(() => { isSelecting.current = false; setIsFocused(false); }, 200);
   };

@@ -197,12 +197,23 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     
     fetchAddressTimeout.current = setTimeout(async () => {
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=18&addressdetails=1`);
-        const data = await res.json();
-        if (data && data.display_name) {
-          setTempLocation(prev => ({ ...prev, address: data.display_name }));
+        const goongApiKey = import.meta.env.VITE_GOONG_API_KEY;
+        if (goongApiKey) {
+          const res = await fetch(`https://rsapi.goong.io/Geocode?latlng=${coords.lat},${coords.lng}&api_key=${goongApiKey}`);
+          const data = await res.json();
+          if (data && data.results && data.results.length > 0) {
+            setTempLocation(prev => ({ ...prev, address: data.results[0].formatted_address }));
+          } else {
+            setTempLocation(prev => ({ ...prev, address: "Không xác định được địa chỉ" }));
+          }
         } else {
-          setTempLocation(prev => ({ ...prev, address: "Không xác định được địa chỉ" }));
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&zoom=18&addressdetails=1`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            setTempLocation(prev => ({ ...prev, address: data.display_name }));
+          } else {
+            setTempLocation(prev => ({ ...prev, address: "Không xác định được địa chỉ" }));
+          }
         }
       } catch (e) {
         setTempLocation(prev => ({ ...prev, address: "Lỗi kết nối khi tải địa chỉ" }));
