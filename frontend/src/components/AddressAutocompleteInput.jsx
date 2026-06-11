@@ -61,6 +61,7 @@ export default function AddressAutocompleteInput({
   const wrapperRef = useRef(null);
   const isSelecting = useRef(false);
   const isTyping = useRef(false);
+  const suggestionCache = useRef({});
 
   // Lấy toạ độ GPS thực tế của thiết bị ngay khi Component được tải
   useEffect(() => {
@@ -102,7 +103,7 @@ export default function AddressAutocompleteInput({
   useEffect(() => {
     if (isSelecting.current) return;
     
-    if (query.trim().length < 2) {
+    if (query.trim().length < 4) {
       setSuggestions([]);
       return;
     }
@@ -110,23 +111,28 @@ export default function AddressAutocompleteInput({
     const delayDebounce = setTimeout(async () => {
       setIsSearching(true);
       
-      const goongApiKey = import.meta.env.VITE_GOONG_API_KEY;
+      const cacheKey = query.trim().toLowerCase();
+      if (suggestionCache.current[cacheKey]) {
+        setSuggestions(suggestionCache.current[cacheKey]);
+        setIsSearching(false);
+        return;
+      }
+      
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
       let allResults = [];
 
-      if (goongApiKey) {
-        try {
-          const res = await fetch(`https://rsapi.goong.io/Place/AutoComplete?api_key=${goongApiKey}&location=${mapCenter[0]},${mapCenter[1]}&limit=7&input=${encodeURIComponent(query)}`);
-          const data = await res.json();
-          if (data && data.predictions) {
-            allResults = data.predictions.map(item => ({
-              display_name: item.description,
-              place_id: item.place_id,
-              source: 'goong'
-            }));
-          }
-        } catch (err) {
-          console.error("Lỗi lấy dữ liệu từ Goong:", err);
+      try {
+        const res = await fetch(`${apiUrl}/maps/autocomplete?location=${mapCenter[0]},${mapCenter[1]}&input=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        if (data && data.predictions) {
+          allResults = data.predictions.map(item => ({
+            display_name: item.description,
+            place_id: item.place_id,
+            source: 'goong'
+          }));
         }
+      } catch (err) {
+        console.error("Lỗi lấy dữ liệu từ Backend Map API:", err);
       }
 
       // Fallback nếu không có API key hoặc lỗi Goong
@@ -175,9 +181,11 @@ export default function AddressAutocompleteInput({
         return true;
       });
       
-      setSuggestions(unique.slice(0, 7));
+      const finalSuggestions = unique.slice(0, 7);
+      suggestionCache.current[cacheKey] = finalSuggestions;
+      setSuggestions(finalSuggestions);
       setIsSearching(false);
-    }, 1000);
+    }, 1200);
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
@@ -194,18 +202,18 @@ export default function AddressAutocompleteInput({
     
     let lon = item.lon;
     let lat = item.lat;
-    const goongApiKey = import.meta.env.VITE_GOONG_API_KEY;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-    if (item.source === 'goong' && item.place_id && goongApiKey) {
+    if (item.source === 'goong' && item.place_id) {
       try {
-        const res = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${item.place_id}&api_key=${goongApiKey}`);
+        const res = await fetch(`${apiUrl}/maps/place?place_id=${item.place_id}`);
         const data = await res.json();
         if (data && data.result && data.result.geometry) {
           lat = data.result.geometry.location.lat;
           lon = data.result.geometry.location.lng;
         }
       } catch (e) {
-        console.error("Lỗi lấy chi tiết địa điểm Goong:", e);
+        console.error("Lỗi lấy chi tiết địa điểm từ Backend:", e);
       }
     }
 
@@ -229,18 +237,18 @@ export default function AddressAutocompleteInput({
     
     let lon = item.lon;
     let lat = item.lat;
-    const goongApiKey = import.meta.env.VITE_GOONG_API_KEY;
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-    if (item.source === 'goong' && item.place_id && goongApiKey) {
+    if (item.source === 'goong' && item.place_id) {
       try {
-        const res = await fetch(`https://rsapi.goong.io/Place/Detail?place_id=${item.place_id}&api_key=${goongApiKey}`);
+        const res = await fetch(`${apiUrl}/maps/place?place_id=${item.place_id}`);
         const data = await res.json();
         if (data && data.result && data.result.geometry) {
           lat = data.result.geometry.location.lat;
           lon = data.result.geometry.location.lng;
         }
       } catch (e) {
-        console.error("Lỗi lấy chi tiết địa điểm Goong:", e);
+        console.error("Lỗi lấy chi tiết địa điểm từ Backend:", e);
       }
     }
     
@@ -318,7 +326,7 @@ export default function AddressAutocompleteInput({
           )}
 
           {/* LỊCH SỬ TÌM KIẾM (Chỉ hiện khi chưa nhập gì và có lịch sử) */}
-          {!isSearching && query.trim().length < 2 && recentSearches.length > 0 && (
+          {!isSearching && query.trim().length < 4 && recentSearches.length > 0 && (
             <div className="max-h-60 overflow-y-auto bg-white">
               <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
                 Tìm kiếm gần đây
@@ -343,7 +351,7 @@ export default function AddressAutocompleteInput({
           )}
 
           {/* DANH SÁCH GỢI Ý API */}
-          {!isSearching && query.trim().length >= 2 && suggestions.length > 0 && (
+          {!isSearching && query.trim().length >= 4 && suggestions.length > 0 && (
             <div className="max-h-60 overflow-y-auto bg-white">
               {suggestions.map((item, idx) => (
                 <div 
