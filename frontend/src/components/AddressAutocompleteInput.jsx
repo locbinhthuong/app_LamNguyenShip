@@ -206,7 +206,7 @@ export default function AddressAutocompleteInput({
     let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
 
-    if (item.source === 'goong' && item.place_id) {
+    if (item.source === 'goong' && item.place_id && (!lat || !lon)) {
       try {
         const res = await fetch(`${apiUrl}/maps/place?place_id=${item.place_id}`);
         const data = await res.json();
@@ -242,7 +242,7 @@ export default function AddressAutocompleteInput({
     let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
     if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
 
-    if (item.source === 'goong' && item.place_id) {
+    if (item.source === 'goong' && item.place_id && (!lat || !lon)) {
       try {
         const res = await fetch(`${apiUrl}/maps/place?place_id=${item.place_id}`);
         const data = await res.json();
