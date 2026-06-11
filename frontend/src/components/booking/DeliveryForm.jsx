@@ -104,23 +104,6 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         setRouteLine([]); // Xóa đường đi cũ ngay lập tức
 
         try {
-          try {
-            const routeRes = await fetch(`https://router.project-osrm.org/route/v1/driving/${form.pickupCoordinates.lng},${form.pickupCoordinates.lat};${form.deliveryCoordinates.lng},${form.deliveryCoordinates.lat}?overview=full&geometries=geojson`);
-            const routeData = await routeRes.json();
-            if (routeData.routes && routeData.routes[0]) {
-              const coordinates = routeData.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-              // Nối điểm thực tế vào đầu và cuối để tránh bị hở đường màu xanh khi ghim sâu trong hẻm
-              coordinates.unshift([form.pickupCoordinates.lat, form.pickupCoordinates.lng]);
-              coordinates.push([form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]);
-              setRouteLine(coordinates);
-            } else {
-              // Fallback: Vẽ đường chim bay nếu không tìm thấy đường đi (do ghim sâu trong hẻm)
-              setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
-            }
-          } catch (routeErr) {
-            setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
-          }
-
           const res = await estimateFee({
             pickupCoordinates: form.pickupCoordinates,
             deliveryCoordinates: form.deliveryCoordinates,
@@ -129,9 +112,15 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           if (res && res.data && res.data.deliveryFee !== null) {
             setEstimatedFee(res.data.deliveryFee);
             setDistanceKm(res.data.distanceKm);
+            if (res.data.routeLine) {
+              setRouteLine(res.data.routeLine);
+            } else {
+              setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
+            }
           } else {
             setEstimatedFee(null);
             setDistanceKm(null);
+            setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
           }
         } catch (error) {
           setEstimatedFee(null);

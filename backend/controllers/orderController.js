@@ -1462,8 +1462,8 @@ const orderController = {
         return res.status(200).json({ success: true, data: { distanceKm: 0, deliveryFee: null } });
       }
 
-      // Lấy khoảng cách thực tế từ OSRM
-      const distanceKm = await getDrivingDistance(
+      // Lấy khoảng cách và đường đi thực tế từ Goong
+      const { distanceKm, routeLine } = await getDrivingDistance(
         pickupCoordinates.lat, pickupCoordinates.lng,
         deliveryCoordinates.lat, deliveryCoordinates.lng
       );
@@ -1529,7 +1529,8 @@ const orderController = {
         success: true,
         data: {
           distanceKm,
-          deliveryFee
+          deliveryFee,
+          routeLine
         }
       });
 
