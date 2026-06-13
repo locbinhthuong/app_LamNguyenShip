@@ -24,7 +24,7 @@ jobs:
       - name: Install & Build Web
         working-directory: ./frontend
         env:
-          VITE_GOOGLE_MAPS_API_KEY: "AIzaSyA754qV4brlD1_Yi_9tWoSvKVs839i5BHA"
+          VITE_GOOGLE_MAPS_API_KEY: "AIzaSyD4K539FsZSlqiUGHm9OYj8_ThfGdeOHyE"
         run: |
           npm install --legacy-peer-deps
           npm run build
@@ -69,7 +69,7 @@ jobs:
       - name: Install & Build Web
         working-directory: ./frontend
         env:
-          VITE_GOOGLE_MAPS_API_KEY: "AIzaSyA754qV4brlD1_Yi_9tWoSvKVs839i5BHA"
+          VITE_GOOGLE_MAPS_API_KEY: "AIzaSyD4K539FsZSlqiUGHm9OYj8_ThfGdeOHyE"
         run: |
           npm install --legacy-peer-deps
           npm run build
