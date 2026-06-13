@@ -1,61 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check, Map as MapOutlineIcon, X } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check, Map as MapOutlineIcon, X, Loader2 } from 'lucide-react';
+import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from '@react-google-maps/api';
 import CurrencyInput from '../CurrencyInput';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
 import { estimateFee } from '../../services/api';
 
-// --- CUSTOM ICONS ---
-const pickupIcon = L.divIcon({
-  html: `<div class="w-7 h-7 bg-blue-600 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgba(0,0,0,0.3)] flex items-center justify-center"><div class="w-2 h-2 bg-white rounded-full"></div></div>`,
-  className: '',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14]
-});
+const libraries = ['places'];
 
-const deliveryIcon = L.divIcon({
-  html: `<div class="w-7 h-7 bg-sky-500 rounded-full border-[3px] border-white shadow-[0_2px_8px_rgba(0,0,0,0.3)] flex items-center justify-center"><div class="w-2 h-2 bg-white rounded-full"></div></div>`,
-  className: '',
-  iconSize: [28, 28],
-  iconAnchor: [14, 14]
-});
-
-// --- MAP HELPER COMPONENT ---
-const MapUpdater = ({ pickup, delivery, routeLine, mapSelectMode }) => {
-  const map = useMap();
-  useEffect(() => {
-    if (mapSelectMode) return; // Don't auto-fit bounds when user is manually selecting on map
-
-    if (pickup && delivery) {
-      const bounds = L.latLngBounds([pickup, delivery]);
-      map.fitBounds(bounds, { 
-        paddingTopLeft: [40, 180], 
-        paddingBottomRight: [40, 120], 
-        animate: true, 
-        duration: 1.2 
-      });
-    } else if (pickup) {
-      map.flyTo(pickup, 16, { animate: true, duration: 1 });
-    } else if (delivery) {
-      map.flyTo(delivery, 16, { animate: true, duration: 1 });
-    }
-  }, [pickup, delivery, routeLine, map, mapSelectMode]);
-  return null;
-};
-
-// --- MAP PICKER LISTENER ---
-const MapPickerListener = ({ mode, onLocationChange }) => {
-  const map = useMapEvents({
-    moveend: () => {
-      if (mode) {
-        const center = map.getCenter();
-        onLocationChange({ lat: center.lat, lng: center.lng });
-      }
-    }
-  });
-  return null;
+// Helper to convert Goong [lat, lng] to Google {lat, lng}
+const toGooglePath = (routeLine) => {
+  if (!routeLine) return [];
+  return routeLine.map(coord => ({ lat: coord[0], lng: coord[1] }));
 };
 
 export default function DeliveryForm({ onBooking, loading, defaultLocation, defaultPhone }) {
@@ -86,6 +41,15 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const [tempLocation, setTempLocation] = useState({ lat: null, lng: null, address: '' });
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const fetchAddressTimeout = useRef(null);
+  
+  const mapRef = useRef(null);
+
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+    language: 'vi',
+    region: 'VN'
+  });
 
   useEffect(() => {
     if (defaultLocation?.address) {
@@ -101,7 +65,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     const fetchEstimateAndRoute = async () => {
       if (form.pickupCoordinates && form.deliveryCoordinates && form.pickupCoordinates.lat && form.deliveryCoordinates.lat) {
         setEstimating(true);
-        setRouteLine([]); // Xóa đường đi cũ ngay lập tức
+        setRouteLine([]);
 
         try {
           const res = await estimateFee({
@@ -140,6 +104,23 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       return () => clearTimeout(timer);
     }
   }, [form.pickupCoordinates, form.deliveryCoordinates, mapSelectMode]);
+
+  useEffect(() => {
+    if (mapRef.current && !mapSelectMode) {
+      if (form.pickupCoordinates && form.deliveryCoordinates) {
+        const bounds = new window.google.maps.LatLngBounds();
+        bounds.extend(form.pickupCoordinates);
+        bounds.extend(form.deliveryCoordinates);
+        mapRef.current.fitBounds(bounds, { top: 40, bottom: 120, left: 40, right: 40 });
+      } else if (form.pickupCoordinates) {
+        mapRef.current.panTo(form.pickupCoordinates);
+        mapRef.current.setZoom(16);
+      } else if (form.deliveryCoordinates) {
+        mapRef.current.panTo(form.deliveryCoordinates);
+        mapRef.current.setZoom(16);
+      }
+    }
+  }, [form.pickupCoordinates, form.deliveryCoordinates, routeLine, mapSelectMode]);
 
   const handleBookingClick = (e) => {
     e.preventDefault();
@@ -181,28 +162,32 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     }
   };
 
-  const handleMapLocationChange = (coords) => {
-    setTempLocation(prev => ({ ...prev, lat: coords.lat, lng: coords.lng }));
+  const fetchAddressFromCoords = async (lat, lng) => {
+    if (!window.google) return;
     setIsFetchingAddress(true);
-    
-    if (fetchAddressTimeout.current) clearTimeout(fetchAddressTimeout.current);
-    
-    fetchAddressTimeout.current = setTimeout(async () => {
-      try {
-        let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-        if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
-        const res = await fetch(`${apiUrl}/maps/geocode?latlng=${coords.lat},${coords.lng}`);
-        const data = await res.json();
-        if (data && data.results && data.results.length > 0) {
-          setTempLocation(prev => ({ ...prev, address: data.results[0].formatted_address }));
-        } else {
-          setTempLocation(prev => ({ ...prev, address: "Không xác định được địa chỉ" }));
-        }
-      } catch (e) {
-        setTempLocation(prev => ({ ...prev, address: "Lỗi kết nối khi tải địa chỉ" }));
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+      if (status === 'OK' && results[0]) {
+        setTempLocation(prev => ({ ...prev, address: results[0].formatted_address }));
+      } else {
+        setTempLocation(prev => ({ ...prev, address: 'Vị trí không xác định' }));
       }
       setIsFetchingAddress(false);
-    }, 1200); // delay 1200ms to avoid spamming API on drag
+    });
+  };
+
+  const onMapDragEnd = () => {
+    if (mapSelectMode && mapRef.current) {
+      const center = mapRef.current.getCenter();
+      const lat = center.lat();
+      const lng = center.lng();
+      setTempLocation(prev => ({ ...prev, lat, lng }));
+      
+      if (fetchAddressTimeout.current) clearTimeout(fetchAddressTimeout.current);
+      fetchAddressTimeout.current = setTimeout(() => {
+        fetchAddressFromCoords(lat, lng);
+      }, 500);
+    }
   };
 
   const confirmMapSelection = () => {
@@ -222,40 +207,74 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     setMapSelectMode(null);
   };
 
+  const onLoad = useCallback(function callback(map) {
+    mapRef.current = map;
+  }, []);
+
+  const onUnmount = useCallback(function callback() {
+    mapRef.current = null;
+  }, []);
+
+  const mapCenter = mapSelectMode ? { lat: tempLocation.lat || 10.045162, lng: tempLocation.lng || 105.746854 } 
+                  : (form.pickupCoordinates || { lat: 10.045162, lng: 105.746854 });
+
   return (
     <form onSubmit={(e) => e.preventDefault()} className="flex flex-col bg-gray-50 relative -mx-4 -mt-4 md:-mx-0 min-h-full">
       
       {/* KHU VỰC BẢN ĐỒ INLINE (CỐ ĐỊNH PHÍA TRÊN) */}
       <div className={`sticky top-0 w-full z-0 shrink-0 ${mapSelectMode ? 'h-[100dvh]' : 'h-[70vh] md:h-[75vh]'}`}>
-        <MapContainer 
-          center={
-            mapSelectMode ? [tempLocation.lat || 10.045162, tempLocation.lng || 105.746854] : 
-            form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : 
-            [10.045162, 105.746854]
-          } 
-          zoom={15} 
-          zoomControl={false} 
-          className="w-full h-full z-0"
-        >
-          <TileLayer
-            attribution='&copy; Google Maps'
-            url={`https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}`}
-          />
-          
-          {/* Markers when NOT in map select mode */}
-          {!mapSelectMode && form.pickupCoordinates && <Marker position={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} icon={pickupIcon} />}
-          {!mapSelectMode && form.deliveryCoordinates && <Marker position={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} icon={deliveryIcon} />}
-          {!mapSelectMode && routeLine.length > 0 && <Polyline positions={routeLine} color="#2563EB" weight={5} opacity={0.8} className="animated-route-line" />}
-          
-          <MapUpdater 
-            pickup={form.pickupCoordinates ? [form.pickupCoordinates.lat, form.pickupCoordinates.lng] : null}
-            delivery={form.deliveryCoordinates ? [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng] : null}
-            routeLine={routeLine}
-            mapSelectMode={mapSelectMode}
-          />
-
-          {mapSelectMode && <MapPickerListener mode={mapSelectMode} onLocationChange={handleMapLocationChange} />}
-        </MapContainer>
+        {!isLoaded ? (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+            <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
+          </div>
+        ) : (
+          <GoogleMap
+            mapContainerStyle={{ width: '100%', height: '100%' }}
+            center={mapCenter}
+            zoom={15}
+            onLoad={onLoad}
+            onUnmount={onUnmount}
+            onDragEnd={onMapDragEnd}
+            options={{
+              disableDefaultUI: true,
+              gestureHandling: 'greedy'
+            }}
+          >
+            {/* Markers when NOT in map select mode */}
+            {!mapSelectMode && form.pickupCoordinates && (
+              <MarkerF 
+                position={form.pickupCoordinates} 
+                icon={{
+                  path: window.google.maps.SymbolPath.CIRCLE,
+                  fillColor: '#2563EB',
+                  fillOpacity: 1,
+                  strokeWeight: 3,
+                  strokeColor: '#FFFFFF',
+                  scale: 10
+                }} 
+              />
+            )}
+            {!mapSelectMode && form.deliveryCoordinates && (
+              <MarkerF 
+                position={form.deliveryCoordinates} 
+                icon={{
+                  path: window.google.maps.SymbolPath.CIRCLE,
+                  fillColor: '#0EA5E9',
+                  fillOpacity: 1,
+                  strokeWeight: 3,
+                  strokeColor: '#FFFFFF',
+                  scale: 10
+                }} 
+              />
+            )}
+            {!mapSelectMode && routeLine.length > 0 && (
+              <PolylineF 
+                path={toGooglePath(routeLine)} 
+                options={{ strokeColor: '#2563EB', strokeOpacity: 0.8, strokeWeight: 5 }} 
+              />
+            )}
+          </GoogleMap>
+        )}
 
         {/* TRUNG TÂM BẢN ĐỒ (KHI CHỌN ĐIỂM) */}
         {mapSelectMode && (
