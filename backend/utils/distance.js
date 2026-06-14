@@ -18,52 +18,42 @@ const getHaversineDistance = (lat1, lon1, lat2, lon2) => {
 
 /**
  * Lấy khoảng cách và đường đi thực tế giữa 2 điểm
- * Dùng OSRM (Miễn phí 100%) vì Google Cloud đang bị lỗi nhận diện sai quốc gia (India bug)
+ * Dùng Goong API
  */
 const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   try {
-    // Gọi OSRM API (Lưu ý: lng trước, lat sau)
-    const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
+    const apiKey = process.env.GOONG_API_KEY;
+    if (!apiKey) throw new Error('Missing GOONG_API_KEY');
+
+    // Gọi Goong Direction API (Lưu ý: Goong nhận Origin/Destination dạng lat,lng)
+    const url = `https://rsapi.goong.io/Direction?origin=${lat1},${lng1}&destination=${lat2},${lng2}&vehicle=car&api_key=${apiKey}`;
     
-    // Thêm User-Agent để không bị server OSRM chặn
-    const response = await axios.get(url, {
-      headers: {
-        'User-Agent': 'LamNguyenShipApp/1.0'
-      },
-      timeout: 5000 // timeout 5s
-    });
+    const response = await axios.get(url, { timeout: 5000 });
 
-    if (response.data && response.data.code === 'Ok' && response.data.routes && response.data.routes.length > 0) {
+    if (response.data && response.data.routes && response.data.routes.length > 0) {
       const route = response.data.routes[0];
-      const distanceKm = route.distance / 1000;
+      const distanceKm = route.legs[0].distance.value / 1000;
       
-      // Chuyển đổi GeoJSON LineString của OSRM về định dạng polyline mảng object {lat, lng}
-      // OSRM trả về [lng, lat], đổi thành {lat, lng} cho Frontend dễ vẽ
-      const coordinates = route.geometry.coordinates.map(coord => ({
-        lat: coord[1],
-        lng: coord[0]
-      })); 
+      // Decode polyline (Goong uses standard Google polyline encoding)
+      const encodedPolyline = route.overview_polyline.points;
+      const coordinates = require('@mapbox/polyline').decode(encodedPolyline).map(p => ({lat: p[0], lng: p[1]}));
       
-      // Đảm bảo điểm bắt đầu và kết thúc trùng với điểm gốc
-      coordinates.unshift({lat: lat1, lng: lng1});
-      coordinates.push({lat: lat2, lng: lng2});
-
       return {
         distanceKm: Number(distanceKm.toFixed(2)),
         routeLine: coordinates
       };
     }
     
-    throw new Error('Không tìm thấy đường đi từ OSRM');
+    throw new Error('Không tìm thấy đường đi từ Goong');
   } catch (error) {
-    console.error('Lỗi tính khoảng cách OSRM:', error.message);
+    console.error('Lỗi tính khoảng cách Goong:', error.message);
     
     // Nếu lỗi thì fallback dùng đường chim bay x 1.3
     const fallbackDistance = getHaversineDistance(lat1, lng1, lat2, lng2) * 1.3;
     return {
       distanceKm: Number(fallbackDistance.toFixed(2)), 
-      routeLine: [{lat: lat1, lng: lng1}, {lat: lat2, lng: lng2}], // Trả về đường thẳng 2 điểm để bản đồ đỡ trống
-      error: 'OSRM_FAILED_FALLBACK_TO_HAVERSINE'
+      routeLine: [{lat: lat1, lng: lng1}, {lat: lat2, lng: lng2}], // Trả về đường thẳng 2 điểm
+      error: 'GOONG_FAILED_FALLBACK_TO_HAVERSINE'
     };
   }
 };

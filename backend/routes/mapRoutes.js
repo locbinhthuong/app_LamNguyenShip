@@ -3,10 +3,10 @@ const router = express.Router();
 const axios = require('axios');
 const rateLimit = require('express-rate-limit');
 
-// Rate Limiter: Mỗi IP được phép gọi tối đa 50 lần trong 5 phút cho các API bản đồ
+// Rate Limiter
 const mapLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000, // 5 phút
-  max: 50, // Tối đa 50 requests
+  windowMs: 5 * 60 * 1000,
+  max: 50,
   message: { error: 'Bạn đã thực hiện quá nhiều thao tác tìm kiếm bản đồ. Vui lòng thử lại sau 5 phút.' }
 });
 
@@ -15,14 +15,12 @@ router.use(mapLimiter);
 router.get('/autocomplete', async (req, res) => {
   try {
     const { input, location } = req.query;
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'Missing GOOGLE_MAPS_API_KEY on server' });
+    const apiKey = process.env.GOONG_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'Missing GOONG_API_KEY on server' });
 
-    // location is "lat,lng"
-    let url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(input)}&key=${apiKey}&language=vi&components=country:vn`;
-    
+    let url = `https://rsapi.goong.io/Place/AutoComplete?api_key=${apiKey}&input=${encodeURIComponent(input)}`;
     if (location) {
-      url += `&location=${location}&radius=50000`; // 50km bias
+      url += `&location=${location}&radius=50`; 
     }
 
     const response = await axios.get(url);
@@ -32,30 +30,28 @@ router.get('/autocomplete', async (req, res) => {
       const predictions = data.predictions.map(item => ({
         description: item.description,
         place_id: item.place_id,
-        source: 'google'
+        source: 'goong'
       }));
       return res.json({ predictions });
     } else {
        return res.json({ predictions: [] });
     }
   } catch (error) {
-    console.error('Error Google Autocomplete:', error?.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to fetch autocomplete from Google' });
+    console.error('Error Goong Autocomplete:', error?.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch autocomplete from Goong' });
   }
 });
 
 router.get('/place', async (req, res) => {
   try {
     const { place_id } = req.query;
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'Missing GOOGLE_MAPS_API_KEY on server' });
+    const apiKey = process.env.GOONG_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'Missing GOONG_API_KEY on server' });
 
-    const response = await axios.get(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${place_id}&key=${apiKey}&language=vi`);
+    const response = await axios.get(`https://rsapi.goong.io/Place/Detail?place_id=${place_id}&api_key=${apiKey}`);
     const data = response.data;
     
     if (data.status === 'OK' && data.result) {
-      // Transform format back to match old frontend expectations if needed
-      // Frontend expects { result: { geometry: { location: { lat, lng } } } }
       return res.json({
         result: {
           geometry: {
@@ -72,18 +68,18 @@ router.get('/place', async (req, res) => {
       res.status(404).json({ error: 'Place not found' });
     }
   } catch (error) {
-    console.error('Error Google Place Detail:', error?.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to fetch place detail from Google' });
+    console.error('Error Goong Place Detail:', error?.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch place detail from Goong' });
   }
 });
 
 router.get('/geocode', async (req, res) => {
   try {
     const { latlng } = req.query;
-    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'Missing GOOGLE_MAPS_API_KEY on server' });
+    const apiKey = process.env.GOONG_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'Missing GOONG_API_KEY on server' });
 
-    const response = await axios.get(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latlng}&key=${apiKey}&language=vi`);
+    const response = await axios.get(`https://rsapi.goong.io/Geocode?latlng=${latlng}&api_key=${apiKey}`);
     const data = response.data;
     
     if (data.status === 'OK' && data.results) {
@@ -97,8 +93,8 @@ router.get('/geocode', async (req, res) => {
        return res.json({ results: [] });
     }
   } catch (error) {
-    console.error('Error Google Geocode:', error?.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to fetch geocode from Google' });
+    console.error('Error Goong Geocode:', error?.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to fetch geocode from Goong' });
   }
 });
 
