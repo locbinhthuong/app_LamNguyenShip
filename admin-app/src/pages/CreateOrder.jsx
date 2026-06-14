@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrder, getDrivers } from '../services/api';
-import { createOrder, getDrivers } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
 
 export default function CreateOrder() {
