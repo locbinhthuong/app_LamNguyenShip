@@ -15,11 +15,17 @@ function PureMapPreview({ lat, lng, onLocationChange }) {
     
     if (!mapInstance.current) {
       mapInstance.current = L.map(mapRef.current).setView([lat, lng], 16);
-      L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+      const tileLayer = L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
           attribution: '&copy; Google Maps',
           maxZoom: 22,
           maxNativeZoom: 20
       }).addTo(mapInstance.current);
+
+      // Hệ thống chống cháy: Chuyển qua bản đồ Free (OSM) nếu Google sập / hết requests
+      tileLayer.once('tileerror', function() {
+          console.warn('Google Maps tile load error, falling back to OpenStreetMap...');
+          tileLayer.setUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+      });
       
       const customIcon = L.divIcon({
           className: 'custom-preview-marker',

@@ -230,11 +230,17 @@ export default function DriverMap() {
     // 1. Khởi tạo bản đồ thuần Túy
     if (mapRef.current && !mapInstance.current) {
         mapInstance.current = L.map(mapRef.current).setView([10.762622, 106.660172], 13); // TPHCM Mặc định
-        L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+        const tileLayer = L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
             attribution: '&copy; Google Maps',
             maxZoom: 22,
             maxNativeZoom: 20
         }).addTo(mapInstance.current);
+
+        // Hệ thống chống cháy: Chuyển qua bản đồ Free (OSM) nếu Google sập / hết requests
+        tileLayer.once('tileerror', function() {
+            console.warn('Google Maps tile load error, falling back to OpenStreetMap...');
+            tileLayer.setUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        });
     }
 
     loadInitialData();
