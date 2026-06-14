@@ -261,14 +261,25 @@ export default function Dispatchers() {
               <div className="grid grid-cols-2 gap-2 pt-2">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Vai trò</label>
-                  <select value={role} onChange={e => setRole(e.target.value)} className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                  <select 
+                    value={role} 
+                    onChange={e => setRole(e.target.value)} 
+                    disabled={editingStaff?.role === 'admin'}
+                    className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {editingStaff?.role === 'admin' && <option value="admin">Super Admin</option>}
                     <option value="staff">Tổng Đài Viên</option>
                     <option value="manager">Quản Lý</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Trạng Thái</label>
-                  <select value={status} onChange={e => setStatus(e.target.value)} className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                  <select 
+                    value={status} 
+                    onChange={e => setStatus(e.target.value)} 
+                    disabled={editingStaff?.role === 'admin'}
+                    className="w-full text-sm p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <option value="active">Hoạt động</option>
                     <option value="inactive">Khoá tài khoản</option>
                   </select>
