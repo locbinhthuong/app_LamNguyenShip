@@ -2,6 +2,29 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrder, getDrivers } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconUrl: markerIcon,
+    iconRetinaUrl: markerIcon2x,
+    shadowUrl: markerShadow,
+});
+
+function MapUpdater({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center.lat && center.lng) {
+      map.setView([center.lat, center.lng], 16);
+    }
+  }, [center, map]);
+  return null;
+}
 
 export default function CreateOrder() {
   const navigate = useNavigate();
@@ -618,6 +641,15 @@ export default function CreateOrder() {
               <datalist id="pickupAddressList">
                 {history.pickupAddresses.map((item, index) => <option key={index} value={item} />)}
               </datalist>
+              {form.pickupCoordinates && (
+                <div className="mt-2 h-40 w-full rounded-lg overflow-hidden border border-slate-200">
+                  <MapContainer center={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} zoom={16} style={{ height: '100%', width: '100%' }}>
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <Marker position={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} />
+                    <MapUpdater center={form.pickupCoordinates} />
+                  </MapContainer>
+                </div>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'SĐT Điểm đón (Tùy chọn)' : form.serviceType === 'DIEU_PHOI' ? 'SĐT Khác (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'SĐT Nơi mua (Tùy chọn)' : 'SĐT Điểm lấy (Shop)'}</label>
@@ -654,6 +686,15 @@ export default function CreateOrder() {
               <datalist id="deliveryAddressList">
                 {history.deliveryAddresses.map((item, index) => <option key={index} value={item} />)}
               </datalist>
+              {form.deliveryCoordinates && (
+                <div className="mt-2 h-40 w-full rounded-lg overflow-hidden border border-slate-200">
+                  <MapContainer center={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} zoom={16} style={{ height: '100%', width: '100%' }}>
+                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                    <Marker position={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} />
+                    <MapUpdater center={form.deliveryCoordinates} />
+                  </MapContainer>
+                </div>
+              )}
             </div>
           )}
 
