@@ -109,13 +109,12 @@ export default function CreateOrder() {
   const geocodeAddress = async (address, type) => {
     if (!address || address.length < 5) return;
     try {
-      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1&lat=10.762622&lon=106.660172`);
+      const res = await fetch(`https://rsapi.goong.io/geocode?address=${encodeURIComponent(address)}&api_key=2OlStVgXqfhCduMBb8isHpudl5S8kLYzrxUPTT5d`);
       if (res.ok) {
         const data = await res.json();
-        if (data.features && data.features.length > 0) {
-          const item = data.features[0];
-          const lat = parseFloat(item.geometry.coordinates[1]);
-          const lon = parseFloat(item.geometry.coordinates[0]);
+        if (data.results && data.results.length > 0) {
+          const lat = data.results[0].geometry.location.lat;
+          const lon = data.results[0].geometry.location.lng;
           if (type === 'pickup') {
             setForm(prev => ({...prev, pickupCoordinates: {lat, lng: lon}}));
           } else {
@@ -125,6 +124,7 @@ export default function CreateOrder() {
         }
       }
       
+      // Fallback to nominatim if Goong fails
       const res2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=vn&accept-language=vi`);
       const nomData = await res2.json();
       if (nomData && nomData.length > 0) {
