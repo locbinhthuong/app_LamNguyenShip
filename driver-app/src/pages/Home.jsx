@@ -592,6 +592,12 @@ export default function Home() {
       const driverRate = driver?.commissionRate || 15;
       
       if (updatedOrder.status === 'PENDING') {
+         // Lọc bỏ nếu đơn hàng đang được gán độc quyền cho nhóm tài xế gần nhất
+         if (updatedOrder.pendingAssignTo && updatedOrder.pendingAssignTo.length > 0) {
+             setAvailableOrders(prev => prev.filter(o => o._id !== updatedOrder._id));
+             return;
+         }
+
          if (updatedOrder.commissionRate != null && Number(updatedOrder.commissionRate) !== Number(driverRate)) {
              setAvailableOrders(prev => prev.filter(o => o._id !== updatedOrder._id));
          } else {

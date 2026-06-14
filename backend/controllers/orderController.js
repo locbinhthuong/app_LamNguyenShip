@@ -105,9 +105,18 @@ const orderController = {
       const orders = await Order.find({ 
         status: 'PENDING',
         $or: [
-          { commissionRate: null },
-          { commissionRate: { $exists: false } },
-          { commissionRate: driverRate }
+          { pendingAssignTo: { $exists: false } },
+          { pendingAssignTo: null },
+          { pendingAssignTo: { $size: 0 } }
+        ],
+        $and: [
+          {
+            $or: [
+              { commissionRate: null },
+              { commissionRate: { $exists: false } },
+              { commissionRate: driverRate }
+            ]
+          }
         ]
       })
         .populate('createdBy', 'name')
