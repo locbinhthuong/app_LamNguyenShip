@@ -275,39 +275,40 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 options={{ strokeColor: '#2563EB', strokeOpacity: 0.8, strokeWeight: 5 }} 
               />
             )}
-            {/* NÚT VỀ VỊ TRÍ CỦA TÔI (Chỉ hiện khi chọn điểm trên bản đồ) */}
-            {mapSelectMode && (
-              <button 
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition((pos) => {
-                      const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                      setTempLocation(prev => ({ ...prev, lat: newPos.lat, lng: newPos.lng }));
-                      mapRef.current?.panTo(newPos);
-                    });
-                  }
-                }} 
-                className="absolute bottom-16 right-4 z-50 bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
-              >
-                <Target size={24} />
-              </button>
-            )}
-
-            {/* NÚT CHUYỂN ĐỔI BẢN ĐỒ VỆ TINH */}
-            <button 
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setMapType(prev => prev === 'roadmap' ? 'satellite' : 'roadmap');
-              }} 
-              className="absolute top-4 right-4 z-50 bg-white/90 backdrop-blur-sm p-2.5 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform"
-            >
-              <Layers size={22} className={mapType === 'satellite' ? 'text-blue-600' : ''} />
-            </button>
           </GoogleMap>
         )}
+
+        {/* NÚT VỀ VỊ TRÍ CỦA TÔI (Chỉ hiện khi chọn điểm trên bản đồ) */}
+        {mapSelectMode && (
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((pos) => {
+                  const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                  setTempLocation(prev => ({ ...prev, lat: newPos.lat, lng: newPos.lng }));
+                  mapRef.current?.panTo(newPos);
+                });
+              }
+            }} 
+            className="absolute bottom-16 right-4 z-[2000] bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
+          >
+            <Target size={24} />
+          </button>
+        )}
+
+        {/* NÚT CHUYỂN ĐỔI BẢN ĐỒ VỆ TINH */}
+        <button 
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            setMapType(prev => prev === 'roadmap' ? 'satellite' : 'roadmap');
+          }} 
+          className="absolute top-4 right-4 z-[2000] bg-white/90 backdrop-blur-sm p-2.5 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform"
+        >
+          <Layers size={22} className={mapType === 'satellite' ? 'text-blue-600' : ''} />
+        </button>
 
         {/* TRUNG TÂM BẢN ĐỒ (KHI CHỌN ĐIỂM) */}
         {mapSelectMode && (
