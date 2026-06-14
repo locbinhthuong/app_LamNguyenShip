@@ -249,13 +249,13 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={mapCenter}
             zoom={16}
+            mapTypeId={mapType}
             onLoad={onLoad}
             onUnmount={onUnmount}
             onDragStart={onMapDragStart}
             onDragEnd={onMapDragEnd}
             options={{
               disableDefaultUI: true,
-              mapTypeId: mapType,
               gestureHandling: 'greedy',
               maxZoom: 22
             }}

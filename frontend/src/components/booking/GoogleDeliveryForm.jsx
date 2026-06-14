@@ -233,12 +233,12 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={mapCenter}
             zoom={15}
+            mapTypeId={mapType}
             onLoad={onLoad}
             onUnmount={onUnmount}
             onDragEnd={onMapDragEnd}
             options={{
               disableDefaultUI: true,
-              mapTypeId: mapType,
               gestureHandling: 'greedy',
               maxZoom: 22
             }}
