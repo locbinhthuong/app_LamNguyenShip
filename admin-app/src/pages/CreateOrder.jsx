@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrder, getDrivers } from '../services/api';
+import { createOrder, getDrivers } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
-import AddressAutocompleteInput from '../components/AddressAutocompleteInput';
 
 export default function CreateOrder() {
   const navigate = useNavigate();
@@ -39,10 +39,71 @@ export default function CreateOrder() {
   const [history, setHistory] = useState({
     customerNames: [],
     customerPhones: [],
-    pickupAddresses: [],
     pickupPhones: [],
-    deliveryAddresses: []
+    pickupAddresses: [],
+    deliveryAddresses: [],
+    driverReminders: [],
+    senders: []
   });
+
+  const geocodeAddress = async (address, type) => {
+    if (!address || address.length < 5) return;
+    try {
+      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(address)}&limit=1&lat=10.762622&lon=106.660172`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.features && data.features.length > 0) {
+          const item = data.features[0];
+          const lat = parseFloat(item.geometry.coordinates[1]);
+          const lon = parseFloat(item.geometry.coordinates[0]);
+          if (type === 'pickup') {
+            setForm(prev => ({...prev, pickupCoordinates: {lat, lng: lon}}));
+          } else {
+            setForm(prev => ({...prev, deliveryCoordinates: {lat, lng: lon}}));
+          }
+          return;
+        }
+      }
+      
+      const res2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1&countrycodes=vn&accept-language=vi`);
+      const nomData = await res2.json();
+      if (nomData && nomData.length > 0) {
+        const lat = parseFloat(nomData[0].lat);
+        const lon = parseFloat(nomData[0].lon);
+        if (type === 'pickup') {
+          setForm(prev => ({...prev, pickupCoordinates: {lat, lng: lon}}));
+        } else {
+          setForm(prev => ({...prev, deliveryCoordinates: {lat, lng: lon}}));
+        }
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (form.pickupAddress) {
+        if (!form.pickupCoordinates) {
+           geocodeAddress(form.pickupAddress, 'pickup');
+        }
+      } else {
+        setForm(prev => ({...prev, pickupCoordinates: null}));
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [form.pickupAddress, form.pickupCoordinates]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (form.deliveryAddress) {
+        if (!form.deliveryCoordinates) {
+           geocodeAddress(form.deliveryAddress, 'delivery');
+        }
+      } else {
+        setForm(prev => ({...prev, deliveryCoordinates: null}));
+      }
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [form.deliveryAddress, form.deliveryCoordinates]);
 
   useEffect(() => {
     fetchDrivers();
@@ -68,7 +129,17 @@ export default function CreateOrder() {
   const [smartText, setSmartText] = useState('');
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm(prev => {
+      const newForm = { ...prev, [name]: value };
+      if (name === 'pickupAddress') {
+        newForm.pickupCoordinates = null;
+      }
+      if (name === 'deliveryAddress') {
+        newForm.deliveryCoordinates = null;
+      }
+      return newForm;
+    });
   };
 
   const saveToHistory = (newForm) => {
@@ -530,17 +601,24 @@ export default function CreateOrder() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="relative z-[40]">
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'Điểm đón' : form.serviceType === 'DIEU_PHOI' ? 'Địa chỉ khách' : form.serviceType === 'MUA_HO' ? 'Nơi mua hàng' : 'Địa chỉ lấy hàng (Shop)'} <span className="text-red-400">*</span></label>
-              <div className="input-field p-0 flex items-center bg-white border border-slate-200 rounded-lg">
-                <AddressAutocompleteInput
-                  value={form.pickupAddress}
-                  onChangeText={(text) => setForm({...form, pickupAddress: text})}
-                  onSelectCoordinates={(coords) => setForm({...form, pickupCoordinates: coords})}
-                  placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
-                  className="w-full px-3 py-2.5"
-                />
-              </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">
+                {form.serviceType === 'DAT_XE' ? 'Điểm đón' : form.serviceType === 'DIEU_PHOI' ? 'Địa chỉ khách' : form.serviceType === 'MUA_HO' ? 'Nơi mua hàng' : 'Địa chỉ lấy hàng (Shop)'} 
+                <span className="text-red-400">*</span>
+                {form.pickupCoordinates && <span className="ml-2 text-green-500 text-[10px] bg-green-50 px-1.5 py-0.5 rounded-full font-bold" title="Hệ thống đã nhận diện toạ độ">📍 Đã quét vị trí</span>}
+              </label>
+              <input
+                name="pickupAddress"
+                value={form.pickupAddress}
+                onChange={handleChange}
+                placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
+                className="input-field"
+                list="pickupAddressList"
+                autoComplete="off"
+              />
+              <datalist id="pickupAddressList">
+                {history.pickupAddresses.map((item, index) => <option key={index} value={item} />)}
+              </datalist>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'SĐT Điểm đón (Tùy chọn)' : form.serviceType === 'DIEU_PHOI' ? 'SĐT Khác (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'SĐT Nơi mua (Tùy chọn)' : 'SĐT Điểm lấy (Shop)'}</label>
@@ -560,17 +638,23 @@ export default function CreateOrder() {
           </div>
 
           {form.serviceType !== 'DIEU_PHOI' && (
-            <div className="relative z-[30]">
-              <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'Điểm đến (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'Nơi giao hàng (Tùy chọn)' : 'Địa chỉ giao hàng (Tùy chọn)'}</label>
-              <div className="input-field p-0 flex items-center bg-white border border-slate-200 rounded-lg">
-                <AddressAutocompleteInput
-                  value={form.deliveryAddress}
-                  onChangeText={(text) => setForm({...form, deliveryAddress: text})}
-                  onSelectCoordinates={(coords) => setForm({...form, deliveryCoordinates: coords})}
-                  placeholder="456 Lê Lợi, Quận 1, TP.HCM"
-                  className="w-full px-3 py-2.5"
-                />
-              </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">
+                {form.serviceType === 'DAT_XE' ? 'Điểm đến (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'Nơi giao hàng (Tùy chọn)' : 'Địa chỉ giao hàng (Tùy chọn)'}
+                {form.deliveryCoordinates && <span className="ml-2 text-green-500 text-[10px] bg-green-50 px-1.5 py-0.5 rounded-full font-bold" title="Hệ thống đã nhận diện toạ độ">📍 Đã quét vị trí</span>}
+              </label>
+              <input
+                name="deliveryAddress"
+                value={form.deliveryAddress}
+                onChange={handleChange}
+                placeholder="456 Lê Lợi, Quận 1, TP.HCM"
+                className="input-field"
+                list="deliveryAddressList"
+                autoComplete="off"
+              />
+              <datalist id="deliveryAddressList">
+                {history.deliveryAddresses.map((item, index) => <option key={index} value={item} />)}
+              </datalist>
             </div>
           )}
 
