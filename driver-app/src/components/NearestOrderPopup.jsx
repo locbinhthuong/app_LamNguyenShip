@@ -16,10 +16,24 @@ export default function NearestOrderPopup() {
         setTimeLeft(30);
       }
     };
+
+    const handleOrderAccepted = (e) => {
+      const acceptedOrder = e.detail;
+      if (order && (acceptedOrder._id === order._id || acceptedOrder.id === order.id || acceptedOrder._id === order.id)) {
+        // Nếu người khác đã nhận đơn này, tự động ẩn popup
+        setOrder(null);
+        window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+      }
+    };
     
     window.addEventListener('driver_nearest_order_assignment', handleAssignment);
-    return () => window.removeEventListener('driver_nearest_order_assignment', handleAssignment);
-  }, []);
+    window.addEventListener('driver_order_accepted', handleOrderAccepted);
+    
+    return () => {
+      window.removeEventListener('driver_nearest_order_assignment', handleAssignment);
+      window.removeEventListener('driver_order_accepted', handleOrderAccepted);
+    };
+  }, [order]);
 
   useEffect(() => {
     if (!order) return;

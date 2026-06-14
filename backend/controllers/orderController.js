@@ -7,7 +7,7 @@ const { emitNewOrder, emitOrderAccepted, emitOrderPickedUp, emitOrderDelivering,
 const { startOfTodayVietnam } = require('../utils/todayVietnam');
 const DebtTransaction = require('../models/DebtTransaction');
 const { checkDriverDebtBlock, getTodayVN } = require('../utils/debtUtils');
-const { findNearestAvailableDriver } = require('../utils/driverAssignment');
+const { findNearestAvailableDriver, findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
 const { sendNotification, sendMultipleNotifications } = require('../utils/notification');
 const Config = require('../models/Config');
 const { getDrivingDistance } = require('../utils/distance');
@@ -309,26 +309,61 @@ const orderController = {
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
           }
         } else if (autoAssignNearest && payload.pickupCoordinates && payload.pickupCoordinates.lat && payload.pickupCoordinates.lng) {
-          // Gán cho tài xế gần nhất
-          const nearestDriver = await findNearestAvailableDriver(
+          // Gán cho một nhóm tài xế gần nhất
+          const nearestDrivers = await findNearestAvailableDriversGroup(
             payload.pickupCoordinates.lat,
             payload.pickupCoordinates.lng,
-            payload.commissionRate
+            payload.commissionRate,
+            [],
+            5 // Lấy top 5 người
           );
           
-          if (nearestDriver) {
-            payload.pendingAssignTo = nearestDriver._id;
-            await Order.findByIdAndUpdate(order._id, { pendingAssignTo: nearestDriver._id });
+          if (nearestDrivers && nearestDrivers.length > 0) {
+            const driverIds = nearestDrivers.map(d => d._id);
+            payload.pendingAssignTo = driverIds; // Gửi mảng xuống client
+            await Order.findByIdAndUpdate(order._id, { pendingAssignTo: driverIds });
             
-            req.io.to(`driver_${nearestDriver._id.toString()}`).emit('nearest_order_assignment', payload);
+            const { sendMultipleNotifications } = require('../utils/notification');
+            const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+            let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+            const fcmTokens = [];
+
+            for (const driver of nearestDrivers) {
+              req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', payload);
+              if (driver.fcmToken) {
+                fcmTokens.push(driver.fcmToken);
+              }
+            }
             req.io.to('admins').emit('new_order', payload);
             
-            if (nearestDriver.fcmToken) {
-              const { sendMultipleNotifications } = require('../utils/notification');
-              const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
-              let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
-              await sendMultipleNotifications([nearestDriver.fcmToken], '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+            if (fcmTokens.length > 0) {
+              await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
             }
+
+            // Fallback timeout: Sau 32s nếu đơn vẫn PENDING và mảng chưa rỗng thì ép xóa và nổ cho tất cả
+            setTimeout(async () => {
+              try {
+                const checkOrder = await Order.findById(order._id);
+                if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+                  const remainingIds = checkOrder.pendingAssignTo;
+                  const forcedOrder = await Order.findOneAndUpdate(
+                    { _id: order._id, status: 'PENDING' },
+                    {
+                      $set: { pendingAssignTo: [] },
+                      $addToSet: { rejectedBy: { $each: remainingIds } }
+                    },
+                    { new: true }
+                  );
+                  if (forcedOrder && req.io) {
+                    const forcedPayload = typeof forcedOrder.toObject === 'function' ? forcedOrder.toObject({ virtuals: true }) : forcedOrder;
+                    const { emitNewOrder } = require('../sockets/index');
+                    emitNewOrder(req.io, forcedPayload, true);
+                  }
+                }
+              } catch (e) {
+                console.error('Fallback timeout error:', e);
+              }
+            }, 32000);
           } else {
             // Không tìm thấy ai thì nổ cho tất cả
             const { emitNewOrder } = require('../sockets/index');
@@ -691,8 +726,12 @@ const orderController = {
         return res.status(400).json({ success: false, message: 'Đơn hàng đã được nhận bởi tài xế khác hoặc không tồn tại' });
       }
       
-      if (existingOrder.pendingAssignTo && existingOrder.pendingAssignTo.toString() !== req.driver._id.toString()) {
-        return res.status(400).json({ success: false, message: 'Đơn hàng đang chờ tài xế khác phản hồi, vui lòng thử lại sau' });
+      if (existingOrder.pendingAssignTo && existingOrder.pendingAssignTo.length > 0) {
+        // Kiểm tra xem req.driver._id có nằm trong mảng pendingAssignTo không
+        const isDriverInGroup = existingOrder.pendingAssignTo.some(id => id.toString() === req.driver._id.toString());
+        if (!isDriverInGroup) {
+          return res.status(400).json({ success: false, message: 'Đơn hàng đang chờ nhóm tài xế khác phản hồi, vui lòng thử lại sau' });
+        }
       }
 
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
@@ -749,19 +788,26 @@ const orderController = {
       const order = await Order.findById(id);
       if (!order) return res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
       
-      if (order.pendingAssignTo && order.pendingAssignTo.toString() === driverId.toString()) {
-        order.pendingAssignTo = null;
-        if (!order.rejectedBy) order.rejectedBy = [];
-        if (!order.rejectedBy.includes(driverId)) {
-          order.rejectedBy.push(driverId);
-        }
-        await order.save();
-        
-        // Phát lại đơn cho tất cả tài xế
-        if (req.io) {
-          const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
-          const { emitNewOrder } = require('../sockets/index');
-          emitNewOrder(req.io, payload, true); // true = isSilentAdmin
+      if (order.pendingAssignTo && order.pendingAssignTo.length > 0) {
+        // Atomic update to prevent race conditions when multiple drivers timeout at exactly 30s
+        const updatedOrder = await Order.findOneAndUpdate(
+          { _id: id, pendingAssignTo: driverId },
+          {
+            $pull: { pendingAssignTo: driverId },
+            $addToSet: { rejectedBy: driverId }
+          },
+          { new: true }
+        );
+
+        // Nếu mảng pendingAssignTo đã trống (tất cả tài xế trong nhóm đều từ chối hoặc hết hạn)
+        // và đơn vẫn đang PENDING
+        if (updatedOrder && updatedOrder.pendingAssignTo.length === 0 && updatedOrder.status === 'PENDING') {
+          // Phát lại đơn cho tất cả tài xế
+          if (req.io) {
+            const payload = typeof updatedOrder.toObject === 'function' ? updatedOrder.toObject({ virtuals: true }) : updatedOrder;
+            const { emitNewOrder } = require('../sockets/index');
+            emitNewOrder(req.io, payload, true); // true = isSilentAdmin
+          }
         }
       }
       

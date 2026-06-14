@@ -219,11 +219,10 @@ const orderSchema = new mongoose.Schema({
     type: String,
     default: null
   },
-  pendingAssignTo: { // Gán tạm thời cho tài xế gần nhất để đợi họ xác nhận (popup 30s)
+  pendingAssignTo: [{ // Gán tạm thời cho một nhóm tài xế gần nhất để đợi họ xác nhận (popup 30s cạnh tranh)
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Driver',
-    default: null
-  },
+    ref: 'Driver'
+  }],
   rejectedBy: [{ // Danh sách các tài xế đã từ chối nhận đơn này (hoặc hết hạn popup)
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Driver'
