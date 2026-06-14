@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check, Map as MapOutlineIcon, X } from 'lucide-react';
+import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check, Map as MapOutlineIcon, X, Layers } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -85,6 +85,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const [mapSelectMode, setMapSelectMode] = useState(null); // 'pickup' | 'delivery' | null
   const [tempLocation, setTempLocation] = useState({ lat: null, lng: null, address: '' });
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
+  const [mapType, setMapType] = useState('m'); // m = roadmap, y = satellite
   const fetchAddressTimeout = useRef(null);
 
   useEffect(() => {
@@ -239,7 +240,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         >
           <TileLayer
             attribution='&copy; Google Maps'
-            url={`https://mt0.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}`}
+            url={`https://mt0.google.com/vt/lyrs=${mapType}&hl=en&x={x}&y={y}&z={z}`}
           />
           
           {/* Markers when NOT in map select mode */}
@@ -256,6 +257,19 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
           {mapSelectMode && <MapPickerListener mode={mapSelectMode} onLocationChange={handleMapLocationChange} />}
         </MapContainer>
+
+        {/* NÚT CHUYỂN ĐỔI BẢN ĐỒ VỆ TINH */}
+        <button 
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            setMapType(prev => prev === 'm' ? 'y' : 'm');
+          }} 
+          className="absolute top-1/2 right-4 -translate-y-1/2 z-[2000] bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform flex items-center gap-2"
+        >
+          <Layers size={18} className={mapType === 'y' ? 'text-blue-600' : ''} />
+          <span className="text-xs font-bold">{mapType === 'm' ? 'Vệ tinh' : 'Bản đồ'}</span>
+        </button>
 
         {/* TRUNG TÂM BẢN ĐỒ (KHI CHỌN ĐIỂM) */}
         {mapSelectMode && (
