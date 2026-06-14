@@ -38,16 +38,19 @@ const findNearestAvailableDriver = async (pickupLat, pickupLng, commissionRate =
     const availableDrivers = await Driver.find(query).lean();
     if (availableDrivers.length === 0) return null;
 
-    // 2. Tính khoảng cách và sắp xếp từ gần đến xa
-    const driversWithDistance = availableDrivers.map(driver => {
+    // 2. Tính khoảng cách, chỉ lấy trong bán kính 5km, và sắp xếp từ gần đến xa
+    const driversWithDistance = availableDrivers.reduce((acc, driver) => {
       const dist = getHaversineDistance(
         pickupLat,
         pickupLng,
         driver.currentLocation.lat,
         driver.currentLocation.lng
       );
-      return { ...driver, distance: dist };
-    }).sort((a, b) => a.distance - b.distance);
+      if (dist <= 5) { // Bán kính 5km
+        acc.push({ ...driver, distance: dist });
+      }
+      return acc;
+    }, []).sort((a, b) => a.distance - b.distance);
 
     // 3. Kiểm tra các điều kiện chuyên sâu theo thứ tự (Nợ, Số đơn đang chạy)
     for (const driver of driversWithDistance) {
@@ -114,16 +117,19 @@ const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commission
     const availableDrivers = await Driver.find(query).lean();
     if (availableDrivers.length === 0) return [];
 
-    // 2. Tính khoảng cách và sắp xếp từ gần đến xa
-    const driversWithDistance = availableDrivers.map(driver => {
+    // 2. Tính khoảng cách, chỉ lấy trong bán kính 5km, và sắp xếp từ gần đến xa
+    const driversWithDistance = availableDrivers.reduce((acc, driver) => {
       const dist = getHaversineDistance(
         pickupLat,
         pickupLng,
         driver.currentLocation.lat,
         driver.currentLocation.lng
       );
-      return { ...driver, distance: dist };
-    }).sort((a, b) => a.distance - b.distance);
+      if (dist <= 5) { // Bán kính 5km
+        acc.push({ ...driver, distance: dist });
+      }
+      return acc;
+    }, []).sort((a, b) => a.distance - b.distance);
 
     const eligibleGroup = [];
 
