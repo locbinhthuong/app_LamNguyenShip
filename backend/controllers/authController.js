@@ -554,7 +554,7 @@ const authController = {
   // PUT /api/auth/admin/me - Cập nhật thông tin admin
   updateAdminProfile: async (req, res) => {
     try {
-      const { name, phone, password } = req.body;
+      const { name, phone, password, oldPassword } = req.body;
       const updateData = {};
       
       if (name) updateData.name = name;
@@ -568,6 +568,14 @@ const authController = {
       }
 
       if (password) {
+         if (!oldPassword) {
+            return res.status(400).json({ success: false, message: 'Vui lòng nhập mật khẩu cũ để thay đổi mật khẩu' });
+         }
+         const adminObj = await Admin.findById(req.admin._id);
+         const isMatch = await bcrypt.compare(oldPassword, adminObj.password);
+         if (!isMatch) {
+            return res.status(400).json({ success: false, message: 'Mật khẩu cũ không chính xác' });
+         }
          updateData.password = await bcrypt.hash(password, 10);
       }
 

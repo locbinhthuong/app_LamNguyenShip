@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig } from '../services/configService';
 import { getAdminProfile, updateAdminProfile } from '../services/api';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Eye, EyeOff } from 'lucide-react';
 
 export default function Settings() {
   const [loading, setLoading] = useState(true);
@@ -17,7 +17,9 @@ export default function Settings() {
     customerApp: { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" }
   });
 
-  const [adminProfile, setAdminProfile] = useState({ name: '', phone: '', password: '' });
+  const [adminProfile, setAdminProfile] = useState({ name: '', phone: '', oldPassword: '', password: '' });
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [config, setConfig] = useState({
     tiers: [
@@ -74,6 +76,7 @@ export default function Settings() {
         setAdminProfile({
           name: adminProfileRes.data.name || '',
           phone: adminProfileRes.data.phone || '',
+          oldPassword: '',
           password: ''
         });
       }
@@ -131,10 +134,19 @@ export default function Settings() {
       const updateData = {};
       if (adminProfile.name) updateData.name = adminProfile.name;
       if (adminProfile.phone) updateData.phone = adminProfile.phone;
-      if (adminProfile.password) updateData.password = adminProfile.password;
+      if (adminProfile.password) {
+        updateData.oldPassword = adminProfile.oldPassword;
+        updateData.password = adminProfile.password;
+      }
       
       if (Object.keys(updateData).length > 0) {
-        await updateAdminProfile(updateData);
+        try {
+          await updateAdminProfile(updateData);
+        } catch (adminErr) {
+          setErrorMsg(adminErr.response?.data?.message || 'Lỗi khi cập nhật thông tin Admin');
+          setSaving(false);
+          return;
+        }
       }
       
       if (res.success) {
@@ -506,15 +518,45 @@ export default function Settings() {
                       className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
                     />
                   </div>
+                  {adminProfile.password && (
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">Mật khẩu cũ (Bắt buộc khi đổi mật khẩu)</label>
+                      <div className="relative">
+                        <input
+                          type={showOldPassword ? "text" : "password"}
+                          value={adminProfile.oldPassword}
+                          onChange={(e) => setAdminProfile({ ...adminProfile, oldPassword: e.target.value })}
+                          placeholder="••••••••"
+                          className="w-full p-3 pr-10 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                        />
+                        <button 
+                          type="button" 
+                          onClick={() => setShowOldPassword(!showOldPassword)}
+                          className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                        >
+                          {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Mật khẩu mới (Để trống nếu không đổi)</label>
-                    <input
-                      type="password"
-                      value={adminProfile.password}
-                      onChange={(e) => setAdminProfile({ ...adminProfile, password: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        value={adminProfile.password}
+                        onChange={(e) => setAdminProfile({ ...adminProfile, password: e.target.value })}
+                        placeholder="••••••••"
+                        className="w-full p-3 pr-10 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                      >
+                        {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
