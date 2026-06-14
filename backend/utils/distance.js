@@ -16,6 +16,38 @@ const getHaversineDistance = (lat1, lon1, lat2, lon2) => {
   return Number(distance.toFixed(2));
 };
 
+// Manual Polyline Decoder (Google Maps standard)
+const decodePolyline = (encoded) => {
+  if (!encoded) return [];
+  const poly = [];
+  let index = 0, len = encoded.length;
+  let lat = 0, lng = 0;
+
+  while (index < len) {
+    let b, shift = 0, result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    let dlat = ((result & 1) ? ~(result >> 1) : (result >> 1));
+    lat += dlat;
+
+    shift = 0;
+    result = 0;
+    do {
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    let dlng = ((result & 1) ? ~(result >> 1) : (result >> 1));
+    lng += dlng;
+
+    poly.push({ lat: lat / 1e5, lng: lng / 1e5 });
+  }
+  return poly;
+};
+
 /**
  * Lấy khoảng cách và đường đi thực tế giữa 2 điểm
  * Dùng Goong API
@@ -34,9 +66,9 @@ const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
       const route = response.data.routes[0];
       const distanceKm = route.legs[0].distance.value / 1000;
       
-      // Decode polyline (Goong uses standard Google polyline encoding)
+      // Decode polyline manual
       const encodedPolyline = route.overview_polyline.points;
-      const coordinates = require('@mapbox/polyline').decode(encodedPolyline).map(p => ({lat: p[0], lng: p[1]}));
+      const coordinates = decodePolyline(encodedPolyline);
       
       return {
         distanceKm: Number(distanceKm.toFixed(2)),
