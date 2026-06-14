@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check, Map as MapOutlineIcon, X, Loader2 } from 'lucide-react';
+import { Navigation, Package, DollarSign, MapPin as MapPinIcon, Check, Map as MapOutlineIcon, X, Loader2, Layers } from 'lucide-react';
 import { GoogleMap, useJsApiLoader, MarkerF, PolylineF } from '@react-google-maps/api';
 import CurrencyInput from '../CurrencyInput';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
@@ -39,6 +39,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   // MAP SELECTION STATE
   const [mapSelectMode, setMapSelectMode] = useState(null); // 'pickup' | 'delivery' | null
   const [tempLocation, setTempLocation] = useState({ lat: null, lng: null, address: '' });
+  const [mapType, setMapType] = useState('roadmap');
   const [isFetchingAddress, setIsFetchingAddress] = useState(false);
   const fetchAddressTimeout = useRef(null);
   
@@ -236,11 +237,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             onUnmount={onUnmount}
             onDragEnd={onMapDragEnd}
             options={{
-              disableDefaultUI: false,
-              mapTypeControl: true,
-              streetViewControl: false,
-              fullscreenControl: false,
-              zoomControl: false,
+              disableDefaultUI: true,
+              mapTypeId: mapType,
               gestureHandling: 'greedy'
             }}
           >
@@ -277,6 +275,37 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 options={{ strokeColor: '#2563EB', strokeOpacity: 0.8, strokeWeight: 5 }} 
               />
             )}
+            {/* NÚT VỀ VỊ TRÍ CỦA TÔI (Chỉ hiện khi chọn điểm trên bản đồ) */}
+            {mapSelectMode && (
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                      const newPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                      setTempLocation(prev => ({ ...prev, lat: newPos.lat, lng: newPos.lng }));
+                      mapRef.current?.panTo(newPos);
+                    });
+                  }
+                }} 
+                className="absolute bottom-16 right-4 z-50 bg-white p-3 rounded-full shadow-lg border border-gray-100 text-blue-600 active:scale-90 transition-transform"
+              >
+                <Target size={24} />
+              </button>
+            )}
+
+            {/* NÚT CHUYỂN ĐỔI BẢN ĐỒ VỆ TINH */}
+            <button 
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setMapType(prev => prev === 'roadmap' ? 'satellite' : 'roadmap');
+              }} 
+              className="absolute top-4 right-4 z-50 bg-white/90 backdrop-blur-sm p-2.5 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform"
+            >
+              <Layers size={22} className={mapType === 'satellite' ? 'text-blue-600' : ''} />
+            </button>
           </GoogleMap>
         )}
 
