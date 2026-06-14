@@ -256,7 +256,8 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
             options={{
               disableDefaultUI: true,
               mapTypeId: mapType,
-              gestureHandling: 'greedy'
+              gestureHandling: 'greedy',
+              maxZoom: 22
             }}
           >
             {/* NO MARKER RENDERED HERE CAUSE WE USE THE CENTER FIX PIN BELOW */}
@@ -288,13 +289,13 @@ const LocationPicker = ({ isOpen, onClose, onSelect, initialPosition, initialSea
           <Target size={24} />
         </button>
 
-        {/* NÚT CHUYỂN ĐỔI BẢN ĐỒ VỆ TINH */}
         <button 
           type="button"
           onClick={() => setMapType(prev => prev === 'roadmap' ? 'satellite' : 'roadmap')} 
-          className="absolute top-4 right-4 z-[2000] bg-white p-2.5 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform"
+          className="absolute top-4 right-4 z-[2000] bg-white px-3 py-2 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform flex items-center gap-2"
         >
-          <Layers size={22} className={mapType === 'satellite' ? 'text-blue-600' : ''} />
+          <Layers size={18} className={mapType === 'satellite' ? 'text-blue-600' : ''} />
+          <span className="text-xs font-bold">{mapType === 'roadmap' ? 'Vệ tinh' : 'Bản đồ'}</span>
         </button>
       </div>
 
