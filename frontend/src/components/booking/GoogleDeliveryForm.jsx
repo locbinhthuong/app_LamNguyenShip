@@ -306,7 +306,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             e.preventDefault();
             setMapType(prev => prev === 'roadmap' ? 'satellite' : 'roadmap');
           }} 
-          className="absolute top-4 right-4 z-[2000] bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform flex items-center gap-2"
+          className="absolute bottom-12 right-4 z-[2000] bg-white/90 backdrop-blur-sm px-3 py-2 rounded-xl shadow-lg border border-gray-100 text-slate-700 active:scale-90 transition-transform flex items-center gap-2"
         >
           <Layers size={18} className={mapType === 'satellite' ? 'text-blue-600' : ''} />
           <span className="text-xs font-bold">{mapType === 'roadmap' ? 'Vệ tinh' : 'Bản đồ'}</span>
