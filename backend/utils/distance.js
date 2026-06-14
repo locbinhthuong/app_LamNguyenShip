@@ -26,10 +26,10 @@ const decodePolyline = (str) => {
  */
 const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
   try {
-    const apiKey = process.env.GOONG_API_KEY;
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     if (apiKey) {
-      const url = `https://rsapi.goong.io/Direction/Route?origin=${lat1},${lng1}&destination=${lat2},${lng2}&vehicle=bike&api_key=${apiKey}`;
-      const response = await axios.get(url, { headers: { 'Referer': 'https://api.aloshipp.com/' } });
+      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${lat1},${lng1}&destination=${lat2},${lng2}&mode=driving&key=${apiKey}`;
+      const response = await axios.get(url);
 
       if (response.data && response.data.routes && response.data.routes.length > 0) {
         const route = response.data.routes[0];
@@ -48,14 +48,13 @@ const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
       }
     }
 
-    // Nếu không có API Key hoặc Goong không trả về kết quả
-    throw new Error('Goong API không trả về kết quả hoặc thiếu API Key');
+    throw new Error('Google Maps Directions API không trả về kết quả hoặc thiếu API Key');
   } catch (error) {
-    console.error('Lỗi khi gọi API Goong Direction:', error?.response?.data || error.message);
+    console.error('Lỗi khi gọi API Google Directions:', error?.response?.data || error.message);
     
-    // FALLBACK: Chuyển sang dùng OSRM Miễn phí nếu Goong xịt
+    // FALLBACK: Chuyển sang dùng OSRM Miễn phí nếu Google xịt
     try {
-      console.warn('Đang chuyển hướng sang OSRM miễn phí vì Goong bị lỗi/hết request...');
+      console.warn('Đang chuyển hướng sang OSRM miễn phí vì Google bị lỗi/hết request...');
       const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
       const osrmResponse = await axios.get(osrmUrl);
 
@@ -77,8 +76,8 @@ const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
       console.error('Lỗi khi gọi OSRM Fallback:', osrmError.message);
     }
 
-    // Nếu cả Goong và OSRM đều xịt, dùng đường chim bay
-    console.warn('Cả Goong và OSRM đều lỗi, sử dụng đường chim bay x 1.3');
+    // Nếu cả Google và OSRM đều xịt, dùng đường chim bay
+    console.warn('Cả Google và OSRM đều lỗi, sử dụng đường chim bay x 1.3');
     const d = getHaversineDistance(lat1, lng1, lat2, lng2) * 1.3;
     return {
       distanceKm: Number(d.toFixed(2)),

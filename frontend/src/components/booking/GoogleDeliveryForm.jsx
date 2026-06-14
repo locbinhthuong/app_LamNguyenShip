@@ -236,7 +236,11 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             onUnmount={onUnmount}
             onDragEnd={onMapDragEnd}
             options={{
-              disableDefaultUI: true,
+              disableDefaultUI: false,
+              mapTypeControl: true,
+              streetViewControl: false,
+              fullscreenControl: false,
+              zoomControl: false,
               gestureHandling: 'greedy'
             }}
           >
