@@ -499,6 +499,10 @@ export default function Settings() {
               <p className="text-sm text-slate-500 mb-6">Thay đổi thông tin liên hệ và mật khẩu đăng nhập của tài khoản Admin.</p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                {/* Dummy inputs to prevent aggressive Chrome autofill */}
+                <input type="text" name="fakeusernameremembered" className="hidden" aria-hidden="true" />
+                <input type="password" name="fakepasswordremembered" className="hidden" aria-hidden="true" />
+
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Tên Admin</label>
