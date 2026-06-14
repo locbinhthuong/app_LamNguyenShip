@@ -159,19 +159,6 @@ export default function CreateOrder() {
   }, [form.pickupAddress, form.pickupCoordinates]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (form.deliveryAddress) {
-        if (!form.deliveryCoordinates) {
-           geocodeAddress(form.deliveryAddress, 'delivery');
-        }
-      } else {
-        setForm(prev => ({...prev, deliveryCoordinates: null}));
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [form.deliveryAddress, form.deliveryCoordinates]);
-
-  useEffect(() => {
     fetchDrivers();
     try {
       const saved = localStorage.getItem('orderFormHistory');
@@ -722,7 +709,6 @@ export default function CreateOrder() {
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">
                 {form.serviceType === 'DAT_XE' ? 'Điểm đến (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'Nơi giao hàng (Tùy chọn)' : 'Địa chỉ giao hàng (Tùy chọn)'}
-                {form.deliveryCoordinates && <span className="ml-2 text-green-500 text-[10px] bg-green-50 px-1.5 py-0.5 rounded-full font-bold" title="Hệ thống đã nhận diện toạ độ">📍 Đã quét vị trí</span>}
               </label>
               <input
                 name="deliveryAddress"
@@ -736,21 +722,6 @@ export default function CreateOrder() {
               <datalist id="deliveryAddressList">
                 {history.deliveryAddresses.map((item, index) => <option key={index} value={item} />)}
               </datalist>
-              {form.deliveryCoordinates && (
-                <div className="mt-2 w-full rounded-lg overflow-hidden border border-slate-200">
-                  <div className="bg-orange-50 px-2 py-1.5 border-b border-orange-100 flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-orange-700 uppercase">Kéo thả kim đỏ để chỉnh vị trí giao hàng</span>
-                    <span className="text-[10px] bg-white px-2 py-0.5 rounded text-slate-500 border border-slate-200 font-mono">{form.deliveryCoordinates.lat.toFixed(5)}, {form.deliveryCoordinates.lng.toFixed(5)}</span>
-                  </div>
-                  <div className="h-44 relative z-0">
-                    <PureMapPreview 
-                      lat={form.deliveryCoordinates.lat} 
-                      lng={form.deliveryCoordinates.lng} 
-                      onLocationChange={(coords) => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
-                    />
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
