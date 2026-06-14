@@ -518,27 +518,26 @@ export default function Settings() {
                       className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
                     />
                   </div>
-                  {adminProfile.password && (
-                    <div>
-                      <label className="block text-sm font-bold text-slate-700 mb-1">Mật khẩu cũ (Bắt buộc khi đổi mật khẩu)</label>
-                      <div className="relative">
-                        <input
-                          type={showOldPassword ? "text" : "password"}
-                          value={adminProfile.oldPassword}
-                          onChange={(e) => setAdminProfile({ ...adminProfile, oldPassword: e.target.value })}
-                          placeholder="••••••••"
-                          className="w-full p-3 pr-10 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
-                        />
-                        <button 
-                          type="button" 
-                          onClick={() => setShowOldPassword(!showOldPassword)}
-                          className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
-                        >
-                          {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                        </button>
-                      </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Mật khẩu cũ (Bắt buộc khi đổi mật khẩu mới)</label>
+                    <div className="relative">
+                      <input
+                        type={showOldPassword ? "text" : "password"}
+                        value={adminProfile.oldPassword}
+                        onChange={(e) => setAdminProfile({ ...adminProfile, oldPassword: e.target.value })}
+                        placeholder="••••••••"
+                        autoComplete="off"
+                        className="w-full p-3 pr-10 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowOldPassword(!showOldPassword)}
+                        className="absolute right-3 top-3.5 text-slate-400 hover:text-slate-600"
+                      >
+                        {showOldPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
                     </div>
-                  )}
+                  </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-1">Mật khẩu mới (Để trống nếu không đổi)</label>
                     <div className="relative">
@@ -547,6 +546,7 @@ export default function Settings() {
                         value={adminProfile.password}
                         onChange={(e) => setAdminProfile({ ...adminProfile, password: e.target.value })}
                         placeholder="••••••••"
+                        autoComplete="new-password"
                         className="w-full p-3 pr-10 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
                       />
                       <button 
