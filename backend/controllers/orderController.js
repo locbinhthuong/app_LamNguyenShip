@@ -659,7 +659,65 @@ const orderController = {
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
           }
         } else if (isDraftToPending) {
-          emitNewOrder(req.io, payload, true); // true = isSilentAdmin (Treo lại đơn không báo hú Admin)
+          if (orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
+            const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
+            const nearestDrivers = await findNearestAvailableDriversGroup(
+              orderToUpdate.pickupCoordinates.lat,
+              orderToUpdate.pickupCoordinates.lng,
+              orderToUpdate.commissionRate,
+              [],
+              9999
+            );
+            
+            if (nearestDrivers && nearestDrivers.length > 0) {
+              const driverIds = nearestDrivers.map(d => d._id);
+              payload.pendingAssignTo = driverIds;
+              await Order.findByIdAndUpdate(orderToUpdate._id, { pendingAssignTo: driverIds });
+              
+              const { sendMultipleNotifications } = require('../utils/notification');
+              const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+              let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+              const fcmTokens = [];
+
+              for (const driver of nearestDrivers) {
+                req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', payload);
+                if (driver.fcmToken) {
+                  fcmTokens.push(driver.fcmToken);
+                }
+              }
+              
+              if (fcmTokens.length > 0) {
+                await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+              }
+
+              setTimeout(async () => {
+                try {
+                  const checkOrder = await Order.findById(orderToUpdate._id);
+                  if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+                    const remainingIds = checkOrder.pendingAssignTo;
+                    const forcedOrder = await Order.findOneAndUpdate(
+                      { _id: orderToUpdate._id, status: 'PENDING' },
+                      {
+                        $set: { pendingAssignTo: [] },
+                        $addToSet: { rejectedBy: { $each: remainingIds } }
+                      },
+                      { new: true }
+                    );
+                    if (forcedOrder && req.io) {
+                      const forcedPayload = typeof forcedOrder.toObject === 'function' ? forcedOrder.toObject({ virtuals: true }) : forcedOrder;
+                      emitNewOrder(req.io, forcedPayload, true);
+                    }
+                  }
+                } catch (e) {
+                  console.error('Fallback timeout error:', e);
+                }
+              }, 32000);
+            } else {
+              emitNewOrder(req.io, payload, true);
+            }
+          } else {
+            emitNewOrder(req.io, payload, true); // true = isSilentAdmin (Treo lại đơn không báo hú Admin)
+          }
           req.io.to('admins').emit('order_updated', payload);
         } else {
           // Bắn socket thông thường cho Admin
