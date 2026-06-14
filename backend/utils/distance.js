@@ -58,7 +58,7 @@ const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
     if (!apiKey) throw new Error('Missing GOONG_API_KEY');
 
     // Gọi Goong Direction API (Lưu ý: Goong nhận Origin/Destination dạng lat,lng)
-    const url = `https://rsapi.goong.io/Direction?origin=${lat1},${lng1}&destination=${lat2},${lng2}&vehicle=car&api_key=${apiKey}`;
+    const url = `https://rsapi.goong.io/Direction?origin=${lat1},${lng1}&destination=${lat2},${lng2}&vehicle=bike&api_key=${apiKey}`;
     
     const response = await axios.get(url, { timeout: 5000 });
 
