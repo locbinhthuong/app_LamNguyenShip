@@ -60,6 +60,11 @@ export const getAdminProfile = async () => {
   return response.data;
 };
 
+export const updateAdminProfile = async (data) => {
+  const response = await api.put('/api/auth/admin/me', data);
+  return response.data;
+};
+
 export const updateFcmToken = async (token) => {
   const response = await api.post('/api/auth/fcm-token', { token });
   return response.data;

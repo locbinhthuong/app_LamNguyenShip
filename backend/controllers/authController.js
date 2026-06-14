@@ -551,6 +551,43 @@ const authController = {
     }
   },
 
+  // PUT /api/auth/admin/me - Cập nhật thông tin admin
+  updateAdminProfile: async (req, res) => {
+    try {
+      const { name, phone, password } = req.body;
+      const updateData = {};
+      
+      if (name) updateData.name = name;
+      
+      if (phone && phone !== req.admin.phone) {
+         const existingAdmin = await Admin.findOne({ phone, _id: { $ne: req.admin._id } });
+         if (existingAdmin) {
+           return res.status(400).json({ success: false, message: 'Số điện thoại đã được đăng ký bởi tài khoản khác' });
+         }
+         updateData.phone = phone;
+      }
+
+      if (password) {
+         updateData.password = await bcrypt.hash(password, 10);
+      }
+
+      const admin = await Admin.findByIdAndUpdate(
+        req.admin._id,
+        updateData,
+        { new: true, runValidators: true }
+      ).select('-password');
+
+      res.status(200).json({
+        success: true,
+        message: 'Cập nhật thông tin thành công',
+        data: admin
+      });
+    } catch (error) {
+       console.error('Error updateAdminProfile:', error);
+       res.status(500).json({ success: false, message: 'Lỗi server khi cập nhật thông tin' });
+    }
+  },
+
   // ==================== CUSTOMER / SHOP ====================
 
   // POST /api/auth/customer/register

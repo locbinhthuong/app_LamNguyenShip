@@ -48,6 +48,9 @@ router.post('/admin/login', [
 // GET /api/auth/admin/me
 router.get('/admin/me', verifyToken, onlyAdmin, authController.getAdminProfile);
 
+// PUT /api/auth/admin/me
+router.put('/admin/me', verifyToken, onlyAdmin, authController.updateAdminProfile);
+
 // ==================== CUSTOMER/SHOP AUTH ====================
 
 // POST /api/auth/customer/register

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig } from '../services/configService';
+import { getAdminProfile, updateAdminProfile } from '../services/api';
 import { Trash2, Plus } from 'lucide-react';
 
 export default function Settings() {
@@ -15,6 +16,8 @@ export default function Settings() {
     driverApp: { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" },
     customerApp: { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" }
   });
+
+  const [adminProfile, setAdminProfile] = useState({ name: '', phone: '', password: '' });
 
   const [config, setConfig] = useState({
     tiers: [
@@ -38,10 +41,11 @@ export default function Settings() {
   const fetchConfig = async () => {
     try {
       setLoading(true);
-      const [pricingRes, regionRes, appVersionRes] = await Promise.all([
+      const [pricingRes, regionRes, appVersionRes, adminProfileRes] = await Promise.all([
         getPricingConfig(),
         getRegionConfig().catch(() => null),
-        getAppVersionConfig().catch(() => null)
+        getAppVersionConfig().catch(() => null),
+        getAdminProfile().catch(() => null)
       ]);
 
       if (pricingRes.success && pricingRes.data && pricingRes.data.value && Array.isArray(pricingRes.data.value.tiers)) {
@@ -63,6 +67,14 @@ export default function Settings() {
         setAppVersion({
           driverApp: appVersionRes.data.value.driverApp || { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" },
           customerApp: appVersionRes.data.value.customerApp || { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" }
+        });
+      }
+
+      if (adminProfileRes && adminProfileRes.success && adminProfileRes.data) {
+        setAdminProfile({
+          name: adminProfileRes.data.name || '',
+          phone: adminProfileRes.data.phone || '',
+          password: ''
         });
       }
 
@@ -115,6 +127,15 @@ export default function Settings() {
       const res = await updatePricingConfig(config);
       await updateRegionConfig(regions);
       await updateAppVersionConfig(appVersion);
+      
+      const updateData = {};
+      if (adminProfile.name) updateData.name = adminProfile.name;
+      if (adminProfile.phone) updateData.phone = adminProfile.phone;
+      if (adminProfile.password) updateData.password = adminProfile.password;
+      
+      if (Object.keys(updateData).length > 0) {
+        await updateAdminProfile(updateData);
+      }
       
       if (res.success) {
         setSuccessMsg('Đã lưu cấu hình thành công!');
@@ -455,6 +476,44 @@ export default function Settings() {
                       value={appVersion?.customerApp?.storeUrlIos || ''}
                       onChange={(e) => setAppVersion({ ...appVersion, customerApp: { ...appVersion.customerApp, storeUrlIos: e.target.value } })}
                       className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm text-slate-600"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-8">
+              <h3 className="text-xl font-bold text-slate-800 mb-4">Tài Khoản Quản Trị (Admin)</h3>
+              <p className="text-sm text-slate-500 mb-6">Thay đổi thông tin liên hệ và mật khẩu đăng nhập của tài khoản Admin.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Tên Admin</label>
+                    <input
+                      type="text"
+                      value={adminProfile.name}
+                      onChange={(e) => setAdminProfile({ ...adminProfile, name: e.target.value })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Số điện thoại đăng nhập</label>
+                    <input
+                      type="text"
+                      value={adminProfile.phone}
+                      onChange={(e) => setAdminProfile({ ...adminProfile, phone: e.target.value })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Mật khẩu mới (Để trống nếu không đổi)</label>
+                    <input
+                      type="password"
+                      value={adminProfile.password}
+                      onChange={(e) => setAdminProfile({ ...adminProfile, password: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
                     />
                   </div>
                 </div>
