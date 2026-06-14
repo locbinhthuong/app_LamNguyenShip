@@ -5,7 +5,7 @@ import CurrencyInput from '../components/CurrencyInput';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-function PureMapPreview({ lat, lng }) {
+function PureMapPreview({ lat, lng, onLocationChange }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markerInstance = useRef(null);
@@ -19,12 +19,23 @@ function PureMapPreview({ lat, lng }) {
       
       const customIcon = L.divIcon({
           className: 'custom-preview-marker',
-          html: `<div style="font-size: 24px; text-align: center; margin-top: -12px; text-shadow: 0 2px 4px rgba(0,0,0,0.4);">📍</div>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 24]
+          html: `<div style="font-size: 28px; text-align: center; margin-top: -14px; text-shadow: 0 4px 6px rgba(0,0,0,0.5); cursor: grab;">📍</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 28]
       });
       
-      markerInstance.current = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstance.current);
+      markerInstance.current = L.marker([lat, lng], { 
+        icon: customIcon,
+        draggable: true 
+      }).addTo(mapInstance.current);
+
+      markerInstance.current.on('dragend', function (event) {
+        const marker = event.target;
+        const position = marker.getLatLng();
+        if (onLocationChange) {
+          onLocationChange({ lat: position.lat, lng: position.lng });
+        }
+      });
     } else {
       mapInstance.current.setView([lat, lng], 16);
       if (markerInstance.current) {
@@ -35,7 +46,7 @@ function PureMapPreview({ lat, lng }) {
     return () => {
       // Don't destroy the map immediately to prevent flickering on quick updates
     };
-  }, [lat, lng]);
+  }, [lat, lng, onLocationChange]);
 
   useEffect(() => {
     return () => {
@@ -665,8 +676,18 @@ export default function CreateOrder() {
                 {history.pickupAddresses.map((item, index) => <option key={index} value={item} />)}
               </datalist>
               {form.pickupCoordinates && (
-                <div className="mt-2 h-40 w-full rounded-lg overflow-hidden border border-slate-200">
-                  <PureMapPreview lat={form.pickupCoordinates.lat} lng={form.pickupCoordinates.lng} />
+                <div className="mt-2 w-full rounded-lg overflow-hidden border border-slate-200">
+                  <div className="bg-indigo-50 px-2 py-1.5 border-b border-indigo-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-indigo-700 uppercase">Kéo thả kim đỏ để chỉnh lại nếu hệ thống quét sai</span>
+                    <span className="text-[10px] bg-white px-2 py-0.5 rounded text-slate-500 border border-slate-200 font-mono">{form.pickupCoordinates.lat.toFixed(5)}, {form.pickupCoordinates.lng.toFixed(5)}</span>
+                  </div>
+                  <div className="h-44 relative z-0">
+                    <PureMapPreview 
+                      lat={form.pickupCoordinates.lat} 
+                      lng={form.pickupCoordinates.lng} 
+                      onLocationChange={(coords) => setForm(prev => ({...prev, pickupCoordinates: coords}))}
+                    />
+                  </div>
                 </div>
               )}
             </div>
@@ -706,8 +727,18 @@ export default function CreateOrder() {
                 {history.deliveryAddresses.map((item, index) => <option key={index} value={item} />)}
               </datalist>
               {form.deliveryCoordinates && (
-                <div className="mt-2 h-40 w-full rounded-lg overflow-hidden border border-slate-200">
-                  <PureMapPreview lat={form.deliveryCoordinates.lat} lng={form.deliveryCoordinates.lng} />
+                <div className="mt-2 w-full rounded-lg overflow-hidden border border-slate-200">
+                  <div className="bg-orange-50 px-2 py-1.5 border-b border-orange-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-orange-700 uppercase">Kéo thả kim đỏ để chỉnh vị trí giao hàng</span>
+                    <span className="text-[10px] bg-white px-2 py-0.5 rounded text-slate-500 border border-slate-200 font-mono">{form.deliveryCoordinates.lat.toFixed(5)}, {form.deliveryCoordinates.lng.toFixed(5)}</span>
+                  </div>
+                  <div className="h-44 relative z-0">
+                    <PureMapPreview 
+                      lat={form.deliveryCoordinates.lat} 
+                      lng={form.deliveryCoordinates.lng} 
+                      onLocationChange={(coords) => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
+                    />
+                  </div>
                 </div>
               )}
             </div>
