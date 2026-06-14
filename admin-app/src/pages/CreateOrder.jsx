@@ -15,7 +15,11 @@ function PureMapPreview({ lat, lng, onLocationChange }) {
     
     if (!mapInstance.current) {
       mapInstance.current = L.map(mapRef.current).setView([lat, lng], 16);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current);
+      L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+          attribution: '&copy; Google Maps',
+          maxZoom: 22,
+          maxNativeZoom: 20
+      }).addTo(mapInstance.current);
       
       const customIcon = L.divIcon({
           className: 'custom-preview-marker',
