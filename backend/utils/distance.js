@@ -1,74 +1,90 @@
 const axios = require('axios');
 
-/**
- * Tính khoảng cách đường chim bay (Haversine formula)
- */
-const getHaversineDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Bán kính trái đất (km)
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  const distance = R * c; // Km
-  return Number(distance.toFixed(2));
-};
+// Fallback logic cho tính toán khoảng cách đường chim bay (Haversine)
+function haversineDistance(coords1, coords2) {
+  function toRad(x) {
+    return x * Math.PI / 180;
+  }
+
+  const lon1 = coords1.lng;
+  const lat1 = coords1.lat;
+  const lon2 = coords2.lng;
+  const lat2 = coords2.lat;
+
+  const R = 6371; // Radius of the earth in km
+  const x1 = lat2 - lat1;
+  const dLat = toRad(x1);
+  const x2 = lon2 - lon1;
+  const dLon = toRad(x2);
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const d = R * c;
+
+  return d; // km
+}
 
 /**
  * Lấy khoảng cách và đường đi thực tế giữa 2 điểm
- * Dùng OSRM (Miễn phí 100%) để không phụ thuộc vào billing của Google
+ * Dùng Google Maps Routes API (Công nghệ mới nhất của Google)
  */
-const getDrivingDistance = async (lat1, lng1, lat2, lng2) => {
+async function getDrivingDistance(lat1, lng1, lat2, lng2) {
   try {
-    // Gọi OSRM API (Lưu ý: lng trước, lat sau)
-    const url = `https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=full&geometries=geojson`;
-    
-    // Thêm User-Agent để không bị server OSRM chặn
-    const response = await axios.get(url, {
+    const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+
+    if (!apiKey) {
+      throw new Error("Missing Google Maps API Key for Routes");
+    }
+
+    const url = 'https://routes.googleapis.com/directions/v2:computeRoutes';
+    const payload = {
+      origin: { location: { latLng: { latitude: lat1, longitude: lng1 } } },
+      destination: { location: { latLng: { latitude: lat2, longitude: lng2 } } },
+      travelMode: 'DRIVE'
+    };
+
+    const response = await axios.post(url, payload, {
       headers: {
-        'User-Agent': 'LamNguyenShipApp/1.0'
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': apiKey,
+        'X-Goog-FieldMask': 'routes.duration,routes.distanceMeters,routes.polyline.encodedPolyline'
       },
-      timeout: 5000 // timeout 5s
+      timeout: 5000
     });
 
-    if (response.data && response.data.code === 'Ok' && response.data.routes && response.data.routes.length > 0) {
+    if (response.data && response.data.routes && response.data.routes.length > 0) {
       const route = response.data.routes[0];
-      const distanceKm = route.distance / 1000;
+      const distanceKm = route.distanceMeters / 1000;
       
-      // Chuyển đổi GeoJSON LineString của OSRM về định dạng polyline mảng object {lat, lng}
-      // OSRM trả về [lng, lat], đổi thành {lat, lng} cho Frontend dễ vẽ
-      const coordinates = route.geometry.coordinates.map(coord => ({
-        lat: coord[1],
-        lng: coord[0]
-      })); 
-      
-      // Đảm bảo điểm bắt đầu và kết thúc trùng với điểm gốc
-      coordinates.unshift({lat: lat1, lng: lng1});
-      coordinates.push({lat: lat2, lng: lng2});
+      // Decode the polyline points from Google Maps format
+      const encodedPolyline = route.polyline.encodedPolyline;
+      const polylinePoints = require('@mapbox/polyline').decode(encodedPolyline).map(p => ({lat: p[0], lng: p[1]}));
 
       return {
         distanceKm: Number(distanceKm.toFixed(2)),
-        routeLine: coordinates
+        routeLine: polylinePoints,
+        duration: parseInt(route.duration.replace('s', '')) / 60
       };
+    } else {
+      throw new Error(`Google Routes API error: Không tìm thấy đường đi`);
     }
-    
-    throw new Error('Không tìm thấy đường đi từ OSRM');
   } catch (error) {
-    console.error('Lỗi tính khoảng cách OSRM:', error.message);
+    console.error('Lỗi tính khoảng cách Google Routes API:', error?.response?.data || error.message);
     
-    // Nếu lỗi thì fallback dùng đường chim bay x 1.3
-    const fallbackDistance = getHaversineDistance(lat1, lng1, lat2, lng2) * 1.3;
+    // Nếu lỗi thì fallback dùng đường chim bay
+    const origin = { lat: lat1, lng: lng1 };
+    const destination = { lat: lat2, lng: lng2 };
+    const fallbackDistance = haversineDistance(origin, destination) * 1.3;
     return {
-      distanceKm: Number(fallbackDistance.toFixed(2)), 
-      routeLine: [{lat: lat1, lng: lng1}, {lat: lat2, lng: lng2}], // Trả về đường thẳng 2 điểm để bản đồ đỡ trống
-      error: 'OSRM_FAILED_FALLBACK_TO_HAVERSINE'
+      distanceKm: Number(fallbackDistance.toFixed(2)),
+      routeLine: [origin, destination],
+      error: 'ROUTES_API_FAILED_FALLBACK_TO_HAVERSINE'
     };
   }
-};
+}
 
 module.exports = {
   getDrivingDistance,
-  getHaversineDistance
+  getHaversineDistance: haversineDistance
 };
