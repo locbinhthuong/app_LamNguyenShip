@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrder, getDrivers } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
+import AddressAutocompleteInput from '../components/AddressAutocompleteInput';
 
 export default function CreateOrder() {
   const navigate = useNavigate();
@@ -12,7 +13,9 @@ export default function CreateOrder() {
     customerPhone: '',
     pickupPhone: '',
     pickupAddress: '',
+    pickupCoordinates: null,
     deliveryAddress: '',
+    deliveryCoordinates: null,
     items: '',
     note: '',
     driverReminder: '',
@@ -197,8 +200,14 @@ export default function CreateOrder() {
     const pData = extractPhones(rawPickup);
     const dData = extractPhones(rawDelivery);
 
-    if (pData.text) newForm.pickupAddress = pData.text;
-    if (dData.text) newForm.deliveryAddress = dData.text;
+    if (pData.text) {
+      newForm.pickupAddress = pData.text;
+      newForm.pickupCoordinates = null; // Reset coord when paste
+    }
+    if (dData.text) {
+      newForm.deliveryAddress = dData.text;
+      newForm.deliveryCoordinates = null;
+    }
 
     let pPhone = pData.phones.length > 0 ? pData.phones[0] : '';
     let dPhone = dData.phones.length > 0 ? dData.phones[0] : '';
@@ -297,6 +306,8 @@ export default function CreateOrder() {
         pickupPhone: form.pickupPhone,
         pickupAddress: form.pickupAddress,
         deliveryAddress: form.deliveryAddress,
+        pickupCoordinates: form.pickupCoordinates || undefined,
+        deliveryCoordinates: form.deliveryCoordinates || undefined,
         items,
         note: form.note,
         driverReminder: form.driverReminder,
@@ -519,20 +530,17 @@ export default function CreateOrder() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
+            <div className="relative z-[40]">
               <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'Điểm đón' : form.serviceType === 'DIEU_PHOI' ? 'Địa chỉ khách' : form.serviceType === 'MUA_HO' ? 'Nơi mua hàng' : 'Địa chỉ lấy hàng (Shop)'} <span className="text-red-400">*</span></label>
-              <input
-                name="pickupAddress"
-                value={form.pickupAddress}
-                onChange={handleChange}
-                placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
-                className="input-field"
-                list="pickupAddressList"
-                autoComplete="off"
-              />
-              <datalist id="pickupAddressList">
-                {history.pickupAddresses.map((item, index) => <option key={index} value={item} />)}
-              </datalist>
+              <div className="input-field p-0 flex items-center bg-white border border-slate-200 rounded-lg">
+                <AddressAutocompleteInput
+                  value={form.pickupAddress}
+                  onChangeText={(text) => setForm({...form, pickupAddress: text})}
+                  onSelectCoordinates={(coords) => setForm({...form, pickupCoordinates: coords})}
+                  placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
+                  className="w-full px-3 py-2.5"
+                />
+              </div>
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'SĐT Điểm đón (Tùy chọn)' : form.serviceType === 'DIEU_PHOI' ? 'SĐT Khác (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'SĐT Nơi mua (Tùy chọn)' : 'SĐT Điểm lấy (Shop)'}</label>
@@ -552,20 +560,17 @@ export default function CreateOrder() {
           </div>
 
           {form.serviceType !== 'DIEU_PHOI' && (
-            <div>
+            <div className="relative z-[30]">
               <label className="mb-1.5 block text-sm font-medium text-slate-600">{form.serviceType === 'DAT_XE' ? 'Điểm đến (Tùy chọn)' : form.serviceType === 'MUA_HO' ? 'Nơi giao hàng (Tùy chọn)' : 'Địa chỉ giao hàng (Tùy chọn)'}</label>
-              <input
-                name="deliveryAddress"
-                value={form.deliveryAddress}
-                onChange={handleChange}
-                placeholder="456 Lê Lợi, Quận 1, TP.HCM"
-                className="input-field"
-                list="deliveryAddressList"
-                autoComplete="off"
-              />
-              <datalist id="deliveryAddressList">
-                {history.deliveryAddresses.map((item, index) => <option key={index} value={item} />)}
-              </datalist>
+              <div className="input-field p-0 flex items-center bg-white border border-slate-200 rounded-lg">
+                <AddressAutocompleteInput
+                  value={form.deliveryAddress}
+                  onChangeText={(text) => setForm({...form, deliveryAddress: text})}
+                  onSelectCoordinates={(coords) => setForm({...form, deliveryCoordinates: coords})}
+                  placeholder="456 Lê Lợi, Quận 1, TP.HCM"
+                  className="w-full px-3 py-2.5"
+                />
+              </div>
             </div>
           )}
 
