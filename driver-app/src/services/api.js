@@ -110,6 +110,11 @@ export const acceptOrder = async (id) => {
   return response.data;
 };
 
+export const rejectNearestAssignment = async (id) => {
+  const response = await api.post(`/api/orders/${id}/nearest-reject`);
+  return response.data;
+};
+
 export const pickedUpOrder = async (id) => {
   const response = await api.post(`/api/orders/${id}/pickup`);
   return response.data;

@@ -15,6 +15,7 @@ import AnimatedPage from './components/AnimatedPage';
 import api, { getAppVersionConfig } from './services/api';
 import { requestFirebaseToken, setupForegroundListener } from './utils/firebase';
 import ForceUpdateModal from './components/ForceUpdateModal';
+import NearestOrderPopup from './components/NearestOrderPopup';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { NativeAudio } from '@capacitor-community/native-audio';
@@ -265,6 +266,12 @@ function AppContent() {
     };
     window.addEventListener('driver_force_assigned', handleForceAssign);
 
+    const handleNearestAssign = (e) => {
+        // Kích hoạt còi báo động cho đơn gán gần nhất
+        startAlarm();
+    };
+    window.addEventListener('driver_nearest_order_assignment', handleNearestAssign);
+
     return () => {
       window.removeEventListener('stop_alarm_event', handleStopEvent);
       window.removeEventListener('driver_new_order', handleNewOrderEvent);
@@ -272,6 +279,7 @@ function AppContent() {
       window.removeEventListener('driver_order_cancelled', handleStopEvent);
       window.removeEventListener('driver_order_deleted_event', handleStopEvent);
       window.removeEventListener('driver_force_assigned', handleForceAssign);
+      window.removeEventListener('driver_nearest_order_assignment', handleNearestAssign);
     };
   }, [startAlarm, stopAlarm]);
 
@@ -382,7 +390,7 @@ function AppContent() {
         setLogoutAlert('Tài khoản của bạn đã bị xóa khỏi hệ thống!');
       });
 
-      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated', 'force_assigned'];
+      const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated', 'force_assigned', 'nearest_order_assignment'];
       forwardEvents.forEach(event => {
         socketRef.current.on(event, (data) => {
           if (event === 'new_order') {
@@ -454,6 +462,7 @@ function AppContent() {
           </div>
         </div>
       )}
+      <NearestOrderPopup />
     </div>
     </>
   );

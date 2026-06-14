@@ -22,6 +22,7 @@ export default function CreateOrder() {
     adminBonus: '',
     scheduledPublishAt: '',
     forceAssignDriverId: '',
+    autoAssignNearest: true,
     commissionRate: null,
     vehicleClass: 'TAY_GA',
     bankName: '',
@@ -304,6 +305,7 @@ export default function CreateOrder() {
         adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0,
         scheduledPublishAt: form.scheduledPublishAt || undefined,
         forceAssignDriverId: form.forceAssignDriverId || undefined,
+        autoAssignNearest: form.autoAssignNearest,
         commissionRate: form.commissionRate,
         senderPhone: form.pickupPhone,
         rideDetails,
@@ -684,7 +686,22 @@ export default function CreateOrder() {
                   </option>
                 ))}
              </select>
-             <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">
+             
+             {!form.forceAssignDriverId && (
+               <label className="flex items-center gap-2 mt-3 cursor-pointer relative z-10">
+                 <input 
+                   type="checkbox" 
+                   checked={form.autoAssignNearest}
+                   onChange={(e) => setForm({...form, autoAssignNearest: e.target.checked})}
+                   className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
+                 />
+                 <span className="text-sm font-bold text-purple-800">
+                   Tự động quét & Gán đơn cho Tài xế gần nhất (Popup 30s)
+                 </span>
+               </label>
+             )}
+
+             <p className="text-[10px] text-purple-600 mt-2 font-medium italic relative z-10">
                * Hệ thống sẽ đánh giá công nợ của tài xế trước khi chốt gán đơn.
              </p>
           </div>

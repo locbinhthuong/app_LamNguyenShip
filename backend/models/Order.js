@@ -218,7 +218,16 @@ const orderSchema = new mongoose.Schema({
   ipAddress: {
     type: String,
     default: null
-  }
+  },
+  pendingAssignTo: { // Gán tạm thời cho tài xế gần nhất để đợi họ xác nhận (popup 30s)
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Driver',
+    default: null
+  },
+  rejectedBy: [{ // Danh sách các tài xế đã từ chối nhận đơn này (hoặc hết hạn popup)
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Driver'
+  }]
 }, {
   timestamps: true,
   toJSON: { virtuals: true },

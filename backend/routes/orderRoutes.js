@@ -15,6 +15,9 @@ router.get('/my', verifyToken, onlyDriver, orderController.getMyOrders);
 // POST /api/orders/:id/accept - Nhận đơn
 router.post('/:id/accept', verifyToken, onlyDriver, orderController.acceptOrder);
 
+// POST /api/orders/:id/nearest-reject - Từ chối đơn gần nhất
+router.post('/:id/nearest-reject', verifyToken, onlyDriver, orderController.rejectNearestAssignment);
+
 // POST /api/orders/:id/pickup - Đã lấy hàng
 router.post('/:id/pickup', verifyToken, onlyDriver, orderController.pickedUpOrder);
 

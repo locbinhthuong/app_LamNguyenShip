@@ -7,6 +7,7 @@ const { emitNewOrder, emitOrderAccepted, emitOrderPickedUp, emitOrderDelivering,
 const { startOfTodayVietnam } = require('../utils/todayVietnam');
 const DebtTransaction = require('../models/DebtTransaction');
 const { checkDriverDebtBlock, getTodayVN } = require('../utils/debtUtils');
+const { findNearestAvailableDriver } = require('../utils/driverAssignment');
 const { sendNotification, sendMultipleNotifications } = require('../utils/notification');
 const Config = require('../models/Config');
 const { getDrivingDistance } = require('../utils/distance');
@@ -227,7 +228,7 @@ const orderController = {
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, 
         items, note, driverReminder, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, 
         scheduledPublishAt, forceAssignDriverId, commissionRate, serviceType, subServiceType,
-        senderPhone, receiverPhone, receiverPhone2, rideDetails, financialDetails, packageDetails
+        senderPhone, receiverPhone, receiverPhone2, rideDetails, financialDetails, packageDetails, autoAssignNearest
       } = req.body;
 
       let didAdminForceAssign = false;
@@ -306,6 +307,32 @@ const orderController = {
             const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
             let msgBody = `📍 Đơn: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+          }
+        } else if (autoAssignNearest && payload.pickupCoordinates && payload.pickupCoordinates.lat && payload.pickupCoordinates.lng) {
+          // Gán cho tài xế gần nhất
+          const nearestDriver = await findNearestAvailableDriver(
+            payload.pickupCoordinates.lat,
+            payload.pickupCoordinates.lng,
+            payload.commissionRate
+          );
+          
+          if (nearestDriver) {
+            payload.pendingAssignTo = nearestDriver._id;
+            await Order.findByIdAndUpdate(order._id, { pendingAssignTo: nearestDriver._id });
+            
+            req.io.to(`driver_${nearestDriver._id.toString()}`).emit('nearest_order_assignment', payload);
+            req.io.to('admins').emit('new_order', payload);
+            
+            if (nearestDriver.fcmToken) {
+              const { sendMultipleNotifications } = require('../utils/notification');
+              const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+              let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+              await sendMultipleNotifications([nearestDriver.fcmToken], '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+            }
+          } else {
+            // Không tìm thấy ai thì nổ cho tất cả
+            const { emitNewOrder } = require('../sockets/index');
+            emitNewOrder(req.io, payload, true); // true = isSilentAdmin
           }
         } else {
           const { emitNewOrder } = require('../sockets/index');
@@ -658,12 +685,23 @@ const orderController = {
         });
       }
 
+      // Lấy Order kiểm tra pendingAssignTo trước khi update
+      const existingOrder = await Order.findOne({ _id: id, status: 'PENDING' });
+      if (!existingOrder) {
+        return res.status(400).json({ success: false, message: 'Đơn hàng đã được nhận bởi tài xế khác hoặc không tồn tại' });
+      }
+      
+      if (existingOrder.pendingAssignTo && existingOrder.pendingAssignTo.toString() !== req.driver._id.toString()) {
+        return res.status(400).json({ success: false, message: 'Đơn hàng đang chờ tài xế khác phản hồi, vui lòng thử lại sau' });
+      }
+
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
       const order = await Order.findOneAndUpdate(
         { _id: id, status: 'PENDING' },
         {
           status: 'ACCEPTED',
           assignedTo: req.driver._id,
+          pendingAssignTo: null, // Xóa pendingAssignTo
           acceptedAt: new Date()
         },
         { new: true }
@@ -699,6 +737,38 @@ const orderController = {
         success: false,
         message: 'Lỗi server khi nhận đơn hàng'
       });
+    }
+  },
+
+  // POST /api/orders/:id/nearest-reject - Tài xế từ chối gán đơn gần nhất
+  rejectNearestAssignment: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const driverId = req.driver._id;
+      
+      const order = await Order.findById(id);
+      if (!order) return res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+      
+      if (order.pendingAssignTo && order.pendingAssignTo.toString() === driverId.toString()) {
+        order.pendingAssignTo = null;
+        if (!order.rejectedBy) order.rejectedBy = [];
+        if (!order.rejectedBy.includes(driverId)) {
+          order.rejectedBy.push(driverId);
+        }
+        await order.save();
+        
+        // Phát lại đơn cho tất cả tài xế
+        if (req.io) {
+          const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+          const { emitNewOrder } = require('../sockets/index');
+          emitNewOrder(req.io, payload, true); // true = isSilentAdmin
+        }
+      }
+      
+      res.status(200).json({ success: true, message: 'Đã từ chối đơn hàng' });
+    } catch (error) {
+      console.error('Error rejectNearestAssignment:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   },
 
