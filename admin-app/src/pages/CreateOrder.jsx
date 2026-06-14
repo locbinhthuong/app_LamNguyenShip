@@ -1,29 +1,52 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createOrder, getDrivers } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
-import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
-import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
-import markerIcon from 'leaflet/dist/images/marker-icon.png';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+import 'leaflet/dist/leaflet.css';
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconUrl: markerIcon,
-    iconRetinaUrl: markerIcon2x,
-    shadowUrl: markerShadow,
-});
+function PureMapPreview({ lat, lng }) {
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const markerInstance = useRef(null);
 
-function MapUpdater({ center }) {
-  const map = useMap();
   useEffect(() => {
-    if (center && center.lat && center.lng) {
-      map.setView([center.lat, center.lng], 16);
+    if (!mapRef.current) return;
+    
+    if (!mapInstance.current) {
+      mapInstance.current = L.map(mapRef.current).setView([lat, lng], 16);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current);
+      
+      const customIcon = L.divIcon({
+          className: 'custom-preview-marker',
+          html: `<div style="font-size: 24px; text-align: center; margin-top: -12px; text-shadow: 0 2px 4px rgba(0,0,0,0.4);">📍</div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 24]
+      });
+      
+      markerInstance.current = L.marker([lat, lng], { icon: customIcon }).addTo(mapInstance.current);
+    } else {
+      mapInstance.current.setView([lat, lng], 16);
+      if (markerInstance.current) {
+        markerInstance.current.setLatLng([lat, lng]);
+      }
     }
-  }, [center, map]);
-  return null;
+
+    return () => {
+      // Don't destroy the map immediately to prevent flickering on quick updates
+    };
+  }, [lat, lng]);
+
+  useEffect(() => {
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
+  }, []);
+
+  return <div ref={mapRef} style={{ width: '100%', height: '100%', zIndex: 0 }}></div>;
 }
 
 export default function CreateOrder() {
@@ -643,11 +666,7 @@ export default function CreateOrder() {
               </datalist>
               {form.pickupCoordinates && (
                 <div className="mt-2 h-40 w-full rounded-lg overflow-hidden border border-slate-200">
-                  <MapContainer center={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} zoom={16} style={{ height: '100%', width: '100%' }}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <Marker position={[form.pickupCoordinates.lat, form.pickupCoordinates.lng]} />
-                    <MapUpdater center={form.pickupCoordinates} />
-                  </MapContainer>
+                  <PureMapPreview lat={form.pickupCoordinates.lat} lng={form.pickupCoordinates.lng} />
                 </div>
               )}
             </div>
@@ -688,11 +707,7 @@ export default function CreateOrder() {
               </datalist>
               {form.deliveryCoordinates && (
                 <div className="mt-2 h-40 w-full rounded-lg overflow-hidden border border-slate-200">
-                  <MapContainer center={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} zoom={16} style={{ height: '100%', width: '100%' }}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <Marker position={[form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]} />
-                    <MapUpdater center={form.deliveryCoordinates} />
-                  </MapContainer>
+                  <PureMapPreview lat={form.deliveryCoordinates.lat} lng={form.deliveryCoordinates.lng} />
                 </div>
               )}
             </div>
