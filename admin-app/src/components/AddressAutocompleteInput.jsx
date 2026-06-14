@@ -64,10 +64,44 @@ export default function AddressAutocompleteInput({
     }
   }, []);
 
+  const autoGeocode = async (text) => {
+    try {
+      const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(text)}&limit=1&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.features && data.features.length > 0) {
+          const item = data.features[0];
+          const lat = parseFloat(item.geometry.coordinates[1]);
+          const lon = parseFloat(item.geometry.coordinates[0]);
+          if (lat && lon && onSelectCoordinates) {
+            onSelectCoordinates({ lat, lng: lon });
+            return;
+          }
+        }
+      }
+      
+      const delta = 0.3; 
+      const viewbox = `${mapCenter[1]-delta},${mapCenter[0]+delta},${mapCenter[1]+delta},${mapCenter[0]-delta}`;
+      const res2 = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(text)}&limit=1&countrycodes=vn&accept-language=vi&viewbox=${viewbox}&bounded=0`);
+      const nomData = await res2.json();
+      if (nomData && nomData.length > 0) {
+        const item = nomData[0];
+        const lat = parseFloat(item.lat);
+        const lon = parseFloat(item.lon);
+        if (lat && lon && onSelectCoordinates) {
+          onSelectCoordinates({ lat, lng: lon });
+        }
+      }
+    } catch (err) {}
+  };
+
   useEffect(() => {
     if (!isSelecting.current && value !== query) {
       isTyping.current = false;
       setQuery(value || '');
+      if (value && value.trim().length > 5) {
+        autoGeocode(value);
+      }
     }
   }, [value]);
 
@@ -107,40 +141,38 @@ export default function AddressAutocompleteInput({
         return;
       }
       
-      let apiUrl = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
-      if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
       let allResults = [];
 
       try {
-        const res = await fetch(`${apiUrl}/maps/autocomplete?location=${mapCenter[0]},${mapCenter[1]}&input=${encodeURIComponent(query)}`);
-        const data = await res.json();
-        if (data && data.predictions) {
-          allResults = data.predictions.map(item => ({
-            display_name: item.description,
-            place_id: item.place_id,
-            source: 'goong'
-          }));
-        }
-      } catch (err) {
-        console.error("Lỗi lấy dữ liệu từ Backend Map API:", err);
-      }
-
-      // Fallback
-      if (allResults.length === 0) {
-        try {
-          const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
-          if (res.ok) {
-            const photonData = await res.json();
-            (photonData.features || []).forEach(item => {
-              allResults.push({
-                display_name: formatPhotonAddress(item.properties),
-                lat: parseFloat(item.geometry.coordinates[1]),
-                lon: parseFloat(item.geometry.coordinates[0]),
-                source: 'photon'
-              });
+        const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(query)}&limit=7&lat=${mapCenter[0]}&lon=${mapCenter[1]}`);
+        if (res.ok) {
+          const photonData = await res.json();
+          (photonData.features || []).forEach(item => {
+            allResults.push({
+              display_name: formatPhotonAddress(item.properties),
+              lat: parseFloat(item.geometry.coordinates[1]),
+              lon: parseFloat(item.geometry.coordinates[0]),
+              source: 'photon'
             });
-          }
-        } catch (err) {}
+          });
+        }
+      } catch (err) {}
+
+      if (allResults.length < 3) {
+        try {
+          const delta = 0.3;
+          const viewbox = `${mapCenter[1]-delta},${mapCenter[0]+delta},${mapCenter[1]+delta},${mapCenter[0]-delta}`;
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=vn&accept-language=vi&viewbox=${viewbox}&bounded=0`);
+          const nomData = await res.json() || [];
+          nomData.forEach(item => {
+            allResults.push({
+              display_name: item.display_name,
+              lat: parseFloat(item.lat),
+              lon: parseFloat(item.lon),
+              source: 'nominatim'
+            });
+          });
+        } catch (e) {}
       }
 
       const seen = new Set();
@@ -172,21 +204,6 @@ export default function AddressAutocompleteInput({
     
     let lon = item.lon;
     let lat = item.lat;
-    let apiUrl = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
-    if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
-
-    if (item.source === 'goong' && item.place_id && (!lat || !lon)) {
-      try {
-        const res = await fetch(`${apiUrl}/maps/place?place_id=${item.place_id}`);
-        const data = await res.json();
-        if (data && data.result && data.result.geometry) {
-          lat = data.result.geometry.location.lat;
-          lon = data.result.geometry.location.lng;
-        }
-      } catch (e) {
-        console.error("Lỗi lấy chi tiết địa điểm từ Backend:", e);
-      }
-    }
 
     if (lat && lon && onSelectCoordinates) onSelectCoordinates({ lat, lng: lon });
     
@@ -208,21 +225,6 @@ export default function AddressAutocompleteInput({
     
     let lon = item.lon;
     let lat = item.lat;
-    let apiUrl = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
-    if (apiUrl && !apiUrl.endsWith('/api')) apiUrl += '/api';
-
-    if (item.source === 'goong' && item.place_id && (!lat || !lon)) {
-      try {
-        const res = await fetch(`${apiUrl}/maps/place?place_id=${item.place_id}`);
-        const data = await res.json();
-        if (data && data.result && data.result.geometry) {
-          lat = data.result.geometry.location.lat;
-          lon = data.result.geometry.location.lng;
-        }
-      } catch (e) {
-        console.error("Lỗi lấy chi tiết địa điểm từ Backend:", e);
-      }
-    }
     
     setSuggestions([]);
     
