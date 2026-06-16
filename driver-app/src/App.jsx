@@ -151,7 +151,6 @@ function AppContent() {
         fallbackAudioRef.current.pause(); 
         fallbackAudioRef.current.currentTime = 0; 
       } catch(e){}
-      fallbackAudioRef.current = null;
     }
   }, []);
 
