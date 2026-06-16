@@ -221,7 +221,7 @@ function AppContent() {
                 body: "Vào ứng dụng kiểm tra ngay!",
                 id: Math.floor(Math.random() * 2147483647),
                 schedule: { at: new Date(Date.now() + 100) },
-                channelId: 'aloshipp_push_channel_v4'
+                channelId: 'aloshipp_push_channel_v6'
               }]
             }).catch(e => console.log("Lỗi Notification: " + e.message));
         });
@@ -337,7 +337,7 @@ function AppContent() {
     if (Capacitor.isNativePlatform()) {
       import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
           LocalNotifications.createChannel({
-            id: 'aloshipp_push_channel_v4',
+            id: 'aloshipp_push_channel_v6',
             name: 'Kênh Báo Đơn 3KM (Push V4)',
             description: 'Kênh âm báo ưu tiên cho đơn hàng',
             importance: 5,
