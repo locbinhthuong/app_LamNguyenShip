@@ -92,6 +92,7 @@ function AppContent() {
         } catch (e) {
           console.error("Audio init error:", e);
         }
+      }
     };
     
     initAudio();
