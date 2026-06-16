@@ -397,30 +397,39 @@ export default function Home() {
 
     const executeGps = () => {
       setGpsStatus('FINDING');
-      startGpsTracking(
-        (pos) => {
-          setGpsStatus('TRACKING');
-          requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
+
+      const handleSuccess = (pos) => {
+        setGpsStatus('TRACKING');
+        requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
+        
+        const now = Date.now();
+        // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
+        if (now - lastLocationEmitRef.current >= 6000) {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
           
-          const now = Date.now();
-          // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
-          if (now - lastLocationEmitRef.current >= 6000) {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            
-            if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
-              window.driverSocket.emit('update_location', { lat, lng });
-            } else {
-              updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
-            }
-            lastLocationEmitRef.current = now;
+          if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
+            window.driverSocket.emit('update_location', { lat, lng });
+          } else {
+            updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
           }
-        },
-        (err) => {
-          setGpsStatus('ERROR');
-          showNotification('Lỗi cấp quyền: Cần bật Vị Trí (Location/Luôn Luôn)!', 'error');
+          lastLocationEmitRef.current = now;
         }
-      );
+      };
+
+      const handleError = (err) => {
+        setGpsStatus('ERROR');
+        showNotification('Lỗi cấp quyền: Cần bật Vị Trí (Location/Luôn Luôn)!', 'error');
+      };
+
+      // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên siêu tốc trên mọi nền tảng
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(handleSuccess, (err) => console.warn("Lỗi Get nhanh:", err), { 
+          enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
+        });
+      }
+
+      startGpsTracking(handleSuccess, handleError);
     };
 
     requestGpsWithDisclosure(executeGps);
@@ -457,9 +466,9 @@ export default function Home() {
           setGpsStatus('ERROR');
         };
 
-        // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên (khắc phục lỗi xoay hoài lúc mới load trên web)
-        if (!Capacitor.isNativePlatform()) {
-          navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
+        // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên siêu tốc trên mọi nền tảng (cả Native lẫn Web)
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(handleSuccess, (err) => console.warn("Lỗi Get nhanh tự động:", err), { 
             enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
           });
         }
