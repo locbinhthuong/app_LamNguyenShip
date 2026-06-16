@@ -19,6 +19,7 @@ import NearestOrderPopup from './components/NearestOrderPopup';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { NativeAudio } from '@capacitor-community/native-audio';
+import { Haptics } from '@capacitor/haptics';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
 
@@ -82,58 +83,32 @@ function AppContent() {
       }, remainingTime);
     }
 
-    const initAudio = async () => {
-      try {
-        if (Capacitor.isNativePlatform()) {
-           const possiblePaths = ['chuong', 'chuong.mp3', 'public/chuong.mp3', 'assets/public/chuong.mp3', 'raw/chuong', 'res/raw/chuong.mp3'];
-           for (const path of possiblePaths) {
-               try {
-                  await NativeAudio.preload({
-                      assetId: 'chuong_aloshipp',
-                      assetPath: path,
-                      audioChannelNum: 1,
-                      isUrl: false
-                  });
-                  console.log('Preloaded native audio with path:', path);
-                  break; // Thoát vòng lặp khi load thành công
-               } catch(e) {
-                  // Thử path tiếp theo
-               }
-           }
-        }
-
-        if (!audioCtxRef.current) {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          if (!AudioContext) return;
-          audioCtxRef.current = new AudioContext();
-          
-          const response = await fetch('/chuong.mp3');
-          const arrayBuffer = await response.arrayBuffer();
-          const decoded = await audioCtxRef.current.decodeAudioData(arrayBuffer);
-          audioBufferRef.current = decoded;
-        }
-      } catch (err) {
-        console.error("Audio init error:", err);
+    const initAudio = () => {
+      if (!fallbackAudioRef.current) {
+        const audio = new Audio('/chuong.mp3');
+        audio.loop = true;
+        fallbackAudioRef.current = audio;
       }
     };
     
-    // Khởi tạo tải trước file mp3 (nhưng chưa phát)
     initAudio();
     
-    const resumeAudioContext = () => {
-      initAudio();
-      if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-        audioCtxRef.current.resume();
+    const unlockAudio = () => {
+      if (fallbackAudioRef.current && fallbackAudioRef.current.paused) {
+         // Chơi một đoạn âm thanh trống ngắn để unlock trên mobile
+         fallbackAudioRef.current.play().then(() => {
+             fallbackAudioRef.current.pause();
+             fallbackAudioRef.current.currentTime = 0;
+         }).catch(e => {});
       }
     };
 
-    // Đánh thức Audio Context ở mọi lần chạm tay vào màn hình
-    document.addEventListener('touchstart', resumeAudioContext, { passive: true });
-    document.addEventListener('click', resumeAudioContext, { passive: true });
+    document.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
+    document.addEventListener('click', unlockAudio, { passive: true, once: true });
     
     return () => {
-      document.removeEventListener('touchstart', resumeAudioContext);
-      document.removeEventListener('click', resumeAudioContext);
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
     };
   }, []);
 
@@ -188,41 +163,24 @@ function AppContent() {
     intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
 
     const playWebAudio = () => {
-        if (audioCtxRef.current && audioBufferRef.current) {
-            if (audioCtxRef.current.state !== 'running') {
-                audioCtxRef.current.resume();
-            }
-            const source = audioCtxRef.current.createBufferSource();
-            source.buffer = audioBufferRef.current;
-            source.connect(audioCtxRef.current.destination);
-            source.loop = true;
-            source.start(0);
-            sourceNodeRef.current = source;
+        if (Capacitor.isNativePlatform()) {
+             Haptics.vibrate({ duration: 1000 }).catch(e => {});
+        }
+        if (fallbackAudioRef.current) {
+            fallbackAudioRef.current.play().catch(e => {
+                console.error('Audio play blocked:', e);
+                alert('Lỗi Web Audio (Cần tương tác chạm màn hình): ' + e.message);
+            });
         } else {
-            try { 
-              const audio = new Audio('/chuong.mp3');
-              audio.loop = true;
-              audio.play().catch(e => {
-                  console.error('Audio play blocked:', e);
-                  alert('Lỗi Web Audio (Cần tương tác chạm màn hình): ' + e.message);
-              });
-              fallbackAudioRef.current = audio;
-            } catch(e) {
-              alert('Web Audio Exception: ' + e.message);
-            }
+            alert('Lỗi Web Audio: Audio chưa được khởi tạo!');
         }
     };
     
     if (Capacitor.isNativePlatform()) {
-        NativeAudio.loop({ assetId: 'chuong_aloshipp' })
-          .catch(e => {
-              console.log('Native play err', e);
-          });
-          
-        // Luôn chạy Web Audio song song để đảm bảo chắc chắn có tiếng
+        // Chạy Web Audio (đã được unlock bằng touch) làm luồng âm thanh chính
         playWebAudio();
           
-        // Ép hệ điều hành phát ra âm thanh thông qua kênh Notification để chống tịt ngòi
+        // Kèm theo LocalNotification để Android tạo thêm Notification Ringtone
         import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
             LocalNotifications.schedule({
               notifications: [{
