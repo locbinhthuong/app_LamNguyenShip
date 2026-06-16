@@ -312,17 +312,15 @@ function AppContent() {
     // Tắt chuông khi bấm vào Local Notification hoặc FCM Notification (App đang chạy ngầm)
     if (Capacitor.isNativePlatform()) {
       import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
-        if (Capacitor.getPlatform() === 'android') {
           LocalNotifications.createChannel({
-            id: 'aloshipp_local_channel',
-            name: 'Thông báo đơn hàng',
-            description: 'Kênh âm báo cho đơn hàng mới',
+            id: 'aloshipp_push_channel_v2',
+            name: 'Kênh Báo Đơn 3KM (Push V2)',
+            description: 'Kênh âm báo ưu tiên cho đơn hàng',
             importance: 5,
             visibility: 1,
-            sound: 'default',
+            sound: 'chuong.mp3',
             vibration: true
           });
-        }
         LocalNotifications.addListener('localNotificationActionPerformed', () => {
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
         });
