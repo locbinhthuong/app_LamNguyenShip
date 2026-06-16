@@ -85,14 +85,21 @@ function AppContent() {
     const initAudio = async () => {
       try {
         if (Capacitor.isNativePlatform()) {
-           try {
-              await NativeAudio.preload({
-                  assetId: 'chuong_aloshipp',
-                  assetPath: 'public/chuong.mp3',
-                  audioChannelNum: 1,
-                  isUrl: false
-              });
-           } catch(e) { console.log('NativeAudio preload error', e); }
+           const possiblePaths = ['chuong', 'chuong.mp3', 'public/chuong.mp3', 'assets/public/chuong.mp3', 'raw/chuong', 'res/raw/chuong.mp3'];
+           for (const path of possiblePaths) {
+               try {
+                  await NativeAudio.preload({
+                      assetId: 'chuong_aloshipp',
+                      assetPath: path,
+                      audioChannelNum: 1,
+                      isUrl: false
+                  });
+                  console.log('Preloaded native audio with path:', path);
+                  break; // Thoát vòng lặp khi load thành công
+               } catch(e) {
+                  // Thử path tiếp theo
+               }
+           }
         }
 
         if (!audioCtxRef.current) {
@@ -207,6 +214,19 @@ function AppContent() {
               console.log('Native play err, fallback to web', e);
               playWebAudio();
           });
+          
+        // Ép hệ điều hành phát ra âm thanh thông qua kênh Notification để chống tịt ngòi
+        import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
+            LocalNotifications.schedule({
+              notifications: [{
+                title: "🔥 ĐƠN HÀNG MỚI",
+                body: "Vào ứng dụng kiểm tra ngay!",
+                id: new Date().getTime(),
+                schedule: { at: new Date(Date.now() + 100) },
+                channelId: 'aloshipp_push_channel_v3'
+              }]
+            }).catch(() => {});
+        });
     } else {
         playWebAudio();
     }
