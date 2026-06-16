@@ -88,7 +88,7 @@ function AppContent() {
            try {
               await NativeAudio.preload({
                   assetId: 'chuong_aloshipp',
-                  assetPath: 'chuong',
+                  assetPath: 'public/chuong.mp3',
                   audioChannelNum: 1,
                   isUrl: false
               });
