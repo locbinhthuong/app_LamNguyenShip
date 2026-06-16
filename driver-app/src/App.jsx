@@ -88,7 +88,7 @@ function AppContent() {
            try {
               await NativeAudio.preload({
                   assetId: 'chuong_aloshipp',
-                  assetPath: 'chuong.mp3',
+                  assetPath: 'chuong',
                   audioChannelNum: 1,
                   isUrl: false
               });
@@ -174,7 +174,11 @@ function AppContent() {
   }, []);
 
   const startAlarm = useCallback(() => {
+    if (intervalRef.current) return; // Nếu đang kêu rồi thì bỏ qua để chống nhiễu (double-call)
     stopAlarm();
+
+    // Set timeout ngay lập tức để block các lệnh gọi đồng thời khác
+    intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
 
     const playWebAudio = () => {
         if (audioCtxRef.current && audioBufferRef.current) {
@@ -187,23 +191,18 @@ function AppContent() {
             source.loop = true;
             source.start(0);
             sourceNodeRef.current = source;
-            intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
         } else {
             try { 
               const audio = new Audio('/chuong.mp3');
               audio.loop = true;
               audio.play().catch(e => console.error('Audio play blocked:', e));
               fallbackAudioRef.current = audio;
-              intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
             } catch(e) {}
         }
     };
     
     if (Capacitor.isNativePlatform()) {
         NativeAudio.loop({ assetId: 'chuong_aloshipp' })
-          .then(() => {
-              intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
-          })
           .catch(e => {
               console.log('Native play err, fallback to web', e);
               playWebAudio();
@@ -320,8 +319,8 @@ function AppContent() {
     if (Capacitor.isNativePlatform()) {
       import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
           LocalNotifications.createChannel({
-            id: 'aloshipp_push_channel_v2',
-            name: 'Kênh Báo Đơn 3KM (Push V2)',
+            id: 'aloshipp_push_channel_v3',
+            name: 'Kênh Báo Đơn 3KM (Push V3)',
             description: 'Kênh âm báo ưu tiên cho đơn hàng',
             importance: 5,
             visibility: 1,

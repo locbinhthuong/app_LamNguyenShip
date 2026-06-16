@@ -71,13 +71,13 @@ export default function NearestOrderPopup() {
   const handleReject = async (isTimeout = false) => {
     if (loading) return;
     setLoading(true);
+    window.dispatchEvent(new CustomEvent('stop_alarm_event'));
     try {
       await rejectNearestAssignment(order._id || order.id);
     } catch (err) {
       console.log('Lỗi khi từ chối đơn:', err);
     } finally {
       setOrder(null);
-      window.dispatchEvent(new CustomEvent('stop_alarm_event'));
       setLoading(false);
     }
   };
