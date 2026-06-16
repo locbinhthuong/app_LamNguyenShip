@@ -38,7 +38,7 @@ const findNearestAvailableDriver = async (pickupLat, pickupLng, commissionRate =
     const availableDrivers = await Driver.find(query).lean();
     if (availableDrivers.length === 0) return null;
 
-    // 2. Tính khoảng cách, chỉ lấy trong bán kính 3km, và sắp xếp từ gần đến xa
+    // 2. Tính khoảng cách, chỉ lấy trong bán kính 1.5km, và sắp xếp từ gần đến xa
     const driversWithDistance = availableDrivers.reduce((acc, driver) => {
       const dist = getHaversineDistance(
         pickupLat,
@@ -117,7 +117,7 @@ const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commission
     const availableDrivers = await Driver.find(query).lean();
     if (availableDrivers.length === 0) return [];
 
-    // 2. Tính khoảng cách, chỉ lấy trong bán kính 3km, và sắp xếp từ gần đến xa
+    // 2. Tính khoảng cách, chỉ lấy trong bán kính 1.5km, và sắp xếp từ gần đến xa
     const driversWithDistance = availableDrivers.reduce((acc, driver) => {
       const dist = getHaversineDistance(
         pickupLat,
