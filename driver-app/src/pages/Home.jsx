@@ -628,8 +628,11 @@ export default function Home() {
       if (updatedOrder.status === 'PENDING') {
          // Lọc bỏ nếu đơn hàng đang được gán độc quyền cho nhóm tài xế gần nhất
          if (updatedOrder.pendingAssignTo && updatedOrder.pendingAssignTo.length > 0) {
-             setAvailableOrders(prev => prev.filter(o => o._id !== updatedOrder._id));
-             return;
+             const isDriverInGroup = updatedOrder.pendingAssignTo.some(id => id.toString() === (driver?._id || driver?.id)?.toString());
+             if (!isDriverInGroup) {
+               setAvailableOrders(prev => prev.filter(o => o._id !== updatedOrder._id));
+               return;
+             }
          }
 
          if (updatedOrder.commissionRate != null && Number(updatedOrder.commissionRate) !== Number(driverRate)) {

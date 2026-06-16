@@ -21,13 +21,12 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
     const message = {
       notification: { title, body },
       data: {
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
         ...data
       },
       android: {
         priority: "high",
         notification: {
-          sound: "chuong",
+          sound: "chuong.mp3",
           channelId: "aloshipp_push_channel_v2",
           defaultSound: false,
           defaultVibrateTimings: true
@@ -81,13 +80,12 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
     const message = {
       notification: { title, body },
       data: {
-        click_action: "FLUTTER_NOTIFICATION_CLICK",
         ...data
       },
       android: {
         priority: "high",
         notification: {
-          sound: "chuong",
+          sound: "chuong.mp3",
           channelId: "aloshipp_push_channel_v2",
           defaultSound: false,
           defaultVibrateTimings: true

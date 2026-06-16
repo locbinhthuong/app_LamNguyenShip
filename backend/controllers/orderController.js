@@ -107,7 +107,8 @@ const orderController = {
         $or: [
           { pendingAssignTo: { $exists: false } },
           { pendingAssignTo: null },
-          { pendingAssignTo: { $size: 0 } }
+          { pendingAssignTo: { $size: 0 } },
+          { pendingAssignTo: req.driver._id }
         ],
         $and: [
           {
@@ -372,7 +373,7 @@ const orderController = {
               } catch (e) {
                 console.error('Fallback timeout error:', e);
               }
-            }, 32000);
+            }, 30000);
           } else {
             // Không tìm thấy ai thì nổ cho tất cả
             const { emitNewOrder } = require('../sockets/index');
@@ -711,7 +712,7 @@ const orderController = {
                 } catch (e) {
                   console.error('Fallback timeout error:', e);
                 }
-              }, 32000);
+              }, 30000);
             } else {
               emitNewOrder(req.io, payload, true);
             }
