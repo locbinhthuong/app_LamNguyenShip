@@ -88,7 +88,7 @@ function AppContent() {
            try {
               await NativeAudio.preload({
                   assetId: 'chuong_aloshipp',
-                  assetPath: 'public/chuong.mp3',
+                  assetPath: 'chuong.mp3',
                   audioChannelNum: 1,
                   isUrl: false
               });
@@ -267,6 +267,13 @@ function AppContent() {
     window.addEventListener('driver_force_assigned', handleForceAssign);
 
     const handleNearestAssign = (e) => {
+        const order = e.detail;
+        if (order) {
+            setPushMessage({ 
+                title: '🚀 ĐƠN MỚI GẦN BẠN', 
+                message: order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Bạn là tài xế gần nhất!'
+            });
+        }
         // Kích hoạt còi báo động cho đơn gán gần nhất
         startAlarm();
     };

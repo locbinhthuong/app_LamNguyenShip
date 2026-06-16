@@ -315,7 +315,7 @@ const orderController = {
             const { sendMultipleNotifications } = require('../utils/notification');
             const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
             let msgBody = `📍 Đơn: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
-            await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+            await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
         } else if (autoAssignNearest && payload.pickupCoordinates && payload.pickupCoordinates.lat && payload.pickupCoordinates.lng) {
           // Gán cho một nhóm tài xế gần nhất
@@ -346,7 +346,7 @@ const orderController = {
             req.io.to('admins').emit('new_order', payload);
             
             if (fcmTokens.length > 0) {
-              await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+              await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
             }
 
             // Fallback timeout: Sau 32s nếu đơn vẫn PENDING và mảng chưa rỗng thì ép xóa và nổ cho tất cả
@@ -656,7 +656,7 @@ const orderController = {
             const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
             let msgBody = payload.driverReminder ? `⚠️ ${payload.driverReminder}\n` : '';
             msgBody += `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
-            await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+            await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
         } else if (isDraftToPending) {
           if (orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
@@ -687,7 +687,7 @@ const orderController = {
               }
               
               if (fcmTokens.length > 0) {
-                await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}` }).catch(e => console.log('Push lỗi', e));
+                await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
               }
 
               setTimeout(async () => {
