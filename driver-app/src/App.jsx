@@ -202,9 +202,14 @@ function AppContent() {
             try { 
               const audio = new Audio('/chuong.mp3');
               audio.loop = true;
-              audio.play().catch(e => console.error('Audio play blocked:', e));
+              audio.play().catch(e => {
+                  console.error('Audio play blocked:', e);
+                  alert('Lỗi Web Audio (Cần tương tác chạm màn hình): ' + e.message);
+              });
               fallbackAudioRef.current = audio;
-            } catch(e) {}
+            } catch(e) {
+              alert('Web Audio Exception: ' + e.message);
+            }
         }
     };
     
@@ -212,6 +217,7 @@ function AppContent() {
         NativeAudio.loop({ assetId: 'chuong_aloshipp' })
           .catch(e => {
               console.log('Native play err, fallback to web', e);
+              alert('Lỗi Native Audio: ' + JSON.stringify(e));
               playWebAudio();
           });
           
