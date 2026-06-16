@@ -484,6 +484,31 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [driver?.isOnline]);
 
+  // Heartbeat định vị: Ép lấy vị trí mỗi 30 giây khi đang Online (Tránh lỗi tài xế ngồi im không di chuyển)
+  useEffect(() => {
+    if (gpsStatus === 'TRACKING' && driver?.isOnline) {
+      const heartbeatTimer = setInterval(() => {
+        if (!document.hidden && navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              if (window.driverSocket && window.driverSocket.connected) {
+                window.driverSocket.emit('update_location', { lat, lng });
+              }
+            },
+            (err) => {
+              console.warn("⚠️ [Heartbeat] Lỗi lấy vị trí ngầm:", err.message);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+          );
+        }
+      }, 30000); // Mỗi 30 giây
+
+      return () => clearInterval(heartbeatTimer);
+    }
+  }, [gpsStatus, driver?.isOnline]);
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
