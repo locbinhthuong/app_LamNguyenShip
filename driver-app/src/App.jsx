@@ -95,11 +95,24 @@ function AppContent() {
       }
       
       if (Capacitor.isNativePlatform()) {
-        NativeAudio.preload({
-          assetId: 'chuong_aloshipp',
-          assetPath: 'chuong.mp3',
-          isComplex: true
-        }).catch(err => console.log('NativeAudio Preload Error:', err));
+        const preloadAudio = async () => {
+          const possiblePaths = ['public/chuong.mp3', 'chuong.mp3', 'raw/chuong.mp3'];
+          for (const path of possiblePaths) {
+            try {
+              await NativeAudio.preload({
+                assetId: 'chuong_aloshipp',
+                assetPath: path,
+                isComplex: true,
+                audioChannelNum: 1
+              });
+              console.log('NativeAudio Preload Success with path:', path);
+              break;
+            } catch (err) {
+              // Ignore and try next path
+            }
+          }
+        };
+        preloadAudio();
       }
     };
     
