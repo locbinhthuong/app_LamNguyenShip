@@ -216,10 +216,11 @@ function AppContent() {
     if (Capacitor.isNativePlatform()) {
         NativeAudio.loop({ assetId: 'chuong_aloshipp' })
           .catch(e => {
-              console.log('Native play err, fallback to web', e);
-              alert('Lỗi Native Audio: ' + JSON.stringify(e));
-              playWebAudio();
+              console.log('Native play err', e);
           });
+          
+        // Luôn chạy Web Audio song song để đảm bảo chắc chắn có tiếng
+        playWebAudio();
           
         // Ép hệ điều hành phát ra âm thanh thông qua kênh Notification để chống tịt ngòi
         import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
@@ -227,11 +228,11 @@ function AppContent() {
               notifications: [{
                 title: "🔥 ĐƠN HÀNG MỚI",
                 body: "Vào ứng dụng kiểm tra ngay!",
-                id: new Date().getTime(),
+                id: Math.floor(Math.random() * 2147483647), // Phải là Int32
                 schedule: { at: new Date(Date.now() + 100) },
-                channelId: 'aloshipp_push_channel_v3'
+                channelId: 'aloshipp_push_channel_v4'
               }]
-            }).catch(() => {});
+            }).catch(e => alert("Lỗi Notification: " + e.message));
         });
     } else {
         playWebAudio();
@@ -345,8 +346,8 @@ function AppContent() {
     if (Capacitor.isNativePlatform()) {
       import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
           LocalNotifications.createChannel({
-            id: 'aloshipp_push_channel_v3',
-            name: 'Kênh Báo Đơn 3KM (Push V3)',
+            id: 'aloshipp_push_channel_v4',
+            name: 'Kênh Báo Đơn 3KM (Push V4)',
             description: 'Kênh âm báo ưu tiên cho đơn hàng',
             importance: 5,
             visibility: 1,
