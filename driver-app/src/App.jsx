@@ -92,29 +92,6 @@ function AppContent() {
         } catch (e) {
           console.error("Audio init error:", e);
         }
-      }
-      
-      if (Capacitor.isNativePlatform()) {
-        const preloadAudio = async () => {
-          const possiblePaths = ['public/chuong.mp3', 'chuong.mp3', 'raw/chuong.mp3'];
-          for (const path of possiblePaths) {
-            try {
-              await NativeAudio.preload({
-                assetId: 'chuong_aloshipp',
-                assetPath: path,
-                isComplex: true,
-                audioChannelNum: 1
-              });
-              console.log('NativeAudio Preload Success with path:', path);
-              break;
-            } catch (err) {
-              // Ignore and try next path
-            }
-          }
-        };
-        preloadAudio();
-        console.log('--- NATIVE AUDIO PRELOAD TRIGGERED V2 ---');
-      }
     };
     
     initAudio();
@@ -164,9 +141,6 @@ function AppContent() {
       clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
-    if (Capacitor.isNativePlatform()) {
-      NativeAudio.stop({ assetId: 'chuong_aloshipp' }).catch(e => {});
-    }
     if (sourceNodeRef.current) {
       try { sourceNodeRef.current.stop(); } catch(e){}
       try { sourceNodeRef.current.disconnect(); } catch(e){}
@@ -190,22 +164,16 @@ function AppContent() {
     const playWebAudio = () => {
         if (Capacitor.isNativePlatform()) {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
-            NativeAudio.loop({ assetId: 'chuong_aloshipp' }).catch(e => {
-                console.log("NativeAudio play error, falling back to Web Audio:", e);
-                if (fallbackAudioRef.current) {
-                    fallbackAudioRef.current.play().catch(err => {
-                        console.error('Fallback audio play blocked:', err);
-                        // Do not alert aggressively to avoid blocking UI, just log
-                    });
+        }
+        if (fallbackAudioRef.current) {
+            fallbackAudioRef.current.play().catch(e => {
+                console.error('Audio play blocked:', e);
+                if (!Capacitor.isNativePlatform()) {
+                    alert('Trình duyệt chặn phát âm thanh. Vui lòng chạm vào màn hình bất kỳ đâu để cấp quyền cho chuông báo!');
                 }
             });
         } else {
-            if (fallbackAudioRef.current) {
-                fallbackAudioRef.current.play().catch(e => {
-                    console.error('Audio play blocked:', e);
-                    alert('Trình duyệt chặn phát âm thanh. Vui lòng chạm vào màn hình bất kỳ đâu để cấp quyền cho chuông báo!');
-                });
-            } else {
+            if (!Capacitor.isNativePlatform()) {
                 alert('Lỗi Web Audio: Audio chưa được khởi tạo!');
             }
         }
