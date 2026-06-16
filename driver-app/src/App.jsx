@@ -113,6 +113,7 @@ function AppContent() {
           }
         };
         preloadAudio();
+        console.log('--- NATIVE AUDIO PRELOAD TRIGGERED V2 ---');
       }
     };
     
