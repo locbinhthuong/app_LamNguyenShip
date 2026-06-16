@@ -169,14 +169,10 @@ function AppContent() {
         if (fallbackAudioRef.current) {
             fallbackAudioRef.current.play().catch(e => {
                 console.error('Audio play blocked:', e);
-                if (!Capacitor.isNativePlatform()) {
-                    alert('Trình duyệt chặn phát âm thanh. Vui lòng chạm vào màn hình bất kỳ đâu để cấp quyền cho chuông báo!');
-                }
+                alert('🔴 LỖI PHÁT CHUÔNG: ' + e.message + '\n(Hệ điều hành chặn hoặc bạn chưa bật Âm lượng Media)');
             });
         } else {
-            if (!Capacitor.isNativePlatform()) {
-                alert('Lỗi Web Audio: Audio chưa được khởi tạo!');
-            }
+            alert('🔴 LỖI PHÁT CHUÔNG: Hệ thống Audio chưa sẵn sàng!');
         }
     };
     
