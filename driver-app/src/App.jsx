@@ -85,9 +85,21 @@ function AppContent() {
 
     const initAudio = () => {
       if (!fallbackAudioRef.current) {
-        const audio = new Audio('/chuong.mp3');
-        audio.loop = true;
-        fallbackAudioRef.current = audio;
+        try {
+          const audio = new Audio('/chuong.mp3');
+          audio.loop = true;
+          fallbackAudioRef.current = audio;
+        } catch (e) {
+          console.error("Audio init error:", e);
+        }
+      }
+      
+      if (Capacitor.isNativePlatform()) {
+        NativeAudio.preload({
+          assetId: 'chuong_aloshipp',
+          assetPath: 'chuong.mp3',
+          isComplex: true
+        }).catch(err => console.log('NativeAudio Preload Error:', err));
       }
     };
     
@@ -163,33 +175,41 @@ function AppContent() {
 
     const playWebAudio = () => {
         if (Capacitor.isNativePlatform()) {
-             Haptics.vibrate({ duration: 1000 }).catch(e => {});
-        }
-        if (fallbackAudioRef.current) {
-            fallbackAudioRef.current.play().catch(e => {
-                console.error('Audio play blocked:', e);
-                alert('Lỗi Web Audio (Cần tương tác chạm màn hình): ' + e.message);
+            Haptics.vibrate({ duration: 1000 }).catch(e => {});
+            NativeAudio.loop({ assetId: 'chuong_aloshipp' }).catch(e => {
+                console.log("NativeAudio play error, falling back to Web Audio:", e);
+                if (fallbackAudioRef.current) {
+                    fallbackAudioRef.current.play().catch(err => {
+                        console.error('Fallback audio play blocked:', err);
+                        // Do not alert aggressively to avoid blocking UI, just log
+                    });
+                }
             });
         } else {
-            alert('Lỗi Web Audio: Audio chưa được khởi tạo!');
+            if (fallbackAudioRef.current) {
+                fallbackAudioRef.current.play().catch(e => {
+                    console.error('Audio play blocked:', e);
+                    alert('Trình duyệt chặn phát âm thanh. Vui lòng chạm vào màn hình bất kỳ đâu để cấp quyền cho chuông báo!');
+                });
+            } else {
+                alert('Lỗi Web Audio: Audio chưa được khởi tạo!');
+            }
         }
     };
     
     if (Capacitor.isNativePlatform()) {
-        // Chạy Web Audio (đã được unlock bằng touch) làm luồng âm thanh chính
         playWebAudio();
           
-        // Kèm theo LocalNotification để Android tạo thêm Notification Ringtone
         import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
             LocalNotifications.schedule({
               notifications: [{
                 title: "🔥 ĐƠN HÀNG MỚI",
                 body: "Vào ứng dụng kiểm tra ngay!",
-                id: Math.floor(Math.random() * 2147483647), // Phải là Int32
+                id: Math.floor(Math.random() * 2147483647),
                 schedule: { at: new Date(Date.now() + 100) },
                 channelId: 'aloshipp_push_channel_v4'
               }]
-            }).catch(e => alert("Lỗi Notification: " + e.message));
+            }).catch(e => console.log("Lỗi Notification: " + e.message));
         });
     } else {
         playWebAudio();
