@@ -88,6 +88,7 @@ function AppContent() {
         try {
           const audio = new Audio('/chuong.mp3');
           audio.loop = true;
+          audio.preload = 'auto';
           fallbackAudioRef.current = audio;
         } catch (e) {
           console.error("Audio init error:", e);
@@ -185,7 +186,6 @@ function AppContent() {
                 title: "🔥 ĐƠN HÀNG MỚI",
                 body: "Vào ứng dụng kiểm tra ngay!",
                 id: Math.floor(Math.random() * 2147483647),
-                schedule: { at: new Date(Date.now() + 100) },
                 channelId: 'aloshipp_push_channel_v6'
               }]
             }).catch(e => console.log("Lỗi Notification: " + e.message));
