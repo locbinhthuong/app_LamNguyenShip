@@ -337,7 +337,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
             ) : (
               <>
                 <Check size={20} />
-                <span>1 TÀI XẾ GIAO ({deliveries.length} ĐIỂM)</span>
+                <span>1 TÀI XẾ GIAO NHIỀU ĐƠN ({deliveries.length} ĐIỂM)</span>
               </>
             )}
           </button>
@@ -356,7 +356,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
             ) : (
               <>
                 <Package size={20} />
-                <span>NHIỀU TÀI XẾ GIAO (TÁCH THÀNH {deliveries.length} ĐƠN)</span>
+                <span>NHIỀU TÀI XẾ GIAO TỪNG ĐƠN ({deliveries.length} ĐƠN)</span>
               </>
             )}
           </button>
