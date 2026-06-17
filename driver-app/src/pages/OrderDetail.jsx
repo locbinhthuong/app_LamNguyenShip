@@ -344,6 +344,12 @@ export default function OrderDetail() {
                      </a>
                    </div>
                    <p className="text-slate-800 font-medium text-sm leading-snug mb-2">{d.deliveryAddress || 'Chưa xác định'}</p>
+                   {d.note && (
+                     <div className="bg-amber-50/70 p-2 rounded-lg border border-amber-100 mb-2">
+                       <p className="text-[10px] font-bold text-amber-700 uppercase mb-0.5 flex items-center gap-1"><AlertTriangle size={10}/> LƯU Ý ĐIỂM NÀY:</p>
+                       <p className="text-xs text-amber-900 font-medium whitespace-pre-wrap">{d.note}</p>
+                     </div>
+                   )}
                    <div className="flex flex-wrap items-center gap-2">
                      {d.receiverPhone && (
                         <a href={`tel:${d.receiverPhone}`} className="inline-flex bg-blue-100 text-blue-700 font-black tracking-wider px-3 py-1.5 rounded-lg active:scale-95 transition-transform items-center gap-1.5 border border-blue-200 text-xs"><Phone size={12}/> Gọi Khách: {d.receiverPhone}</a>
