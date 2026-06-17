@@ -4,7 +4,7 @@ const orderSchema = new mongoose.Schema({
   // Phân loại hình thức dịch vụ
   serviceType: {
     type: String,
-    enum: ['GIAO_HANG', 'DAT_XE', 'MUA_HO', 'DIEU_PHOI'],
+    enum: ['GIAO_HANG', 'DAT_XE', 'MUA_HO', 'DIEU_PHOI', 'DON_GHEP'],
     default: 'GIAO_HANG',
     index: true
   },
@@ -117,6 +117,22 @@ const orderSchema = new mongoose.Schema({
     bankName: { type: String, default: '' },
     transactionAmount: { type: Number, default: 0 }
   },
+
+  // Chi tiết dịch vụ: DON_GHEP (Đơn nhiều điểm giao)
+  batchedDeliveries: [{
+    receiverName: { type: String, trim: true },
+    receiverPhone: { type: String, trim: true },
+    deliveryAddress: { type: String, trim: true },
+    deliveryCoordinates: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null }
+    },
+    codAmount: { type: Number, default: 0 },
+    fee: { type: Number, default: 0 },
+    distanceKm: { type: Number, default: 0 },
+    note: { type: String, default: '' },
+    status: { type: String, enum: ['PENDING', 'DELIVERED', 'FAILED'], default: 'PENDING' }
+  }],
 
   // Trạng thái đơn hàng
   // DRAFT (Lưu nháp/Đang sửa) -> PENDING -> ACCEPTED -> PICKED_UP -> DELIVERING -> COMPLETED

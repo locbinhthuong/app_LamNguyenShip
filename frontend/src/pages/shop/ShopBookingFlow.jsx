@@ -92,24 +92,14 @@ export default function ShopBookingFlow() {
         payload.senderName = localStorage.getItem('shopName') || 'Cửa hàng';
       }
 
-      // Xử lý nộp đơn (Đơn ghép cần submit 1 mảng nếu form trả về mảng, nếu form tự gọi API thì sẽ báo thành công luôn)
-      // Chú thích: Với Batched, form có thể tự loop gọi API và báo onBooking({success: true}), 
-      // Nhưng để nhất quán, BatchedDeliveryForm sẽ trả ra mảng các đơn hàng để component này loop gọi API.
-      
-      if (serviceType === 'batched' && Array.isArray(payload)) {
-        for (let i = 0; i < payload.length; i++) {
-          await api.post('/orders/customer', payload[i]);
-        }
+      // Xử lý nộp đơn
+      const res = await api.post('/orders/customer', payload);
+      if (res.data.success) {
         isSuccess = true;
-      } else {
-        const res = await api.post('/orders/customer', payload);
-        if (res.data.success) {
-          isSuccess = true;
-          // Lưu lại làm mặc định nếu đây là lần đầu tiên tạo đơn
-          if (serviceType === 'delivery') {
-            if (!localStorage.getItem('shopAddress')) localStorage.setItem('shopAddress', payload.pickupAddress);
-            if (!localStorage.getItem('shopPhone')) localStorage.setItem('shopPhone', payload.senderPhone);
-          }
+        // Lưu lại làm mặc định nếu đây là lần đầu tiên tạo đơn
+        if (serviceType === 'delivery') {
+          if (!localStorage.getItem('shopAddress')) localStorage.setItem('shopAddress', payload.pickupAddress);
+          if (!localStorage.getItem('shopPhone')) localStorage.setItem('shopPhone', payload.senderPhone);
         }
       }
       

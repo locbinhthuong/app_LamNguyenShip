@@ -238,7 +238,7 @@ const orderController = {
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, 
         items, note, driverReminder, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, 
         scheduledPublishAt, forceAssignDriverId, commissionRate, serviceType, subServiceType,
-        senderPhone, receiverPhone, receiverPhone2, rideDetails, financialDetails, packageDetails, autoAssignNearest
+        senderPhone, receiverPhone, receiverPhone2, rideDetails, financialDetails, packageDetails, autoAssignNearest, batchedDeliveries
       } = req.body;
 
       let didAdminForceAssign = false;
@@ -288,6 +288,7 @@ const orderController = {
         packageDetails: packageDetails || {},
         pickupCoordinates,
         deliveryCoordinates,
+        batchedDeliveries: batchedDeliveries || [],
         status: didAdminForceAssign ? 'ACCEPTED' : (scheduledPublishAt ? 'DRAFT' : 'PENDING'),
         assignedTo: didAdminForceAssign ? forceAssignDriverId : undefined,
         acceptedAt: didAdminForceAssign ? new Date() : undefined,
@@ -411,7 +412,7 @@ const orderController = {
         serviceType, subServiceType, customerName, customerPhone, pickupPhone,
         senderName, senderPhone, receiverName, receiverPhone, receiverPhone2,
         pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates,
-        items, note, packageDetails, rideDetails, financialDetails, codAmount
+        items, note, packageDetails, rideDetails, financialDetails, codAmount, batchedDeliveries
       } = req.body;
 
       const order = new Order({
@@ -435,6 +436,7 @@ const orderController = {
         packageDetails: packageDetails || {},
         rideDetails: rideDetails || {},
         financialDetails: financialDetails || {},
+        batchedDeliveries: batchedDeliveries || [],
         codAmount: codAmount || 0,
         deliveryFee: req.body.deliveryFee || 0,
         status: 'DRAFT', // Mặc định luôn là DRAFT để bắt buộc Admin duyệt và Treo đơn
@@ -506,7 +508,8 @@ const orderController = {
         bankName, bankAccount, bankAccountName, transactionAmount, // Nạp Rút
         forceAssignDriverId, // Cờ Admin cướp quyền Gán đơn
         commissionRate, // Tỉ lệ chiết khấu riêng
-        scheduledPublishAt // Hẹn giờ lên đơn
+        scheduledPublishAt, // Hẹn giờ lên đơn
+        batchedDeliveries // Cập nhật mảng Đơn ghép
       } = req.body;
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
@@ -561,6 +564,7 @@ const orderController = {
       if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
       if (commissionRate !== undefined) orderToUpdate.commissionRate = commissionRate;
       if (scheduledPublishAt !== undefined) orderToUpdate.scheduledPublishAt = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
+      if (batchedDeliveries !== undefined) orderToUpdate.batchedDeliveries = batchedDeliveries;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
       if (bulkyFee !== undefined || packageDescription !== undefined) {

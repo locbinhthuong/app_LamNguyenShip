@@ -234,7 +234,8 @@ export default function OrderDetail() {
           </button>
           <div className="min-w-0 flex-1">
             <h1 className="text-base font-bold text-slate-800 sm:text-lg">
-              {order.serviceType === 'GIAO_HANG' ? 'Đơn Giao Hàng' :
+               order.serviceType === 'GIAO_HANG' ? 'Đơn Giao Hàng' :
+               order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' :
                order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách Xe Máy' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                order.serviceType === 'MUA_HO' ? 'Mua Hàng Hộ' :
                order.serviceType === 'DIEU_PHOI' ? 'Dịch Vụ Điều Phối' : 'Chi tiết đơn hàng'}
@@ -296,7 +297,7 @@ export default function OrderDetail() {
               <p className="text-slate-800 font-bold text-sm leading-snug">{order.pickupAddress || 'Chưa xác định'}</p>
             </div>
           </div>
-          {order.serviceType !== 'DIEU_PHOI' && (
+          {order.serviceType !== 'DIEU_PHOI' && order.serviceType !== 'DON_GHEP' && (
             <>
               <div className="border-l-2 border-dashed border-slate-600 ml-4 h-4 mb-4" />
               <div className="flex items-start gap-3">
@@ -320,6 +321,31 @@ export default function OrderDetail() {
               </div>
             </>
           )}
+
+          {/* ĐƠN GHÉP (DON_GHEP) - HIỂN THỊ DANH SÁCH ĐIỂM GIAO */}
+          {order.serviceType === 'DON_GHEP' && order.batchedDeliveries?.map((d, index) => (
+             <div key={index}>
+               <div className="border-l-2 border-dashed border-purple-300 ml-4 h-4 mb-4" />
+               <div className="flex items-start gap-3">
+                 <span className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold"><MapPin size={16}/></span>
+                 <div className="flex-1 min-w-0">
+                   <div className="flex items-center justify-between gap-2 mb-1">
+                     <p className="text-xs text-purple-600 font-bold uppercase">Điểm Giao Thứ {index + 1}</p>
+                     <a 
+                       href={`https://www.google.com/maps/dir/?api=1&destination=${d.deliveryCoordinates?.lat && d.deliveryCoordinates.lat !== 10.045 ? `${d.deliveryCoordinates.lat},${d.deliveryCoordinates.lng}` : encodeURIComponent(d.deliveryAddress)}`} 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       className="flex items-center gap-1 text-[11px] font-extrabold text-blue-600 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-full border border-blue-100 transition-colors"
+                     >
+                       <Map size={12}/> DẪN ĐƯỜNG
+                     </a>
+                   </div>
+                   <p className="text-slate-800 font-medium text-sm leading-snug">{d.deliveryAddress || 'Chưa xác định'}</p>
+                   {d.codAmount > 0 && <p className="text-[11px] text-blue-600 font-bold mt-1 bg-blue-50 px-2 py-0.5 rounded inline-block">Thu hộ (COD): {d.codAmount.toLocaleString()}đ</p>}
+                 </div>
+               </div>
+             </div>
+          ))}
         </div>
 
         {/* Liên Hệ */}
@@ -339,6 +365,30 @@ export default function OrderDetail() {
                 <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg flex items-center gap-1"><Phone size={12}/> LIÊN HỆ KHÁCH</span>
                 <a href={`tel:${order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-orange-200 text-sm"><Phone size={14}/> {order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}</a>
               </div>
+            ) : order.serviceType === 'DON_GHEP' ? (
+               <>
+                 <div className="flex items-center justify-between mx-[-12px] px-3 pb-3 border-b border-slate-100">
+                   <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg flex items-center gap-1"><MapPin size={12}/> ĐIỂM ĐI</span>
+                   {(order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : null)) ? (
+                     <a href={`tel:${order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-orange-200 text-sm"><Phone size={14}/> {order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}</a>
+                   ) : (
+                     <span className="text-xs text-slate-400 italic">Không có SĐT</span>
+                   )}
+                 </div>
+                 {order.batchedDeliveries?.map((d, index) => (
+                    <div key={index} className="flex items-center justify-between mx-[-12px] px-3 pt-3 pb-3 border-b border-slate-100 last:border-0">
+                      <div className="flex flex-col items-start">
+                        <span className="font-bold text-purple-600 text-[11px] uppercase bg-purple-50 px-2 py-1 rounded flex items-center gap-1"><MapPin size={12}/> KHÁCH {index + 1}</span>
+                        {d.receiverName && <span className="text-[10px] text-slate-500 mt-1 font-semibold">{d.receiverName}</span>}
+                      </div>
+                      {d.receiverPhone ? (
+                        <a href={`tel:${d.receiverPhone}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-blue-200 text-sm"><Phone size={14}/> {d.receiverPhone}</a>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">Không có SĐT</span>
+                      )}
+                    </div>
+                 ))}
+               </>
             ) : (
               <>
                 <div className="flex items-center justify-between mx-[-12px] px-3 pb-3 border-b border-slate-100">
@@ -483,11 +533,11 @@ export default function OrderDetail() {
                </div>
             </div>
             
-            {/* Cột 2: Thu Hộ (Giao Hàng) */}
-            {order.serviceType === 'GIAO_HANG' && (order.codAmount > 0 || order.codAmount === 0) && (
+            {/* Cột 2: Thu Hộ (Giao Hàng/Đơn Ghép) */}
+            {(order.serviceType === 'GIAO_HANG' || order.serviceType === 'DON_GHEP') && (order.codAmount > 0 || order.codAmount === 0) && (
               <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200">
                 <div className="absolute -right-3 -top-1 text-slate-100 opacity-50 group-hover:scale-110 transition-transform"><Diamond size={80}/></div>
-                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Cần Thu hộ COD</p>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">{order.serviceType === 'DON_GHEP' ? 'Tổng COD Cần Thu' : 'Cần Thu hộ COD'}</p>
                 <p className="text-blue-600 font-black text-xl sm:text-2xl  relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
               </div>
             )}

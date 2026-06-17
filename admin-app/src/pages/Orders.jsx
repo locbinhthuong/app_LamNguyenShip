@@ -393,6 +393,8 @@ export default function Orders() {
                           </span>
                         ) : order.serviceType === 'MUA_HO' ? (
                           <span className="text-[10px] font-bold bg-lime-100 text-lime-700 px-1.5 py-0.5 rounded border border-lime-200 whitespace-nowrap">🛒 MUA HỘ</span>
+                        ) : order.serviceType === 'DON_GHEP' ? (
+                          <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 whitespace-nowrap">📦 ĐƠN GHÉP</span>
                         ) : (
                           <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200 whitespace-nowrap">📦 GIAO HÀNG</span>
                         )}
@@ -407,6 +409,14 @@ export default function Orders() {
                           <div className="flex flex-col gap-1">
                              <div className="flex items-start gap-1"><span className="text-orange-500 font-bold shrink-0">📍 Đón:</span> <span className="truncate">{order.pickupAddress}</span></div>
                              <div className="flex items-start gap-1"><span className="text-blue-500 font-bold shrink-0">🏁 Đến:</span> <span className="truncate">{order.deliveryAddress}</span></div>
+                          </div>
+                       ) : order.serviceType === 'DON_GHEP' ? (
+                          <div className="flex flex-col gap-1">
+                             <span className="truncate block"><span className="font-bold text-slate-800">Từ:</span> {order.pickupAddress}</span>
+                             <span className="truncate block text-purple-600 font-bold"><span className="font-bold text-slate-800">Đến:</span> {order.batchedDeliveries?.length || 0} điểm giao</span>
+                             {(order.packageDetails?.description || order.note) && (
+                                <span className="truncate block text-[10px] text-blue-600 font-bold bg-blue-50 rounded px-1 py-0.5 mt-0.5">Mô tả: {order.packageDetails?.description || order.note}</span>
+                             )}
                           </div>
                        ) : (
                           <div className="flex flex-col gap-1">

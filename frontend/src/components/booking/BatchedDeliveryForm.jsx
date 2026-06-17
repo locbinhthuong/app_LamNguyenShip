@@ -104,31 +104,39 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
       }
     }
 
-    // Prepare payload array
-    const payloads = deliveries.map(d => ({
-      serviceType: 'GIAO_HANG',
+    // Prepare single payload for DON_GHEP
+    const totalFee = deliveries.reduce((sum, d) => sum + (d.fee || 0), 0);
+    const totalCod = deliveries.reduce((sum, d) => sum + (d.codAmount ? parseInt(d.codAmount) : 0), 0);
+
+    const payload = {
+      serviceType: 'DON_GHEP',
       senderName: shopName || 'Cửa hàng',
-      customerPhone: pickup.phone, // Dùng tạm phone cửa hàng làm customer phone (để shop dễ quản lý)
+      customerPhone: pickup.phone,
       senderPhone: pickup.phone,
-      receiverName: d.receiverName.trim(),
-      receiverPhone: d.receiverPhone.trim(),
-      receiverPhone2: '',
       pickupAddress: pickup.address.trim(),
       pickupCoordinates: pickup.coordinates || null,
-      deliveryAddress: d.address.trim(),
-      deliveryCoordinates: d.coordinates || null,
-      note: d.note.trim() + (d.note ? ' - (Đơn ghép)' : '(Đơn ghép)'),
-      codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
-      deliveryFee: d.fee || 0,
+      note: `Đơn ghép ${deliveries.length} điểm`,
+      codAmount: totalCod,
+      deliveryFee: totalFee,
       packageDetails: {
-        description: 'Giao hàng hóa/tài liệu (Đơn ghép)',
+        description: `Giao hàng hóa (Đơn ghép ${deliveries.length} điểm)`,
         weight: '',
         isFragile: false,
         bulkyFee: 0
-      }
-    }));
+      },
+      batchedDeliveries: deliveries.map(d => ({
+        receiverName: d.receiverName.trim(),
+        receiverPhone: d.receiverPhone.trim(),
+        deliveryAddress: d.address.trim(),
+        deliveryCoordinates: d.coordinates || null,
+        codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
+        fee: d.fee || 0,
+        distanceKm: d.distanceKm || 0,
+        note: d.note.trim()
+      }))
+    };
 
-    onBooking(payloads);
+    onBooking(payload);
   };
 
   const totalFee = deliveries.reduce((sum, d) => sum + (d.fee || 0), 0);

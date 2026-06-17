@@ -28,7 +28,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     forceAssignDriverId: '',
     commissionRate: null,
     items: '',
-    scheduledPublishAt: ''
+    scheduledPublishAt: '',
+    batchedDeliveries: []
   });
 
   useEffect(() => {
@@ -72,7 +73,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         forceAssignDriverId: order.assignedTo?._id || order.assignedTo || '',
         commissionRate: order.commissionRate || null,
         items: order.items ? order.items.join('\n') : '',
-        scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''
+        scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '',
+        batchedDeliveries: order.batchedDeliveries || []
       });
     }
   }, [order]);
@@ -108,6 +110,20 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     ? `https://www.google.com/maps/search/?api=1&query=${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}`
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(formData.deliveryAddress)}`;
 
+  const handleBatchedChange = (index, field, value) => {
+    setFormData(prev => {
+      const updated = [...prev.batchedDeliveries];
+      updated[index] = { ...updated[index], [field]: value };
+      
+      // Tự động tính lại tổng COD nếu đổi COD từng điểm
+      if (field === 'codAmount') {
+         const newTotalCod = updated.reduce((sum, d) => sum + (Number(d.codAmount) || 0), 0);
+         return { ...prev, batchedDeliveries: updated, codAmount: newTotalCod };
+      }
+      return { ...prev, batchedDeliveries: updated };
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm">
       <div className="bg-white w-full max-w-xl rounded-2xl shadow-2xl p-6 overflow-y-auto max-h-[90vh]">
@@ -123,6 +139,9 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-full whitespace-nowrap">
                  {order.subServiceType === 'NAP_TIEN' ? '🏦 NẠP TIỀN' : order.subServiceType === 'RUT_TIEN' ? '💵 RÚT TIỀN' : 'ĐIỀU PHỐI'}
                </span>
+            )}
+            {order.serviceType === 'DON_GHEP' && (
+               <span className="text-xs font-bold bg-purple-100 text-purple-700 px-2 py-1 rounded-full whitespace-nowrap">📦 ĐƠN GHÉP</span>
             )}
           </h2>
           <button onClick={onClose} className="text-slate-400 hover:text-red-500 rounded-lg p-2 bg-slate-100 font-bold">✕ Đóng</button>
@@ -217,8 +236,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
              </div>
           )}
 
-          {/* KHỐI 3: ĐIỂM GIAO / TRẢ KHÁCH (ko cho Điều Phối) */}
-          {order.serviceType !== 'DIEU_PHOI' && (
+          {/* KHỐI 3: ĐIỂM GIAO / TRẢ KHÁCH (ko cho Điều Phối và DON_GHEP) */}
+          {order.serviceType !== 'DIEU_PHOI' && order.serviceType !== 'DON_GHEP' && (
             <div className="bg-sky-50 p-3 rounded-xl border border-sky-100">
               <h3 className="text-xs font-bold text-sky-600 uppercase mb-3 tracking-wider">
                 {order.serviceType === 'DAT_XE' ? 'ĐIỂM TRẢ KHÁCH' : 'ĐIỂM GIAO HÀNG / TRẢ KHÁCH'}
@@ -246,6 +265,52 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                   </div>
                 )}
               </div>
+            </div>
+          )}
+
+          {/* KHỐI 3B: DANH SÁCH ĐIỂM GIAO (CHỈ CHO DON_GHEP) */}
+          {order.serviceType === 'DON_GHEP' && (
+            <div className="bg-purple-50 p-3 rounded-xl border border-purple-100 space-y-4">
+              <h3 className="text-xs font-bold text-purple-600 uppercase mb-2 tracking-wider flex items-center justify-between">
+                <span>DANH SÁCH CÁC ĐIỂM GIAO GHÉP</span>
+                <span className="bg-purple-200 text-purple-800 px-2 py-0.5 rounded-full text-[10px]">{formData.batchedDeliveries.length} ĐIỂM</span>
+              </h3>
+              
+              {formData.batchedDeliveries.map((delivery, index) => (
+                 <div key={index} className="bg-white p-3 rounded-xl border border-purple-100 shadow-sm relative">
+                   <div className="absolute top-0 left-0 w-1 h-full bg-purple-400 rounded-l-xl"></div>
+                   <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
+                     <span className="text-[10px] font-extrabold text-purple-500">ĐIỂM SỐ {index + 1}</span>
+                   </div>
+                   
+                   <div className="space-y-3">
+                     <div className="grid grid-cols-2 gap-3">
+                        <div>
+                           <label className="block text-[10px] font-semibold text-slate-500 mb-1">Người nhận</label>
+                           <input type="text" value={delivery.receiverName} onChange={e => handleBatchedChange(index, 'receiverName', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs bg-slate-50 focus:border-purple-400 focus:outline-none" />
+                        </div>
+                        <div>
+                           <label className="block text-[10px] font-semibold text-slate-500 mb-1">SĐT Nhận</label>
+                           <input type="text" value={delivery.receiverPhone} onChange={e => handleBatchedChange(index, 'receiverPhone', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs font-bold text-sky-600 bg-slate-50 focus:border-purple-400 focus:outline-none" />
+                        </div>
+                     </div>
+                     <div>
+                        <label className="block text-[10px] font-semibold text-slate-500 mb-1">Địa chỉ giao</label>
+                        <input type="text" value={delivery.deliveryAddress} onChange={e => handleBatchedChange(index, 'deliveryAddress', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs bg-slate-50 focus:border-purple-400 focus:outline-none" />
+                     </div>
+                     <div className="grid grid-cols-2 gap-3">
+                        <div>
+                           <label className="block text-[10px] font-semibold text-slate-500 mb-1">Tiền thu hộ (COD)</label>
+                           <CurrencyInput name={`cod_${index}`} value={delivery.codAmount} onChange={e => handleBatchedChange(index, 'codAmount', Number(e.target.value))} min="0" className="w-full rounded-lg border border-slate-200 p-2 text-xs font-bold bg-slate-50 focus:border-purple-400 focus:outline-none" />
+                        </div>
+                        <div>
+                           <label className="block text-[10px] font-semibold text-slate-500 mb-1">Ghi chú riêng</label>
+                           <input type="text" value={delivery.note} onChange={e => handleBatchedChange(index, 'note', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs bg-slate-50 focus:border-purple-400 focus:outline-none" placeholder="Lưu ý..." />
+                        </div>
+                     </div>
+                   </div>
+                 </div>
+              ))}
             </div>
           )}
 
@@ -279,8 +344,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
           <div className="grid grid-cols-2 gap-4">
             {order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
                <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tiền thu hộ (COD)</label>
-                  <CurrencyInput name="codAmount" value={formData.codAmount} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Tiền thu hộ (COD) {order.serviceType === 'DON_GHEP' ? '(Tổng)' : ''}</label>
+                  <CurrencyInput name="codAmount" value={formData.codAmount} onChange={handleChange} min="0" className={`w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 ${order.serviceType === 'DON_GHEP' ? 'cursor-not-allowed opacity-70' : ''}`} readOnly={order.serviceType === 'DON_GHEP'} />
                </div>
             )}
             <div>
