@@ -228,43 +228,8 @@ const ShopDashboard = () => {
         </motion.div>
       </div>
 
-      {/* SLIDER BANNER */}
-      {banners.length > 0 && (
-        <div className="mb-10">
-          <div className="relative w-full h-48 sm:h-[320px] md:h-[400px] lg:h-[460px] rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-slate-50 group flex items-center justify-center">
-            <div 
-              className="flex w-full h-full transition-transform duration-500 ease-out items-center"
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-            >
-              {banners.map(banner => (
-                <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-0">
-                  {banner.imageUrl && (
-                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-cover object-center" />
-                  )}
-                  {banner.videoUrl && (
-                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-cover object-center" autoPlay muted loop playsInline />
-                  )}
-                </div>
-              ))}
-            </div>
-            {/* Nút điều hướng Slider */}
-            {banners.length > 1 && (
-              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
-                {banners.map((_, index) => (
-                  <button 
-                    key={index} 
-                    onClick={() => setCurrentSlide(index)}
-                    className={`h-2 rounded-full transition-all ${currentSlide === index ? 'w-6 bg-white shadow' : 'w-2 bg-white/50'}`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* DỊCH VỤ NỔI BẬT */}
-      <div className="mb-14">
+      <div className="mb-10">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Dịch vụ nổi bật</h2>
         <div className="grid grid-cols-3 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
           
@@ -304,6 +269,41 @@ const ShopDashboard = () => {
 
         </div>
       </div>
+
+      {/* SLIDER BANNER */}
+      {banners.length > 0 && (
+        <div className="mb-14">
+          <div className="relative w-full h-48 sm:h-[320px] md:h-[400px] lg:h-[460px] rounded-[24px] overflow-hidden shadow-[0_8px_30px_rgba(0,0,0,0.06)] bg-slate-50 group flex items-center justify-center">
+            <div 
+              className="flex w-full h-full transition-transform duration-500 ease-out items-center"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {banners.map(banner => (
+                <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-0">
+                  {banner.imageUrl && (
+                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-cover object-center" />
+                  )}
+                  {banner.videoUrl && (
+                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-cover object-center" autoPlay muted loop playsInline />
+                  )}
+                </div>
+              ))}
+            </div>
+            {/* Nút điều hướng Slider */}
+            {banners.length > 1 && (
+              <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-10">
+                {banners.map((_, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setCurrentSlide(index)}
+                    className={`h-2 rounded-full transition-all ${currentSlide === index ? 'w-6 bg-white shadow' : 'w-2 bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* KHUYẾN MÃI & TIN TỨC (SPLIT LAYOUT) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14">
