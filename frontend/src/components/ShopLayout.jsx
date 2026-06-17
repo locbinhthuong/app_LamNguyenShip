@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation, useOutlet, useNavigationType } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import AnimatedPage from './AnimatedPage';
-import { Search, Clock, Bell, User } from 'lucide-react';
+import { Search, Clock, Bell, User, BarChart2 } from 'lucide-react';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
 import { updateFcmToken } from '../services/api';
 
@@ -46,7 +46,7 @@ const ShopLayout = () => {
 
   const navItems = [
     { name: 'Trang chủ', path: '/shop', icon: <Search size={22} /> },
-    { name: 'Hoạt động', path: '/shop/activity', icon: <Clock size={22} />, requiresAuth: true },
+    { name: 'Thống kê', path: '/shop/activity', icon: <BarChart2 size={22} />, requiresAuth: true },
     { name: 'Thông báo', path: '/shop/notifications', icon: <Bell size={22} />, badge: true, requiresAuth: true },
     { name: 'Tài khoản', path: '/shop/profile', icon: <User size={22} />, requiresAuth: true }
   ];

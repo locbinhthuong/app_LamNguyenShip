@@ -228,21 +228,6 @@ const ShopDashboard = () => {
         </motion.div>
       </div>
 
-      {/* THÔNG BÁO CẬP NHẬT ĐỊNH VỊ (Chỉ hiện nếu đang dùng địa chỉ mặc định hoặc lỗi) */}
-      {!localStorage.getItem('savedShopLocation') && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-3 relative overflow-hidden shadow-sm mb-6 max-w-4xl">
-          <div className="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
-          <div className="text-blue-500 animate-bounce">
-            <MapPin size={20} />
-          </div>
-          <div className="flex-1">
-            <p className="text-[12px] md:text-sm text-blue-800 leading-snug font-medium">
-              Vui lòng bấm vào <strong>"📍 Toạ độ cửa hàng"</strong> ở trên cùng để cập nhật định vị chuẩn xác trước khi lên đơn!
-            </p>
-          </div>
-        </div>
-      )}
-
       {/* SLIDER BANNER */}
       {banners.length > 0 && (
         <div className="mb-10">
@@ -281,7 +266,7 @@ const ShopDashboard = () => {
       {/* DỊCH VỤ NỔI BẬT */}
       <div className="mb-14">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Dịch vụ nổi bật</h2>
-        <div className="grid grid-cols-4 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
+        <div className="grid grid-cols-3 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
           
           {/* GIAO HÀNG */}
           <div 
@@ -315,17 +300,6 @@ const ShopDashboard = () => {
               <Layers size={22} className="md:w-7 md:h-7" strokeWidth={1.5} />
             </div>
             <h3 className="text-[13px] md:text-[15px] font-bold text-gray-900 text-center">Đơn ghép</h3>
-          </div>
-
-          {/* LỊCH SỬ ĐƠN */}
-          <div 
-            onClick={() => navigate('/shop/activity')}
-            className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
-          >
-            <div className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-emerald-50 flex items-center justify-center mb-2.5 text-emerald-600">
-              <History size={22} className="md:w-7 md:h-7" strokeWidth={1.5} />
-            </div>
-            <h3 className="text-[13px] md:text-[15px] font-bold text-gray-900 text-center">Lịch sử đơn</h3>
           </div>
 
         </div>
