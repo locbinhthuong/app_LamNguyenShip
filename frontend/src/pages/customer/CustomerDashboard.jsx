@@ -383,7 +383,7 @@ const CustomerDashboard = () => {
               {selectedAnnouncement.videoUrl ? (
                  <video src={`https://api.aloshipp.com${selectedAnnouncement.videoUrl}`} className="w-full bg-black max-h-[300px]" controls playsInline autoPlay />
               ) : selectedAnnouncement.imageUrl ? (
-                 <img src={`https://api.aloshipp.com${selectedAnnouncement.imageUrl}`} className="w-full object-cover max-h-[300px]" alt="Chi tiết" />
+                 <img src={`https://api.aloshipp.com${selectedAnnouncement.imageUrl}`} className="w-full object-contain bg-gray-100 max-h-[500px]" alt="Chi tiết" />
               ) : (
                  <div className="w-full h-40 bg-gradient-to-br from-indigo-500 to-purple-600"></div>
               )}
