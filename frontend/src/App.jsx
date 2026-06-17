@@ -15,6 +15,7 @@ import OrderDetail from './pages/customer/OrderDetail';
 import ShopBookingFlow from './pages/shop/ShopBookingFlow';
 import ShopProfile from './pages/shop/ShopProfile';
 import ShopActivity from './pages/shop/ShopActivity';
+import ShopStatistics from './pages/shop/ShopStatistics';
 import { useAuthSocket } from './hooks/useAuthSocket';
 import ForceUpdateModal from './components/ForceUpdateModal';
 import { getAppVersionConfig } from './services/api';
@@ -146,6 +147,11 @@ function App() {
             <Route path="/shop/activity" element={
               <ProtectedRoute allowedRole="SHOP">
                 <ShopActivity />
+              </ProtectedRoute>
+            } />
+            <Route path="/shop/statistics" element={
+              <ProtectedRoute allowedRole="SHOP">
+                <ShopStatistics />
               </ProtectedRoute>
             } />
             <Route path="/shop/notifications" element={
