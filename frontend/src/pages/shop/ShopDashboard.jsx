@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon, Bike, ShoppingCart, Headset, Newspaper, Gift } from 'lucide-react';
+import { PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon, Bike, ShoppingCart, Headset, Newspaper, Gift, Package, ShoppingBag, Layers } from 'lucide-react';
 import { api, getActiveAnnouncements } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 import AnnouncementSlider from '../../components/AnnouncementSlider';
@@ -208,16 +208,47 @@ const ShopDashboard = () => {
           </div>
         </div>
 
-        {/* NÚT TẠO ĐƠN SIÊU TỐC */}
-        <button 
-          onClick={() => navigate('/shop/book')}
-          className="w-full bg-white text-blue-600 rounded-3xl p-4 flex items-center justify-center gap-3 shadow-[0_10px_40px_rgba(0,0,0,0.08)] border border-blue-50 active:scale-[0.98] transition-all group hover:shadow-[0_15px_40px_rgba(59,130,246,0.15)]"
-        >
-          <div className="bg-blue-50 p-2 rounded-full group-hover:bg-blue-100 group-hover:scale-110 transition-all">
-            <PlusCircle size={24} className="text-blue-600" />
+        {/* DỊCH VỤ NỔI BẬT */}
+        <div className="mb-2">
+          <h2 className="text-lg md:text-xl font-bold text-gray-800 mb-4">Dịch vụ nổi bật</h2>
+          <div className="grid grid-cols-3 gap-3 md:gap-6">
+            
+            {/* GIAO HÀNG */}
+            <div 
+              onClick={() => navigate('/shop/book/delivery')}
+              className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
+            >
+              <div className="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center mb-2.5 text-blue-600">
+                <Package size={22} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-[13px] font-bold text-gray-900 text-center">Giao hàng</h3>
+            </div>
+
+            {/* LẤY HÀNG (GIỐNG MUA HỘ) */}
+            <div 
+              onClick={() => navigate('/shop/book/pickup')}
+              className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
+            >
+              <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center mb-2.5 text-slate-700">
+                <ShoppingBag size={22} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-[13px] font-bold text-gray-900 text-center">Lấy hàng</h3>
+            </div>
+
+            {/* ĐƠN GHÉP */}
+            <div 
+              onClick={() => navigate('/shop/book/batched')}
+              className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform relative overflow-hidden group"
+            >
+              <div className="absolute top-0 right-0 bg-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-bl-lg">MỚI</div>
+              <div className="w-11 h-11 rounded-full bg-orange-50 flex items-center justify-center mb-2.5 text-orange-600">
+                <Layers size={22} strokeWidth={1.5} />
+              </div>
+              <h3 className="text-[13px] font-bold text-gray-900 text-center">Đơn ghép</h3>
+            </div>
+
           </div>
-          <span className="font-extrabold text-lg tracking-wide">TẠO ĐƠN NGAY</span>
-        </button>
+        </div>
 
 
 

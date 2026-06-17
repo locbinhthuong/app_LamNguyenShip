@@ -167,6 +167,10 @@ function App() {
 
           <Route 
             path="/shop/book" 
+            element={<Navigate to="/shop" replace />}
+          />
+          <Route 
+            path="/shop/book/:serviceType" 
             element={
               <ProtectedRoute allowedRole="SHOP">
                 <ShopBookingFlow />
