@@ -19,14 +19,13 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   const [mapConfig, setMapConfig] = useState(null); // { type: 'pickup' | 'delivery', id?: number, pos: any, query: string }
 
   useEffect(() => {
-    if (defaultLocation?.address) {
-      setPickup(prev => ({ 
-        ...prev, 
-        address: defaultLocation.address, 
-        coordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
-      }));
-    }
-  }, [defaultLocation]);
+    setPickup(prev => ({ 
+      ...prev, 
+      address: defaultLocation?.address || prev.address, 
+      coordinates: (defaultLocation && defaultLocation.lat) ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : prev.coordinates,
+      phone: defaultPhone || prev.phone
+    }));
+  }, [defaultLocation, defaultPhone]);
 
   // Calculate fee automatically when address changes
   useEffect(() => {
