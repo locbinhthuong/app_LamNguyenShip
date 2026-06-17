@@ -3,7 +3,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { api } from '../../services/api';
 import DeliveryForm from '../../components/booking/DeliveryForm';
-import PurchaseForm from '../../components/booking/PurchaseForm';
 import BatchedDeliveryForm from '../../components/booking/BatchedDeliveryForm';
 
 export default function ShopBookingFlow() {
@@ -68,7 +67,10 @@ export default function ShopBookingFlow() {
         return alert('Vui lòng cung cấp Địa chỉ và SĐT lấy hàng hoặc Cài đặt định vị gốc trong trang Thông tin.');
       }
     } else if (serviceType === 'pickup') {
-      // Logic cho Lấy hàng (Mua Hộ)
+      // Logic cho Lấy hàng (Mang về shop)
+      if (!payload.receiverPhone) {
+        payload.receiverPhone = shopPhone || cData.phone || '';
+      }
       if (!payload.deliveryAddress) {
         const savedLoc = localStorage.getItem('savedShopLocation');
         if (savedLoc) {
@@ -78,7 +80,13 @@ export default function ShopBookingFlow() {
         } else if (cData.defaultLocation && cData.defaultLocation.lat) {
           payload.deliveryAddress = cData.defaultLocation.address;
           payload.deliveryCoordinates = { lat: cData.defaultLocation.lat, lng: cData.defaultLocation.lng };
+        } else {
+          payload.deliveryAddress = localStorage.getItem('shopAddress') || '';
         }
+      }
+
+      if (!payload.deliveryAddress || !payload.receiverPhone) {
+        return alert('Vui lòng cung cấp Địa chỉ và SĐT cửa hàng (Nơi nhận) hoặc cài đặt định vị mặc định.');
       }
     }
 
@@ -127,16 +135,17 @@ export default function ShopBookingFlow() {
             loading={loading} 
             defaultLocation={defaultLocation} 
             defaultPhone={shopPhone} 
+            mode="delivery"
           />
         );
       case 'pickup':
         return (
-          <PurchaseForm 
+          <DeliveryForm 
             onBooking={handleBookingSubmit} 
             loading={loading} 
             defaultLocation={defaultLocation} 
             defaultPhone={shopPhone} 
-            customerData={customerData}
+            mode="pickup"
           />
         );
       case 'batched':

@@ -58,19 +58,19 @@ const MapPickerListener = ({ mode, onLocationChange }) => {
   return null;
 };
 
-export default function DeliveryForm({ onBooking, loading, defaultLocation, defaultPhone }) {
+export default function DeliveryForm({ onBooking, loading, defaultLocation, defaultPhone, mode = 'delivery' }) {
   const [form, setForm] = useState({
     senderName: '',
     customerPhone: defaultPhone || '',
-    senderPhone: defaultPhone || '',
-    pickupAddress: defaultLocation?.address || '',
-    pickupCoordinates: defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null,
+    senderPhone: mode === 'delivery' ? (defaultPhone || '') : '',
+    pickupAddress: mode === 'delivery' ? (defaultLocation?.address || '') : '',
+    pickupCoordinates: mode === 'delivery' ? (defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null) : null,
     
     receiverName: '',
-    receiverPhone: '',
+    receiverPhone: mode === 'pickup' ? (defaultPhone || '') : '',
     receiverPhone2: '',
-    deliveryAddress: '',
-    deliveryCoordinates: null,
+    deliveryAddress: mode === 'pickup' ? (defaultLocation?.address || '') : '',
+    deliveryCoordinates: mode === 'pickup' ? (defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null) : null,
 
     note: '',
     codAmount: ''
@@ -90,13 +90,21 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
   useEffect(() => {
     if (defaultLocation?.address) {
-      setForm(prev => ({ 
-        ...prev, 
-        pickupAddress: defaultLocation.address, 
-        pickupCoordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
-      }));
+      if (mode === 'delivery') {
+        setForm(prev => ({ 
+          ...prev, 
+          pickupAddress: defaultLocation.address, 
+          pickupCoordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
+        }));
+      } else {
+        setForm(prev => ({ 
+          ...prev, 
+          deliveryAddress: defaultLocation.address, 
+          deliveryCoordinates: defaultLocation.lat && defaultLocation.lng ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null 
+        }));
+      }
     }
-  }, [defaultLocation]);
+  }, [defaultLocation, mode]);
 
   useEffect(() => {
     const fetchEstimateAndRoute = async () => {
@@ -147,9 +155,9 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
     onBooking({
       serviceType: 'GIAO_HANG',
-      senderName: form.senderName.trim() || 'Khách đặt qua App',
+      senderName: form.senderName.trim(),
       customerPhone: defaultPhone || 'Khách Vãng Lai',
-      senderPhone: form.senderPhone.trim() || defaultPhone,
+      senderPhone: form.senderPhone.trim(),
       receiverName: form.receiverName.trim(),
       receiverPhone: form.receiverPhone.trim(),
       receiverPhone2: form.receiverPhone2.trim(),
@@ -402,69 +410,100 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
               </div>
             </div>
             
-            {/* Thông tin liên hệ */}
-            <div className="space-y-3">
-              <h4 className="text-[11px] font-extrabold text-gray-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                <MapPinIcon size={14} className="text-gray-400" /> THÔNG TIN LIÊN LẠC
-              </h4>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <input 
-                    type="tel"
-                    placeholder="SĐT Lấy Hàng"
-                    className="w-full text-[13px] font-bold text-blue-600 p-3.5 bg-gray-50/80 border border-gray-100 rounded-2xl outline-none focus:border-blue-400 focus:bg-white transition-colors"
-                    value={form.senderPhone} onChange={e => setForm({...form, senderPhone: e.target.value})}
-                  />
+            {/* COD Section */}
+            <div className="bg-white p-4 rounded-2xl border border-gray-100">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">{mode === 'delivery' ? 'TIỀN THU HỘ (COD)' : 'TIỀN ỨNG (TÀI XẾ TRẢ TRƯỚC LÚC LẤY)'}</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <DollarSign size={18} />
                 </div>
-                <div>
-                  <input 
-                    type="tel"
-                    placeholder="SĐT Giao Hàng"
-                    className="w-full text-[13px] font-bold text-sky-600 p-3.5 bg-gray-50/80 border border-gray-100 rounded-2xl outline-none focus:border-sky-400 focus:bg-white transition-colors"
-                    value={form.receiverPhone} onChange={e => setForm({...form, receiverPhone: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <input 
-                  type="text" 
-                  placeholder="Tên người nhận (Tùy chọn)"
-                  className="w-full text-[13px] bg-gray-50/80 border border-gray-100 p-3.5 rounded-2xl outline-none font-bold text-slate-800 focus:border-sky-400 focus:bg-white transition-colors"
-                  value={form.receiverName} onChange={e => setForm({...form, receiverName: e.target.value})}
+                <CurrencyInput 
+                  value={form.codAmount}
+                  onChange={val => setForm({...form, codAmount: val})}
+                  placeholder={mode === 'delivery' ? "Nhập số tiền cần thu hộ (nếu có)..." : "Nhập số tiền tài xế cần ứng ra trả trước (nếu có)..."}
+                  className="w-full text-base font-bold text-gray-800 outline-none p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
                 />
               </div>
             </div>
 
-            {/* Thu hộ và Ghi chú */}
-            <div className="bg-white p-4 md:p-5 rounded-3xl shadow-[0_4px_20px_rgba(0,0,0,0.02)] border border-gray-100/50 space-y-5">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
-                  <DollarSign size={14} className="text-yellow-500" /> THU HỘ TIỀN HÀNG (COD)
-                </label>
-                <CurrencyInput 
-                  name="codAmount"
-                  placeholder="Ví dụ: 250.000"
-                  className="w-full text-[14px] font-bold text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-2xl outline-none focus:border-yellow-400 focus:ring-4 focus:ring-yellow-100/50 focus:bg-white transition-all duration-300"
-                  value={form.codAmount}
-                  onChange={e => setForm({...form, codAmount: e.target.value})}
+            {/* Thông tin lấy hàng */}
+            <div className="flex-1 border-b border-gray-100 pb-3">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                {mode === 'delivery' ? 'LẤY HÀNG TẠI' : 'LẤY HÀNG Ở ĐÂU (ĐIỂM LẤY)'}
+              </label>
+              <div className="flex flex-col gap-2 relative">
+                <AddressAutocompleteInput 
+                  value={form.pickupAddress}
+                  onChangeText={txt => setForm(prev => ({...prev, pickupAddress: txt}))}
+                  onSelectCoordinates={coords => setForm(prev => ({...prev, pickupCoordinates: coords}))}
+                  placeholder="Nhập địa chỉ lấy hàng..."
+                  onClickMapIcon={(query) => openMapSelect('pickup')}
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl focus-within:border-blue-300"
                 />
-                <p className="text-[10px] text-gray-400 mt-1.5 ml-1">Nhập 0 hoặc bỏ trống nếu không cần thu hộ.</p>
+                <div className="flex gap-2">
+                  <input 
+                    type="text"
+                    placeholder={mode === 'delivery' ? "Tên người giao (không bắt buộc)" : "Tên người gửi (không bắt buộc)"}
+                    className="w-1/2 text-xs outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
+                    value={form.senderName}
+                    onChange={e => setForm({...form, senderName: e.target.value})}
+                  />
+                  <input 
+                    type="tel"
+                    placeholder={mode === 'delivery' ? "SĐT Cửa hàng / Nơi lấy" : "SĐT Nơi lấy hàng (Bắt buộc)"}
+                    className="w-1/2 text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
+                    value={form.senderPhone}
+                    onChange={e => setForm({...form, senderPhone: e.target.value})}
+                  />
+                </div>
               </div>
+            </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
-                  <Package size={14} className="text-blue-500" /> GHI CHÚ ĐƠN HÀNG
-                </label>
-                <textarea 
-                  rows="2"
-                  placeholder="Lưu ý cho tài xế (mặt hàng dễ vỡ, giao hẻm...)"
-                  className="w-full text-[13px] text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-2xl outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 focus:bg-white transition-all duration-300 resize-none font-medium"
-                  value={form.note}
-                  onChange={e => setForm({...form, note: e.target.value})}
-                ></textarea>
+            {/* Thông tin giao hàng */}
+            <div className="flex-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                {mode === 'delivery' ? 'GIAO ĐẾN ĐÂU' : 'MANG VỀ CỬA HÀNG (ĐIỂM GIAO)'}
+              </label>
+              <div className="flex flex-col gap-2 relative mt-1">
+                <AddressAutocompleteInput 
+                  value={form.deliveryAddress}
+                  onChangeText={txt => setForm(prev => ({...prev, deliveryAddress: txt}))}
+                  onSelectCoordinates={coords => setForm(prev => ({...prev, deliveryCoordinates: coords}))}
+                  placeholder="Nhập địa chỉ nhận..."
+                  onClickMapIcon={(query) => openMapSelect('delivery')}
+                  className="bg-white border text-sm font-semibold border-gray-100 rounded-xl focus-within:border-sky-300"
+                />
+                <div className="flex gap-2">
+                  <input 
+                    type="tel"
+                    placeholder={mode === 'delivery' ? "SĐT Khách nhận" : "SĐT Cửa hàng"}
+                    className="w-1/2 text-xs font-semibold text-blue-600 outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
+                    value={form.receiverPhone}
+                    onChange={e => setForm({...form, receiverPhone: e.target.value})}
+                  />
+                  <input 
+                    type="text"
+                    placeholder={mode === 'delivery' ? "Tên người nhận (không bắt buộc)" : "Tên người nhận tại Cửa hàng"}
+                    className="w-1/2 text-xs outline-none p-3 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
+                    value={form.receiverName}
+                    onChange={e => setForm({...form, receiverName: e.target.value})}
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* Ghi chú */}
+            <div>
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2 flex items-center gap-1">
+                <Package size={14} className="text-blue-500" /> GHI CHÚ ĐƠN HÀNG
+              </label>
+              <textarea 
+                rows="2"
+                placeholder="Lưu ý cho tài xế (mặt hàng dễ vỡ, giao hẻm...)"
+                className="w-full text-[13px] text-gray-800 bg-gray-50/50 border border-gray-100 p-3.5 rounded-2xl outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100/50 focus:bg-white transition-all duration-300 resize-none font-medium"
+                value={form.note}
+                onChange={e => setForm({...form, note: e.target.value})}
+              ></textarea>
             </div>
 
             {/* BUTTON TẠO ĐƠN */}
@@ -478,12 +517,12 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 {loading ? (
                   <>
                     <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>ĐANG XỬ LÝ...</span>
+                    <span>ĐANG TÌM TÀI XẾ...</span>
                   </>
                 ) : (
                   <>
                     <Check size={20} />
-                    <span>XÁC NHẬN TẠO ĐƠN</span>
+                    <span>{mode === 'delivery' ? 'TẠO ĐƠN GIAO HÀNG' : 'TẠO ĐƠN LẤY HÀNG (MANG VỀ)'}</span>
                   </>
                 )}
               </button>
