@@ -146,9 +146,10 @@ const ShopStatistics = () => {
           <div className="flex flex-col">
             <span className="text-sm font-bold text-gray-800">
               {order.serviceType === 'GIAO_HANG' ? 'Giao Hàng' :
+               order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' :
                order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                order.serviceType === 'DIEU_PHOI' ? (order.subServiceType === 'NAP_TIEN' ? 'Nạp Tiền' : order.subServiceType === 'RUT_TIEN' ? 'Rút Tiền' : 'Điều Phối') :
-               order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' : 'Mua Hộ'}
+               'Mua Hộ'}
             </span>
             <span className="text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleDateString('vi-VN', { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
