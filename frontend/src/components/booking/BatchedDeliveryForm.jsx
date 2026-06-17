@@ -89,7 +89,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e, mode) => {
     e.preventDefault();
 
     if (!pickup.address || !pickup.phone) {
@@ -104,46 +104,73 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
       }
     }
 
-    // Prepare single payload for DON_GHEP
     const totalFee = deliveries.reduce((sum, d) => sum + (d.fee || 0), 0);
     const totalCod = deliveries.reduce((sum, d) => sum + (d.codAmount ? parseInt(d.codAmount) : 0), 0);
 
-    const payload = {
-      serviceType: 'DON_GHEP',
-      senderName: shopName || 'Cửa hàng',
-      customerPhone: pickup.phone,
-      senderPhone: pickup.phone,
-      pickupAddress: pickup.address.trim(),
-      pickupCoordinates: pickup.coordinates || null,
-      note: `Đơn ghép ${deliveries.length} điểm`,
-      codAmount: totalCod,
-      deliveryFee: totalFee,
-      packageDetails: {
-        description: `Giao hàng hóa (Đơn ghép ${deliveries.length} điểm)`,
-        weight: '',
-        isFragile: false,
-        bulkyFee: 0
-      },
-      batchedDeliveries: deliveries.map(d => ({
+    if (mode === 'SINGLE_DRIVER') {
+      const payload = {
+        serviceType: 'DON_GHEP',
+        senderName: shopName || 'Cửa hàng',
+        customerPhone: pickup.phone,
+        senderPhone: pickup.phone,
+        pickupAddress: pickup.address.trim(),
+        pickupCoordinates: pickup.coordinates || null,
+        note: `Đơn ghép ${deliveries.length} điểm`,
+        codAmount: totalCod,
+        deliveryFee: totalFee,
+        packageDetails: {
+          description: `Giao hàng hóa (Đơn ghép ${deliveries.length} điểm)`,
+          weight: '',
+          isFragile: false,
+          bulkyFee: 0
+        },
+        batchedDeliveries: deliveries.map(d => ({
+          receiverName: d.receiverName.trim(),
+          receiverPhone: d.receiverPhone.trim(),
+          deliveryAddress: d.address.trim(),
+          deliveryCoordinates: d.coordinates || null,
+          codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
+          fee: d.fee || 0,
+          distanceKm: d.distanceKm || 0,
+          note: d.note.trim()
+        }))
+      };
+
+      onBooking(payload);
+    } else {
+      // MULTI_DRIVER
+      const payloads = deliveries.map((d, index) => ({
+        serviceType: 'GIAO_HANG',
+        senderName: shopName || 'Cửa hàng',
+        customerPhone: pickup.phone,
+        senderPhone: pickup.phone,
+        pickupAddress: pickup.address.trim(),
+        pickupCoordinates: pickup.coordinates || null,
+        note: d.note.trim(),
+        codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
+        deliveryFee: d.fee || 0,
         receiverName: d.receiverName.trim(),
         receiverPhone: d.receiverPhone.trim(),
+        receiverPhone2: '',
         deliveryAddress: d.address.trim(),
         deliveryCoordinates: d.coordinates || null,
-        codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
-        fee: d.fee || 0,
-        distanceKm: d.distanceKm || 0,
-        note: d.note.trim()
-      }))
-    };
+        packageDetails: {
+          description: `Giao hàng hóa (Tách từ đơn ghép - điểm ${index + 1})`,
+          weight: '',
+          isFragile: false,
+          bulkyFee: 0
+        }
+      }));
 
-    onBooking(payload);
+      onBooking({ isMultiple: true, orders: payloads });
+    }
   };
 
   const totalFee = deliveries.reduce((sum, d) => sum + (d.fee || 0), 0);
   const totalCod = deliveries.reduce((sum, d) => sum + (d.codAmount ? parseInt(d.codAmount) : 0), 0);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 pb-12">
+    <form onSubmit={(e) => e.preventDefault()} className="space-y-6 pb-12">
       
       {/* THÔNG TIN LẤY HÀNG (SHOP) */}
       <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.02)] relative overflow-hidden">
@@ -295,23 +322,45 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
           <span className="text-sm font-extrabold text-yellow-600">{totalCod.toLocaleString('vi-VN')}đ</span>
         </div>
         
-        <button 
-          disabled={loading}
-          type="submit"
-          className="w-full bg-blue-600 active:bg-blue-700 text-white font-extrabold text-[15px] sm:text-base py-4 rounded-xl shadow-[0_8px_20px_rgba(37,99,235,0.24)] active:scale-[0.98] transition-transform duration-300 ease-out disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              <span>ĐANG XỬ LÝ {deliveries.length} ĐƠN...</span>
-            </>
-          ) : (
-            <>
-              <Check size={20} />
-              <span>TẠO {deliveries.length} ĐƠN GHÉP NGAY</span>
-            </>
-          )}
-        </button>
+        <div className="flex flex-col gap-3">
+          <button 
+            type="button"
+            disabled={loading}
+            onClick={(e) => handleSubmit(e, 'SINGLE_DRIVER')}
+            className="w-full bg-blue-600 active:bg-blue-700 text-white font-extrabold text-[15px] sm:text-base py-4 rounded-xl shadow-[0_8px_20px_rgba(37,99,235,0.24)] active:scale-[0.98] transition-transform duration-300 ease-out disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>ĐANG XỬ LÝ...</span>
+              </>
+            ) : (
+              <>
+                <Check size={20} />
+                <span>1 TÀI XẾ GIAO ({deliveries.length} ĐIỂM)</span>
+              </>
+            )}
+          </button>
+
+          <button 
+            type="button"
+            disabled={loading}
+            onClick={(e) => handleSubmit(e, 'MULTI_DRIVER')}
+            className="w-full bg-sky-50 border-2 border-sky-200 active:bg-sky-100 text-sky-700 font-extrabold text-[15px] sm:text-base py-4 rounded-xl active:scale-[0.98] transition-transform duration-300 ease-out disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-sky-400 border-t-sky-700 rounded-full animate-spin"></div>
+                <span>ĐANG XỬ LÝ...</span>
+              </>
+            ) : (
+              <>
+                <Package size={20} />
+                <span>NHIỀU TÀI XẾ GIAO (TÁCH THÀNH {deliveries.length} ĐƠN)</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       <LocationPicker 

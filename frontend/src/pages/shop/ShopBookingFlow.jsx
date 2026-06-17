@@ -40,6 +40,28 @@ export default function ShopBookingFlow() {
   const handleBookingSubmit = async (payload) => {
     if (isSubmittingRef.current) return;
     
+    // Xử lý tạo NHIỀU đơn độc lập (Nhiều tài xế giao)
+    if (payload.isMultiple && payload.orders) {
+      isSubmittingRef.current = true;
+      setLoading(true);
+      let successCount = 0;
+      try {
+        for (let order of payload.orders) {
+          const res = await api.post('/orders/customer', order);
+          if (res.data.success) successCount++;
+        }
+        alert(`Đã tạo thành công ${successCount} đơn hàng độc lập!`);
+        navigate('/shop');
+      } catch (error) {
+        console.error(error);
+        alert('Có lỗi xảy ra khi tạo một số đơn. Vui lòng kiểm tra lại!');
+      } finally {
+        isSubmittingRef.current = false;
+        setLoading(false);
+      }
+      return;
+    }
+
     // Tự động gán thông tin Mặc định của Cửa hàng nếu người dùng để trống
     const cData = JSON.parse(localStorage.getItem('customerData') || '{}');
     
