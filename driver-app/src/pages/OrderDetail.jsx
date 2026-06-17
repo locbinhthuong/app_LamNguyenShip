@@ -234,7 +234,7 @@ export default function OrderDetail() {
           </button>
           <div className="min-w-0 flex-1">
             <h1 className="text-base font-bold text-slate-800 sm:text-lg">
-               order.serviceType === 'GIAO_HANG' ? 'Đơn Giao Hàng' :
+              {order.serviceType === 'GIAO_HANG' ? 'Đơn Giao Hàng' :
                order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' :
                order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách Xe Máy' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                order.serviceType === 'MUA_HO' ? 'Mua Hàng Hộ' :
@@ -295,6 +295,9 @@ export default function OrderDetail() {
                 </a>
               </div>
               <p className="text-slate-800 font-bold text-sm leading-snug">{order.pickupAddress || 'Chưa xác định'}</p>
+              {order.serviceType === 'DON_GHEP' && (order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : null)) && (
+                 <a href={`tel:${order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}`} className="inline-flex bg-orange-100 text-orange-700 font-black tracking-wider px-3 py-1.5 rounded-lg active:scale-95 transition-transform items-center gap-1.5 border border-orange-200 text-xs mt-2"><Phone size={12}/> Gọi Lấy Hàng: {order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}</a>
+              )}
             </div>
           </div>
           {order.serviceType !== 'DIEU_PHOI' && order.serviceType !== 'DON_GHEP' && (
@@ -330,7 +333,7 @@ export default function OrderDetail() {
                  <span className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold"><MapPin size={16}/></span>
                  <div className="flex-1 min-w-0">
                    <div className="flex items-center justify-between gap-2 mb-1">
-                     <p className="text-xs text-purple-600 font-bold uppercase">Điểm Giao Thứ {index + 1}</p>
+                     <p className="text-xs text-purple-600 font-bold uppercase flex items-center gap-1">Điểm Thứ {index + 1} {d.receiverName && <span className="text-[10px] text-slate-500 normal-case font-medium">- {d.receiverName}</span>}</p>
                      <a 
                        href={`https://www.google.com/maps/dir/?api=1&destination=${d.deliveryCoordinates?.lat && d.deliveryCoordinates.lat !== 10.045 ? `${d.deliveryCoordinates.lat},${d.deliveryCoordinates.lng}` : encodeURIComponent(d.deliveryAddress)}`} 
                        target="_blank" 
@@ -340,8 +343,13 @@ export default function OrderDetail() {
                        <Map size={12}/> DẪN ĐƯỜNG
                      </a>
                    </div>
-                   <p className="text-slate-800 font-medium text-sm leading-snug">{d.deliveryAddress || 'Chưa xác định'}</p>
-                   {d.codAmount > 0 && <p className="text-[11px] text-blue-600 font-bold mt-1 bg-blue-50 px-2 py-0.5 rounded inline-block">Thu hộ (COD): {d.codAmount.toLocaleString()}đ</p>}
+                   <p className="text-slate-800 font-medium text-sm leading-snug mb-2">{d.deliveryAddress || 'Chưa xác định'}</p>
+                   <div className="flex flex-wrap items-center gap-2">
+                     {d.receiverPhone && (
+                        <a href={`tel:${d.receiverPhone}`} className="inline-flex bg-blue-100 text-blue-700 font-black tracking-wider px-3 py-1.5 rounded-lg active:scale-95 transition-transform items-center gap-1.5 border border-blue-200 text-xs"><Phone size={12}/> Gọi Khách: {d.receiverPhone}</a>
+                     )}
+                     {d.codAmount > 0 && <p className="text-[11px] text-blue-700 font-bold bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100 inline-flex items-center">Thu hộ (COD): {d.codAmount.toLocaleString()}đ</p>}
+                   </div>
                  </div>
                </div>
              </div>
@@ -349,6 +357,7 @@ export default function OrderDetail() {
         </div>
 
         {/* Liên Hệ */}
+        {order.serviceType !== 'DON_GHEP' && (
         <div className="card">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1">
             <Phone size={14}/> LIÊN HỆ GIAO NHẬN
@@ -365,30 +374,6 @@ export default function OrderDetail() {
                 <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg flex items-center gap-1"><Phone size={12}/> LIÊN HỆ KHÁCH</span>
                 <a href={`tel:${order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-orange-200 text-sm"><Phone size={14}/> {order.receiverPhone || order.senderPhone || order.pickupPhone || order.customerPhone}</a>
               </div>
-            ) : order.serviceType === 'DON_GHEP' ? (
-               <>
-                 <div className="flex items-center justify-between mx-[-12px] px-3 pb-3 border-b border-slate-100">
-                   <span className="font-bold text-slate-500 text-[11px] uppercase bg-slate-100 px-3 py-1.5 rounded-lg flex items-center gap-1"><MapPin size={12}/> ĐIỂM ĐI</span>
-                   {(order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : null)) ? (
-                     <a href={`tel:${order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}`} className="bg-orange-100 text-orange-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-orange-200 text-sm"><Phone size={14}/> {order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}</a>
-                   ) : (
-                     <span className="text-xs text-slate-400 italic">Không có SĐT</span>
-                   )}
-                 </div>
-                 {order.batchedDeliveries?.map((d, index) => (
-                    <div key={index} className="flex items-center justify-between mx-[-12px] px-3 pt-3 pb-3 border-b border-slate-100 last:border-0">
-                      <div className="flex flex-col items-start">
-                        <span className="font-bold text-purple-600 text-[11px] uppercase bg-purple-50 px-2 py-1 rounded flex items-center gap-1"><MapPin size={12}/> KHÁCH {index + 1}</span>
-                        {d.receiverName && <span className="text-[10px] text-slate-500 mt-1 font-semibold">{d.receiverName}</span>}
-                      </div>
-                      {d.receiverPhone ? (
-                        <a href={`tel:${d.receiverPhone}`} className="bg-blue-100 text-blue-700 font-black tracking-wider px-4 py-2 rounded-xl active:scale-95 transition-transform flex items-center gap-2 border border-blue-200 text-sm"><Phone size={14}/> {d.receiverPhone}</a>
-                      ) : (
-                        <span className="text-xs text-slate-400 italic">Không có SĐT</span>
-                      )}
-                    </div>
-                 ))}
-               </>
             ) : (
               <>
                 <div className="flex items-center justify-between mx-[-12px] px-3 pb-3 border-b border-slate-100">
@@ -412,6 +397,7 @@ export default function OrderDetail() {
 
           </div>
         </div>
+        )}
 
         {/* Order Info */}
         <div className="card">
