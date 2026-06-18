@@ -12,5 +12,5 @@ function bump(path, regex, replacement) {
 }
 
 // Customer app
-bump('c:/app_LamNguyenShip/frontend/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 74;/g, 'CURRENT_PROJECT_VERSION = 75;');
-bump('c:/app_LamNguyenShip/frontend/android/app/build.gradle', /versionCode 63/g, 'versionCode 64');
+bump('c:/app_LamNguyenShip/frontend/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 75;/g, 'CURRENT_PROJECT_VERSION = 76;');
+bump('c:/app_LamNguyenShip/frontend/android/app/build.gradle', /versionCode 64/g, 'versionCode 65');
