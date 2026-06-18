@@ -355,9 +355,9 @@ export default function Finance() {
                          <div className="text-xs text-slate-500 flex flex-col items-end">
                             <span className="font-semibold text-slate-700">Nợ mới: <span className="text-red-500 font-bold">{(drv.todayDebt || 0).toLocaleString()} đ</span></span>
                             <span className="uppercase font-semibold mt-1">
-                               Nợ: 
-                               <span className={`font-black ml-1 text-sm ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                                   {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Đủ'}
+                               Nợ Cũ Phải Thu: 
+                               <span className={`font-black ml-1 text-sm ${drv.walletDebt - (drv.todayDebt || 0) > 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                                   {drv.walletDebt - (drv.todayDebt || 0) > 0 ? (drv.walletDebt - (drv.todayDebt || 0)).toLocaleString() + ' đ' : 'Đã Đóng Đủ'}
                                </span>
                             </span>
                          </div>
@@ -375,7 +375,7 @@ export default function Finance() {
                       <th className="px-4 py-3 font-semibold text-center border-l border-slate-200">Đơn Hôm Nay</th>
                       <th className="px-4 py-3 font-semibold text-center border-l border-slate-200">Phí Giao (Hôm Nay)</th>
                       <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Công Nợ Hôm Nay</th>
-                      <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Nợ Còn Thiếu</th>
+                      <th className="px-4 py-3 font-semibold text-right border-l border-slate-200">Nợ Cũ Phải Thu</th>
                       <th className="px-4 py-3 font-semibold text-center mt-1 border-l border-slate-200">Quản Lý Sổ Đen</th>
                     </tr>
                   </thead>
@@ -399,8 +399,8 @@ export default function Finance() {
                          </td>
 
                          <td className="px-4 py-3 text-right border-l border-slate-100">
-                            <span className={`font-black ${drv.walletDebt > 0 ? 'text-red-500' : 'text-slate-400'}`}>
-                                {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : 'Thanh toán đủ'}
+                            <span className={`font-black ${drv.walletDebt - (drv.todayDebt || 0) > 0 ? 'text-red-500' : 'text-slate-400'}`}>
+                                {drv.walletDebt - (drv.todayDebt || 0) > 0 ? (drv.walletDebt - (drv.todayDebt || 0)).toLocaleString() + ' đ' : 'Không Nợ Cũ'}
                             </span>
                          </td>
                          <td className="px-4 py-3 text-center border-l border-slate-100">
