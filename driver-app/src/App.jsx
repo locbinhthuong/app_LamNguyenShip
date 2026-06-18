@@ -83,25 +83,13 @@ function AppContent() {
     }
 
     const initAudio = async () => {
-      // 1. CHỈ DÙNG HTML5 AUDIO CHO WEB. App điện thoại (Native) bỏ qua để không bị cái khung nghe nhạc ngoài màn hình khóa
-      if (Capacitor.isNativePlatform()) return;
-
+      // Dùng HTML5 Audio cho tất cả nền tảng. Bỏ mediaSession để không hiện Lock Screen Player.
       if (!fallbackAudioRef.current) {
         try {
           const audio = new Audio('/chuong.mp3');
           audio.loop = true;
           audio.preload = 'auto';
           fallbackAudioRef.current = audio;
-
-          if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = new MediaMetadata({
-              title: '🔥 Có Đơn Hàng Mới 🔥',
-              artist: 'AloShipp Tài Xế',
-              album: 'Thông báo khẩn cấp'
-            });
-            navigator.mediaSession.setActionHandler('play', () => {});
-            navigator.mediaSession.setActionHandler('pause', () => {});
-          }
         } catch (e) {
           console.error("Audio init error:", e);
         }
@@ -182,24 +170,10 @@ function AppContent() {
     const playAudio = async () => {
         if (Capacitor.isNativePlatform()) {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
-            
-            // CHỈ Hú còi LocalNotification nếu App đang MỞ TRÊN MÀN HÌNH (Foreground). 
-            // Nếu đang chạy ngầm (Background), nhường lại cho Firebase Push Notification để tránh bị trùng lặp banner.
-            if (document.visibilityState === 'visible') {
-                import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
-                    LocalNotifications.schedule({
-                      notifications: [{
-                        title: "🔥 ĐƠN HÀNG MỚI",
-                        body: "Vào ứng dụng kiểm tra ngay!",
-                        id: Math.floor(Math.random() * 2147483647),
-                        sound: "chuong.mp3", // Sẽ lấy từ Library/Sounds nhờ Swift copy
-                        channelId: 'aloshipp_push_channel_v6'
-                      }]
-                    }).catch(e => console.log("Lỗi Notification: " + e.message));
-                });
-            }
-        } else {
-            // WEB BROWSER: Vẫn dùng HTML5 Audio bình thường vì Web không có Push Native
+        }
+        
+        // Luôn kêu chuông HTML5 Audio nếu app đang mở (Foreground)
+        if (document.visibilityState === 'visible') {
             if (fallbackAudioRef.current) {
                 fallbackAudioRef.current.play().catch(e => {
                     console.error('Audio play blocked:', e);
