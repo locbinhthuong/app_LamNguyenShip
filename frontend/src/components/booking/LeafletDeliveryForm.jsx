@@ -419,7 +419,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 </div>
                 <CurrencyInput 
                   value={form.codAmount}
-                  onChange={val => setForm({...form, codAmount: val})}
+                  onChange={e => setForm({...form, codAmount: e.target.value})}
                   placeholder={mode === 'delivery' ? "Nhập số tiền cần thu hộ (nếu có)..." : "Nhập số tiền tài xế cần ứng ra trả trước (nếu có)..."}
                   className="w-full text-base font-bold text-gray-800 outline-none p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
                 />

@@ -71,6 +71,7 @@ const ShopStatistics = () => {
     
     let chartData = [];
     let totalRevenue = 0;
+    let totalShipping = 0;
     let totalOrders = 0;
 
     const formatDate = (d) => `${d.getDate()}/${d.getMonth() + 1}`;
@@ -79,7 +80,7 @@ const ShopStatistics = () => {
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(now.getDate() - i);
-        chartData.push({ name: formatDate(d), revenue: 0, orders: 0, time: d.getTime() });
+        chartData.push({ name: formatDate(d), revenue: 0, shipping: 0, orders: 0, time: d.getTime() });
       }
 
       completedOrders.forEach(o => {
@@ -87,12 +88,13 @@ const ShopStatistics = () => {
         const match = chartData.find(c => c.name === formatDate(od));
         if (match) {
           match.revenue += (o.codAmount || 0);
+          match.shipping += (o.deliveryFee || 0);
           match.orders += 1;
         }
       });
     } else if (statFilter === 'week') {
       for (let i = 3; i >= 0; i--) {
-        chartData.push({ name: i === 0 ? 'Tuần này' : `-${i} Tuần`, revenue: 0, orders: 0, weekOffset: i });
+        chartData.push({ name: i === 0 ? 'Tuần này' : `-${i} Tuần`, revenue: 0, shipping: 0, orders: 0, weekOffset: i });
       }
       
       completedOrders.forEach(o => {
@@ -103,6 +105,7 @@ const ShopStatistics = () => {
           const match = chartData.find(c => c.weekOffset === diffWeeks);
           if (match) {
             match.revenue += (o.codAmount || 0);
+            match.shipping += (o.deliveryFee || 0);
             match.orders += 1;
           }
         }
@@ -110,7 +113,7 @@ const ShopStatistics = () => {
     } else if (statFilter === 'month') {
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        chartData.push({ name: `T${d.getMonth() + 1}`, revenue: 0, orders: 0, month: d.getMonth(), year: d.getFullYear() });
+        chartData.push({ name: `T${d.getMonth() + 1}`, revenue: 0, shipping: 0, orders: 0, month: d.getMonth(), year: d.getFullYear() });
       }
 
       completedOrders.forEach(o => {
@@ -118,18 +121,19 @@ const ShopStatistics = () => {
         const match = chartData.find(c => c.month === od.getMonth() && c.year === od.getFullYear());
         if (match) {
           match.revenue += (o.codAmount || 0);
+          match.shipping += (o.deliveryFee || 0);
           match.orders += 1;
         }
       });
     }
 
-    // Tính tổng trong khoảng thời gian biểu đồ
     chartData.forEach(c => {
       totalRevenue += c.revenue;
+      totalShipping += c.shipping;
       totalOrders += c.orders;
     });
 
-    return { chartData, totalRevenue, totalOrders };
+    return { chartData, totalRevenue, totalShipping, totalOrders };
   }, [orders, statFilter]);
 
   const renderOrder = (order) => {
@@ -180,8 +184,9 @@ const ShopStatistics = () => {
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100 text-xs">
           <p className="font-bold text-gray-800 mb-1">{label}</p>
-          <p className="text-blue-600 font-bold mb-0.5">Doanh thu: {payload[0].value.toLocaleString('vi-VN')}đ</p>
-          <p className="text-orange-500 font-bold">Số đơn: {payload[1].value}</p>
+          <p className="text-blue-600 font-bold mb-0.5">Tiền thu hộ: {payload[0].value.toLocaleString('vi-VN')}đ</p>
+          {payload[1] && <p className="text-emerald-500 font-bold mb-0.5">Tiền ship: {payload[1].value.toLocaleString('vi-VN')}đ</p>}
+          {payload[2] && <p className="text-orange-500 font-bold">Số đơn: {payload[2].value}</p>}
         </div>
       );
     }
@@ -204,7 +209,7 @@ const ShopStatistics = () => {
         </div>
 
         {/* Các thẻ tổng quan */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/30">
             <div className="flex items-center gap-2 mb-2 opacity-80">
               <DollarSign size={18} />
@@ -212,6 +217,15 @@ const ShopStatistics = () => {
             </div>
             <div className="text-2xl md:text-3xl font-black">
               {statsData.totalRevenue.toLocaleString('vi-VN')}đ
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 text-white shadow-lg shadow-emerald-500/30">
+            <div className="flex items-center gap-2 mb-2 opacity-80">
+              <DollarSign size={18} />
+              <span className="text-xs font-medium uppercase tracking-wider">Doanh thu tiền ship</span>
+            </div>
+            <div className="text-2xl md:text-3xl font-black">
+              {statsData.totalShipping.toLocaleString('vi-VN')}đ
             </div>
           </div>
           <div className="bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/30">
@@ -237,7 +251,8 @@ const ShopStatistics = () => {
                 <YAxis yAxisId="right" orientation="right" hide={true} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
-                <Bar yAxisId="left" dataKey="revenue" name="Doanh thu (đ)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar yAxisId="left" dataKey="revenue" name="Tiền thu hộ (đ)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar yAxisId="left" dataKey="shipping" name="Tiền ship (đ)" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 <Line yAxisId="right" type="monotone" dataKey="orders" name="Số đơn" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
               </ComposedChart>
             </ResponsiveContainer>
