@@ -309,7 +309,31 @@ export default function OrderDetail() {
                </div>
 
                {/* ĐIỂM ĐẾN */}
-               {order.serviceType !== 'DIEU_PHOI' && (
+               {order.serviceType === 'DON_GHEP' && order.batchedDeliveries?.map((d, idx) => (
+                 <div key={idx} className="relative mb-5 last:mb-0">
+                    <div className="absolute -left-[27px] top-1 w-3 h-3 bg-blue-500 rounded-full ring-4 ring-blue-50"></div>
+                    <div className="flex justify-between items-start mb-2 gap-2">
+                       <div>
+                         <p className="text-[10px] font-bold text-slate-400 uppercase">ĐIỂM GIAO SỐ {idx + 1}</p>
+                         <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight">{d.deliveryAddress}</p>
+                       </div>
+                       <div className="text-right shrink-0">
+                         <p className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${d.feePaidBy === 'SENDER' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>Ship ({d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}): <br/> {d.fee > 0 ? `${d.fee.toLocaleString()}đ` : '0đ'}</p>
+                       </div>
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <p className="text-xs text-slate-600 font-medium">👤 {d.receiverName || 'Khách hàng'}</p>
+                      <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
+                        <span className="font-bold text-blue-600">SĐT Liên Hệ:</span> {d.receiverPhone}
+                      </p>
+                      {d.codAmount > 0 && <p className="text-[11px] text-blue-700 font-bold bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100 inline-flex items-center">Thu hộ (COD): {d.codAmount.toLocaleString()}đ</p>}
+                      {d.note && <p className="text-[11px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">Ghi chú: {d.note}</p>}
+                    </div>
+                 </div>
+               ))}
+               
+               {order.serviceType !== 'DIEU_PHOI' && order.serviceType !== 'DON_GHEP' && (
                  <div className="relative">
                     <div className="absolute -left-[27px] top-1 w-3 h-3 bg-blue-500 rounded-full ring-4 ring-blue-50"></div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'NGƯỜI NHẬN / NƠI GIAO'}</p>

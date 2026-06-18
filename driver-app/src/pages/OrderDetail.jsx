@@ -355,7 +355,7 @@ export default function OrderDetail() {
                         <a href={`tel:${d.receiverPhone}`} className="inline-flex bg-blue-100 text-blue-700 font-black tracking-wider px-3 py-1.5 rounded-lg active:scale-95 transition-transform items-center gap-1.5 border border-blue-200 text-xs"><Phone size={12}/> Gọi Khách: {d.receiverPhone}</a>
                      )}
                      {d.codAmount > 0 && <p className="text-[11px] text-blue-700 font-bold bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100 inline-flex items-center">Thu hộ (COD): {d.codAmount.toLocaleString()}đ</p>}
-                     <p className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border inline-flex items-center ${d.feePaidBy === 'SENDER' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>Ship: {d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}</p>
+                     <p className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border inline-flex items-center ${d.feePaidBy === 'SENDER' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>Ship ({d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}): {d.fee > 0 ? `${d.fee.toLocaleString()}đ` : '0đ'}</p>
                    </div>
                  </div>
                </div>

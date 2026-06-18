@@ -310,6 +310,19 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                            <input type="text" value={delivery.note} onChange={e => handleBatchedChange(index, 'note', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs bg-slate-50 focus:border-purple-400 focus:outline-none" placeholder="Lưu ý..." />
                         </div>
                      </div>
+                     <div className="grid grid-cols-2 gap-3">
+                        <div>
+                           <label className="block text-[10px] font-semibold text-slate-500 mb-1">Phí Ship</label>
+                           <CurrencyInput name={`fee_${index}`} value={delivery.fee} onChange={e => handleBatchedChange(index, 'fee', Number(e.target.value))} min="0" className="w-full rounded-lg border border-slate-200 p-2 text-xs font-bold text-green-600 bg-slate-50 focus:border-purple-400 focus:outline-none" />
+                        </div>
+                        <div>
+                           <label className="block text-[10px] font-semibold text-slate-500 mb-1">Người trả ship</label>
+                           <select value={delivery.feePaidBy || 'RECEIVER'} onChange={e => handleBatchedChange(index, 'feePaidBy', e.target.value)} className="w-full rounded-lg border border-slate-200 p-2 text-xs font-bold text-sky-600 bg-slate-50 focus:border-purple-400 focus:outline-none">
+                              <option value="RECEIVER">Khách nhận trả</option>
+                              <option value="SENDER">Shop trả</option>
+                           </select>
+                        </div>
+                     </div>
                    </div>
                  </div>
               ))}
