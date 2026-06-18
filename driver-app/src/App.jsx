@@ -101,22 +101,24 @@ function AppContent() {
     
     const unlockAudio = () => {
       if (fallbackAudioRef.current && fallbackAudioRef.current.paused) {
-         // Chơi một đoạn âm thanh trống ngắn để unlock trên mobile
-         fallbackAudioRef.current.muted = true;
-         fallbackAudioRef.current.play().then(() => {
-             fallbackAudioRef.current.pause();
-             fallbackAudioRef.current.currentTime = 0;
-             setTimeout(() => {
-                 if (fallbackAudioRef.current) fallbackAudioRef.current.muted = false;
-             }, 300);
-         }).catch(e => {
-             if (fallbackAudioRef.current) fallbackAudioRef.current.muted = false;
-         });
+          // Giải pháp unlock im lặng 100% cho iOS/Safari:
+          // 1. Kích hoạt Web Audio API
+          try {
+              const AudioContext = window.AudioContext || window.webkitAudioContext;
+              if (AudioContext) {
+                  const ctx = new AudioContext();
+                  ctx.resume().then(() => ctx.close());
+              }
+          } catch (e) {}
+          // 2. Gọi load() thay vì play() để Safari cấp quyền mà không phát tiếng
+          fallbackAudioRef.current.load();
       }
+      document.removeEventListener('touchstart', unlockAudio);
+      document.removeEventListener('click', unlockAudio);
     };
 
-    document.addEventListener('touchstart', unlockAudio, { passive: true, once: true });
-    document.addEventListener('click', unlockAudio, { passive: true, once: true });
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
+    document.addEventListener('click', unlockAudio, { passive: true });
     
     return () => {
       document.removeEventListener('touchstart', unlockAudio);
