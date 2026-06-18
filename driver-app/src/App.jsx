@@ -83,7 +83,9 @@ function AppContent() {
     }
 
     const initAudio = async () => {
-      // 1. HTML5 Audio (Sử dụng cho tất cả Web/Android/iOS vì độ ổn định cao nhất)
+      // 1. CHỈ DÙNG HTML5 AUDIO CHO WEB. App điện thoại (Native) bỏ qua để không bị cái khung nghe nhạc ngoài màn hình khóa
+      if (Capacitor.isNativePlatform()) return;
+
       if (!fallbackAudioRef.current) {
         try {
           const audio = new Audio('/chuong.mp3');
@@ -91,14 +93,12 @@ function AppContent() {
           audio.preload = 'auto';
           fallbackAudioRef.current = audio;
 
-          // Thay đổi giao diện Lock Screen Music Player thành Thông báo đơn hàng chuyên nghiệp
           if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = new MediaMetadata({
               title: '🔥 Có Đơn Hàng Mới 🔥',
               artist: 'AloShipp Tài Xế',
               album: 'Thông báo khẩn cấp'
             });
-            // Vô hiệu hóa các nút điều khiển nhạc trên màn hình khóa
             navigator.mediaSession.setActionHandler('play', () => {});
             navigator.mediaSession.setActionHandler('pause', () => {});
           }
@@ -111,19 +111,22 @@ function AppContent() {
     initAudio();
     
     const unlockAudio = () => {
-      // Bật chế độ unlock cho HTML5 Audio (để không bị chặn phát loa)
       if (fallbackAudioRef.current && fallbackAudioRef.current.paused) {
+          fallbackAudioRef.current.muted = true; // Tắt tiếng để không bị ré lên khi chạm
           fallbackAudioRef.current.play().then(() => {
               fallbackAudioRef.current.pause();
               fallbackAudioRef.current.currentTime = 0;
+              fallbackAudioRef.current.muted = false; // Trả lại tiếng bình thường
           }).catch(e => {});
       }
       document.removeEventListener('touchstart', unlockAudio);
       document.removeEventListener('click', unlockAudio);
     };
 
-    document.addEventListener('touchstart', unlockAudio, { passive: true });
-    document.addEventListener('click', unlockAudio, { passive: true });
+    if (!Capacitor.isNativePlatform()) {
+      document.addEventListener('touchstart', unlockAudio, { passive: true });
+      document.addEventListener('click', unlockAudio, { passive: true });
+    }
     
     return () => {
       document.removeEventListener('touchstart', unlockAudio);
