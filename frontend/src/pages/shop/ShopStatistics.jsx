@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PackageCheck, CheckCircle, XCircle, TrendingUp, DollarSign, Package } from 'lucide-react';
+import { PackageCheck, CheckCircle, XCircle, TrendingUp, DollarSign, Package, ListOrdered } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Line } from 'recharts';
@@ -10,6 +10,8 @@ const ShopStatistics = () => {
   const [loading, setLoading] = useState(true);
   const [statFilter, setStatFilter] = useState('day');
   const [showShippingModal, setShowShippingModal] = useState(false); // 'day', 'week', 'month'
+  const [viewMode, setViewMode] = useState('REVENUE'); // 'REVENUE' | 'ORDERS'
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
 
   const fetchOrders = async () => {
     try {
@@ -145,6 +147,7 @@ const ShopStatistics = () => {
     });
 
     let statusCounts = { placed: 0, delivering: 0, completed: 0, cancelled: 0 };
+    let matchedOrders = [];
     orders.forEach(o => {
       const od = new Date(o.createdAt);
       let matched = false;
@@ -159,6 +162,7 @@ const ShopStatistics = () => {
       }
 
       if (matched) {
+        matchedOrders.push(o);
         if (['DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status)) statusCounts.placed++;
         else if (['PICKED_UP', 'DELIVERING'].includes(o.status)) statusCounts.delivering++;
         else if (o.status === 'COMPLETED') statusCounts.completed++;
@@ -166,8 +170,19 @@ const ShopStatistics = () => {
       }
     });
 
-    return { chartData, totalRevenue, totalShipping, shopPaidShipping, customerPaidShipping, totalOrders, statusCounts };
+    matchedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return { chartData, totalRevenue, totalShipping, shopPaidShipping, customerPaidShipping, totalOrders, statusCounts, matchedOrders };
   }, [orders, statFilter]);
+
+  const displayedOrders = useMemo(() => {
+    let list = statsData.matchedOrders || [];
+    if (selectedStatus === 'PLACED') return list.filter(o => ['DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status));
+    if (selectedStatus === 'DELIVERING') return list.filter(o => ['PICKED_UP', 'DELIVERING'].includes(o.status));
+    if (selectedStatus === 'COMPLETED') return list.filter(o => o.status === 'COMPLETED');
+    if (selectedStatus === 'CANCELLED') return list.filter(o => o.status === 'CANCELLED');
+    return list;
+  }, [statsData, selectedStatus]);
 
   const renderOrder = (order) => {
     const statusCfg = getStatusConfig(order);
@@ -228,107 +243,156 @@ const ShopStatistics = () => {
 
   return (
     <div className="flex flex-col min-h-screen w-full bg-gray-50 font-sans overflow-hidden">
-      <div className="shrink-0 bg-white px-4 py-3 safe-pt relative z-40 flex items-center justify-center border-b border-gray-100 shadow-sm">
-        <span className="font-bold text-gray-800 text-lg">Thống Kê Doanh Thu</span>
+      <div className="shrink-0 bg-white px-4 py-3 safe-pt relative z-40 flex flex-col items-center justify-center border-b border-gray-100 shadow-sm">
+        <span className="font-bold text-gray-800 text-lg mb-3">Thống Kê</span>
+        <div className="flex w-full bg-gray-100 rounded-lg p-1 max-w-sm">
+          <button 
+            onClick={() => setViewMode('REVENUE')} 
+            className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${viewMode === 'REVENUE' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            Doanh Thu
+          </button>
+          <button 
+            onClick={() => setViewMode('ORDERS')} 
+            className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${viewMode === 'ORDERS' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            Đơn Hàng
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
         
-        {/* Bộ lọc thống kê */}
+        {/* Bộ lọc thống kê (chung) */}
         <div className="bg-white rounded-xl p-1.5 flex gap-1 mb-6 shadow-sm border border-gray-100 max-w-sm mx-auto md:mx-0">
           <button onClick={() => setStatFilter('day')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${statFilter === 'day' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}>Theo Ngày</button>
           <button onClick={() => setStatFilter('week')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${statFilter === 'week' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}>Theo Tuần</button>
           <button onClick={() => setStatFilter('month')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-colors ${statFilter === 'month' ? 'bg-blue-50 text-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}>Theo Tháng</button>
         </div>
 
-        {/* Các thẻ tổng quan */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/30">
-            <div className="flex items-center gap-2 mb-2 opacity-80">
-              <DollarSign size={18} />
-              <span className="text-xs font-medium uppercase tracking-wider">Tổng thu hộ (COD)</span>
+        {viewMode === 'REVENUE' && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/30">
+                <div className="flex items-center gap-2 mb-2 opacity-80">
+                  <DollarSign size={18} />
+                  <span className="text-xs font-medium uppercase tracking-wider">Tổng thu hộ (COD)</span>
+                </div>
+                <div className="text-2xl md:text-3xl font-black">
+                  {statsData.totalRevenue.toLocaleString('vi-VN')}đ
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 text-white shadow-lg shadow-emerald-500/30 cursor-pointer active:scale-95 transition-transform" onClick={() => setShowShippingModal(true)}>
+                <div className="flex items-center gap-2 mb-2 opacity-80">
+                  <DollarSign size={18} />
+                  <span className="text-xs font-medium uppercase tracking-wider">Doanh thu tiền ship</span>
+                </div>
+                <div className="text-2xl md:text-3xl font-black">
+                  {statsData.totalShipping.toLocaleString('vi-VN')}đ
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/30">
+                <div className="flex items-center gap-2 mb-2 opacity-80">
+                  <Package size={18} />
+                  <span className="text-xs font-medium uppercase tracking-wider">Số đơn giao thành công</span>
+                </div>
+                <div className="text-2xl md:text-3xl font-black">
+                  {statsData.totalOrders}
+                </div>
+              </div>
             </div>
-            <div className="text-2xl md:text-3xl font-black">
-              {statsData.totalRevenue.toLocaleString('vi-VN')}đ
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 text-white shadow-lg shadow-emerald-500/30 cursor-pointer active:scale-95 transition-transform" onClick={() => setShowShippingModal(true)}>
-            <div className="flex items-center gap-2 mb-2 opacity-80">
-              <DollarSign size={18} />
-              <span className="text-xs font-medium uppercase tracking-wider">Doanh thu tiền ship</span>
-            </div>
-            <div className="text-2xl md:text-3xl font-black">
-              {statsData.totalShipping.toLocaleString('vi-VN')}đ
-            </div>
-          </div>
-          <div className="bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl p-4 text-white shadow-lg shadow-orange-500/30">
-            <div className="flex items-center gap-2 mb-2 opacity-80">
-              <Package size={18} />
-              <span className="text-xs font-medium uppercase tracking-wider">Số đơn giao thành công</span>
-            </div>
-            <div className="text-2xl md:text-3xl font-black">
-              {statsData.totalOrders}
-            </div>
-          </div>
-        </div>
 
-        {/* Tình trạng đơn hàng */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <div className="bg-sky-50 border border-sky-100 p-4 rounded-2xl flex flex-col items-center justify-center">
-            <span className="text-2xl font-black text-sky-600">{statsData.statusCounts.placed}</span>
-            <span className="text-[11px] font-bold text-sky-500 uppercase mt-1 text-center">Đã Đặt / Tìm Xế</span>
-          </div>
-          <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex flex-col items-center justify-center">
-            <span className="text-2xl font-black text-amber-600">{statsData.statusCounts.delivering}</span>
-            <span className="text-[11px] font-bold text-amber-500 uppercase mt-1">Đang Giao</span>
-          </div>
-          <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col items-center justify-center">
-            <span className="text-2xl font-black text-emerald-600">{statsData.statusCounts.completed}</span>
-            <span className="text-[11px] font-bold text-emerald-500 uppercase mt-1">Hoàn Thành</span>
-          </div>
-          <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex flex-col items-center justify-center">
-            <span className="text-2xl font-black text-red-600">{statsData.statusCounts.cancelled}</span>
-            <span className="text-[11px] font-bold text-red-500 uppercase mt-1">Đã Hủy</span>
-          </div>
-        </div>
-
-        {/* Biểu đồ */}
-        <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-gray-100 mb-8">
-          <h3 className="text-sm font-bold text-gray-600 mb-6 flex items-center gap-2"><TrendingUp size={16} /> Biểu đồ biến động</h3>
-          <div className="w-full h-64 md:h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={statsData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={10} />
-                <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(val) => (val >= 1000 ? `${val/1000}k` : val)} />
-                <YAxis yAxisId="right" orientation="right" hide={true} />
-                <Tooltip content={<CustomTooltip />} />
-                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
-                <Bar yAxisId="left" dataKey="revenue" name="Tiền thu hộ (đ)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar yAxisId="left" dataKey="shipping" name="Tiền ship (đ)" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Line yAxisId="right" type="monotone" dataKey="orders" name="Số đơn" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Lịch sử đơn hàng */}
-        <div className="mb-4">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">Lịch sử đơn hàng</h2>
-          {loading ? (
-            <div className="text-center text-gray-500 mt-10">Đang tải...</div>
-          ) : historyOrders.length === 0 ? (
-            <div className="text-center text-gray-500 mt-10 flex flex-col items-center">
-              <span className="text-4xl mb-3">📋</span>
-              <p>Không có lịch sử đơn hàng.</p>
+            <div className="bg-white rounded-3xl p-4 md:p-6 shadow-sm border border-gray-100 mb-8">
+              <h3 className="text-sm font-bold text-gray-600 mb-6 flex items-center gap-2"><TrendingUp size={16} /> Biểu đồ biến động</h3>
+              <div className="w-full h-64 md:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={statsData.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={10} />
+                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} tickFormatter={(val) => (val >= 1000 ? `${val/1000}k` : val)} />
+                    <YAxis yAxisId="right" orientation="right" hide={true} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
+                    <Bar yAxisId="left" dataKey="revenue" name="Tiền thu hộ (đ)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Bar yAxisId="left" dataKey="shipping" name="Tiền ship (đ)" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Line yAxisId="right" type="monotone" dataKey="orders" name="Số đơn" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {historyOrders.map(renderOrder)}
+            
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Lịch sử đơn hàng</h2>
+              {loading ? (
+                <div className="text-center text-gray-500 mt-10">Đang tải...</div>
+              ) : historyOrders.length === 0 ? (
+                <div className="text-center text-gray-500 mt-10 flex flex-col items-center">
+                  <span className="text-4xl mb-3">📭</span>
+                  <p>Không có lịch sử đơn hàng.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {historyOrders.map(renderOrder)}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        
+          </>
+        )}
+
+        {viewMode === 'ORDERS' && (
+          <>
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div 
+                onClick={() => setSelectedStatus(selectedStatus === 'PLACED' ? 'ALL' : 'PLACED')}
+                className={`p-4 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${selectedStatus === 'PLACED' ? 'bg-sky-500 shadow-md shadow-sky-500/30' : 'bg-sky-50 border border-sky-100'}`}
+              >
+                <span className={`text-2xl font-black ${selectedStatus === 'PLACED' ? 'text-white' : 'text-sky-600'}`}>{statsData.statusCounts.placed}</span>
+                <span className={`text-[11px] font-bold uppercase mt-1 text-center ${selectedStatus === 'PLACED' ? 'text-sky-50' : 'text-sky-500'}`}>Đã Đặt / Tìm Xế</span>
+              </div>
+              <div 
+                onClick={() => setSelectedStatus(selectedStatus === 'DELIVERING' ? 'ALL' : 'DELIVERING')}
+                className={`p-4 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${selectedStatus === 'DELIVERING' ? 'bg-amber-500 shadow-md shadow-amber-500/30' : 'bg-amber-50 border border-amber-100'}`}
+              >
+                <span className={`text-2xl font-black ${selectedStatus === 'DELIVERING' ? 'text-white' : 'text-amber-600'}`}>{statsData.statusCounts.delivering}</span>
+                <span className={`text-[11px] font-bold uppercase mt-1 ${selectedStatus === 'DELIVERING' ? 'text-amber-50' : 'text-amber-500'}`}>Đang Giao</span>
+              </div>
+              <div 
+                onClick={() => setSelectedStatus(selectedStatus === 'COMPLETED' ? 'ALL' : 'COMPLETED')}
+                className={`p-4 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${selectedStatus === 'COMPLETED' ? 'bg-emerald-500 shadow-md shadow-emerald-500/30' : 'bg-emerald-50 border border-emerald-100'}`}
+              >
+                <span className={`text-2xl font-black ${selectedStatus === 'COMPLETED' ? 'text-white' : 'text-emerald-600'}`}>{statsData.statusCounts.completed}</span>
+                <span className={`text-[11px] font-bold uppercase mt-1 ${selectedStatus === 'COMPLETED' ? 'text-emerald-50' : 'text-emerald-500'}`}>Hoàn Thành</span>
+              </div>
+              <div 
+                onClick={() => setSelectedStatus(selectedStatus === 'CANCELLED' ? 'ALL' : 'CANCELLED')}
+                className={`p-4 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition-all ${selectedStatus === 'CANCELLED' ? 'bg-red-500 shadow-md shadow-red-500/30' : 'bg-red-50 border border-red-100'}`}
+              >
+                <span className={`text-2xl font-black ${selectedStatus === 'CANCELLED' ? 'text-white' : 'text-red-600'}`}>{statsData.statusCounts.cancelled}</span>
+                <span className={`text-[11px] font-bold uppercase mt-1 ${selectedStatus === 'CANCELLED' ? 'text-red-50' : 'text-red-500'}`}>Đã Hủy</span>
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2"><ListOrdered size={20} /> Danh sách đơn</h2>
+                <span className="text-sm font-bold text-gray-500">{displayedOrders.length} đơn</span>
+              </div>
+              
+              {loading ? (
+                <div className="text-center text-gray-500 mt-10">Đang tải...</div>
+              ) : displayedOrders.length === 0 ? (
+                <div className="text-center text-gray-500 mt-10 flex flex-col items-center">
+                  <span className="text-4xl mb-3">📭</span>
+                  <p>Không có đơn hàng nào.</p>
+                </div>
+              ) : (
+                <div className="space-y-4 pb-20">
+                  {displayedOrders.map(renderOrder)}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* SHIPPING REVENUE BREAKDOWN MODAL */}
