@@ -174,6 +174,19 @@ function AppContent() {
     const playAudio = async () => {
         if (Capacitor.isNativePlatform()) {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
+            
+            // Đảm bảo kêu chuông bằng Native Local Notification (vượt qua mọi block của WebKit)
+            import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
+                LocalNotifications.schedule({
+                  notifications: [{
+                    title: "🔥 ĐƠN HÀNG MỚI",
+                    body: "Vào ứng dụng kiểm tra ngay!",
+                    id: Math.floor(Math.random() * 2147483647),
+                    sound: "chuong.mp3", // Sẽ lấy từ Library/Sounds nhờ Swift copy
+                    channelId: 'aloshipp_push_channel_v6'
+                  }]
+                }).catch(e => console.log("Lỗi Notification: " + e.message));
+            });
         }
         
         if (fallbackAudioRef.current) {

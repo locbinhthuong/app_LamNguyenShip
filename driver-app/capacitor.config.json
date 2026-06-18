@@ -21,6 +21,9 @@
     },
     "PushNotifications": {
       "presentationOptions": ["badge"]
+    },
+    "LocalNotifications": {
+      "presentationOptions": ["sound"]
     }
   }
 }

@@ -10,7 +10,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
-        // Override point for customization after application launch.
+        
+        // Copy chuong.mp3 to Library/Sounds for APNs push notifications
+        let fileManager = FileManager.default
+        if let libraryDir = fileManager.urls(for: .libraryDirectory, in: .userDomainMask).first {
+            let soundsDir = libraryDir.appendingPathComponent("Sounds")
+            do {
+                try fileManager.createDirectory(at: soundsDir, withIntermediateDirectories: true, attributes: nil)
+                if let bundleURL = Bundle.main.url(forResource: "chuong", withExtension: "mp3", subdirectory: "public") {
+                    let destURL = soundsDir.appendingPathComponent("chuong.mp3")
+                    if !fileManager.fileExists(atPath: destURL.path) {
+                        try fileManager.copyItem(at: bundleURL, to: destURL)
+                        print("Successfully copied chuong.mp3 to Library/Sounds")
+                    }
+                }
+            } catch {
+                print("Error copying sound file: \(error)")
+            }
+        }
+        
         return true
     }
 
