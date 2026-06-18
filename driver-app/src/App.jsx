@@ -82,42 +82,27 @@ function AppContent() {
     }
 
     const initAudio = async () => {
-      // 1. HTML5 Audio (Fallback cho Web/Android)
+      // 1. HTML5 Audio (Sử dụng cho tất cả Web/Android/iOS vì độ ổn định cao nhất)
       if (!fallbackAudioRef.current) {
         try {
           const audio = new Audio('/chuong.mp3');
           audio.loop = true;
           audio.preload = 'auto';
           fallbackAudioRef.current = audio;
+
+          // Thay đổi giao diện Lock Screen Music Player thành Thông báo đơn hàng chuyên nghiệp
+          if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = new MediaMetadata({
+              title: '🔥 Có Đơn Hàng Mới 🔥',
+              artist: 'AloShipp Tài Xế',
+              album: 'Thông báo khẩn cấp'
+            });
+            // Vô hiệu hóa các nút điều khiển nhạc trên màn hình khóa
+            navigator.mediaSession.setActionHandler('play', () => {});
+            navigator.mediaSession.setActionHandler('pause', () => {});
+          }
         } catch (e) {
           console.error("Audio init error:", e);
-        }
-      }
-
-      // 2. iOS NativeAudio Plugin (Tránh hiện Music Player ở Lock Screen iOS, reo chuông ko cần touch)
-      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-        try {
-          // Đặt focus: true để sử dụng AVAudioSessionCategoryPlayback (Bỏ qua nút gạt rung/im lặng của iOS)
-          await NativeAudio.configure({ focus: true });
-          
-          await NativeAudio.preload({
-            assetId: 'chuong',
-            assetPath: 'chuong.mp3', // Thường capacitor copy vào thẳng root của iOS bundle
-            audioChannelNum: 1,
-            isUrl: false
-          });
-        } catch (e) {
-          console.log("NativeAudio preload with chuong.mp3 failed, trying public/chuong.mp3", e);
-          try {
-            await NativeAudio.preload({
-              assetId: 'chuong',
-              assetPath: 'public/chuong.mp3',
-              audioChannelNum: 1,
-              isUrl: false
-            });
-          } catch (e2) {
-            console.error("NativeAudio preload completely failed", e2);
-          }
         }
       }
     };
@@ -125,7 +110,7 @@ function AppContent() {
     initAudio();
     
     const unlockAudio = () => {
-      // Bật chế độ unlock cho HTML5 Audio (để Android/Web không bị chặn phát loa)
+      // Bật chế độ unlock cho HTML5 Audio (để không bị chặn phát loa)
       if (fallbackAudioRef.current && fallbackAudioRef.current.paused) {
           fallbackAudioRef.current.play().then(() => {
               fallbackAudioRef.current.pause();
@@ -171,9 +156,6 @@ function AppContent() {
       clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
-    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
-      NativeAudio.stop({ assetId: 'chuong' }).catch(e => {});
-    }
     if (fallbackAudioRef.current) {
       try { 
         fallbackAudioRef.current.pause(); 
@@ -194,27 +176,11 @@ function AppContent() {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
         }
         
-        const platform = Capacitor.getPlatform();
-        let nativeIOSPlayed = false;
-        
-        if (platform === 'ios') {
-            try {
-                await NativeAudio.loop({ assetId: 'chuong' });
-                nativeIOSPlayed = true;
-            } catch (e) {
-                console.error('NativeAudio play failed, falling back to HTML5 audio', e);
-            }
-        }
-        
-        if (!nativeIOSPlayed) {
-            if (fallbackAudioRef.current) {
-                fallbackAudioRef.current.play().catch(e => {
-                    console.error('Audio play blocked:', e);
-                    alert('🔴 LỖI PHÁT CHUÔNG: ' + e.message + '\n(Hệ điều hành chặn hoặc bạn chưa bật Âm lượng Media)');
-                });
-            } else {
-                alert('🔴 LỖI PHÁT CHUÔNG: Hệ thống Audio chưa sẵn sàng!');
-            }
+        if (fallbackAudioRef.current) {
+            fallbackAudioRef.current.play().catch(e => {
+                console.error('Audio play blocked:', e);
+                // Không hiện alert phiền phức nữa vì tài xế có thể đang chạy xe
+            });
         }
     };
     
