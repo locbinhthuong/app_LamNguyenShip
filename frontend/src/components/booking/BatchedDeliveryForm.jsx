@@ -13,12 +13,10 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   });
 
   const [deliveries, setDeliveries] = useState([
-    { id: 1, address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0 }
+    { id: 1, address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER' }
   ]);
 
   const [mapConfig, setMapConfig] = useState(null); // { type: 'pickup' | 'delivery', id?: number, pos: any, query: string }
-
-  const [feePaidBy, setFeePaidBy] = useState('RECEIVER');
 
   useEffect(() => {
     setPickup(prev => ({ 
@@ -73,7 +71,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   const handleAddDelivery = () => {
     setDeliveries(prev => [
       ...prev,
-      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0 }
+      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER' }
     ]);
   };
 
@@ -132,10 +130,10 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
           deliveryCoordinates: d.coordinates || null,
           codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
           fee: d.fee || 0,
+          feePaidBy: d.feePaidBy || 'RECEIVER',
           distanceKm: d.distanceKm || 0,
           note: d.note.trim()
         })),
-        feePaidBy: feePaidBy
       };
 
       onBooking(payload);
@@ -151,7 +149,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
         note: d.note.trim(),
         codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
         deliveryFee: d.fee || 0,
-        feePaidBy: feePaidBy,
+        feePaidBy: d.feePaidBy || 'RECEIVER',
         receiverName: d.receiverName.trim(),
         receiverPhone: d.receiverPhone.trim(),
         receiverPhone2: '',
@@ -296,6 +294,35 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
                   />
                 </div>
               </div>
+
+              {/* NGƯỜI TRẢ PHÍ SHIP */}
+              <div className="mt-2">
+                <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                  NGƯỜI TRẢ PHÍ SHIP
+                </label>
+                <div className="flex gap-2">
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-xl border-2 cursor-pointer transition-colors ${delivery.feePaidBy === 'RECEIVER' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
+                    <input 
+                      type="radio" 
+                      value="RECEIVER" 
+                      checked={delivery.feePaidBy === 'RECEIVER'}
+                      onChange={() => updateDelivery(index, 'feePaidBy', 'RECEIVER')}
+                      className="hidden" 
+                    />
+                    <span className="font-bold text-[12px]">Khách nhận trả</span>
+                  </label>
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-2 rounded-xl border-2 cursor-pointer transition-colors ${delivery.feePaidBy === 'SENDER' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
+                    <input 
+                      type="radio" 
+                      value="SENDER" 
+                      checked={delivery.feePaidBy === 'SENDER'}
+                      onChange={() => updateDelivery(index, 'feePaidBy', 'SENDER')}
+                      className="hidden" 
+                    />
+                    <span className="font-bold text-[12px]">Shop trả</span>
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
         ))}
@@ -309,37 +336,6 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
       >
         <Plus size={18} /> THÊM ĐIỂM GIAO HÀNG
       </button>
-
-      {/* NGƯỜI TRẢ PHÍ SHIP */}
-      <div className="mt-8">
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
-          NGƯỜI TRẢ PHÍ SHIP (ÁP DỤNG CHUNG)
-        </label>
-        <div className="flex gap-3">
-          <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${feePaidBy === 'RECEIVER' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
-            <input 
-              type="radio" 
-              name="feePaidBy" 
-              value="RECEIVER" 
-              checked={feePaidBy === 'RECEIVER'}
-              onChange={() => setFeePaidBy('RECEIVER')}
-              className="hidden" 
-            />
-            <span className="font-bold text-[13px]">Khách nhận trả</span>
-          </label>
-          <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${feePaidBy === 'SENDER' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
-            <input 
-              type="radio" 
-              name="feePaidBy" 
-              value="SENDER" 
-              checked={feePaidBy === 'SENDER'}
-              onChange={() => setFeePaidBy('SENDER')}
-              className="hidden" 
-            />
-            <span className="font-bold text-[13px]">Shop trả</span>
-          </label>
-        </div>
-      </div>
 
       {/* TỔNG KẾT & SUBMIT BUTTON */}
       <div className="mt-8 bg-blue-50 border border-blue-100 p-4 rounded-2xl">

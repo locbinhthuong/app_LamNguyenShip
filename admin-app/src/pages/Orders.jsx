@@ -449,7 +449,12 @@ export default function Orders() {
                       </div>
                     </td>
                     <td className="table-td">
-                       <p className="font-bold text-blue-600 text-sm whitespace-nowrap">{order.deliveryFee?.toLocaleString()}đ</p>
+                        <p className="font-bold text-blue-600 text-sm whitespace-nowrap">
+                          {order.deliveryFee?.toLocaleString()}đ
+                          {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
+                            <span className="text-[10px] text-slate-500 ml-1 block">{order.feePaidBy === 'SENDER' ? '(Shop trả)' : '(Khách trả)'}</span>
+                          )}
+                        </p>
                        {(order.kpiBonus > 0 || order.adminBonus > 0) && (
                          <div className="flex flex-col items-start gap-1 mt-1">
                            {order.adminBonus > 0 && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap">+ {order.adminBonus.toLocaleString()}đ (Độc quyền)</span>}

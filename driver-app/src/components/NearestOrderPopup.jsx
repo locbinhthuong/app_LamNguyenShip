@@ -105,9 +105,14 @@ export default function NearestOrderPopup() {
           
           <div className="flex items-center justify-between border-b pb-3">
              <div className="text-xs text-slate-500 font-medium uppercase">Phí ship</div>
-             <div className="font-bold text-xl text-green-600">
-               {order.deliveryFee > 0 ? `${order.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận'}
-             </div>
+               <div className="font-bold text-xl text-green-600 flex flex-col items-center">
+                 {order.deliveryFee > 0 ? `${order.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận'}
+                 {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && order.deliveryFee > 0 && (
+                   <span className="text-[10px] mt-0.5 font-bold px-1.5 py-0.5 rounded-md bg-green-100 text-green-700 leading-tight">
+                     {order.feePaidBy === 'SENDER' ? 'Shop trả ship' : 'Khách trả ship'}
+                   </span>
+                 )}
+               </div>
           </div>
           
           <div className="space-y-3 pt-2">

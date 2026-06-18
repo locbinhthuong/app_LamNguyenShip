@@ -355,6 +355,7 @@ export default function OrderDetail() {
                         <a href={`tel:${d.receiverPhone}`} className="inline-flex bg-blue-100 text-blue-700 font-black tracking-wider px-3 py-1.5 rounded-lg active:scale-95 transition-transform items-center gap-1.5 border border-blue-200 text-xs"><Phone size={12}/> Gọi Khách: {d.receiverPhone}</a>
                      )}
                      {d.codAmount > 0 && <p className="text-[11px] text-blue-700 font-bold bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100 inline-flex items-center">Thu hộ (COD): {d.codAmount.toLocaleString()}đ</p>}
+                     <p className={`text-[11px] font-bold px-2 py-1.5 rounded-lg border inline-flex items-center ${d.feePaidBy === 'SENDER' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>Ship: {d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}</p>
                    </div>
                  </div>
                </div>
@@ -507,9 +508,14 @@ export default function OrderDetail() {
                  {order.serviceType === 'DAT_XE' ? 'Cước xe' : order.serviceType === 'DIEU_PHOI' ? 'Phí thợ' : 'Phí giao hàng'}
                </p>
                <div className="flex flex-col relative z-10">
-                 {order.deliveryFee > 0 ? (
-                    <p className="text-green-600 font-black text-xl sm:text-2xl ">{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ</p>
-                 ) : (
+                  {order.deliveryFee > 0 ? (
+                    <div className="flex flex-col items-start">
+                      <p className="text-green-600 font-black text-xl sm:text-2xl ">{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ</p>
+                      {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
+                        <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 mt-0.5 rounded font-bold">{order.feePaidBy === 'SENDER' ? 'Shop trả ship' : 'Khách trả ship'}</span>
+                      )}
+                    </div>
+                  ) : (
                     <p className="text-green-600 font-black text-lg sm:text-xl ">Thỏa Thuận</p>
                  )}
                  {order.packageDetails?.bulkyFee > 0 && (

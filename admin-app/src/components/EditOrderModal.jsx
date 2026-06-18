@@ -29,7 +29,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     commissionRate: null,
     items: '',
     scheduledPublishAt: '',
-    batchedDeliveries: []
+    batchedDeliveries: [],
+    feePaidBy: 'RECEIVER'
   });
 
   useEffect(() => {
@@ -74,7 +75,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         commissionRate: order.commissionRate || null,
         items: order.items ? order.items.join('\n') : '',
         scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '',
-        batchedDeliveries: order.batchedDeliveries || []
+        batchedDeliveries: order.batchedDeliveries || [],
+        feePaidBy: order.feePaidBy || 'RECEIVER'
       });
     }
   }, [order]);
@@ -352,7 +354,15 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
               <label className="block text-xs font-semibold text-slate-600 mb-1">
                  {order.serviceType === 'DAT_XE' ? 'Cước xe' : 'Phí giao hàng (Ship)'}
               </label>
-              <CurrencyInput name="deliveryFee" value={formData.deliveryFee} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+              <div className="flex gap-2">
+                 <CurrencyInput name="deliveryFee" value={formData.deliveryFee} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
+                 {order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && order.serviceType !== 'DON_GHEP' && (
+                   <select name="feePaidBy" value={formData.feePaidBy} onChange={handleChange} className="rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 font-bold focus:border-blue-500 focus:outline-none">
+                     <option value="RECEIVER">Khách trả</option>
+                     <option value="SENDER">Shop trả</option>
+                   </select>
+                 )}
+              </div>
             </div>
           </div>
 

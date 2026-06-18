@@ -224,7 +224,10 @@ export default function MyOrders() {
               <div className="flex justify-between items-center mt-2">
                 <div className="flex flex-col">
                   <span className="text-green-500 font-bold">+{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ</span>
-                  {order.packageDetails?.bulkyFee > 0 && <span className="text-[9px] text-orange-600 font-bold mt-0.5">( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )</span>}
+                  {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
+                     <span className="text-[10px] text-slate-500 font-bold mt-0.5">{order.feePaidBy === 'SENDER' ? '(Shop trả ship)' : '(Khách trả ship)'}</span>
+                  )}
+                  {order.packageDetails?.bulkyFee > 0 && <span className="text-[9px] text-orange-600 font-bold mt-0.5">( Đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )</span>}
                 </div>
                 <span className="text-slate-500 text-xs">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</span>
               </div>

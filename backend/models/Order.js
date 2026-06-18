@@ -129,6 +129,7 @@ const orderSchema = new mongoose.Schema({
     },
     codAmount: { type: Number, default: 0 },
     fee: { type: Number, default: 0 },
+    feePaidBy: { type: String, enum: ['SENDER', 'RECEIVER'], default: 'RECEIVER' },
     distanceKm: { type: Number, default: 0 },
     note: { type: String, default: '' },
     status: { type: String, enum: ['PENDING', 'DELIVERED', 'FAILED'], default: 'PENDING' }
