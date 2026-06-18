@@ -133,12 +133,15 @@ const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commission
 
     const eligibleGroup = [];
 
+    console.log(`[DriverAssignment] Đơn tọa độ (${pickupLat}, ${pickupLng}) - Tìm thấy ${driversWithDistance.length} tài xế trong bán kính 1.5km`);
+
     // 3. Kiểm tra các điều kiện chuyên sâu theo thứ tự
     for (const driver of driversWithDistance) {
 
       // 3.1 Kiểm tra nợ
       const debtCheck = await checkDriverDebtBlock(driver._id);
       if (debtCheck.blocked) {
+        console.log(`[DriverAssignment] Bỏ qua ${driver.name} do nợ tiền`);
         continue;
       }
 
@@ -149,13 +152,20 @@ const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commission
       });
 
       if (activeOrdersCount >= 3) {
+        console.log(`[DriverAssignment] Bỏ qua ${driver.name} do ôm ${activeOrdersCount} đơn`);
         continue;
       }
 
       // Đủ điều kiện -> Thêm vào nhóm
       eligibleGroup.push(driver);
+      
+      if (eligibleGroup.length >= limit) {
+        console.log(`[DriverAssignment] Đã đạt giới hạn limit=${limit}. Dừng tìm kiếm.`);
+        break;
+      }
     }
 
+    console.log(`[DriverAssignment] Đã chốt ${eligibleGroup.length} tài xế nhận thông báo.`);
     return eligibleGroup;
   } catch (error) {
     console.error('[DriverAssignment] Lỗi tìm nhóm tài xế gần nhất:', error.message);
