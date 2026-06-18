@@ -60,9 +60,6 @@ function AppContent() {
   const [forceUpdateConfig, setForceUpdateConfig] = useState(null);
 
   // Audio Alarm Global Array
-  const audioCtxRef = useRef(null);
-  const audioBufferRef = useRef(null);
-  const sourceNodeRef = useRef(null);
   const fallbackAudioRef = useRef(null);
   const intervalRef = useRef(null);
 
@@ -85,7 +82,7 @@ function AppContent() {
     }
 
     const initAudio = async () => {
-      // 1. Fallback HTML5 Audio
+      // 1. HTML5 Audio (Fallback cho Web/Android)
       if (!fallbackAudioRef.current) {
         try {
           const audio = new Audio('/chuong.mp3');
@@ -97,33 +94,43 @@ function AppContent() {
         }
       }
 
-      // 2. Web Audio API (Tránh hiện Music Player ở Lock Screen iOS)
-      try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext && !audioCtxRef.current) {
-          audioCtxRef.current = new AudioContext();
+      // 2. iOS NativeAudio Plugin (Tránh hiện Music Player ở Lock Screen iOS, reo chuông ko cần touch)
+      if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+        try {
+          // NativeAudio configure to avoid lock screen music player
+          await NativeAudio.configure({ focus: false });
+          
+          await NativeAudio.preload({
+            assetId: 'chuong',
+            assetPath: 'chuong.mp3', // Thường capacitor copy vào thẳng root của iOS bundle
+            audioChannelNum: 1,
+            isUrl: false
+          });
+        } catch (e) {
+          console.log("NativeAudio preload with chuong.mp3 failed, trying public/chuong.mp3", e);
+          try {
+            await NativeAudio.preload({
+              assetId: 'chuong',
+              assetPath: 'public/chuong.mp3',
+              audioChannelNum: 1,
+              isUrl: false
+            });
+          } catch (e2) {
+            console.error("NativeAudio preload completely failed", e2);
+          }
         }
-        if (audioCtxRef.current && !audioBufferRef.current) {
-          const response = await fetch('/chuong.mp3');
-          const arrayBuffer = await response.arrayBuffer();
-          audioBufferRef.current = await audioCtxRef.current.decodeAudioData(arrayBuffer);
-        }
-      } catch (e) {
-        console.error("Web Audio API init error:", e);
       }
     };
     
     initAudio();
     
     const unlockAudio = () => {
-      try {
-          if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
-              audioCtxRef.current.resume();
-          }
-      } catch (e) {}
-
+      // Bật chế độ unlock cho HTML5 Audio (để Android/Web không bị chặn phát loa)
       if (fallbackAudioRef.current && fallbackAudioRef.current.paused) {
-          fallbackAudioRef.current.load();
+          fallbackAudioRef.current.play().then(() => {
+              fallbackAudioRef.current.pause();
+              fallbackAudioRef.current.currentTime = 0;
+          }).catch(e => {});
       }
       document.removeEventListener('touchstart', unlockAudio);
       document.removeEventListener('click', unlockAudio);
@@ -164,10 +171,8 @@ function AppContent() {
       clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
-    if (sourceNodeRef.current) {
-      try { sourceNodeRef.current.stop(); } catch(e){}
-      try { sourceNodeRef.current.disconnect(); } catch(e){}
-      sourceNodeRef.current = null;
+    if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
+      NativeAudio.stop({ assetId: 'chuong' }).catch(e => {});
     }
     if (fallbackAudioRef.current) {
       try { 
@@ -184,42 +189,24 @@ function AppContent() {
     // Set timeout ngay lập tức để block các lệnh gọi đồng thời khác
     intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
 
-    const playWebAudio = async () => {
+    const playAudio = async () => {
         if (Capacitor.isNativePlatform()) {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
         }
         
-        let playedWithWebAudio = false;
-        
-        // Trên iOS, ưu tiên dùng Web Audio API để không bị hiện lên Lock Screen
         const platform = Capacitor.getPlatform();
-        if (platform === 'ios' || platform === 'web') {
+        let nativeIOSPlayed = false;
+        
+        if (platform === 'ios') {
             try {
-                if (audioCtxRef.current && audioBufferRef.current) {
-                    if (audioCtxRef.current.state === 'suspended') {
-                        await audioCtxRef.current.resume();
-                    }
-                    
-                    if (sourceNodeRef.current) {
-                        try { sourceNodeRef.current.stop(); } catch(e){}
-                        try { sourceNodeRef.current.disconnect(); } catch(e){}
-                    }
-                    
-                    const source = audioCtxRef.current.createBufferSource();
-                    source.buffer = audioBufferRef.current;
-                    source.loop = true;
-                    source.connect(audioCtxRef.current.destination);
-                    source.start(0);
-                    sourceNodeRef.current = source;
-                    playedWithWebAudio = true;
-                }
+                await NativeAudio.loop({ assetId: 'chuong' });
+                nativeIOSPlayed = true;
             } catch (e) {
-                console.error('Web Audio play failed, falling back:', e);
+                console.error('NativeAudio play failed, falling back to HTML5 audio', e);
             }
         }
         
-        // Trên Android (do user fix để không xịt chuông) hoặc nếu Web Audio API lỗi, dùng thẻ Audio truyền thống
-        if (!playedWithWebAudio || platform === 'android') {
+        if (!nativeIOSPlayed) {
             if (fallbackAudioRef.current) {
                 fallbackAudioRef.current.play().catch(e => {
                     console.error('Audio play blocked:', e);
@@ -231,22 +218,7 @@ function AppContent() {
         }
     };
     
-    if (Capacitor.isNativePlatform()) {
-        playWebAudio();
-          
-        import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
-            LocalNotifications.schedule({
-              notifications: [{
-                title: "🔥 ĐƠN HÀNG MỚI",
-                body: "Vào ứng dụng kiểm tra ngay!",
-                id: Math.floor(Math.random() * 2147483647),
-                channelId: 'aloshipp_push_channel_v6'
-              }]
-            }).catch(e => console.log("Lỗi Notification: " + e.message));
-        });
-    } else {
-        playWebAudio();
-    }
+    playAudio();
   }, [stopAlarm]);
 
   useEffect(() => {
