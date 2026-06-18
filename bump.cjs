@@ -12,9 +12,9 @@ function bump(path, regex, replacement) {
 }
 
 // Customer app
-bump('c:/app_LamNguyenShip/frontend/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 71;/g, 'CURRENT_PROJECT_VERSION = 72;');
-bump('c:/app_LamNguyenShip/frontend/android/app/build.gradle', /versionCode 60/g, 'versionCode 61');
+bump('c:/app_LamNguyenShip/frontend/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 72;/g, 'CURRENT_PROJECT_VERSION = 73;');
+bump('c:/app_LamNguyenShip/frontend/android/app/build.gradle', /versionCode 61/g, 'versionCode 62');
 
 // Driver app
-bump('c:/app_LamNguyenShip/driver-app/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 75;/g, 'CURRENT_PROJECT_VERSION = 76;');
-bump('c:/app_LamNguyenShip/driver-app/android/app/build.gradle', /versionCode 71/g, 'versionCode 72');
+bump('c:/app_LamNguyenShip/driver-app/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 76;/g, 'CURRENT_PROJECT_VERSION = 77;');
+bump('c:/app_LamNguyenShip/driver-app/android/app/build.gradle', /versionCode 72/g, 'versionCode 73');
