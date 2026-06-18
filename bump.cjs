@@ -16,5 +16,5 @@ bump('c:/app_LamNguyenShip/frontend/ios/App/App.xcodeproj/project.pbxproj', /CUR
 bump('c:/app_LamNguyenShip/frontend/android/app/build.gradle', /versionCode 64/g, 'versionCode 65');
 
 // Driver app
-bump('c:/app_LamNguyenShip/driver-app/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 81;/g, 'CURRENT_PROJECT_VERSION = 82;');
-bump('c:/app_LamNguyenShip/driver-app/android/app/build.gradle', /versionCode 77/g, 'versionCode 78');
+bump('c:/app_LamNguyenShip/driver-app/ios/App/App.xcodeproj/project.pbxproj', /CURRENT_PROJECT_VERSION = 82;/g, 'CURRENT_PROJECT_VERSION = 83;');
+bump('c:/app_LamNguyenShip/driver-app/android/app/build.gradle', /versionCode 78/g, 'versionCode 79');

@@ -97,8 +97,8 @@ function AppContent() {
       // 2. iOS NativeAudio Plugin (Tránh hiện Music Player ở Lock Screen iOS, reo chuông ko cần touch)
       if (Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios') {
         try {
-          // NativeAudio configure to avoid lock screen music player
-          await NativeAudio.configure({ focus: false });
+          // Đặt focus: true để sử dụng AVAudioSessionCategoryPlayback (Bỏ qua nút gạt rung/im lặng của iOS)
+          await NativeAudio.configure({ focus: true });
           
           await NativeAudio.preload({
             assetId: 'chuong',
