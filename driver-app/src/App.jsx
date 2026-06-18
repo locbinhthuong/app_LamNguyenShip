@@ -175,25 +175,28 @@ function AppContent() {
         if (Capacitor.isNativePlatform()) {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
             
-            // Đảm bảo kêu chuông bằng Native Local Notification (vượt qua mọi block của WebKit)
-            import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
-                LocalNotifications.schedule({
-                  notifications: [{
-                    title: "🔥 ĐƠN HÀNG MỚI",
-                    body: "Vào ứng dụng kiểm tra ngay!",
-                    id: Math.floor(Math.random() * 2147483647),
-                    sound: "chuong.mp3", // Sẽ lấy từ Library/Sounds nhờ Swift copy
-                    channelId: 'aloshipp_push_channel_v6'
-                  }]
-                }).catch(e => console.log("Lỗi Notification: " + e.message));
-            });
-        }
-        
-        if (fallbackAudioRef.current) {
-            fallbackAudioRef.current.play().catch(e => {
-                console.error('Audio play blocked:', e);
-                // Không hiện alert phiền phức nữa vì tài xế có thể đang chạy xe
-            });
+            // CHỈ Hú còi LocalNotification nếu App đang MỞ TRÊN MÀN HÌNH (Foreground). 
+            // Nếu đang chạy ngầm (Background), nhường lại cho Firebase Push Notification để tránh bị trùng lặp banner.
+            if (document.visibilityState === 'visible') {
+                import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
+                    LocalNotifications.schedule({
+                      notifications: [{
+                        title: "🔥 ĐƠN HÀNG MỚI",
+                        body: "Vào ứng dụng kiểm tra ngay!",
+                        id: Math.floor(Math.random() * 2147483647),
+                        sound: "chuong.mp3", // Sẽ lấy từ Library/Sounds nhờ Swift copy
+                        channelId: 'aloshipp_push_channel_v6'
+                      }]
+                    }).catch(e => console.log("Lỗi Notification: " + e.message));
+                });
+            }
+        } else {
+            // WEB BROWSER: Vẫn dùng HTML5 Audio bình thường vì Web không có Push Native
+            if (fallbackAudioRef.current) {
+                fallbackAudioRef.current.play().catch(e => {
+                    console.error('Audio play blocked:', e);
+                });
+            }
         }
     };
     
