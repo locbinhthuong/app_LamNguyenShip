@@ -134,6 +134,11 @@ export default function DriverDebtModal({ driverId, isOpen, onClose }) {
                    <p className={`text-xl font-black ${(data.totalUnpaid || 0) > 0 ? 'text-red-600' : 'text-slate-600'}`}>
                       {(data.totalUnpaid || 0).toLocaleString()} đ
                    </p>
+                   {(data.todayDebt > 0) && (
+                     <p className="text-[9px] text-slate-400 font-medium mt-1">
+                       (Gồm nợ h.nay: {data.todayDebt.toLocaleString()} đ)
+                     </p>
+                   )}
                  </div>
                  <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-100 flex flex-col items-center">
                    <p className="text-[10px] font-bold text-emerald-600/70 uppercase tracking-widest mb-1">ĐÃ THU ĐƯỢC</p>
