@@ -12,6 +12,22 @@ const { sendNotification, sendMultipleNotifications } = require('../utils/notifi
 const Config = require('../models/Config');
 const { getDrivingDistance } = require('../utils/distance');
 
+
+const refundOrderDebtIfAny = async (orderId) => {
+  try {
+    const debtTxList = await DebtTransaction.find({ orderId: orderId, type: 'FEE_DEDUCTION' });
+    for (const debtTx of debtTxList) {
+      if (debtTx.driverId) {
+        await Driver.findByIdAndUpdate(debtTx.driverId, { $inc: { walletDebt: -debtTx.amount } });
+        await DebtTransaction.findByIdAndDelete(debtTx._id);
+        console.log(`[REFUND DEBT] Hoan lai ${debtTx.amount}d cho tai xe ${debtTx.driverId} do don hang bi huy/xoa.`);
+      }
+    }
+  } catch (err) {
+    console.error('Error refunding order debt:', err);
+  }
+};
+
 const orderController = {
   // GET /api/orders - Lấy danh sách đơn hàng
   getAllOrders: async (req, res) => {
@@ -1135,6 +1151,7 @@ const orderController = {
           },
           { new: true }
         );
+      if (order) await refundOrderDebtIfAny(order._id);
 
         if (!order) {
           return res.status(400).json({ success: false, message: 'Không thể hủy! Đơn có thể đã được Tài xế nhận.' });
@@ -1158,6 +1175,7 @@ const orderController = {
         },
         { new: true }
       );
+      if (order) await refundOrderDebtIfAny(order._id);
 
       if (!order) {
         return res.status(400).json({ success: false, message: 'Không thể hủy đơn hàng này' });
@@ -1234,6 +1252,7 @@ const orderController = {
       const { id } = req.params;
 
       const order = await Order.findByIdAndDelete(id);
+      if (order) await refundOrderDebtIfAny(order._id);
 
       if (!order) {
         return res.status(404).json({
