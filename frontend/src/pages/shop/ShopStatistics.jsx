@@ -144,7 +144,29 @@ const ShopStatistics = () => {
       totalOrders += c.orders;
     });
 
-    return { chartData, totalRevenue, totalShipping, shopPaidShipping, customerPaidShipping, totalOrders };
+    let statusCounts = { placed: 0, delivering: 0, completed: 0, cancelled: 0 };
+    orders.forEach(o => {
+      const od = new Date(o.createdAt);
+      let matched = false;
+      if (statFilter === 'day') {
+        matched = !!chartData.find(c => c.name === formatDate(od));
+      } else if (statFilter === 'week') {
+        const diffTime = Math.abs(now - od);
+        const diffWeeks = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 7));
+        if (diffWeeks < 4) matched = true;
+      } else if (statFilter === 'month') {
+        matched = !!chartData.find(c => c.month === od.getMonth() && c.year === od.getFullYear());
+      }
+
+      if (matched) {
+        if (['DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status)) statusCounts.placed++;
+        else if (['PICKED_UP', 'DELIVERING'].includes(o.status)) statusCounts.delivering++;
+        else if (o.status === 'COMPLETED') statusCounts.completed++;
+        else if (o.status === 'CANCELLED') statusCounts.cancelled++;
+      }
+    });
+
+    return { chartData, totalRevenue, totalShipping, shopPaidShipping, customerPaidShipping, totalOrders, statusCounts };
   }, [orders, statFilter]);
 
   const renderOrder = (order) => {
@@ -247,6 +269,26 @@ const ShopStatistics = () => {
             <div className="text-2xl md:text-3xl font-black">
               {statsData.totalOrders}
             </div>
+          </div>
+        </div>
+
+        {/* Tình trạng đơn hàng */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="bg-sky-50 border border-sky-100 p-4 rounded-2xl flex flex-col items-center justify-center">
+            <span className="text-2xl font-black text-sky-600">{statsData.statusCounts.placed}</span>
+            <span className="text-[11px] font-bold text-sky-500 uppercase mt-1 text-center">Đã Đặt / Tìm Xế</span>
+          </div>
+          <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex flex-col items-center justify-center">
+            <span className="text-2xl font-black text-amber-600">{statsData.statusCounts.delivering}</span>
+            <span className="text-[11px] font-bold text-amber-500 uppercase mt-1">Đang Giao</span>
+          </div>
+          <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col items-center justify-center">
+            <span className="text-2xl font-black text-emerald-600">{statsData.statusCounts.completed}</span>
+            <span className="text-[11px] font-bold text-emerald-500 uppercase mt-1">Hoàn Thành</span>
+          </div>
+          <div className="bg-red-50 border border-red-100 p-4 rounded-2xl flex flex-col items-center justify-center">
+            <span className="text-2xl font-black text-red-600">{statsData.statusCounts.cancelled}</span>
+            <span className="text-[11px] font-bold text-red-500 uppercase mt-1">Đã Hủy</span>
           </div>
         </div>
 
