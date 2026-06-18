@@ -147,6 +147,7 @@ const ShopStatistics = () => {
     });
 
     let statusCounts = { placed: 0, delivering: 0, completed: 0, cancelled: 0 };
+    let matchedOrders = [];
     orders.forEach(o => {
       const od = new Date(o.createdAt);
       let matched = false;
@@ -161,6 +162,7 @@ const ShopStatistics = () => {
       }
 
       if (matched) {
+        matchedOrders.push(o);
         if (['DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status)) statusCounts.placed++;
         else if (['PICKED_UP', 'DELIVERING'].includes(o.status)) statusCounts.delivering++;
         else if (o.status === 'COMPLETED') statusCounts.completed++;
