@@ -84,7 +84,8 @@ function AppContent() {
       }, remainingTime);
     }
 
-    const initAudio = () => {
+    const initAudio = async () => {
+      // 1. Fallback HTML5 Audio
       if (!fallbackAudioRef.current) {
         try {
           const audio = new Audio('/chuong.mp3');
@@ -95,22 +96,33 @@ function AppContent() {
           console.error("Audio init error:", e);
         }
       }
+
+      // 2. Web Audio API (Tránh hiện Music Player ở Lock Screen iOS)
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext && !audioCtxRef.current) {
+          audioCtxRef.current = new AudioContext();
+        }
+        if (audioCtxRef.current && !audioBufferRef.current) {
+          const response = await fetch('/chuong.mp3');
+          const arrayBuffer = await response.arrayBuffer();
+          audioBufferRef.current = await audioCtxRef.current.decodeAudioData(arrayBuffer);
+        }
+      } catch (e) {
+        console.error("Web Audio API init error:", e);
+      }
     };
     
     initAudio();
     
     const unlockAudio = () => {
+      try {
+          if (audioCtxRef.current && audioCtxRef.current.state === 'suspended') {
+              audioCtxRef.current.resume();
+          }
+      } catch (e) {}
+
       if (fallbackAudioRef.current && fallbackAudioRef.current.paused) {
-          // Giải pháp unlock im lặng 100% cho iOS/Safari:
-          // 1. Kích hoạt Web Audio API
-          try {
-              const AudioContext = window.AudioContext || window.webkitAudioContext;
-              if (AudioContext) {
-                  const ctx = new AudioContext();
-                  ctx.resume().then(() => ctx.close());
-              }
-          } catch (e) {}
-          // 2. Gọi load() thay vì play() để Safari cấp quyền mà không phát tiếng
           fallbackAudioRef.current.load();
       }
       document.removeEventListener('touchstart', unlockAudio);
@@ -172,17 +184,50 @@ function AppContent() {
     // Set timeout ngay lập tức để block các lệnh gọi đồng thời khác
     intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
 
-    const playWebAudio = () => {
+    const playWebAudio = async () => {
         if (Capacitor.isNativePlatform()) {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
         }
-        if (fallbackAudioRef.current) {
-            fallbackAudioRef.current.play().catch(e => {
-                console.error('Audio play blocked:', e);
-                alert('🔴 LỖI PHÁT CHUÔNG: ' + e.message + '\n(Hệ điều hành chặn hoặc bạn chưa bật Âm lượng Media)');
-            });
-        } else {
-            alert('🔴 LỖI PHÁT CHUÔNG: Hệ thống Audio chưa sẵn sàng!');
+        
+        let playedWithWebAudio = false;
+        
+        // Trên iOS, ưu tiên dùng Web Audio API để không bị hiện lên Lock Screen
+        const platform = Capacitor.getPlatform();
+        if (platform === 'ios' || platform === 'web') {
+            try {
+                if (audioCtxRef.current && audioBufferRef.current) {
+                    if (audioCtxRef.current.state === 'suspended') {
+                        await audioCtxRef.current.resume();
+                    }
+                    
+                    if (sourceNodeRef.current) {
+                        try { sourceNodeRef.current.stop(); } catch(e){}
+                        try { sourceNodeRef.current.disconnect(); } catch(e){}
+                    }
+                    
+                    const source = audioCtxRef.current.createBufferSource();
+                    source.buffer = audioBufferRef.current;
+                    source.loop = true;
+                    source.connect(audioCtxRef.current.destination);
+                    source.start(0);
+                    sourceNodeRef.current = source;
+                    playedWithWebAudio = true;
+                }
+            } catch (e) {
+                console.error('Web Audio play failed, falling back:', e);
+            }
+        }
+        
+        // Trên Android (do user fix để không xịt chuông) hoặc nếu Web Audio API lỗi, dùng thẻ Audio truyền thống
+        if (!playedWithWebAudio || platform === 'android') {
+            if (fallbackAudioRef.current) {
+                fallbackAudioRef.current.play().catch(e => {
+                    console.error('Audio play blocked:', e);
+                    alert('🔴 LỖI PHÁT CHUÔNG: ' + e.message + '\n(Hệ điều hành chặn hoặc bạn chưa bật Âm lượng Media)');
+                });
+            } else {
+                alert('🔴 LỖI PHÁT CHUÔNG: Hệ thống Audio chưa sẵn sàng!');
+            }
         }
     };
     
