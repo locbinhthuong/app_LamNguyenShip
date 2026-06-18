@@ -55,6 +55,7 @@ function AppContent() {
   const direction = location.state?.direction || (navType === 'POP' ? -1 : 1);
   const [logoutAlert, setLogoutAlert] = useState(null);
   const [pushMessage, setPushMessage] = useState(null);
+  const appStartTimeRef = useRef(Date.now());
   
   const [forceUpdateConfig, setForceUpdateConfig] = useState(null);
 
@@ -105,9 +106,11 @@ function AppContent() {
          fallbackAudioRef.current.play().then(() => {
              fallbackAudioRef.current.pause();
              fallbackAudioRef.current.currentTime = 0;
-             fallbackAudioRef.current.muted = false;
+             setTimeout(() => {
+                 if (fallbackAudioRef.current) fallbackAudioRef.current.muted = false;
+             }, 300);
          }).catch(e => {
-             fallbackAudioRef.current.muted = false;
+             if (fallbackAudioRef.current) fallbackAudioRef.current.muted = false;
          });
       }
     };
@@ -284,6 +287,10 @@ function AppContent() {
     window.addEventListener('api_unauthorized', handleUnauthorized);
 
     const handlePush = (e) => {
+      if (Date.now() - appStartTimeRef.current < 5000) {
+         console.log("Bỏ qua FCM push lúc khởi động app");
+         return;
+      }
       // Nếu là sự kiện đơn mới thì FCM_foreground sẽ nổ trực tiếp driver_new_order để xử lý chung
       if (e.detail.title && e.detail.title.toUpperCase().includes('MỚI')) {
          // Truyền fake order id hoặc không truyền để xử lý fallback chuông,
