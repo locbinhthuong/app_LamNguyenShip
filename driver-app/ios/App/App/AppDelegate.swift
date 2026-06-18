@@ -24,6 +24,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                         print("Successfully copied chuong.mp3 to Library/Sounds")
                     }
                 }
+                
+                if let bundleURL2 = Bundle.main.url(forResource: "thongbaongoaiapp", withExtension: "mp3", subdirectory: "public") {
+                    let destURL2 = soundsDir.appendingPathComponent("thongbaongoaiapp.mp3")
+                    if !fileManager.fileExists(atPath: destURL2.path) {
+                        try fileManager.copyItem(at: bundleURL2, to: destURL2)
+                        print("Successfully copied thongbaongoaiapp.mp3 to Library/Sounds")
+                    }
+                }
             } catch {
                 print("Error copying sound file: \(error)")
             }

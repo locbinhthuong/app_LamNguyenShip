@@ -333,11 +333,20 @@ function AppContent() {
       import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
           LocalNotifications.createChannel({
             id: 'aloshipp_push_channel_v6',
-            name: 'Kênh Báo Đơn 3KM (Push V4)',
+            name: 'Kênh Báo Đơn Trong App',
             description: 'Kênh âm báo ưu tiên cho đơn hàng',
             importance: 5,
             visibility: 1,
             sound: 'chuong.mp3',
+            vibration: true
+          });
+          LocalNotifications.createChannel({
+            id: 'aloshipp_push_channel_v7',
+            name: 'Kênh Báo Đơn Ngoài App',
+            description: 'Kênh âm báo ưu tiên cho đơn hàng (FCM)',
+            importance: 5,
+            visibility: 1,
+            sound: 'thongbaongoaiapp.mp3',
             vibration: true
           });
         LocalNotifications.addListener('localNotificationActionPerformed', () => {
@@ -347,6 +356,15 @@ function AppContent() {
       }).catch(console.error);
 
       import('@capacitor-firebase/messaging').then(({ FirebaseMessaging }) => {
+        FirebaseMessaging.createChannel({
+            id: 'aloshipp_push_channel_v7',
+            name: 'Kênh Báo Đơn Ngoài App',
+            description: 'Kênh âm báo ưu tiên cho đơn hàng (FCM)',
+            importance: 5,
+            visibility: 1,
+            sound: 'thongbaongoaiapp.mp3',
+            vibration: true
+        }).catch(e => console.log('FCM createChannel error:', e));
         FirebaseMessaging.addListener('notificationActionPerformed', () => {
           lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
