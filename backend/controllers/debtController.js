@@ -37,24 +37,32 @@ const debtController = {
         }
       });
 
-      let unpaidDays = [];
       const todayStr = getTodayVN();
-      
-      const sortedDatesAsc = Object.keys(netDebtByDate)
-        .filter(d => netDebtByDate[d] > 0 && d < todayStr)
-        .sort((a, b) => (a > b ? 1 : (a < b ? -1 : 0)));
-
-      for (const dateStr of sortedDatesAsc) {
-        unpaidDays.push({ date: dateStr, amount: Math.round(netDebtByDate[dateStr]) });
-      }
-
-      // Tính nợ hôm nay riêng để Admin tham khảo (chỉ hiển thị, không thu)
       const todayDebt = Math.max(0, Math.round(netDebtByDate[todayStr] || 0));
 
-      // Tính tổng nợ phải thu (CÒN PHẢI THU) bao gồm cả hôm nay và các ngày cũ
-      const totalUnpaid = Object.keys(netDebtByDate)
-        .filter(d => netDebtByDate[d] > 0)
-        .reduce((sum, d) => sum + Math.round(netDebtByDate[d]), 0);
+      let unpaidDays = [];
+      if (driver.walletDebt > 0) {
+        // Trừ đi nợ hôm nay để chỉ phân bổ nợ cũ
+        let remainingDebtForOldDays = driver.walletDebt - todayDebt;
+        
+        const sortedDatesDesc = Object.keys(netDebtByDate)
+          .filter(d => netDebtByDate[d] > 0 && d < todayStr)
+          .sort((a, b) => (a < b ? 1 : (a > b ? -1 : 0)));
+
+        for (const dateStr of sortedDatesDesc) {
+          if (remainingDebtForOldDays <= 0) break;
+          const allocated = Math.min(remainingDebtForOldDays, netDebtByDate[dateStr]);
+          if (allocated > 0) {
+            unpaidDays.push({ date: dateStr, amount: Math.round(allocated) });
+          }
+          remainingDebtForOldDays -= allocated;
+        }
+        
+        unpaidDays.sort((a, b) => (a.date > b.date ? 1 : (a.date < b.date ? -1 : 0)));
+      }
+
+      // Tính tổng nợ phải thu (CÒN PHẢI THU) chính là walletDebt thực tế của tài xế
+      const totalUnpaid = driver.walletDebt > 0 ? driver.walletDebt : 0;
 
       res.status(200).json({
         success: true,
