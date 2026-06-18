@@ -56,6 +56,7 @@ function AppContent() {
   const [logoutAlert, setLogoutAlert] = useState(null);
   const [pushMessage, setPushMessage] = useState(null);
   const appStartTimeRef = useRef(Date.now());
+  const lastPushTapTimeRef = useRef(0);
   
   const [forceUpdateConfig, setForceUpdateConfig] = useState(null);
 
@@ -166,6 +167,10 @@ function AppContent() {
 
   const startAlarm = useCallback(() => {
     if (intervalRef.current) return; // Nếu đang kêu rồi thì bỏ qua để chống nhiễu (double-call)
+    if (Date.now() - lastPushTapTimeRef.current < 5000) {
+        console.log("Bỏ qua startAlarm vì user vừa bấm Push Notification");
+        return;
+    }
     stopAlarm();
 
     // Set timeout ngay lập tức để block các lệnh gọi đồng thời khác
@@ -245,6 +250,11 @@ function AppContent() {
     const handleForceAssign = (e) => {
         const order = e.detail;
         if (order) {
+            if (lastOrderIds.has(order._id)) {
+                if (Date.now() - lastOrderIds.get(order._id) < 10000) return;
+            }
+            lastOrderIds.set(order._id, Date.now());
+
             setPushMessage({ 
                 title: '⚡ TỔNG ĐÀI GÁN ĐƠN ĐẶC BIỆT', 
                 message: order.pickupAddress ? `Nơi lấy/đón: ${order.pickupAddress}` : 'Nhiệm vụ mới Mở app ngay!'
@@ -259,6 +269,11 @@ function AppContent() {
     const handleNearestAssign = (e) => {
         const order = e.detail;
         if (order) {
+            if (lastOrderIds.has(order._id)) {
+                if (Date.now() - lastOrderIds.get(order._id) < 10000) return;
+            }
+            lastOrderIds.set(order._id, Date.now());
+
             setPushMessage({ 
                 title: '🚀 ĐƠN MỚI GẦN BẠN', 
                 message: order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Bạn là tài xế gần nhất!'
@@ -323,12 +338,14 @@ function AppContent() {
             vibration: true
           });
         LocalNotifications.addListener('localNotificationActionPerformed', () => {
+          lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
         });
       }).catch(console.error);
 
       import('@capacitor-firebase/messaging').then(({ FirebaseMessaging }) => {
         FirebaseMessaging.addListener('notificationActionPerformed', () => {
+          lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
         });
       }).catch(console.error);
