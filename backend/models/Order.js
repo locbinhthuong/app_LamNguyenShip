@@ -205,6 +205,11 @@ const orderSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  feePaidBy: {
+    type: String,
+    enum: ['SENDER', 'RECEIVER'],
+    default: 'RECEIVER'
+  },
   adminBonus: {
     type: Number,
     default: 0,

@@ -73,7 +73,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
     deliveryCoordinates: mode === 'pickup' ? (defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null) : null,
 
     note: '',
-    codAmount: ''
+    codAmount: '',
+    feePaidBy: 'RECEIVER'
   });
 
   const [estimatedFee, setEstimatedFee] = useState(null);
@@ -173,7 +174,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         weight: '',
         isFragile: false,
         bulkyFee: 0
-      }
+      },
+      feePaidBy: form.feePaidBy
     });
   };
 
@@ -425,6 +427,39 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 />
               </div>
             </div>
+
+            {/* NGƯỜI TRẢ PHÍ SHIP */}
+            {mode === 'delivery' && (
+              <div className="flex-1 mt-4">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+                  NGƯỜI TRẢ PHÍ SHIP
+                </label>
+                <div className="flex gap-3">
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${form.feePaidBy === 'RECEIVER' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
+                    <input 
+                      type="radio" 
+                      name="feePaidBy" 
+                      value="RECEIVER" 
+                      checked={form.feePaidBy === 'RECEIVER'}
+                      onChange={() => setForm({...form, feePaidBy: 'RECEIVER'})}
+                      className="hidden" 
+                    />
+                    <span className="font-bold text-[13px]">Khách nhận trả</span>
+                  </label>
+                  <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${form.feePaidBy === 'SENDER' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
+                    <input 
+                      type="radio" 
+                      name="feePaidBy" 
+                      value="SENDER" 
+                      checked={form.feePaidBy === 'SENDER'}
+                      onChange={() => setForm({...form, feePaidBy: 'SENDER'})}
+                      className="hidden" 
+                    />
+                    <span className="font-bold text-[13px]">Shop trả</span>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {/* THÔNG TIN KHÁCH HÀNG */}
             <div className="flex-1">

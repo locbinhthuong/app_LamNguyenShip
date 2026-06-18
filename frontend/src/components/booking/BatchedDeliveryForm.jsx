@@ -18,6 +18,8 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
 
   const [mapConfig, setMapConfig] = useState(null); // { type: 'pickup' | 'delivery', id?: number, pos: any, query: string }
 
+  const [feePaidBy, setFeePaidBy] = useState('RECEIVER');
+
   useEffect(() => {
     setPickup(prev => ({ 
       ...prev, 
@@ -132,7 +134,8 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
           fee: d.fee || 0,
           distanceKm: d.distanceKm || 0,
           note: d.note.trim()
-        }))
+        })),
+        feePaidBy: feePaidBy
       };
 
       onBooking(payload);
@@ -148,6 +151,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
         note: d.note.trim(),
         codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
         deliveryFee: d.fee || 0,
+        feePaidBy: feePaidBy,
         receiverName: d.receiverName.trim(),
         receiverPhone: d.receiverPhone.trim(),
         receiverPhone2: '',
@@ -305,6 +309,37 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
       >
         <Plus size={18} /> THÊM ĐIỂM GIAO HÀNG
       </button>
+
+      {/* NGƯỜI TRẢ PHÍ SHIP */}
+      <div className="mt-8">
+        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">
+          NGƯỜI TRẢ PHÍ SHIP (ÁP DỤNG CHUNG)
+        </label>
+        <div className="flex gap-3">
+          <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${feePaidBy === 'RECEIVER' ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
+            <input 
+              type="radio" 
+              name="feePaidBy" 
+              value="RECEIVER" 
+              checked={feePaidBy === 'RECEIVER'}
+              onChange={() => setFeePaidBy('RECEIVER')}
+              className="hidden" 
+            />
+            <span className="font-bold text-[13px]">Khách nhận trả</span>
+          </label>
+          <label className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-xl border-2 cursor-pointer transition-colors ${feePaidBy === 'SENDER' ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-gray-100 bg-gray-50 text-gray-500'}`}>
+            <input 
+              type="radio" 
+              name="feePaidBy" 
+              value="SENDER" 
+              checked={feePaidBy === 'SENDER'}
+              onChange={() => setFeePaidBy('SENDER')}
+              className="hidden" 
+            />
+            <span className="font-bold text-[13px]">Shop trả</span>
+          </label>
+        </div>
+      </div>
 
       {/* TỔNG KẾT & SUBMIT BUTTON */}
       <div className="mt-8 bg-blue-50 border border-blue-100 p-4 rounded-2xl">

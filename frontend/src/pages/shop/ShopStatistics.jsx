@@ -8,7 +8,8 @@ const ShopStatistics = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statFilter, setStatFilter] = useState('day'); // 'day', 'week', 'month'
+  const [statFilter, setStatFilter] = useState('day');
+  const [showShippingModal, setShowShippingModal] = useState(false); // 'day', 'week', 'month'
 
   const fetchOrders = async () => {
     try {
@@ -73,6 +74,8 @@ const ShopStatistics = () => {
     let totalRevenue = 0;
     let totalShipping = 0;
     let totalOrders = 0;
+    let shopPaidShipping = 0;
+    let customerPaidShipping = 0;
 
     const formatDate = (d) => `${d.getDate()}/${d.getMonth() + 1}`;
 
@@ -80,7 +83,7 @@ const ShopStatistics = () => {
       for (let i = 6; i >= 0; i--) {
         const d = new Date();
         d.setDate(now.getDate() - i);
-        chartData.push({ name: formatDate(d), revenue: 0, shipping: 0, orders: 0, time: d.getTime() });
+        chartData.push({ name: formatDate(d), revenue: 0, shipping: 0, shopPaid: 0, customerPaid: 0, orders: 0, time: d.getTime() });
       }
 
       completedOrders.forEach(o => {
@@ -89,12 +92,14 @@ const ShopStatistics = () => {
         if (match) {
           match.revenue += (o.codAmount || 0);
           match.shipping += (o.deliveryFee || 0);
+          if (o.feePaidBy === 'SENDER') match.shopPaid += (o.deliveryFee || 0);
+          else match.customerPaid += (o.deliveryFee || 0);
           match.orders += 1;
         }
       });
     } else if (statFilter === 'week') {
       for (let i = 3; i >= 0; i--) {
-        chartData.push({ name: i === 0 ? 'Tuần này' : `-${i} Tuần`, revenue: 0, shipping: 0, orders: 0, weekOffset: i });
+        chartData.push({ name: i === 0 ? 'Tuần này' : `-${i} Tuần`, revenue: 0, shipping: 0, shopPaid: 0, customerPaid: 0, orders: 0, weekOffset: i });
       }
       
       completedOrders.forEach(o => {
@@ -106,6 +111,8 @@ const ShopStatistics = () => {
           if (match) {
             match.revenue += (o.codAmount || 0);
             match.shipping += (o.deliveryFee || 0);
+          if (o.feePaidBy === 'SENDER') match.shopPaid += (o.deliveryFee || 0);
+          else match.customerPaid += (o.deliveryFee || 0);
             match.orders += 1;
           }
         }
@@ -113,7 +120,7 @@ const ShopStatistics = () => {
     } else if (statFilter === 'month') {
       for (let i = 5; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        chartData.push({ name: `T${d.getMonth() + 1}`, revenue: 0, shipping: 0, orders: 0, month: d.getMonth(), year: d.getFullYear() });
+        chartData.push({ name: `T${d.getMonth() + 1}`, revenue: 0, shipping: 0, shopPaid: 0, customerPaid: 0, orders: 0, month: d.getMonth(), year: d.getFullYear() });
       }
 
       completedOrders.forEach(o => {
@@ -122,6 +129,8 @@ const ShopStatistics = () => {
         if (match) {
           match.revenue += (o.codAmount || 0);
           match.shipping += (o.deliveryFee || 0);
+          if (o.feePaidBy === 'SENDER') match.shopPaid += (o.deliveryFee || 0);
+          else match.customerPaid += (o.deliveryFee || 0);
           match.orders += 1;
         }
       });
@@ -130,10 +139,12 @@ const ShopStatistics = () => {
     chartData.forEach(c => {
       totalRevenue += c.revenue;
       totalShipping += c.shipping;
+      shopPaidShipping += c.shopPaid;
+      customerPaidShipping += c.customerPaid;
       totalOrders += c.orders;
     });
 
-    return { chartData, totalRevenue, totalShipping, totalOrders };
+    return { chartData, totalRevenue, totalShipping, shopPaidShipping, customerPaidShipping, totalOrders };
   }, [orders, statFilter]);
 
   const renderOrder = (order) => {
@@ -219,7 +230,7 @@ const ShopStatistics = () => {
               {statsData.totalRevenue.toLocaleString('vi-VN')}đ
             </div>
           </div>
-          <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 text-white shadow-lg shadow-emerald-500/30">
+          <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 text-white shadow-lg shadow-emerald-500/30 cursor-pointer active:scale-95 transition-transform" onClick={() => setShowShippingModal(true)}>
             <div className="flex items-center gap-2 mb-2 opacity-80">
               <DollarSign size={18} />
               <span className="text-xs font-medium uppercase tracking-wider">Doanh thu tiền ship</span>
