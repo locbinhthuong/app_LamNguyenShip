@@ -101,10 +101,14 @@ function AppContent() {
     const unlockAudio = () => {
       if (fallbackAudioRef.current && fallbackAudioRef.current.paused) {
          // Chơi một đoạn âm thanh trống ngắn để unlock trên mobile
+         fallbackAudioRef.current.muted = true;
          fallbackAudioRef.current.play().then(() => {
              fallbackAudioRef.current.pause();
              fallbackAudioRef.current.currentTime = 0;
-         }).catch(e => {});
+             fallbackAudioRef.current.muted = false;
+         }).catch(e => {
+             fallbackAudioRef.current.muted = false;
+         });
       }
     };
 
