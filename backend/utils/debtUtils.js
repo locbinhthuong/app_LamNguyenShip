@@ -24,39 +24,6 @@ function getTodayVN() {
 }
 
 /**
- * Tính lại walletDebt thực tế từ tất cả DebtTransaction (chỉ SUCCESS).
- * Nếu phát hiện bị lệch so với giá trị cached trên Driver → tự động sửa.
- * 
- * @param {string} driverId - MongoDB ObjectId của tài xế
- * @returns {number} Tổng nợ thực tế (>= 0)
- */
-async function recalcWalletDebt(driverId) {
-  const transactions = await DebtTransaction.find({ driverId })
-    .select('amount status')
-    .lean();
-
-  let actualDebt = 0;
-  transactions.forEach(tx => {
-    if (tx.status === 'SUCCESS') {
-      actualDebt += tx.amount; // Dương = nợ tăng, Âm = nợ giảm (thanh toán)
-    }
-  });
-
-  const correctedDebt = Math.max(0, actualDebt);
-
-  const driver = await Driver.findById(driverId).select('walletDebt name');
-  if (driver && driver.walletDebt !== correctedDebt) {
-    console.log(
-      `[DEBT SYNC] Tài xế "${driver.name}" (${driverId}): ` +
-      `walletDebt cached=${driver.walletDebt} → thực tế=${correctedDebt}. ĐÃ TỰ ĐỘNG SỬA.`
-    );
-    await Driver.findByIdAndUpdate(driverId, { walletDebt: correctedDebt });
-  }
-
-  return correctedDebt;
-}
-
-/**
  * Kiểm tra tài xế có bị chặn nhận đơn vì công nợ không.
  * 
  * Thuật toán:
@@ -96,17 +63,15 @@ async function checkDriverDebtBlock(driverId) {
 
     const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-    if (!netDebtByDate[dateStr]) netDebtByDate[dateStr] = 0;
-    netDebtByDate[dateStr] += tx.amount;
-    totalActualDebt += tx.amount;
+    netDebtByDate[dateStr] = Math.round((netDebtByDate[dateStr] || 0) + tx.amount);
+    totalActualDebt = Math.round(totalActualDebt + tx.amount);
   });
 
   const correctedDebt = Math.max(0, totalActualDebt);
-  const currentDriver = await Driver.findById(driverId).select('walletDebt name');
-  if (currentDriver && currentDriver.walletDebt !== correctedDebt) {
+  if (driver.walletDebt !== correctedDebt) {
     console.log(
-      `[DEBT SYNC] Tài xế "${currentDriver.name}" (${driverId}): ` +
-      `walletDebt cached=${currentDriver.walletDebt} → thực tế=${correctedDebt}. ĐÃ TỰ ĐỘNG SỬA.`
+      `[DEBT SYNC] Tài xế "${driver.name}" (${driverId}): ` +
+      `walletDebt cached=${driver.walletDebt} → thực tế=${correctedDebt}. ĐÃ TỰ ĐỘNG SỬA.`
     );
     await Driver.findByIdAndUpdate(driverId, { walletDebt: correctedDebt });
   }
@@ -152,4 +117,4 @@ async function checkDriverDebtBlock(driverId) {
   };
 }
 
-module.exports = { getTodayVN, recalcWalletDebt, checkDriverDebtBlock };
+module.exports = { getTodayVN, checkDriverDebtBlock };
