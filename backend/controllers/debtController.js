@@ -84,7 +84,7 @@ const debtController = {
         type: 'PENALTY',
         amount: Number(amount),
         description: description || 'Phạt vi phạm nội quy/chậm trễ',
-        targetDate: targetDate || new Date().toLocaleDateString('en-CA'),
+        targetDate: targetDate || getTodayVN(),
         createdByAdminId: adminId
       });
       await tx.save();
@@ -110,7 +110,7 @@ const debtController = {
       const transactions = await DebtTransaction.find({ driverId }).lean();
       let currentAmount = 0;
       transactions.forEach(tx => {
-        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA');
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
         if (dateStr === targetDate && tx.status !== 'REJECTED' && tx.status !== 'PENDING' && tx.status !== 'DELETED') {
           currentAmount += tx.amount;
         }
@@ -376,7 +376,7 @@ const debtController = {
         phone: driver.phone,
         driverCode: driver.driverCode,
         amount: Number(amount),
-        targetDate: targetDate, // Nhận ngày của Hóa đơn Driver muốn thanh toán
+        targetDate: finalTargetDate, // Đảm bảo luôn gửi ngày chính xác đã fallback
         timestamp: new Date()
       };
       

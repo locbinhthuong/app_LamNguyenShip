@@ -351,17 +351,33 @@ const driverController = {
       }
 
       // Reset Debt
-      const debtValue = driver.walletDebt || 0;
-      if (debtValue !== 0) {
-        const type = debtValue > 0 ? 'PAYMENT' : 'PENALTY';
-        const dTx = new DebtTransaction({
-          driverId: id,
-          type: type,
-          amount: -debtValue,
-          description: 'Xóa Sạch Nợ Tự Động / Thủ công Reset Mốc 0',
-          createdByAdminId: adminId
-        });
-        await dTx.save();
+      const transactions = await DebtTransaction.find({ driverId: id, status: 'SUCCESS' }).lean();
+      const netDebtByDate = {};
+      
+      transactions.forEach(tx => {
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        if (!netDebtByDate[dateStr]) netDebtByDate[dateStr] = 0;
+        netDebtByDate[dateStr] += tx.amount;
+      });
+
+      const txsToInsert = [];
+      for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
+        const roundedAmount = Math.round(amount);
+        if (roundedAmount !== 0) {
+          txsToInsert.push({
+            driverId: id,
+            type: roundedAmount > 0 ? 'PAYMENT' : 'PENALTY',
+            amount: -roundedAmount,
+            targetDate: dateStr,
+            description: 'Xóa Sạch Nợ Tự Động / Thủ công Reset Mốc 0',
+            createdByAdminId: adminId,
+            status: 'SUCCESS'
+          });
+        }
+      }
+
+      if (txsToInsert.length > 0) {
+        await DebtTransaction.insertMany(txsToInsert);
       }
 
       // Update Driver
