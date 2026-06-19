@@ -38,7 +38,6 @@ const refundOrderDebtIfAny = async (orderId) => {
         });
         
         await DebtTransaction.findByIdAndUpdate(debtTx._id, { 
-          status: 'DELETED',
           description: (debtTx.description || '') + ' [HOÀN DO HỦY ĐƠN]'
         });
         
