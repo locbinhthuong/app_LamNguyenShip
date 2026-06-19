@@ -202,20 +202,36 @@ const debtController = {
       const driver = await Driver.findById(driverId);
       if (!driver) return res.status(404).json({ success: false, message: 'Driver 404' });
 
-      // Nếu đang nợ dương (> 0) thì ghi nhận Payment. Nếu âm (< 0) thì Penalty để bù về 0.
-      const debtValue = driver.walletDebt;
-      if (debtValue === 0) return res.status(400).json({ success: false, message: 'Nợ hiện tại đã bằng 0' });
-
-      const type = debtValue > 0 ? 'PAYMENT' : 'PENALTY';
+      // Lấy toàn bộ giao dịch SUCCESS để tính nợ ròng theo TỪNG NGÀY
+      const transactions = await DebtTransaction.find({ driverId, status: 'SUCCESS' }).lean();
+      const netDebtByDate = {};
       
-      const tx = new DebtTransaction({
-        driverId,
-        type: type,
-        amount: -debtValue,
-        description: 'Xóa Sạch Nợ Tự Động / Thủ công Reset Mốc 0',
-        createdByAdminId: adminId
+      transactions.forEach(tx => {
+        const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        if (!netDebtByDate[dateStr]) netDebtByDate[dateStr] = 0;
+        netDebtByDate[dateStr] += tx.amount;
       });
-      await tx.save();
+
+      // Tạo giao dịch đối trừ cho từng ngày có nợ ròng khác 0
+      const txsToInsert = [];
+      for (const [dateStr, amount] of Object.entries(netDebtByDate)) {
+        const roundedAmount = Math.round(amount);
+        if (roundedAmount !== 0) {
+          txsToInsert.push({
+            driverId,
+            type: roundedAmount > 0 ? 'PAYMENT' : 'PENALTY',
+            amount: -roundedAmount,
+            targetDate: dateStr,
+            description: 'Xóa Sạch Nợ Tự Động / Thủ công Reset Mốc 0',
+            createdByAdminId: adminId,
+            status: 'SUCCESS' // Bắt buộc phải là SUCCESS để được cộng dồn triệt tiêu
+          });
+        }
+      }
+
+      if (txsToInsert.length > 0) {
+        await DebtTransaction.insertMany(txsToInsert);
+      }
 
       const dr = await Driver.findByIdAndUpdate(driverId, { walletDebt: 0 }, { new: true });
 
@@ -295,7 +311,10 @@ const debtController = {
       }
 
       const transactions = await DebtTransaction.find({ _id: { $in: txIds } });
+      const affectedDrivers = new Set();
+
       for (const tx of transactions) {
+         affectedDrivers.add(tx.driverId.toString());
          if (tx.status === 'SUCCESS') {
             await Driver.findByIdAndUpdate(tx.driverId, { $inc: { walletDebt: -tx.amount } });
          }
@@ -303,9 +322,11 @@ const debtController = {
 
       await DebtTransaction.updateMany({ _id: { $in: txIds } }, { $set: { status: 'DELETED', description: '[ĐÃ XÓA]' } });
 
-      // Cập nhật giao diện nếu cần
+      // Cập nhật giao diện tới đúng tài xế bị ảnh hưởng
       if (req.io) {
-        req.io.emit('debt_updated', {}); 
+        affectedDrivers.forEach(dId => {
+          emitToDriver(req.io, dId, 'debt_updated', {});
+        });
       }
 
       res.status(200).json({ success: true, message: `Đã xóa thành công ${txIds.length} lịch sử giao dịch` });
