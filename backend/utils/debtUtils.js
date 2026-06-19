@@ -67,16 +67,8 @@ async function checkDriverDebtBlock(driverId) {
     totalActualDebt = Math.round(totalActualDebt + tx.amount);
   });
 
-  const correctedDebt = Math.max(0, totalActualDebt);
-  if (driver.walletDebt !== correctedDebt) {
-    console.log(
-      `[DEBT SYNC] Tài xế "${driver.name}" (${driverId}): ` +
-      `walletDebt cached=${driver.walletDebt} → thực tế=${correctedDebt}. ĐÃ TỰ ĐỘNG SỬA.`
-    );
-    await Driver.findByIdAndUpdate(driverId, { walletDebt: correctedDebt });
-  }
-
-  // KHÔNG exit sớm nếu correctedDebt <= 0, để bắt buộc kiểm tra từng ngày xem nợ cũ đã thanh toán đúng ngày chưa.
+  // Bỏ auto-sync vì lịch sử giao dịch có thể bị lệch so với walletDebt do dữ liệu cũ.
+  // Không nên ghi đè walletDebt dựa trên tổng giao dịch cũ.
 
   let oldDebtDate = null;
   let oldDebtAmount = 0;
@@ -96,13 +88,13 @@ async function checkDriverDebtBlock(driverId) {
     console.log(
       `[DEBT BLOCK] Tài xế "${driver?.name}" (${driverId}) BỊ CHẶN:\n` +
       `  → Nợ cũ ngày ${oldDebtDate}: ${oldDebtAmount.toLocaleString()}đ\n` +
-      `  → Tổng nợ: ${correctedDebt.toLocaleString()}đ\n` +
+      `  → Tổng nợ: ${driver.walletDebt.toLocaleString()}đ\n` +
       `  → Hôm nay: ${todayStr}`
     );
     return {
       blocked: true,
       message,
-      details: { todayStr, oldDebtDate, oldDebtAmount, totalDebt: correctedDebt, netDebtByDate }
+      details: { todayStr, oldDebtDate, oldDebtAmount, totalDebt: driver.walletDebt, netDebtByDate }
     };
   }
 
@@ -113,7 +105,7 @@ async function checkDriverDebtBlock(driverId) {
   return {
     blocked: false,
     message: '',
-    details: { todayStr, todayDebt: netDebtByDate[todayStr] || 0, totalDebt: correctedDebt }
+    details: { todayStr, todayDebt: netDebtByDate[todayStr] || 0, totalDebt: driver.walletDebt }
   };
 }
 
