@@ -15,12 +15,34 @@ const { getDrivingDistance } = require('../utils/distance');
 
 const refundOrderDebtIfAny = async (orderId) => {
   try {
-    const debtTxList = await DebtTransaction.find({ orderId: orderId, type: 'FEE_DEDUCTION' });
+    const debtTxList = await DebtTransaction.find({ 
+      orderId: orderId, 
+      type: 'FEE_DEDUCTION',
+      status: 'SUCCESS'  // Chỉ hoàn nợ đã SUCCESS
+    });
+    
     for (const debtTx of debtTxList) {
       if (debtTx.driverId) {
-        await Driver.findByIdAndUpdate(debtTx.driverId, { $inc: { walletDebt: -debtTx.amount } });
-        await DebtTransaction.findByIdAndDelete(debtTx._id);
-        console.log(`[REFUND DEBT] Hoan lai ${debtTx.amount}d cho tai xe ${debtTx.driverId} do don hang bi huy/xoa.`);
+        await Driver.findByIdAndUpdate(debtTx.driverId, { 
+          $inc: { walletDebt: -debtTx.amount } 
+        });
+        
+        await DebtTransaction.create({
+          driverId: debtTx.driverId,
+          orderId: orderId,
+          type: 'PAYMENT',
+          amount: -debtTx.amount,
+          targetDate: debtTx.targetDate, // Đúng ngày gốc, không fallback
+          status: 'SUCCESS',
+          description: `Hoàn nợ do hủy/xóa đơn`
+        });
+        
+        await DebtTransaction.findByIdAndUpdate(debtTx._id, { 
+          status: 'DELETED',
+          description: (debtTx.description || '') + ' [HOÀN DO HỦY ĐƠN]'
+        });
+        
+        console.log(`[REFUND DEBT] Hoàn lại ${debtTx.amount}đ cho tài xế ${debtTx.driverId} do đơn bị hủy/xóa.`);
       }
     }
   } catch (err) {
