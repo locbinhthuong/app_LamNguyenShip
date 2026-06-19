@@ -72,6 +72,18 @@ async function recalcWalletDebt(driverId) {
 async function checkDriverDebtBlock(driverId) {
   const todayStr = getTodayVN();
 
+  const driver = await Driver.findById(driverId).select('walletDebt name');
+  if (!driver) return { blocked: true, message: 'Tài xế không tồn tại' };
+
+  // Tối ưu hiệu năng: Nếu cache báo nợ = 0 thì cho qua luôn, không cần quét lịch sử giao dịch.
+  if (driver.walletDebt === 0) {
+    return {
+      blocked: false,
+      message: '',
+      details: { todayStr, todayDebt: 0, totalDebt: 0 }
+    };
+  }
+
   const transactions = await DebtTransaction.find({ driverId })
     .select('amount targetDate createdAt status type')
     .lean();
