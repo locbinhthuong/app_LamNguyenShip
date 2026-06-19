@@ -102,11 +102,11 @@ async function checkDriverDebtBlock(driverId) {
   });
 
   const correctedDebt = Math.max(0, totalActualDebt);
-  const driver = await Driver.findById(driverId).select('walletDebt name');
-  if (driver && driver.walletDebt !== correctedDebt) {
+  const currentDriver = await Driver.findById(driverId).select('walletDebt name');
+  if (currentDriver && currentDriver.walletDebt !== correctedDebt) {
     console.log(
-      `[DEBT SYNC] Tài xế "${driver.name}" (${driverId}): ` +
-      `walletDebt cached=${driver.walletDebt} → thực tế=${correctedDebt}. ĐÃ TỰ ĐỘNG SỬA.`
+      `[DEBT SYNC] Tài xế "${currentDriver.name}" (${driverId}): ` +
+      `walletDebt cached=${currentDriver.walletDebt} → thực tế=${correctedDebt}. ĐÃ TỰ ĐỘNG SỬA.`
     );
     await Driver.findByIdAndUpdate(driverId, { walletDebt: correctedDebt });
   }
