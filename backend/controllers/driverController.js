@@ -71,12 +71,16 @@ const driverController = {
       ]);
 
       const DebtTransaction = require('../models/DebtTransaction');
+      const targetDateStr = filterDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
       const todayDebtStats = await DebtTransaction.aggregate([
         {
           $match: {
             driverId: { $in: drivers.map(d => d._id) },
-            type: { $in: ['FEE_DEDUCTION', 'PENALTY'] },
-            createdAt: { $gte: startOfDay, $lte: endOfDay }
+            status: 'SUCCESS',
+            $or: [
+              { targetDate: targetDateStr },
+              { targetDate: { $exists: false }, createdAt: { $gte: startOfDay, $lte: endOfDay } }
+            ]
           }
         },
         {
