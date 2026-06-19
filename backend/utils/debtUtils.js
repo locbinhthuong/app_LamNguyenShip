@@ -61,11 +61,10 @@ async function recalcWalletDebt(driverId) {
  * 
  * Thuật toán:
  * 1. Quét TẤT CẢ DebtTransaction của tài xế (chỉ status = SUCCESS)
- * 2. Gom nợ RÒNG theo từng ngày (cộng dương, trừ âm theo targetDate)
+ * 2. Gom nợ RÒNG theo từng ngày (cộng dồn theo targetDate)
  * 3. Nếu bất kỳ ngày CŨ nào (dateStr < todayVN) có nợ ròng > 0 → CHẶN
  * 4. Nợ ngày hôm nay → BỎ QUA, không chặn
- * 5. Tự động đồng bộ walletDebt nếu phát hiện lệch
- * 6. Ghi log chi tiết khi chặn (để debug khi xảy ra sự cố)
+ * 5. Tuyệt đối không bù trừ tiền giữa các ngày.
  * 
  * @param {string} driverId - MongoDB ObjectId của tài xế
  * @returns {{ blocked: boolean, message: string, details: object }}
@@ -73,27 +72,23 @@ async function recalcWalletDebt(driverId) {
 async function checkDriverDebtBlock(driverId) {
   const todayStr = getTodayVN();
 
-  // 1. Lấy TẤT CẢ giao dịch nợ của tài xế
   const transactions = await DebtTransaction.find({ driverId })
     .select('amount targetDate createdAt status type')
     .lean();
 
-  // 2. Tính nợ ròng theo từng ngày (CHỈ TÍNH STATUS = SUCCESS)
   const netDebtByDate = {};
   let totalActualDebt = 0;
 
   transactions.forEach(tx => {
-    if (tx.status !== 'SUCCESS') return; // Bỏ qua PENDING, REJECTED, DELETED
+    if (tx.status !== 'SUCCESS') return;
 
-    const dateStr = tx.targetDate
-      || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+    const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
 
     if (!netDebtByDate[dateStr]) netDebtByDate[dateStr] = 0;
     netDebtByDate[dateStr] += tx.amount;
     totalActualDebt += tx.amount;
   });
 
-  // 3. Tự động đồng bộ walletDebt nếu bị lệch
   const correctedDebt = Math.max(0, totalActualDebt);
   const driver = await Driver.findById(driverId).select('walletDebt name');
   if (driver && driver.walletDebt !== correctedDebt) {
@@ -104,38 +99,28 @@ async function checkDriverDebtBlock(driverId) {
     await Driver.findByIdAndUpdate(driverId, { walletDebt: correctedDebt });
   }
 
-  // 4. Nếu tổng nợ thực tế <= 0 → KHÔNG CHẶN
-  if (correctedDebt <= 0) {
-    return {
-      blocked: false,
-      message: '',
-      details: { todayStr, totalDebt: 0, netDebtByDate }
-    };
-  }
+  // KHÔNG exit sớm nếu correctedDebt <= 0, để bắt buộc kiểm tra từng ngày xem nợ cũ đã thanh toán đúng ngày chưa.
 
-  // 5. Nợ ngày nào là của ngày đó: Lọc ngày CŨ (< todayStr) có NỢ (amount > 0)
   let oldDebtDate = null;
   let oldDebtAmount = 0;
 
-  // Lấy ngày cũ nhất bị nợ để thông báo
+  // Lọc ngày CŨ (< todayStr) có NỢ RÒNG > 0
   const sortedPastDatesAsc = Object.keys(netDebtByDate)
     .filter(dateStr => dateStr < todayStr && netDebtByDate[dateStr] > 0)
-    .sort((a, b) => (a > b ? 1 : (a < b ? -1 : 0))); // Sắp xếp Tăng dần (Cũ nhất -> Mới hơn)
+    .sort((a, b) => (a > b ? 1 : (a < b ? -1 : 0)));
 
   if (sortedPastDatesAsc.length > 0) {
     oldDebtDate = sortedPastDatesAsc[0];
     oldDebtAmount = Math.round(netDebtByDate[oldDebtDate]);
   }
 
-  // 6. Có nợ cũ → CHẶN + ghi log chi tiết
   if (oldDebtDate) {
     const message = `Bạn chưa thanh toán công nợ`;
     console.log(
       `[DEBT BLOCK] Tài xế "${driver?.name}" (${driverId}) BỊ CHẶN:\n` +
       `  → Nợ cũ ngày ${oldDebtDate}: ${oldDebtAmount.toLocaleString()}đ\n` +
       `  → Tổng nợ: ${correctedDebt.toLocaleString()}đ\n` +
-      `  → Hôm nay: ${todayStr}\n` +
-      `  → Chi tiết theo ngày: ${JSON.stringify(netDebtByDate)}`
+      `  → Hôm nay: ${todayStr}`
     );
     return {
       blocked: true,
@@ -144,7 +129,6 @@ async function checkDriverDebtBlock(driverId) {
     };
   }
 
-  // 7. Nợ CHỈ CÓ ngày hôm nay → KHÔNG CHẶN (chưa qua 0h)
   console.log(
     `[DEBT OK] Tài xế "${driver?.name}" (${driverId}): ` +
     `Nợ hôm nay ${(netDebtByDate[todayStr] || 0).toLocaleString()}đ (không chặn). Today=${todayStr}`

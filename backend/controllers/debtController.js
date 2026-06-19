@@ -41,24 +41,12 @@ const debtController = {
       const todayDebt = Math.max(0, Math.round(netDebtByDate[todayStr] || 0));
 
       let unpaidDays = [];
-      if (driver.walletDebt > 0) {
-        // Trừ đi nợ hôm nay để chỉ phân bổ nợ cũ
-        let remainingDebtForOldDays = driver.walletDebt - todayDebt;
-        
-        const sortedDatesDesc = Object.keys(netDebtByDate)
-          .filter(d => netDebtByDate[d] > 0 && d < todayStr)
-          .sort((a, b) => (a < b ? 1 : (a > b ? -1 : 0)));
+      const sortedDatesAsc = Object.keys(netDebtByDate)
+        .filter(d => d < todayStr && netDebtByDate[d] > 0)
+        .sort((a, b) => (a > b ? 1 : (a < b ? -1 : 0)));
 
-        for (const dateStr of sortedDatesDesc) {
-          if (remainingDebtForOldDays <= 0) break;
-          const allocated = Math.min(remainingDebtForOldDays, netDebtByDate[dateStr]);
-          if (allocated > 0) {
-            unpaidDays.push({ date: dateStr, amount: Math.round(allocated) });
-          }
-          remainingDebtForOldDays -= allocated;
-        }
-        
-        unpaidDays.sort((a, b) => (a.date > b.date ? 1 : (a.date < b.date ? -1 : 0)));
+      for (const dateStr of sortedDatesAsc) {
+         unpaidDays.push({ date: dateStr, amount: Math.round(netDebtByDate[dateStr]) });
       }
 
       // Tính tổng nợ phải thu (CÒN PHẢI THU) chính là walletDebt thực tế của tài xế
@@ -409,22 +397,13 @@ const debtController = {
 
       const todayStr = getTodayVN();
       let unpaidDays = [];
-      if (driver.walletDebt > 0) {
-        let remainingDebt = driver.walletDebt;
-        const sortedDatesDesc = Object.keys(netDebtByDate)
-          .filter(d => netDebtByDate[d] > 0 && d < todayStr)
-          .sort((a, b) => (a < b ? 1 : (a > b ? -1 : 0)));
+      
+      const sortedDatesAsc = Object.keys(netDebtByDate)
+        .filter(d => d < todayStr && netDebtByDate[d] > 0)
+        .sort((a, b) => (a > b ? 1 : (a < b ? -1 : 0)));
 
-        for (const dateStr of sortedDatesDesc) {
-          if (remainingDebt <= 0) break;
-          const allocated = Math.min(remainingDebt, netDebtByDate[dateStr]);
-          if (allocated > 0) {
-            unpaidDays.push({ date: dateStr, amount: Math.round(allocated) });
-          }
-          remainingDebt -= allocated;
-        }
-        
-        unpaidDays.sort((a, b) => (a.date > b.date ? 1 : (a.date < b.date ? -1 : 0)));
+      for (const dateStr of sortedDatesAsc) {
+         unpaidDays.push({ date: dateStr, amount: Math.round(netDebtByDate[dateStr]) });
       }
 
       res.status(200).json({
