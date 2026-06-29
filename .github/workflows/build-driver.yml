@@ -157,5 +157,14 @@ jobs:
           
           IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -n 1)
           
-          echo "Uploading $IPA_PATH to App Store Connect..."
-          xcrun altool --upload-app -f "$IPA_PATH" -t ios --apiKey "$APP_STORE_CONNECT_API_KEY_KEY_ID" --apiIssuer "$APP_STORE_CONNECT_API_KEY_ISSUER_ID"
+          echo "Uploading $IPA_PATH to App Store Connect using fastlane..."
+          cat <<EOF > api_key.json
+          {
+            "key_id": "$APP_STORE_CONNECT_API_KEY_KEY_ID",
+            "issuer_id": "$APP_STORE_CONNECT_API_KEY_ISSUER_ID",
+            "key_filepath": "$HOME/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8",
+            "in_house": false
+          }
+          EOF
+          
+          fastlane pilot upload --api_key_path api_key.json --ipa "$IPA_PATH" --skip_waiting_for_build_processing true
