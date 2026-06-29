@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getOrderById, acceptOrder, pickedUpOrder, completeOrder, cancelOrder } from '../services/api';
-import { Package, Bike, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Phone, Map, Car, Key, Building2, Zap, Droplet, Wallet, Diamond, Trophy, Scale, AlertTriangle, ArrowLeft, RefreshCw, FileText } from 'lucide-react';
+import { Package, Bike, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Phone, Map, Car, Key, Building2, Zap, Droplet, Wallet, Diamond, Trophy, Scale, AlertTriangle, ArrowLeft, RefreshCw, FileText, DollarSign } from 'lucide-react';
 
 const STATUS_STEPS = ['ACCEPTED', 'PICKED_UP', 'COMPLETED'];
 const STATUS_LABELS = {
