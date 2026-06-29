@@ -510,7 +510,7 @@ export default function OrderDetail() {
                <div className="flex flex-col relative z-10">
                   {order.deliveryFee > 0 ? (
                     <div className="flex flex-col items-start">
-                      <p className="text-green-600 font-black text-xl sm:text-2xl ">{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ</p>
+                      <p className="text-green-600 font-black text-xl sm:text-2xl ">{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0)).toLocaleString()}đ</p>
                       {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
                         <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 mt-0.5 rounded font-bold">{order.feePaidBy === 'SENDER' ? 'Shop trả ship' : 'Khách trả ship'}</span>
                       )}
@@ -526,6 +526,11 @@ export default function OrderDetail() {
                  {order.rideDetails?.surcharge > 0 && (
                    <p className="text-[10px] text-purple-600 font-bold mt-1 bg-purple-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-purple-100">
                      ( đã cộng phí phụ/lái hộ: {order.rideDetails.surcharge.toLocaleString()}đ )
+                   </p>
+                 )}
+                 {order.extraSurcharge > 0 && (
+                   <p className="text-[10px] text-red-600 font-bold mt-1 bg-red-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-red-100">
+                     ( đã cộng phụ thu thêm: {order.extraSurcharge.toLocaleString()}đ )
                    </p>
                  )}
                </div>
@@ -571,6 +576,41 @@ export default function OrderDetail() {
                </div>
             )}
           </div>
+
+          {/* BLOCK TỔNG KẾT RÕ RÀNG CHO GIAO_HANG */}
+          {order.serviceType === 'GIAO_HANG' && (
+            <div className="mt-4">
+              {(() => {
+                const totalShipFee = (order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0);
+                const shopAmount = order.feePaidBy === 'SENDER' ? ((order.codAmount || 0) - totalShipFee) : (order.codAmount || 0);
+                const customerAmount = order.feePaidBy === 'SENDER' ? (order.codAmount || 0) : ((order.codAmount || 0) + totalShipFee);
+                
+                return (
+                  <div className="flex flex-col gap-3 mt-4">
+                     <div className="flex justify-between items-center bg-white p-3.5 rounded-xl border border-slate-200">
+                       <span className="text-[11px] text-slate-500 font-bold uppercase flex items-center gap-1">
+                         <Wallet size={14} /> 
+                         {shopAmount > 0 ? 'TÀI XẾ ỨNG CHO SHOP' : shopAmount < 0 ? 'TÀI XẾ THU TỪ SHOP' : 'KHÔNG ỨNG/THU Ở SHOP'}
+                       </span>
+                       <span className="font-black text-xl text-slate-700">
+                         {shopAmount === 0 ? '0đ' : `${Math.abs(shopAmount).toLocaleString()}đ`}
+                       </span>
+                     </div>
+
+                     <div className="flex justify-between items-end bg-red-50 p-4 rounded-xl border-2 border-red-200">
+                       <div className="flex flex-col">
+                         <span className="text-xs text-red-600 font-bold uppercase">TỔNG THU CỦA KHÁCH</span>
+                         <span className="text-[10px] text-red-500 italic">({order.feePaidBy === 'SENDER' ? 'Chỉ thu COD vì Shop đã trả ship' : 'Đã bao gồm Tiền Ship + COD'})</span>
+                       </div>
+                       <span className="font-black text-3xl text-red-600">
+                         {customerAmount.toLocaleString()}đ
+                       </span>
+                     </div>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
         </div>
 
         {/* Timeline */}
