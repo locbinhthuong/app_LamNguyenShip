@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await getDriverProfile();
       setDriver(response.data);
+      localStorage.setItem('driver_info', JSON.stringify(response.data));
     } catch (err) {
       console.error('Load profile error:', err);
       if (err.response && (err.response.status === 401 || err.response.status === 403)) {
@@ -94,6 +95,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await updateDriverStatus(isOnline);
       setDriver(response.data);
+      localStorage.setItem('driver_info', JSON.stringify(response.data));
       return response;
     } catch (err) {
       console.error('Set online error:', err);
