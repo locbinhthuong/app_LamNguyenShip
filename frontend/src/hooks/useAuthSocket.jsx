@@ -1,39 +1,64 @@
 import { useEffect } from 'react';
 import { useToast } from '../context/ToastContext';
 import { connectSocket, disconnectSocket } from '../services/api';
+import { Capacitor } from '@capacitor/core';
+import { NativeAudio } from '@capacitor-community/native-audio';
 
 // Hack AudioContext Global
 let customerAudioCtx = null;
 let pricePingBuffer = null;
 const initCustomerAudio = async () => {
-    try {
-        if (!customerAudioCtx) {
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            if (!AudioContext) return;
-            customerAudioCtx = new AudioContext();
-            
-            fetch('/thongbaogiatienkhachhang.mp3').then(res => res.arrayBuffer()).then(arr => customerAudioCtx.decodeAudioData(arr)).then(buf => pricePingBuffer = buf);
+    if (Capacitor.isNativePlatform()) {
+        try {
+            await NativeAudio.preload({
+                assetId: 'ting_ting',
+                assetPath: 'thongbaogiatienkhachhang.mp3',
+                audioChannelNum: 1,
+                isUrl: false
+            });
+        } catch(e) {
+            console.log('NativeAudio preload error:', e);
         }
-        if (customerAudioCtx.state === 'suspended') customerAudioCtx.resume();
-    } catch(e){}
+    } else {
+        try {
+            if (!customerAudioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                customerAudioCtx = new AudioContext();
+                
+                fetch('/thongbaogiatienkhachhang.mp3').then(res => res.arrayBuffer()).then(arr => customerAudioCtx.decodeAudioData(arr)).then(buf => pricePingBuffer = buf);
+            }
+            if (customerAudioCtx.state === 'suspended') customerAudioCtx.resume();
+        } catch(e){}
+    }
 };
-window.addEventListener('click', initCustomerAudio, { once: true });
-window.addEventListener('touchstart', initCustomerAudio, { once: true });
+
+if (!Capacitor.isNativePlatform()) {
+    window.addEventListener('click', initCustomerAudio, { once: true });
+    window.addEventListener('touchstart', initCustomerAudio, { once: true });
+} else {
+    initCustomerAudio();
+}
 
 const playCustomerPing = () => {
     try {
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
             navigator.vibrate([200, 100, 200]); // Rung máy (Mobile) hỗ trợ fallback cho loa
         }
-        if (customerAudioCtx && pricePingBuffer) {
-            if (customerAudioCtx.state === 'suspended') customerAudioCtx.resume();
-            const source = customerAudioCtx.createBufferSource();
-            source.buffer = pricePingBuffer;
-            source.connect(customerAudioCtx.destination);
-            source.start(0);
+        
+        if (Capacitor.isNativePlatform()) {
+            NativeAudio.play({ assetId: 'ting_ting' }).catch(e => console.log('NativeAudio play blocked:', e));
         } else {
-            // Chuông Fallback
-            new Audio('/thongbaogiatienkhachhang.mp3').play().catch(e => console.log('Autoplay blocked'));
+            if (customerAudioCtx && pricePingBuffer) {
+                if (customerAudioCtx.state === 'suspended') customerAudioCtx.resume();
+                const source = customerAudioCtx.createBufferSource();
+                source.buffer = pricePingBuffer;
+                source.connect(customerAudioCtx.destination);
+                source.start(0);
+            } else {
+                // Chuông Fallback
+                new Audio('/thongbaogiatienkhachhang.mp3').play().catch(e => console.log('Autoplay blocked'));
+            }
         }
     } catch(err) {}
 };
