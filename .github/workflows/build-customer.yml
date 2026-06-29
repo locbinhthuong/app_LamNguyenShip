@@ -161,7 +161,13 @@ jobs:
           echo "Uploading $IPA_PATH to App Store Connect using fastlane..."
           cat <<EOF > generate_api_key.rb
           require 'json'
-          key_content = \`echo -n "#{ENV['APP_STORE_CONNECT_API_KEY_P8_BASE64']}" | base64 --decode\`
+          raw_secret = ENV['APP_STORE_CONNECT_API_KEY_P8_BASE64']
+          key_content = if raw_secret.include?('BEGIN PRIVATE KEY')
+                          raw_secret
+                        else
+                          \`echo -n "#{raw_secret}" | base64 --decode\`
+                        end
+          
           File.write('api_key.json', {
             key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
             issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
