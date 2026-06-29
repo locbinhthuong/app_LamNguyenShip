@@ -13,7 +13,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   });
 
   const [deliveries, setDeliveries] = useState([
-    { id: 1, address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER' }
+    { id: 1, address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '' }
   ]);
 
   const [mapConfig, setMapConfig] = useState(null); // { type: 'pickup' | 'delivery', id?: number, pos: any, query: string }
@@ -71,7 +71,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   const handleAddDelivery = () => {
     setDeliveries(prev => [
       ...prev,
-      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER' }
+      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '' }
     ]);
   };
 
@@ -117,6 +117,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
         note: `Đơn ghép ${deliveries.length} điểm`,
         codAmount: totalCod,
         deliveryFee: totalFee,
+        extraSurcharge: deliveries.reduce((sum, d) => sum + (d.extraSurcharge ? parseInt(d.extraSurcharge) : 0), 0),
         packageDetails: {
           description: `Giao hàng hóa (Đơn ghép ${deliveries.length} điểm)`,
           weight: '',
@@ -130,6 +131,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
           deliveryCoordinates: d.coordinates || null,
           codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
           fee: d.fee || 0,
+          extraSurcharge: d.extraSurcharge ? parseInt(d.extraSurcharge) : 0,
           feePaidBy: d.feePaidBy || 'RECEIVER',
           distanceKm: d.distanceKm || 0,
           note: d.note.trim()
@@ -149,6 +151,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
         note: d.note.trim(),
         codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
         deliveryFee: d.fee || 0,
+        extraSurcharge: d.extraSurcharge ? parseInt(d.extraSurcharge) : 0,
         feePaidBy: d.feePaidBy || 'RECEIVER',
         receiverName: d.receiverName.trim(),
         receiverPhone: d.receiverPhone.trim(),
@@ -268,7 +271,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
               )}
 
               {/* Thu hộ và Ghi chú */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
                   <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
                     <DollarSign size={12} className="text-yellow-500" /> THU HỘ (COD)
@@ -279,6 +282,18 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
                     className="w-full text-[13px] font-bold text-slate-800 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-yellow-400"
                     value={delivery.codAmount}
                     onChange={e => updateDelivery(index, 'codAmount', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-[9px] font-bold text-gray-400 uppercase tracking-wider block mb-1 flex items-center gap-1">
+                    <DollarSign size={12} className="text-red-500" /> PHỤ THU
+                  </label>
+                  <CurrencyInput 
+                    name={`extraSurcharge_${index}`}
+                    placeholder="VD: 5.000"
+                    className="w-full text-[13px] font-bold text-slate-800 p-3 bg-gray-50 border border-gray-100 rounded-xl outline-none focus:border-red-400"
+                    value={delivery.extraSurcharge}
+                    onChange={e => updateDelivery(index, 'extraSurcharge', e.target.value)}
                   />
                 </div>
                 <div>

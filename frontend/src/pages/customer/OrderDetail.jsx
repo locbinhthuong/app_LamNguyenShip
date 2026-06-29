@@ -342,7 +342,7 @@ export default function OrderDetail() {
                          <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight">{d.deliveryAddress}</p>
                        </div>
                        <div className="text-right shrink-0">
-                         <p className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${d.feePaidBy === 'SENDER' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>Ship ({d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}): <br/> {d.fee > 0 ? `${d.fee.toLocaleString()}đ` : '0đ'}</p>
+                         <p className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${d.feePaidBy === 'SENDER' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>Ship ({d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}): <br/> {((d.fee || 0) + (d.extraSurcharge || 0)) > 0 ? `${((d.fee || 0) + (d.extraSurcharge || 0)).toLocaleString()}đ` : '0đ'} {d.extraSurcharge > 0 ? ` (+${d.extraSurcharge.toLocaleString()} phụ thu)` : ''}</p>
                        </div>
                     </div>
                     
