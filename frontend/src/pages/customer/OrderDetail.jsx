@@ -250,7 +250,7 @@ export default function OrderDetail() {
 
               <div className="border-t border-dashed border-slate-200 my-2"></div>
               
-              {(() => {
+              {order.serviceType !== 'DON_GHEP' && (() => {
                 const totalShipFee = (order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0);
                 const shopAmount = order.feePaidBy === 'SENDER' ? ((order.codAmount || 0) - totalShipFee) : (order.codAmount || 0);
                 const customerAmount = order.feePaidBy === 'SENDER' ? (order.codAmount || 0) : ((order.codAmount || 0) + totalShipFee);
@@ -315,15 +315,6 @@ export default function OrderDetail() {
               <MapPin size={14}/> {order.serviceType === 'DAT_XE' ? 'LỘ TRÌNH CHUYẾN ĐI' : order.serviceType === 'DIEU_PHOI' ? 'ĐỊA ĐIỂM GIAO DỊCH' : 'LỘ TRÌNH GIAO HÀNG'}
             </h3>
             
-            <div className="relative pl-6">
-               <div className="absolute left-1.5 top-2 bottom-6 w-0.5 bg-dashed bg-slate-200 border-l-2 border-dashed border-slate-200"></div>
-               
-               {/* ĐIỂM XUẤT PHÁT */}
-               <div className="mb-5 relative">
-                  <div className="absolute -left-[27px] top-1 w-3 h-3 bg-blue-400 rounded-full ring-4 ring-blue-50"></div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / GIAO DỊCH' : 'NGƯỜI GỬI / NƠI LẤY'}</p>
-                  <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight mb-2">{order.pickupAddress || 'Chưa xác định'}</p>
-                  
                   <div className="space-y-1">
                     <p className="text-xs text-slate-600 font-medium">👤 {order.senderName || order.customerName || 'Người đặt'}</p>
                     <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
@@ -341,19 +332,32 @@ export default function OrderDetail() {
                          <p className="text-[10px] font-bold text-slate-400 uppercase">ĐIỂM GIAO SỐ {idx + 1}</p>
                          <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight">{d.deliveryAddress}</p>
                        </div>
-                       <div className="text-right shrink-0">
-                         <p className={`text-[10px] font-bold px-2 py-1 rounded-lg border ${d.feePaidBy === 'SENDER' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>Ship ({d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}): <br/> {((d.fee || 0) + (d.extraSurcharge || 0)) > 0 ? `${((d.fee || 0) + (d.extraSurcharge || 0)).toLocaleString()}đ` : '0đ'} {d.extraSurcharge > 0 ? ` (+${d.extraSurcharge.toLocaleString()} phụ thu)` : ''}</p>
-                       </div>
                     </div>
                     
-                    <div className="space-y-1">
+                    <div className="space-y-1 mb-2">
                       <p className="text-xs text-slate-600 font-medium">👤 {d.receiverName || 'Khách hàng'}</p>
                       <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
                         <span className="font-bold text-blue-600">SĐT Liên Hệ:</span> {d.receiverPhone}
                       </p>
-                      {d.codAmount > 0 && <p className="text-[11px] text-blue-700 font-bold bg-blue-50 px-2 py-1.5 rounded-lg border border-blue-100 inline-flex items-center">Thu hộ (COD): {d.codAmount.toLocaleString()}đ</p>}
                       {d.note && <p className="text-[11px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">Ghi chú: {d.note}</p>}
                     </div>
+
+                    {(() => {
+                      const pointShipFee = (d.fee || 0) + (d.extraSurcharge || 0);
+                      const pointCustomerAmount = d.feePaidBy === 'SENDER' ? (d.codAmount || 0) : ((d.codAmount || 0) + pointShipFee);
+                      return (
+                        <div className="bg-red-50 border border-red-100 p-2.5 rounded-xl flex flex-col gap-1.5">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[11px] font-bold text-red-600 uppercase">Khách Cần Trả:</span>
+                            <span className="text-lg font-black text-red-600">{pointCustomerAmount.toLocaleString()}đ</span>
+                          </div>
+                          <div className="flex gap-2 text-[10px] text-slate-500 font-medium flex-wrap border-t border-red-100 pt-1.5">
+                            <span>• Thu hộ (COD): {d.codAmount?.toLocaleString() || 0}đ</span>
+                            <span>• Ship ({d.feePaidBy === 'SENDER' ? 'Shop đã trả' : 'Khách trả'}): {pointShipFee > 0 ? `${pointShipFee.toLocaleString()}đ` : '0đ'}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                  </div>
                ))}
                
