@@ -1,6 +1,6 @@
 require 'xcodeproj'
 
-project_path = 'driver-app/ios/App/App.xcodeproj'
+project_path = 'App.xcodeproj'
 project = Xcodeproj::Project.open(project_path)
 
 # Find the App target
