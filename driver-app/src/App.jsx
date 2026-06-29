@@ -83,15 +83,27 @@ function AppContent() {
     }
 
     const initAudio = async () => {
-      // Dùng HTML5 Audio cho tất cả nền tảng. Bỏ mediaSession để không hiện Lock Screen Player.
-      if (!fallbackAudioRef.current) {
+      if (Capacitor.isNativePlatform()) {
         try {
-          const audio = new Audio('/chuong.mp3');
-          audio.loop = true;
-          audio.preload = 'auto';
-          fallbackAudioRef.current = audio;
+          await NativeAudio.preload({
+              assetId: 'chuong_alarm',
+              assetPath: 'chuong.mp3',
+              audioChannelNum: 1,
+              isUrl: false
+          });
         } catch (e) {
-          console.error("Audio init error:", e);
+          console.error("NativeAudio preload error:", e);
+        }
+      } else {
+        if (!fallbackAudioRef.current) {
+          try {
+            const audio = new Audio('/chuong.mp3');
+            audio.loop = true;
+            audio.preload = 'auto';
+            fallbackAudioRef.current = audio;
+          } catch (e) {
+            console.error("Audio init error:", e);
+          }
         }
       }
     };
@@ -148,11 +160,15 @@ function AppContent() {
       clearTimeout(intervalRef.current);
       intervalRef.current = null;
     }
-    if (fallbackAudioRef.current) {
-      try { 
-        fallbackAudioRef.current.pause(); 
-        fallbackAudioRef.current.currentTime = 0; 
-      } catch(e){}
+    if (Capacitor.isNativePlatform()) {
+      NativeAudio.stop({ assetId: 'chuong_alarm' }).catch(e => {});
+    } else {
+      if (fallbackAudioRef.current) {
+        try { 
+          fallbackAudioRef.current.pause(); 
+          fallbackAudioRef.current.currentTime = 0; 
+        } catch(e){}
+      }
     }
   }, []);
 
@@ -170,14 +186,18 @@ function AppContent() {
     const playAudio = async () => {
         if (Capacitor.isNativePlatform()) {
             Haptics.vibrate({ duration: 1000 }).catch(e => {});
-        }
-        
-        // Luôn kêu chuông HTML5 Audio nếu app đang mở (Foreground)
-        if (document.visibilityState === 'visible') {
-            if (fallbackAudioRef.current) {
-                fallbackAudioRef.current.play().catch(e => {
-                    console.error('Audio play blocked:', e);
+            if (document.visibilityState === 'visible') {
+                NativeAudio.loop({ assetId: 'chuong_alarm' }).catch(e => {
+                    console.error('NativeAudio play blocked:', e);
                 });
+            }
+        } else {
+            if (document.visibilityState === 'visible') {
+                if (fallbackAudioRef.current) {
+                    fallbackAudioRef.current.play().catch(e => {
+                        console.error('Audio play blocked:', e);
+                    });
+                }
             }
         }
     };

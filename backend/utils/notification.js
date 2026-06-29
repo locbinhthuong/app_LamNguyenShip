@@ -119,6 +119,15 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
     };
     const response = await admin.messaging().sendEachForMulticast(message);
     console.log(`[FCM] Đã gửi ${response.successCount} thành công, ${response.failureCount} thất bại`);
+    
+    if (response.failureCount > 0) {
+      response.responses.forEach((resp, idx) => {
+        if (!resp.success) {
+          console.error(`[FCM] Lỗi gửi token ${validTokens[idx]}:`, resp.error);
+        }
+      });
+    }
+    
     return response;
   } catch (error) {
     console.error('[FCM] Lỗi gửi Multicast FCM:', error);
