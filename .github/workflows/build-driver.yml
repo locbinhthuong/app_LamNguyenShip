@@ -136,6 +136,7 @@ jobs:
       - name: Build and Export iOS App
         working-directory: ./driver-app/ios/App
         run: |
+          ruby ../../../add_sound.rb
           xcodebuild -project App.xcodeproj -scheme App -configuration Release archive -archivePath $RUNNER_TEMP/App.xcarchive
           xcodebuild -exportArchive -archivePath $RUNNER_TEMP/App.xcarchive -exportOptionsPlist ExportOptions.plist -exportPath $RUNNER_TEMP/export
           

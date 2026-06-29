@@ -82,7 +82,17 @@ function AppContent() {
       }, remainingTime);
     }
 
-    const initAudio = async () => {
+      if (!fallbackAudioRef.current) {
+        try {
+          const audio = new Audio('/chuong.mp3');
+          audio.loop = true;
+          audio.preload = 'auto';
+          fallbackAudioRef.current = audio;
+        } catch (e) {
+          console.error("Audio init error:", e);
+        }
+      }
+
       if (Capacitor.isNativePlatform()) {
         try {
           await NativeAudio.preload({
@@ -93,17 +103,6 @@ function AppContent() {
           });
         } catch (e) {
           console.error("NativeAudio preload error:", e);
-        }
-      } else {
-        if (!fallbackAudioRef.current) {
-          try {
-            const audio = new Audio('/chuong.mp3');
-            audio.loop = true;
-            audio.preload = 'auto';
-            fallbackAudioRef.current = audio;
-          } catch (e) {
-            console.error("Audio init error:", e);
-          }
         }
       }
     };
@@ -184,19 +183,18 @@ function AppContent() {
     intervalRef.current = setTimeout(() => { stopAlarm(); }, 30000);
 
     const playAudio = async () => {
-        if (Capacitor.isNativePlatform()) {
-            Haptics.vibrate({ duration: 1000 }).catch(e => {});
-            if (document.visibilityState === 'visible') {
+        if (document.visibilityState === 'visible') {
+            if (Capacitor.isNativePlatform()) {
+                Haptics.vibrate({ duration: 1000 }).catch(e => {});
                 NativeAudio.loop({ assetId: 'chuong_alarm' }).catch(e => {
-                    console.error('NativeAudio play blocked:', e);
+                    console.error('NativeAudio play blocked, falling back to HTML5:', e);
+                    if (fallbackAudioRef.current) {
+                        fallbackAudioRef.current.play().catch(console.error);
+                    }
                 });
-            }
-        } else {
-            if (document.visibilityState === 'visible') {
+            } else {
                 if (fallbackAudioRef.current) {
-                    fallbackAudioRef.current.play().catch(e => {
-                        console.error('Audio play blocked:', e);
-                    });
+                    fallbackAudioRef.current.play().catch(console.error);
                 }
             }
         }
