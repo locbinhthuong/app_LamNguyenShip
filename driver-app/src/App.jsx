@@ -82,6 +82,7 @@ function AppContent() {
       }, remainingTime);
     }
 
+    const initAudio = async () => {
       if (!fallbackAudioRef.current) {
         try {
           const audio = new Audio('/chuong.mp3');
