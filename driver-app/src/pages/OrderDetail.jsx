@@ -295,22 +295,7 @@ export default function OrderDetail() {
                 </a>
               </div>
               <p className="text-slate-800 font-bold text-sm leading-snug">{order.pickupAddress || 'Chưa xác định'}</p>
-              {order.serviceType === 'DON_GHEP' && order.batchedDeliveries && (
-                 (() => {
-                   let totalAdvance = 0;
-                   order.batchedDeliveries.forEach(d => {
-                     const pointShipFee = (d.fee || 0) + (d.extraSurcharge || 0);
-                     const shopAdvance = d.feePaidBy === 'SENDER' ? ((d.codAmount || 0) - pointShipFee) : (d.codAmount || 0);
-                     totalAdvance += shopAdvance;
-                   });
-                   return (
-                     <div className="mt-3 bg-blue-50 border border-blue-200 p-3 rounded-xl inline-block">
-                       <p className="text-[10px] text-blue-600 font-bold uppercase mb-0.5 flex items-center gap-1"><Wallet size={12}/> TỔNG TÀI XẾ ỨNG CHO SHOP:</p>
-                       <p className="text-xl text-blue-700 font-black">{totalAdvance.toLocaleString()}đ</p>
-                     </div>
-                   );
-                 })()
-              )}
+
               {order.serviceType === 'DON_GHEP' && (order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : null)) && (
                  <a href={`tel:${order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}`} className="inline-flex bg-orange-100 text-orange-700 font-black tracking-wider px-3 py-1.5 rounded-lg active:scale-95 transition-transform items-center gap-1.5 border border-orange-200 text-xs mt-3"><Phone size={12}/> Gọi Lấy Hàng: {order.senderPhone || order.pickupPhone || (!order.createdBy ? order.customerPhone : '')}</a>
               )}
@@ -376,15 +361,39 @@ export default function OrderDetail() {
                      {(() => {
                        const pointShipFee = (d.fee || 0) + (d.extraSurcharge || 0);
                        const pointCustomerAmount = d.feePaidBy === 'SENDER' ? (d.codAmount || 0) : ((d.codAmount || 0) + pointShipFee);
+                       const shopAdvance = d.feePaidBy === 'SENDER' ? ((d.codAmount || 0) - pointShipFee) : (d.codAmount || 0);
+                       
                        return (
-                         <div className="bg-red-50 border border-red-100 p-2.5 rounded-xl flex flex-col gap-1.5">
-                           <div className="flex justify-between items-center">
-                             <span className="text-[11px] font-bold text-red-600 uppercase">Khách Cần Trả:</span>
-                             <span className="text-lg font-black text-red-600">{pointCustomerAmount.toLocaleString()}đ</span>
-                           </div>
-                           <div className="flex gap-2 text-[10px] text-slate-500 font-medium flex-wrap border-t border-red-100 pt-1.5">
-                             <span>• Thu hộ (COD): {d.codAmount?.toLocaleString() || 0}đ</span>
-                             <span>• Ship ({d.feePaidBy === 'SENDER' ? 'Shop đã trả' : 'Khách trả'}): {pointShipFee > 0 ? `${pointShipFee.toLocaleString()}đ` : '0đ'}</span>
+                         <div className="flex flex-col gap-2 mt-2 border-t border-slate-100 pt-3">
+                           {/* Khối Tài Xế Ứng/Đưa Shop */}
+                           {shopAdvance !== 0 && (
+                             <div className="bg-blue-50 border border-blue-100 p-2.5 rounded-xl flex flex-col gap-1.5 relative overflow-hidden">
+                               <div className="absolute -right-3 -bottom-4 text-blue-100 opacity-30"><Wallet size={60}/></div>
+                               <div className="flex justify-between items-center relative z-10">
+                                 <span className="text-[11px] font-bold text-blue-700 uppercase">
+                                   {shopAdvance > 0 ? 'Ứng Cho Shop:' : 'Nhận Từ Shop:'}
+                                 </span>
+                                 <span className="text-lg font-black text-blue-700">{Math.abs(shopAdvance).toLocaleString()}đ</span>
+                               </div>
+                               {shopAdvance > 0 && d.feePaidBy === 'SENDER' && (
+                                 <div className="text-[10px] text-blue-600 font-medium border-t border-blue-100/50 pt-1.5 relative z-10">
+                                   (COD {d.codAmount?.toLocaleString()}đ - Phí Ship {pointShipFee.toLocaleString()}đ)
+                                 </div>
+                               )}
+                             </div>
+                           )}
+
+                           {/* Khối Khách Cần Trả */}
+                           <div className="bg-red-50 border border-red-100 p-2.5 rounded-xl flex flex-col gap-1.5 relative overflow-hidden">
+                             <div className="absolute -right-3 -bottom-4 text-red-100 opacity-40"><DollarSign size={60}/></div>
+                             <div className="flex justify-between items-center relative z-10">
+                               <span className="text-[11px] font-bold text-red-700 uppercase">Khách Cần Trả:</span>
+                               <span className="text-lg font-black text-red-600">{pointCustomerAmount.toLocaleString()}đ</span>
+                             </div>
+                             <div className="flex gap-2 text-[10px] text-slate-500 font-medium flex-wrap border-t border-red-100/60 pt-1.5 relative z-10">
+                               <span>• Thu hộ (COD): {d.codAmount?.toLocaleString() || 0}đ</span>
+                               <span>• Ship ({d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}): {pointShipFee > 0 ? `${pointShipFee.toLocaleString()}đ` : '0đ'}</span>
+                             </div>
                            </div>
                          </div>
                        );
