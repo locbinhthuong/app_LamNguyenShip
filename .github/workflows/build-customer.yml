@@ -156,19 +156,19 @@ jobs:
           APP_STORE_CONNECT_API_KEY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_P8_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_P8_BASE64 }}
         run: |
-          mkdir -p ~/.appstoreconnect/private_keys
-          echo -n "$APP_STORE_CONNECT_API_KEY_P8_BASE64" | base64 --decode > ~/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8
-          
           IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -n 1)
           
           echo "Uploading $IPA_PATH to App Store Connect using fastlane..."
-          cat <<EOF > api_key.json
-          {
-            "key_id": "$APP_STORE_CONNECT_API_KEY_KEY_ID",
-            "issuer_id": "$APP_STORE_CONNECT_API_KEY_ISSUER_ID",
-            "key_filepath": "$HOME/.appstoreconnect/private_keys/AuthKey_$APP_STORE_CONNECT_API_KEY_KEY_ID.p8",
-            "in_house": false
-          }
+          cat <<EOF > generate_api_key.rb
+          require 'json'
+          key_content = \`echo -n "#{ENV['APP_STORE_CONNECT_API_KEY_P8_BASE64']}" | base64 --decode\`
+          File.write('api_key.json', {
+            key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],
+            issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
+            key: key_content,
+            in_house: false
+          }.to_json)
           EOF
+          ruby generate_api_key.rb
           
           fastlane pilot upload --api_key_path api_key.json --ipa "$IPA_PATH" --skip_waiting_for_build_processing true
