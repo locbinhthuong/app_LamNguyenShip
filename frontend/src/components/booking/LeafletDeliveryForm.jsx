@@ -74,6 +74,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
     note: '',
     codAmount: '',
+    extraSurcharge: '',
     feePaidBy: 'RECEIVER'
   });
 
@@ -168,6 +169,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       deliveryCoordinates: form.deliveryCoordinates || null,
       note: form.note.trim(),
       codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
+      extraSurcharge: form.extraSurcharge ? parseInt(form.extraSurcharge) : 0,
       deliveryFee: estimatedFee || 0,
       packageDetails: {
         description: 'Giao hàng hóa/tài liệu',
@@ -412,19 +414,36 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
               </div>
             </div>
             
-            {/* COD Section */}
-            <div className="bg-white p-4 rounded-2xl border border-gray-100">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">{mode === 'delivery' ? 'TIỀN THU HỘ (COD)' : 'TIỀN ỨNG (TÀI XẾ TRẢ TRƯỚC LÚC LẤY)'}</label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <DollarSign size={18} />
+            {/* COD Section and Extra Surcharge */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-gray-100">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">{mode === 'delivery' ? 'TIỀN THU HỘ (COD)' : 'TIỀN ỨNG (TÀI XẾ TRẢ TRƯỚC LÚC LẤY)'}</label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <DollarSign size={18} />
+                  </div>
+                  <CurrencyInput 
+                    value={form.codAmount}
+                    onChange={e => setForm({...form, codAmount: e.target.value})}
+                    placeholder={mode === 'delivery' ? "Tiền thu hộ (nếu có)..." : "Tài xế ứng trước..."}
+                    className="w-full text-base font-bold text-gray-800 outline-none p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
+                  />
                 </div>
-                <CurrencyInput 
-                  value={form.codAmount}
-                  onChange={e => setForm({...form, codAmount: e.target.value})}
-                  placeholder={mode === 'delivery' ? "Nhập số tiền cần thu hộ (nếu có)..." : "Nhập số tiền tài xế cần ứng ra trả trước (nếu có)..."}
-                  className="w-full text-base font-bold text-gray-800 outline-none p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
-                />
+              </div>
+              
+              <div className="bg-white p-4 rounded-2xl border border-gray-100">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-2">PHỤ THU THÊM (NẾU CÓ)</label>
+                <div className="relative">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    <DollarSign size={18} />
+                  </div>
+                  <CurrencyInput 
+                    value={form.extraSurcharge}
+                    onChange={e => setForm({...form, extraSurcharge: e.target.value})}
+                    placeholder="Phụ phí bốc vác, chờ lâu..."
+                    className="w-full text-base font-bold text-gray-800 outline-none p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:border-blue-300 transition-colors"
+                  />
+                </div>
               </div>
             </div>
 

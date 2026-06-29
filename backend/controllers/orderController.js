@@ -273,7 +273,7 @@ const orderController = {
 
       const { 
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, 
-        items, note, driverReminder, codAmount, deliveryFee, adminBonus, pickupCoordinates, deliveryCoordinates, 
+        items, note, driverReminder, codAmount, deliveryFee, extraSurcharge, adminBonus, pickupCoordinates, deliveryCoordinates, 
         scheduledPublishAt, forceAssignDriverId, commissionRate, serviceType, subServiceType,
         senderPhone, receiverPhone, receiverPhone2, rideDetails, financialDetails, packageDetails, autoAssignNearest, batchedDeliveries, feePaidBy
       } = req.body;
@@ -315,6 +315,7 @@ const orderController = {
         driverReminder: driverReminder || '',
         codAmount: codAmount || 0,
         deliveryFee: deliveryFee || 0,
+        extraSurcharge: extraSurcharge || 0,
         adminBonus: adminBonus || 0,
         commissionRate: commissionRate !== undefined ? commissionRate : null,
         senderPhone: senderPhone || '',
@@ -450,7 +451,7 @@ const orderController = {
         serviceType, subServiceType, customerName, customerPhone, pickupPhone,
         senderName, senderPhone, receiverName, receiverPhone, receiverPhone2,
         pickupAddress, deliveryAddress, pickupCoordinates, deliveryCoordinates,
-        items, note, packageDetails, rideDetails, financialDetails, codAmount, batchedDeliveries, feePaidBy, autoAssignNearest
+        items, note, packageDetails, rideDetails, financialDetails, codAmount, extraSurcharge, batchedDeliveries, feePaidBy, autoAssignNearest
       } = req.body;
 
       const order = new Order({
@@ -476,6 +477,7 @@ const orderController = {
         financialDetails: financialDetails || {},
         batchedDeliveries: batchedDeliveries || [],
         codAmount: codAmount || 0,
+        extraSurcharge: extraSurcharge || 0,
         deliveryFee: req.body.deliveryFee || 0,
         feePaidBy: feePaidBy || 'RECEIVER',
         status: autoAssignNearest ? 'PENDING' : 'DRAFT', // Mặc định luôn là DRAFT để bắt buộc Admin duyệt và Treo đơn
@@ -540,7 +542,7 @@ const orderController = {
       const { id } = req.params;
       const {
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, senderPhone, receiverPhone, receiverPhone2,
-        items, note, driverReminder, codAmount, deliveryFee, status, adminBonus,
+        items, note, driverReminder, codAmount, deliveryFee, extraSurcharge, status, adminBonus,
         bulkyFee, surcharge, // Các phí mới
         packageDescription, // Chi tiết Hàng hóa / Mua hộ
         vehicleClass, // Cập nhật loại xe nếu cần
@@ -594,6 +596,7 @@ const orderController = {
       if (note !== undefined) orderToUpdate.note = note;
       if (driverReminder !== undefined) orderToUpdate.driverReminder = driverReminder;
       if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
+      if (extraSurcharge !== undefined) orderToUpdate.extraSurcharge = extraSurcharge;
       
       let isDeliveryFeeChanged = false;
       if (deliveryFee !== undefined) {

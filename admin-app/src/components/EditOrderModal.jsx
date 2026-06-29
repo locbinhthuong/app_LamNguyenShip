@@ -17,6 +17,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     deliveryAddress: '',
     codAmount: 0,
     deliveryFee: 0,
+    extraSurcharge: 0,
     bankName: '',
     bankAccount: '',
     bankAccountName: '',
@@ -60,6 +61,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         deliveryAddress: order.deliveryAddress || '',
         codAmount: order.codAmount || 0,
         deliveryFee: order.deliveryFee || 0,
+        extraSurcharge: order.extraSurcharge || 0,
         bulkyFee: order.packageDetails?.bulkyFee || 0,
         surcharge: order.rideDetails?.surcharge || 0,
         vehicleClass: order.rideDetails?.vehicleClass || '',
@@ -87,7 +89,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: ['codAmount', 'deliveryFee', 'adminBonus', 'bulkyFee', 'surcharge', 'transactionAmount'].includes(name) ? Number(value) : value
+      [name]: ['codAmount', 'deliveryFee', 'adminBonus', 'bulkyFee', 'surcharge', 'extraSurcharge', 'transactionAmount'].includes(name) ? Number(value) : value
     }));
   };
 
@@ -409,6 +411,13 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
             <div className={(order.serviceType !== 'DAT_XE') ? 'hidden' : ''}>
               <label className="block text-xs font-semibold text-teal-600 mb-1">Phụ Phí Lái Hộ / Gọi Xe</label>
               <CurrencyInput name="surcharge" value={formData.surcharge} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-100" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-blue-500 mb-1">Phụ thu thêm (Tùy chọn)</label>
+              <CurrencyInput name="extraSurcharge" value={formData.extraSurcharge} onChange={handleChange} min="0" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100" />
             </div>
           </div>
 

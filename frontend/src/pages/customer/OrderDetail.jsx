@@ -211,7 +211,7 @@ export default function OrderDetail() {
                  <span className="text-sm text-slate-600 font-medium">Phí Giao Hàng (Ship)</span>
                  <div className="flex flex-col items-end">
                    <span className="font-black text-slate-800">
-                     {order.deliveryFee > 0 ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0)).toLocaleString()}đ` : <span className="text-blue-500 text-xs italic">Đang cập nhật...</span>}
+                     {order.deliveryFee > 0 ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0)).toLocaleString()}đ` : <span className="text-blue-500 text-xs italic">Đang cập nhật...</span>}
                    </span>
                    {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && order.deliveryFee > 0 && (
                       <span className="text-[10px] text-slate-500 font-bold mt-0.5">{order.feePaidBy === 'SENDER' ? '(Shop trả ship)' : '(Khách trả ship)'}</span>
@@ -224,6 +224,11 @@ export default function OrderDetail() {
                    {order.rideDetails?.surcharge > 0 && (
                      <span className="text-[10px] text-purple-600 font-medium mt-0.5">
                        ( đã cộng phí phụ/lái hộ: {order.rideDetails.surcharge.toLocaleString()}đ )
+                     </span>
+                   )}
+                   {order.extraSurcharge > 0 && (
+                     <span className="text-[10px] text-red-600 font-medium mt-0.5">
+                       ( đã cộng phụ thu thêm: {order.extraSurcharge.toLocaleString()}đ )
                      </span>
                    )}
                  </div>
@@ -245,15 +250,34 @@ export default function OrderDetail() {
 
               <div className="border-t border-dashed border-slate-200 my-2"></div>
               
-              <div className="flex justify-between items-end px-1">
-                 <div className="flex flex-col">
-                   <span className="text-[10px] text-slate-400 font-bold uppercase">TỔNG TÀI XẾ SẼ THU</span>
-                   <span className="text-[10px] text-slate-400 italic">(Bao gồm COD + Phí Ship)</span>
-                 </div>
-                 <span className="font-black text-2xl text-red-500">
-                   {(order.deliveryFee > 0 || order.codAmount > 0) ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.rideDetails?.surcharge || 0) + (order.codAmount || 0)).toLocaleString()}đ` : '--'}
-                 </span>
-              </div>
+              {(() => {
+                const totalShipFee = (order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0);
+                const shopAmount = order.feePaidBy === 'SENDER' ? ((order.codAmount || 0) - totalShipFee) : (order.codAmount || 0);
+                const customerAmount = order.feePaidBy === 'SENDER' ? (order.codAmount || 0) : ((order.codAmount || 0) + totalShipFee);
+                
+                return (
+                  <div className="flex flex-col gap-3">
+                     <div className="flex justify-between items-center px-1">
+                       <span className="text-[10px] text-slate-500 font-bold uppercase">
+                         {shopAmount > 0 ? 'TÀI XẾ ỨNG CHO SHOP' : shopAmount < 0 ? 'TÀI XẾ THU TỪ SHOP' : 'TÀI XẾ KHÔNG CẦN ỨNG/THU Ở SHOP'}
+                       </span>
+                       <span className="font-black text-lg text-slate-700">
+                         {shopAmount === 0 ? '0đ' : `${Math.abs(shopAmount).toLocaleString()}đ`}
+                       </span>
+                     </div>
+
+                     <div className="flex justify-between items-end px-1 bg-red-50 p-3 rounded-xl border border-red-100">
+                       <div className="flex flex-col">
+                         <span className="text-xs text-red-600 font-bold uppercase">TỔNG TÀI XẾ THU CỦA KHÁCH</span>
+                         <span className="text-[10px] text-red-500 italic">({order.feePaidBy === 'SENDER' ? 'Chỉ thu COD vì Shop đã trả ship' : 'Đã bao gồm Tiền Ship + COD'})</span>
+                       </div>
+                       <span className="font-black text-2xl text-red-600">
+                         {customerAmount.toLocaleString()}đ
+                       </span>
+                     </div>
+                  </div>
+                );
+              })()}
             </div>
         </div>
 

@@ -206,6 +206,11 @@ const orderSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  extraSurcharge: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   feePaidBy: {
     type: String,
     enum: ['SENDER', 'RECEIVER'],

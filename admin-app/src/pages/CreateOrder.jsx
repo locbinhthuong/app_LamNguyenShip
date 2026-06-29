@@ -87,6 +87,7 @@ export default function CreateOrder() {
     driverReminder: '',
     codAmount: '',
     deliveryFee: '',
+    extraSurcharge: '',
     bulkyFee: '',
     adminBonus: '',
     scheduledPublishAt: '',
@@ -437,6 +438,7 @@ export default function CreateOrder() {
         driverReminder: form.driverReminder,
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
         deliveryFee: form.deliveryFee ? parseInt(form.deliveryFee) : 0,
+        extraSurcharge: form.extraSurcharge ? parseInt(form.extraSurcharge) : 0,
         adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0,
         scheduledPublishAt: form.scheduledPublishAt || undefined,
         forceAssignDriverId: form.forceAssignDriverId || undefined,
@@ -783,6 +785,16 @@ export default function CreateOrder() {
                 value={form.bulkyFee}
                 onChange={handleChange}
                 placeholder="VD: 10.000"
+                className="input-field"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-600">Phụ thu thêm (Tùy chọn)</label>
+              <CurrencyInput
+                name="extraSurcharge"
+                value={form.extraSurcharge}
+                onChange={handleChange}
+                placeholder="VD: 5.000"
                 className="input-field"
               />
             </div>
