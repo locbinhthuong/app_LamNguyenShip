@@ -20,6 +20,7 @@ import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { NativeAudio } from '@capacitor-community/native-audio';
 import { Haptics } from '@capacitor/haptics';
+import { GpsProvider } from './context/GpsContext';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
 
@@ -556,5 +557,9 @@ function AppContent() {
 }
 
 export default function App() {
-  return <AppContent />;
+  return (
+    <GpsProvider>
+      <AppContent />
+    </GpsProvider>
+  );
 }

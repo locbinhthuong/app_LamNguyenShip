@@ -7,8 +7,8 @@ import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullI
 import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass } from 'lucide-react';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
-import { Capacitor, registerPlugin } from '@capacitor/core';
-const BackgroundGeolocation = registerPlugin("BackgroundGeolocation");
+import { Capacitor } from '@capacitor/core';
+import { useGps } from '../context/GpsContext';
 
 const STATUS_CONFIG = {
   ACCEPTED: { label: 'Đã nhận', color: 'bg-blue-500', textColor: 'text-blue-400' },
@@ -251,272 +251,17 @@ export default function Home() {
   const scrollRef = useRef(null);
   const [dailyStats, setDailyStats] = useState({ fee: 0, orders: 0 });
 
-  // GPS Tracking States
-  const [gpsStatus, setGpsStatus] = useState('OFF'); // OFF | FINDING | TRACKING | ERROR
-  const watchIdRef = useRef(null);
-  const lastLocationEmitRef = useRef(0); // Bộ đếm thời gian gửi GPS
-  const [isToggling, setIsToggling] = useState(false); // Ngăn chống spam nút
-  const [showLocationDisclosure, setShowLocationDisclosure] = useState(false);
-  const [pendingGpsAction, setPendingGpsAction] = useState(null); // Lưu hành động xin quyền GPS đang chờ duyệt
+  // GPS Tracking via Context
+  const { 
+    gpsStatus, 
+    toggleGPS, 
+    isToggling, 
+    showLocationDisclosure, 
+    handleAcceptDisclosure, 
+    handleDeclineDisclosure 
+  } = useGps();
 
-  // WAKELOCK (Chống tắt màn hình)
-  const wakeLockRef = useRef(null);
-
-  const requestWakeLock = async () => {
-    if ('wakeLock' in navigator) {
-      try {
-        wakeLockRef.current = await navigator.wakeLock.request('screen');
-        wakeLockRef.current.addEventListener('release', () => {
-          console.log('WakeLock bị nhả (Màn hình có thể tắt)');
-        });
-        console.log('WakeLock kích hoạt: Đã ép sáng màn hình!');
-      } catch (err) {
-        console.error('WakeLock Error:', err);
-      }
-    }
-  };
-
-  const releaseWakeLock = () => {
-    if (wakeLockRef.current !== null) {
-      wakeLockRef.current.release()
-        .then(() => { wakeLockRef.current = null; })
-        .catch(console.error);
-    }
-  };
-
-  // Khôi phục WakeLock nếu Tài xế vuốt ẩn App rồi mở lại (Hệ điều hành tự cắt WakeLock khi ẩn)
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && driver?.isOnline) {
-        requestWakeLock();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [driver?.isOnline]);
-
-  // XỬ LÝ CHÍNH SÁCH GOOGLE: PROMINENT DISCLOSURE
-  const requestGpsWithDisclosure = (actionCallback) => {
-    if (localStorage.getItem('location_disclosure_accepted') === 'true') {
-      actionCallback();
-    } else {
-      setPendingGpsAction(() => actionCallback);
-      setShowLocationDisclosure(true);
-    }
-  };
-
-  const handleAcceptDisclosure = () => {
-    localStorage.setItem('location_disclosure_accepted', 'true');
-    setShowLocationDisclosure(false);
-    if (pendingGpsAction) {
-      pendingGpsAction();
-      setPendingGpsAction(null);
-    }
-  };
-
-  const handleDeclineDisclosure = () => {
-    setShowLocationDisclosure(false);
-    setPendingGpsAction(null);
-    showNotification('Bạn cần cấp quyền vị trí để nhận và giao đơn hàng', 'error');
-  };
-
-  // VŨ KHÍ HẠNG NẶNG: Định vị Background Ngầm (Chỉ kích hoạt nếu là App Native Android/iOS, Web thì xài GPS thường)
-  const startGpsTracking = (onSuccess, onError) => {
-    if (Capacitor.isNativePlatform()) {
-      BackgroundGeolocation.addWatcher(
-        {
-          backgroundMessage: "Ứng dụng đang lấy vị trí ngầm...",
-          backgroundTitle: "AloShipp Định Vị Xe",
-          requestPermissions: true,
-          stale: false,
-          distanceFilter: 3 // Chỉ quét khi xe di chuyển xấp xỉ 3 mét
-        },
-        (location, error) => {
-          if (error) {
-            if (error.code === "NOT_AUTHORIZED") {
-              console.error("KHÔNG ĐƯỢC CẤP QUYỀN CHẠY NGẦM", error);
-            }
-            onError(error);
-            return;
-          }
-          if (location) {
-            onSuccess({ coords: { latitude: location.latitude, longitude: location.longitude } });
-          }
-        }
-      ).then((watcherId) => {
-        // watcherId ở đây là một String
-        watchIdRef.current = watcherId;
-      }).catch(onError);
-    } else {
-      // Bản Web - Đã bị ép sáng màn hình bởi WakeLock
-      watchIdRef.current = navigator.geolocation.watchPosition(
-        onSuccess,
-        onError,
-        { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 }
-      );
-    }
-  };
-
-  const stopGpsTracking = () => {
-    if (watchIdRef.current !== null) {
-      if (Capacitor.isNativePlatform()) {
-        BackgroundGeolocation.removeWatcher({ id: watchIdRef.current });
-      } else {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
-      watchIdRef.current = null;
-    }
-  };
-
-  const toggleGPS = () => {
-    if (isToggling) return;
-    setIsToggling(true);
-    setTimeout(() => setIsToggling(false), 800); // Khóa nút 800ms chống spam
-
-    if (gpsStatus !== 'OFF' || !driver?.isOnline) {
-      // Tắt GPS
-      releaseWakeLock(); // Trả màn hình về bình thường
-      stopGpsTracking();
-      if (gpsStatus !== 'OFF') {
-        if (window.driverSocket && window.driverSocket.connected) {
-          window.driverSocket.emit('stop_location');
-        }
-        showNotification('Đã tắt chia sẻ vị trí', 'error');
-      }
-      setGpsStatus('OFF');
-      return;
-    }
-
-    if (!Capacitor.isNativePlatform() && !navigator.geolocation) {
-      showNotification('Thiết bị không hỗ trợ định vị GPS', 'error');
-      setGpsStatus('ERROR');
-      return;
-    }
-
-    const executeGps = () => {
-      setGpsStatus('FINDING');
-
-      const handleSuccess = (pos) => {
-        setGpsStatus('TRACKING');
-        requestWakeLock(); // Ép sáng màn hình khi bắt đầu tracking
-        
-        const now = Date.now();
-        // Cập nhật lên máy chủ mỗi 6 giây (6000ms) để giảm tải
-        if (now - lastLocationEmitRef.current >= 6000) {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          
-          if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
-            window.driverSocket.emit('update_location', { lat, lng });
-          } else {
-            updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
-          }
-          lastLocationEmitRef.current = now;
-        }
-      };
-
-      const handleError = (err) => {
-        setGpsStatus('ERROR');
-        showNotification('Lỗi cấp quyền: Cần bật Vị Trí (Location/Luôn Luôn)!', 'error');
-      };
-
-      // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên siêu tốc trên mọi nền tảng
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(handleSuccess, (err) => console.warn("Lỗi Get nhanh:", err), { 
-          enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
-        });
-      }
-
-      startGpsTracking(handleSuccess, handleError);
-    };
-
-    requestGpsWithDisclosure(executeGps);
-  };
-
-  // Tự động quản lý Bật/Tắt định vị dựa theo trạng thái Online của Tài Xế
-  useEffect(() => {
-    // 1. Tự động bật GPS nếu Tài xế đang Online (Ví dụ: Lúc mới Load/Refresh trang)
-    if (driver?.isOnline && gpsStatus === 'OFF' && watchIdRef.current === null) {
-      if (!Capacitor.isNativePlatform() && !navigator.geolocation) {
-        setGpsStatus('ERROR');
-        return;
-      }
-      
-      const executeAutoGps = () => {
-        setGpsStatus('FINDING');
-
-        const handleSuccess = (pos) => {
-          setGpsStatus('TRACKING');
-          requestWakeLock(); // Ép sáng màn hình
-          
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          
-          if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
-            window.driverSocket.emit('update_location', { lat, lng });
-          } else {
-            updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
-          }
-        };
-
-        const handleError = (err) => {
-          console.error("GPS Error:", err);
-          setGpsStatus('ERROR');
-        };
-
-        // Gọi Get ngay lập tức để lấy tín hiệu đầu tiên siêu tốc trên mọi nền tảng (cả Native lẫn Web)
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(handleSuccess, (err) => console.warn("Lỗi Get nhanh tự động:", err), { 
-            enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
-          });
-        }
-
-        // Sau đó khởi động máy quét liên tục Chạy Ngầm (Native) hoặc Web
-        startGpsTracking(handleSuccess, handleError);
-      };
-
-      // Chỉ hiển thị hộp thoại nếu họ vừa bấm Online hoặc app khởi động lúc họ đang online
-      requestGpsWithDisclosure(executeAutoGps);
-    } 
-    // 2. Tự động tắt GPS, huỷ vệ tinh nếu chuyển sang trạng thái Offline
-    else if (!driver?.isOnline && gpsStatus !== 'OFF') {
-      releaseWakeLock(); // Nhả màn hình
-      stopGpsTracking(); // Chặn background Service nếu là AppNative
-      setGpsStatus('OFF');
-      // Đảm bảo Máy chủ nhận được lệnh xóa cục GPS cuối cùng trên Bản đồ
-      if (window.driverSocket && window.driverSocket.connected) {
-        window.driverSocket.emit('stop_location');
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [driver?.isOnline]);
-
-  // Heartbeat định vị: Ép lấy vị trí mỗi 30 giây khi đang Online (Tránh lỗi tài xế ngồi im không di chuyển)
-  useEffect(() => {
-    if (gpsStatus === 'TRACKING' && driver?.isOnline) {
-      const heartbeatTimer = setInterval(() => {
-        if (!document.hidden && navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              const lat = pos.coords.latitude;
-              const lng = pos.coords.longitude;
-              if (window.driverSocket && window.driverSocket.connected) {
-                window.driverSocket.emit('update_location', { lat, lng });
-              }
-            },
-            (err) => {
-              console.warn("⚠️ [Heartbeat] Lỗi lấy vị trí ngầm:", err.message);
-            },
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
-          );
-        }
-      }, 30000); // Mỗi 30 giây
-
-      return () => clearInterval(heartbeatTimer);
-    }
-  }, [gpsStatus, driver?.isOnline]);
+  // WakeLock and Background Tracking are now handled in GpsContext
 
   const loadData = useCallback(async () => {
     try {
@@ -570,11 +315,6 @@ export default function Home() {
         LocalNotifications.requestPermissions();
       }).catch(console.error);
     }
-    
-    return () => {
-      releaseWakeLock();
-      stopGpsTracking();
-    };
   }, []);
 
   const showNotification = (message, type = 'success') => {
