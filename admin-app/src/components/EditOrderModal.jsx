@@ -156,13 +156,12 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           
           {/* KHỐI 0: ĐIỀU PHỐI TÀI XẾ */}
-          {(!order.assignedTo || order.status === 'PENDING') && (
-            <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 relative overflow-hidden">
-               <div className="absolute -right-2 -top-2 text-6xl opacity-5">🎯</div>
-               <label className="block text-xs font-bold text-purple-700 uppercase mb-2 tracking-wider relative z-10">
-                 👨‍✈️ ĐIỀU PHỐI / GÁN TÀI XẾ MỚI
-               </label>
-               <select 
+          <div className="bg-purple-50 p-3 rounded-xl border border-purple-200 relative overflow-hidden">
+             <div className="absolute -right-2 -top-2 text-6xl opacity-5">🎯</div>
+             <label className="block text-xs font-bold text-purple-700 uppercase mb-2 tracking-wider relative z-10">
+               👨‍✈️ ĐIỀU PHỐI / GÁN TÀI XẾ MỚI
+             </label>
+             <select 
                   name="assignOption" 
                   value={formData.forceAssignDriverId ? `${formData.forceAssignDriverId}|` : `|${formData.commissionRate == null ? '' : formData.commissionRate}`}
                   onChange={(e) => {
@@ -202,8 +201,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">
                  * Hệ thống sẽ đánh giá công nợ của tài xế trước khi chốt gán đơn.
                </p>
-            </div>
-          )}
+          </div>
 
           {/* KHỐI 1: KHÁCH ĐẶT */}
           <div className="bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 flex justify-between items-center">

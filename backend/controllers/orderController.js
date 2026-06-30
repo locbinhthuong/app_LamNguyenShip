@@ -564,6 +564,18 @@ const orderController = {
       // 1. CẬP NHẬT TRẠNG THÁI (STATUS) THEO YÊU CẦU
       let isDraftToPending = false;
 
+      // Xử lý cờ Quét Lại Gần Nhất từ Admin (Force restart into PENDING)
+      if (autoAssignNearest) {
+        orderToUpdate.status = 'PENDING';
+        orderToUpdate.assignedTo = null;
+        orderToUpdate.acceptedAt = undefined;
+        orderToUpdate.pickedUpAt = undefined;
+        orderToUpdate.cancelReason = undefined;
+        if (req.io) {
+          req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn
+        }
+      }
+
       // Xử lý nhánh "Thu hồi về Lưu Nháp (DRAFT)" (Gỡ bỏ tài xế, ẩn khỏi chợ)
       if (status === 'DRAFT' && orderToUpdate.status !== 'DRAFT') {
         orderToUpdate.status = 'DRAFT';
@@ -706,7 +718,7 @@ const orderController = {
             msgBody += `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
-        } else if (isDraftToPending) {
+        } else if (isDraftToPending || autoAssignNearest) {
           if (autoAssignNearest && orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
             const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
             const nearestDrivers = await findNearestAvailableDriversGroup(
