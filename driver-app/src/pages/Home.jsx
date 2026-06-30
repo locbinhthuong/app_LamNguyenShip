@@ -248,14 +248,14 @@ export default function Home() {
   const [editModal, setEditModal] = useState(false);
   const [confirmAcceptOrder, setConfirmAcceptOrder] = useState(null); // ID đơn hàng đang được hỏi Xác Nhận
   const [historyOrders, setHistoryOrders] = useState([]);
+  const [isOnlineToggling, setIsOnlineToggling] = useState(false);
   const scrollRef = useRef(null);
   const [dailyStats, setDailyStats] = useState({ fee: 0, orders: 0 });
 
   // GPS Tracking via Context
   const { 
     gpsStatus, 
-    toggleGPS, 
-    isToggling, 
+    toggleGPS,
     showLocationDisclosure, 
     handleAcceptDisclosure, 
     handleDeclineDisclosure 
@@ -465,14 +465,14 @@ export default function Home() {
   };
 
   const toggleOnline = async () => {
-    if (isToggling) return;
+    if (isOnlineToggling) return;
 
     if (!driver?.isOnline && driver?.status === 'pending') {
       setShowPendingModal(true);
       return;
     }
 
-    setIsToggling(true);
+    setIsOnlineToggling(true);
     try {
       const newStatus = !driver?.isOnline;
       await setOnline(newStatus);
@@ -491,7 +491,7 @@ export default function Home() {
     } catch (err) {
       showNotification(err.response?.data?.message || err.message || 'Lỗi không xác định', 'error');
     } finally {
-      setTimeout(() => setIsToggling(false), 800);
+      setTimeout(() => setIsOnlineToggling(false), 800);
     }
   };
 
@@ -547,15 +547,15 @@ export default function Home() {
         <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
+            disabled={isOnlineToggling}
             onClick={toggleOnline}
-            disabled={isToggling}
             className={`rounded-full px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-bold transition-all flex items-center shadow-sm ${
               driver?.isOnline 
                 ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-600' 
                    : gpsStatus === 'FINDING' ? 'bg-yellow-400 text-yellow-900 border border-yellow-500 animate-pulse'
                    : 'bg-red-500 text-white border border-red-600') 
                 : 'bg-slate-800 text-white border border-slate-900 shadow-md'
-            } ${isToggling ? 'opacity-70 cursor-wait' : ''}`}
+            } ${isOnlineToggling ? 'opacity-70 cursor-wait' : ''}`}
           >
             {driver?.isOnline ? (
               <>
