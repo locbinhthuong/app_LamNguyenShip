@@ -80,7 +80,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '',
         batchedDeliveries: order.batchedDeliveries || [],
         feePaidBy: order.feePaidBy || 'RECEIVER',
-        autoAssignNearest: true
+        autoAssignNearest: false
       });
     }
   }, [order]);
@@ -103,7 +103,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     }
     const payload = {
       ...formData,
-      items: formData.items ? formData.items.split('\n').filter(i => i.trim()) : []
+      items: formData.items ? formData.items.split('\n').filter(i => i.trim()) : [],
+      autoAssignNearest: formData.forceAssignDriverId ? false : formData.autoAssignNearest
     };
     onSave(order._id, payload);
   };
@@ -490,7 +491,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                     const payload = {
                       ...formData,
                       items: formData.items ? formData.items.split('\n').filter(i => i.trim()) : [],
-                      status: 'PENDING'
+                      status: 'PENDING',
+                      autoAssignNearest: formData.forceAssignDriverId ? false : formData.autoAssignNearest
                     };
                     onSave(order._id, payload);
                   }}
