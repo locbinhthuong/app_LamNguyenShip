@@ -471,26 +471,37 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
 
           <div className="pt-4 flex justify-end gap-3">
             <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 transition-colors">Hủy</button>
-            <button type="submit" className="px-5 py-2.5 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-lg shadow-blue-500/30">Lưu thay đổi</button>
-            {order.status === 'DRAFT' && (
-              <button 
-                type="button" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  if (formData.scheduledPublishAt && formData.deliveryFee === 0) {
-                     const confirmSchedule = window.confirm('Thông tin đơn có vẻ chưa đầy đủ (Cước xe đang là 0đ). Bạn có chắc chắn muốn Hẹn Giờ Lên Đơn không? \n\n(Bạn có thể sửa lại thông tin trước hoặc sau khi đơn được treo lên)');
-                     if (!confirmSchedule) return;
-                  }
-                  const payload = {
-                    ...formData,
-                    items: formData.items ? formData.items.split('\n').filter(i => i.trim()) : [],
-                    status: 'PENDING'
-                  };
-                  onSave(order._id, payload);
-                }}
-                className="px-5 py-2.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30"
-              >
-                Lưu & Treo Đơn Lên
+            
+            {order.status === 'DRAFT' ? (
+              <>
+                {!formData.autoAssignNearest && (
+                  <button type="submit" className="px-5 py-2.5 rounded-xl font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 transition-colors">
+                    Chỉ Lưu Nháp
+                  </button>
+                )}
+                <button 
+                  type="button" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (formData.scheduledPublishAt && formData.deliveryFee === 0) {
+                       const confirmSchedule = window.confirm('Thông tin đơn có vẻ chưa đầy đủ (Cước xe đang là 0đ). Bạn có chắc chắn muốn Hẹn Giờ Lên Đơn không? \n\n(Bạn có thể sửa lại thông tin trước hoặc sau khi đơn được treo lên)');
+                       if (!confirmSchedule) return;
+                    }
+                    const payload = {
+                      ...formData,
+                      items: formData.items ? formData.items.split('\n').filter(i => i.trim()) : [],
+                      status: 'PENDING'
+                    };
+                    onSave(order._id, payload);
+                  }}
+                  className="px-5 py-2.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30"
+                >
+                  {formData.autoAssignNearest ? "Lưu & Tự Động Quét 🚀" : "Lưu & Treo Đơn Lên"}
+                </button>
+              </>
+            ) : (
+              <button type="submit" className={`px-5 py-2.5 rounded-xl font-bold text-white transition-colors shadow-lg ${formData.autoAssignNearest ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'}`}>
+                {formData.autoAssignNearest ? "Lưu & Tự Động Quét 🚀" : "Lưu thay đổi"}
               </button>
             )}
           </div>
