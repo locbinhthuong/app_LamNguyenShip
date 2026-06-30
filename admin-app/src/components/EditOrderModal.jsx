@@ -32,7 +32,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     scheduledPublishAt: '',
     batchedDeliveries: [],
     feePaidBy: 'RECEIVER',
-    autoAssignNearest: true
+    autoAssignNearest: false
   });
 
   useEffect(() => {
