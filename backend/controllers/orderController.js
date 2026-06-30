@@ -550,7 +550,8 @@ const orderController = {
         forceAssignDriverId, // Cờ Admin cướp quyền Gán đơn
         commissionRate, // Tỉ lệ chiết khấu riêng
         scheduledPublishAt, // Hẹn giờ lên đơn
-        batchedDeliveries // Cập nhật mảng Đơn ghép
+        batchedDeliveries, // Cập nhật mảng Đơn ghép
+        autoAssignNearest // Cờ tự động gán đơn gần nhất
       } = req.body;
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
@@ -706,7 +707,7 @@ const orderController = {
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
         } else if (isDraftToPending) {
-          if (orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
+          if (autoAssignNearest && orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
             const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
             const nearestDrivers = await findNearestAvailableDriversGroup(
               orderToUpdate.pickupCoordinates.lat,

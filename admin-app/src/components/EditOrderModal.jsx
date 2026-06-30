@@ -31,7 +31,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     items: '',
     scheduledPublishAt: '',
     batchedDeliveries: [],
-    feePaidBy: 'RECEIVER'
+    feePaidBy: 'RECEIVER',
+    autoAssignNearest: true
   });
 
   useEffect(() => {
@@ -78,7 +79,8 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         items: order.items ? order.items.join('\n') : '',
         scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '',
         batchedDeliveries: order.batchedDeliveries || [],
-        feePaidBy: order.feePaidBy || 'RECEIVER'
+        feePaidBy: order.feePaidBy || 'RECEIVER',
+        autoAssignNearest: true
       });
     }
   }, [order]);
@@ -182,6 +184,21 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                     </option>
                   ))}
                </select>
+               
+               {!formData.forceAssignDriverId && (
+                 <label className="flex items-center gap-2 mt-3 cursor-pointer relative z-10">
+                   <input 
+                     type="checkbox" 
+                     checked={formData.autoAssignNearest}
+                     onChange={(e) => setFormData({...formData, autoAssignNearest: e.target.checked})}
+                     className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
+                   />
+                   <span className="text-sm font-bold text-purple-800">
+                     Tự động quét & Gán đơn cho Tài xế gần nhất (Popup 30s)
+                   </span>
+                 </label>
+               )}
+               
                <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">
                  * Hệ thống sẽ đánh giá công nợ của tài xế trước khi chốt gán đơn.
                </p>
