@@ -194,10 +194,15 @@ export const GpsProvider = ({ children }) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           
-          if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
-            window.driverSocket.emit('update_location', { lat, lng });
-          } else {
-            updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
+          const now = Date.now();
+          // Rate limit: Chỉ cập nhật lên máy chủ mỗi 6 giây
+          if (now - lastLocationEmitRef.current >= 6000) {
+            if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
+              window.driverSocket.emit('update_location', { lat, lng });
+            } else {
+              updateDriverLocationApi(lat, lng).catch(e => console.error("Lỗi đồng bộ GPS API", e));
+            }
+            lastLocationEmitRef.current = now;
           }
         };
 

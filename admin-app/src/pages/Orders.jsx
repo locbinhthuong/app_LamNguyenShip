@@ -464,7 +464,7 @@ export default function Orders() {
                     </td>
                     <td className="table-td text-right">
                       <div className="flex items-center gap-3">
-                        {order.status !== 'CANCELLED' && (
+                        {order.status !== 'CANCELLED' && order.status !== 'PENDING' && (
                           <button onClick={() => setEditingOrder(order)} className="text-sm font-bold text-orange-500 hover:text-orange-600">✏️ Sửa</button>
                         )}
                         {order.status === 'DRAFT' && (

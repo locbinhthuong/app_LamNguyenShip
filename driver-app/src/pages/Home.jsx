@@ -263,9 +263,9 @@ export default function Home() {
 
   // WakeLock and Background Tracking are now handled in GpsContext
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isBackground = false) => {
     try {
-      setLoading(true);
+      if (!isBackground) setLoading(true);
       const [available, myAllRes] = await Promise.all([
         getAvailableOrders(),
         getMyOrders() // Lấy toàn bộ, filter trên Client vì backend không hỗ trợ list param
@@ -325,10 +325,10 @@ export default function Home() {
 
 
   useEffect(() => {
-    loadData();
-    window.addEventListener('refresh_data', loadData);
+    loadData(false);
+    window.addEventListener('refresh_data', () => loadData(false));
     // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
-    const interval = setInterval(loadData, 30000);
+    const interval = setInterval(() => loadData(true), 30000);
 
     const handleNewOrder = (e) => {
        if (!driver?.isOnline) return; // BỎ QUA NẾU ĐANG OFFLINE
@@ -348,7 +348,7 @@ export default function Home() {
         setAvailableOrders(prev => prev.filter(o => o._id !== orderId));
         setMyActiveOrders(prev => prev.filter(o => o._id !== orderId));
       }
-      loadData();
+      loadData(true);
     };
 
     const handleOrderAccepted = (e) => {
@@ -356,7 +356,7 @@ export default function Home() {
       if (orderId) {
         setAvailableOrders(prev => prev.filter(o => o._id !== orderId));
       }
-      loadData();
+      loadData(true);
     };
 
     const handleOrderUpdated = (e) => {
@@ -387,26 +387,39 @@ export default function Home() {
       }
     };
 
+    const loadBackground = () => loadData(true);
+    const loadForeground = () => loadData(false);
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loadData(true); // Tải lại ngầm để cập nhật đơn khi vừa bật lại app
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
     window.addEventListener('driver_new_order', handleNewOrder);
+    window.addEventListener('driver_force_assigned', loadBackground); // Lắng nghe sự kiện Gán Đơn
     window.addEventListener('driver_order_accepted', handleOrderAccepted);
     window.addEventListener('driver_order_cancelled', handleOrderLost);
     window.addEventListener('driver_order_deleted_event', handleOrderLost);
     window.addEventListener('driver_order_updated', handleOrderUpdated);
-    window.addEventListener('driver_order_picked_up', loadData);
-    window.addEventListener('driver_order_delivering', loadData);
-    window.addEventListener('driver_order_completed', loadData);
+    window.addEventListener('driver_order_picked_up', loadBackground);
+    window.addEventListener('driver_order_delivering', loadBackground);
+    window.addEventListener('driver_order_completed', loadBackground);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener('refresh_data', loadData);
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('refresh_data', loadForeground);
       window.removeEventListener('driver_new_order', handleNewOrder);
+      window.removeEventListener('driver_force_assigned', loadBackground);
       window.removeEventListener('driver_order_accepted', handleOrderAccepted);
       window.removeEventListener('driver_order_cancelled', handleOrderLost);
       window.removeEventListener('driver_order_deleted_event', handleOrderLost);
       window.removeEventListener('driver_order_updated', handleOrderUpdated);
-      window.removeEventListener('driver_order_picked_up', loadData);
-      window.removeEventListener('driver_order_delivering', loadData);
-      window.removeEventListener('driver_order_completed', loadData);
+      window.removeEventListener('driver_order_picked_up', loadBackground);
+      window.removeEventListener('driver_order_delivering', loadBackground);
+      window.removeEventListener('driver_order_completed', loadBackground);
     };
   }, [loadData, driver]);
 

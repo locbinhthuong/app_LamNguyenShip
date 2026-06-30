@@ -362,11 +362,10 @@ function AppContent() {
          return;
       }
       // Nếu là sự kiện đơn mới thì FCM_foreground sẽ nổ trực tiếp driver_new_order để xử lý chung
-      if (e.detail.title && e.detail.title.toUpperCase().includes('MỚI')) {
-         // Truyền fake order id hoặc không truyền để xử lý fallback chuông,
-         // Nếu Firebase có mang theo payload order id thì truyền vào, ở đây truyền rỗng tạm.
-         window.dispatchEvent(new CustomEvent('driver_new_order', { detail: { pickupAddress: "Vào xem chi tiết ngay", _id: e.detail.orderId || null } })); 
-      } else {
+      // Dù tiêu đề là gì (Gán đơn, Đơn mới, Điều phối), cứ có Push tới là bắt App tải lại data ngầm cho chắc
+      window.dispatchEvent(new CustomEvent('driver_new_order', { detail: { pickupAddress: "Vào xem chi tiết ngay", _id: e.detail.orderId || null } }));
+      
+      if (!e.detail.title || !e.detail.title.toUpperCase().includes('MỚI')) {
          setPushMessage({ title: e.detail.title, message: e.detail.body });
       }
     };
