@@ -23,6 +23,52 @@ import { Haptics } from '@capacitor/haptics';
 
 const SOCKET_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
 
+class SilentWebAudioPlayer {
+  constructor(url) {
+    this.url = url;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.buffer = null;
+    this.source = null;
+    this.paused = true;
+    this.muted = false;
+    this.currentTime = 0;
+
+    fetch(url)
+      .then(res => res.arrayBuffer())
+      .then(buf => this.ctx.decodeAudioData(buf))
+      .then(decoded => { this.buffer = decoded; })
+      .catch(e => console.error('SilentWebAudioPlayer decode error', e));
+  }
+
+  async play() {
+    if (!this.buffer) return;
+    if (!this.paused) return;
+    if (this.ctx.state === 'suspended') {
+      await this.ctx.resume();
+    }
+    this.source = this.ctx.createBufferSource();
+    this.source.buffer = this.buffer;
+    this.source.loop = true;
+    
+    const gainNode = this.ctx.createGain();
+    gainNode.gain.value = this.muted ? 0 : 1;
+    
+    this.source.connect(gainNode);
+    gainNode.connect(this.ctx.destination);
+    
+    this.source.start(0);
+    this.paused = false;
+  }
+
+  pause() {
+    if (this.source && !this.paused) {
+      try { this.source.stop(); } catch(e) {}
+      this.source.disconnect();
+      this.source = null;
+    }
+    this.paused = true;
+  }
+}
 const compareVersions = (v1, v2) => {
   if (!v1 || !v2) return 0;
   const p1 = v1.split('.').map(Number);
@@ -85,10 +131,7 @@ function AppContent() {
     const initAudio = async () => {
       if (!fallbackAudioRef.current) {
         try {
-          const audio = new Audio('/chuong.mp3');
-          audio.loop = true;
-          audio.preload = 'auto';
-          fallbackAudioRef.current = audio;
+          fallbackAudioRef.current = new SilentWebAudioPlayer('/chuong.mp3');
         } catch (e) {
           console.error("Audio init error:", e);
         }
@@ -162,13 +205,12 @@ function AppContent() {
     }
     if (Capacitor.isNativePlatform()) {
       NativeAudio.stop({ assetId: 'chuong_alarm' }).catch(e => {});
-    } else {
-      if (fallbackAudioRef.current) {
-        try { 
-          fallbackAudioRef.current.pause(); 
-          fallbackAudioRef.current.currentTime = 0; 
-        } catch(e){}
-      }
+    }
+    if (fallbackAudioRef.current) {
+      try { 
+        fallbackAudioRef.current.pause(); 
+        fallbackAudioRef.current.currentTime = 0; 
+      } catch(e){}
     }
   }, []);
 
