@@ -109,6 +109,17 @@ function AppContent() {
   // Audio Alarm Global Array
   const fallbackAudioRef = useRef(null);
   const intervalRef = useRef(null);
+  const lastResumeTimeRef = useRef(0);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        lastResumeTimeRef.current = Date.now();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
   const driverRef = useRef(driver);
   useEffect(() => {
@@ -343,6 +354,10 @@ function AppContent() {
     const handlePush = (e) => {
       if (Date.now() - appStartTimeRef.current < 5000) {
          console.log("Bỏ qua FCM push lúc khởi động app");
+         return;
+      }
+      if (Date.now() - lastResumeTimeRef.current < 2000) {
+         console.log("Bỏ qua FCM push do OS flush khi app vừa resume");
          return;
       }
       // Nếu là sự kiện đơn mới thì FCM_foreground sẽ nổ trực tiếp driver_new_order để xử lý chung
