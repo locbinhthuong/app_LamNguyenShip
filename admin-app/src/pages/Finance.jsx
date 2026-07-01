@@ -464,7 +464,7 @@ export default function Finance() {
                   <thead className="bg-purple-50 text-purple-700 border-b border-purple-100">
                     <tr>
                       <th className="px-4 py-3 font-bold min-w-[200px]">Tài xế chạy hôm qua</th>
-                      <th className="px-4 py-3 font-bold text-right border-l border-purple-100">Tổng Tiền Đơn Hôm Qua</th>
+                      <th className="px-4 py-3 font-bold text-right border-l border-purple-100">Tổng Tiền Phí Giao Hôm Qua</th>
                       <th className="px-4 py-3 font-bold text-right border-l border-purple-100 text-red-600">Công Nợ Tổng Hôm Qua</th>
                       <th className="px-4 py-3 font-bold text-center border-l border-purple-100">Quản Lý</th>
                     </tr>
@@ -478,7 +478,7 @@ export default function Finance() {
                       </tr>
                     ) : (
                       filteredYesterdayDrivers.map(drv => {
-                        const orderAmount = (drv.todayCodAmount || 0) + (drv.todayDeliveryFee || 0);
+                        const orderAmount = (drv.todayDeliveryFee || 0);
                         return (
                           <tr key={drv._id} className="hover:bg-slate-50">
                              <td className="px-4 py-3">
@@ -513,7 +513,7 @@ export default function Finance() {
                       <tr>
                         <td className="px-4 py-3 font-black text-slate-800 text-right uppercase text-xs tracking-wider">Tổng cộng:</td>
                         <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-slate-700">
-                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayCodAmount || 0) + (drv.todayDeliveryFee || 0), 0).toLocaleString()} đ
+                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayDeliveryFee || 0), 0).toLocaleString()} đ
                         </td>
                         <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-red-600 bg-red-50/50">
                           {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayDebt || 0), 0).toLocaleString()} đ
