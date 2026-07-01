@@ -10,7 +10,14 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [driver, setDriver] = useState(null);
+  const [driver, setDriver] = useState(() => {
+    try {
+      const cached = localStorage.getItem('driver_info');
+      return cached ? JSON.parse(cached) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
