@@ -20,6 +20,7 @@ export default function Finance() {
   const [debtModal, setDebtModal] = useState({ isOpen: false, driverId: null });
   const [walletModal, setWalletModal] = useState({ isOpen: false, driverId: null });
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+  const [yesterdayDrivers, setYesterdayDrivers] = useState([]);
 
   const [selectedDebts, setSelectedDebts] = useState([]);
   const [selectedWallets, setSelectedWallets] = useState([]);
@@ -29,11 +30,20 @@ export default function Finance() {
       setLoading(true);
       const res = await api.get('/api/finance/all-requests');
       const drvRes = await api.get(`/api/drivers?date=${filterDate}`);
+      
+      const yesterdayDate = new Date();
+      yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+      const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+      const yesterdayRes = await api.get(`/api/drivers?date=${yesterdayStr}`);
+
       if (res.data.success) {
         setData(res.data.data);
       }
       if (drvRes.data.success) {
         setDrivers(drvRes.data.data);
+      }
+      if (yesterdayRes.data.success) {
+        setYesterdayDrivers(yesterdayRes.data.data.filter(d => d.todayOrders > 0));
       }
     } catch (e) {
       console.error(e);

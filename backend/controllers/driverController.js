@@ -65,7 +65,8 @@ const driverController = {
           $group: {
             _id: '$assignedTo',
             todayOrders: { $sum: 1 },
-            todayDeliveryFee: { $sum: '$deliveryFee' }
+            todayDeliveryFee: { $sum: '$deliveryFee' },
+            todayCodAmount: { $sum: '$codAmount' }
           }
         }
       ]);
@@ -96,19 +97,20 @@ const driverController = {
         statsMap[stat._id.toString()] = {
           todayOrders: stat.todayOrders,
           todayDeliveryFee: stat.todayDeliveryFee,
+          todayCodAmount: stat.todayCodAmount || 0,
           todayDebt: 0
         };
       });
 
       todayDebtStats.forEach(stat => {
         if (!statsMap[stat._id.toString()]) {
-          statsMap[stat._id.toString()] = { todayOrders: 0, todayDeliveryFee: 0, todayDebt: 0 };
+          statsMap[stat._id.toString()] = { todayOrders: 0, todayDeliveryFee: 0, todayCodAmount: 0, todayDebt: 0 };
         }
         statsMap[stat._id.toString()].todayDebt = stat.todayDebt;
       });
 
       const driversWithStats = drivers.map(drv => {
-        const stat = statsMap[drv._id.toString()] || { todayOrders: 0, todayDeliveryFee: 0, todayDebt: 0 };
+        const stat = statsMap[drv._id.toString()] || { todayOrders: 0, todayDeliveryFee: 0, todayCodAmount: 0, todayDebt: 0 };
         return { ...drv, ...stat };
       });
 
