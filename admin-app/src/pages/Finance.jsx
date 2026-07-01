@@ -465,15 +465,14 @@ export default function Finance() {
                     <tr>
                       <th className="px-4 py-3 font-bold min-w-[200px]">Tài xế chạy hôm qua</th>
                       <th className="px-4 py-3 font-bold text-right border-l border-purple-100">Tổng Tiền Đơn Hôm Qua</th>
-                      <th className="px-4 py-3 font-bold text-right border-l border-purple-100">Công Nợ Phát Sinh</th>
-                      <th className="px-4 py-3 font-bold text-right border-l border-purple-100 text-red-600">Công Nợ Tổng (Hiện tại)</th>
+                      <th className="px-4 py-3 font-bold text-right border-l border-purple-100 text-red-600">Công Nợ Tổng Hôm Qua</th>
                       <th className="px-4 py-3 font-bold text-center border-l border-purple-100">Quản Lý</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {filteredYesterdayDrivers.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-4 py-8 text-center text-slate-500 font-medium italic">
+                        <td colSpan="4" className="px-4 py-8 text-center text-slate-500 font-medium italic">
                           Không có tài xế nào khớp với tìm kiếm.
                         </td>
                       </tr>
@@ -489,13 +488,8 @@ export default function Finance() {
                              <td className="px-4 py-3 text-right border-l border-slate-100">
                                 <span className="font-semibold text-slate-700">{orderAmount.toLocaleString()} đ</span>
                              </td>
-                             <td className="px-4 py-3 text-right border-l border-slate-100">
-                                <span className="font-bold text-orange-500">{(drv.todayDebt || 0).toLocaleString()} đ</span>
-                             </td>
                              <td className="px-4 py-3 text-right border-l border-slate-100 bg-red-50/30">
-                                <span className={`font-black ${drv.walletDebt > 0 ? 'text-red-600' : 'text-slate-400'}`}>
-                                    {drv.walletDebt > 0 ? drv.walletDebt.toLocaleString() + ' đ' : '0 đ'}
-                                </span>
+                                <span className="font-black text-red-600">{(drv.todayDebt || 0).toLocaleString()} đ</span>
                              </td>
                              <td className="px-4 py-3 text-center border-l border-slate-100">
                                 <button
@@ -517,11 +511,8 @@ export default function Finance() {
                         <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-slate-700">
                           {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayCodAmount || 0) + (drv.todayDeliveryFee || 0), 0).toLocaleString()} đ
                         </td>
-                        <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-orange-600">
-                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayDebt || 0), 0).toLocaleString()} đ
-                        </td>
                         <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-red-600 bg-red-50/50">
-                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.walletDebt > 0 ? drv.walletDebt : 0), 0).toLocaleString()} đ
+                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayDebt || 0), 0).toLocaleString()} đ
                         </td>
                         <td className="border-l border-slate-200 bg-slate-50"></td>
                       </tr>
