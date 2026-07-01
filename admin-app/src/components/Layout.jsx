@@ -96,7 +96,7 @@ export default function Layout() {
       ];
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50">
 
       {/* GLOBAL MODAL PHÊ DUYỆT CÔNG NỢ TỰ ĐỘNG */}
       <DebtApprovalModal />
