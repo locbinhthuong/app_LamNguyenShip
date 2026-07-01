@@ -44,13 +44,21 @@ const driverController = {
 
       // Aggregate today's orders (or a specific date)
       let filterDate = new Date();
+      let startOfDay, endOfDay;
       if (req.query.date) {
-        filterDate = new Date(req.query.date);
+        startOfDay = new Date(`${req.query.date}T00:00:00+07:00`);
+        endOfDay = new Date(`${req.query.date}T23:59:59.999+07:00`);
+        filterDate = startOfDay;
+      } else {
+        const vnTimeStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+        const vnDate = new Date(vnTimeStr);
+        const y = vnDate.getFullYear();
+        const m = String(vnDate.getMonth() + 1).padStart(2, '0');
+        const d = String(vnDate.getDate()).padStart(2, '0');
+        startOfDay = new Date(`${y}-${m}-${d}T00:00:00+07:00`);
+        endOfDay = new Date(`${y}-${m}-${d}T23:59:59.999+07:00`);
+        filterDate = startOfDay;
       }
-      const startOfDay = new Date(filterDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(filterDate);
-      endOfDay.setHours(23, 59, 59, 999);
       const Order = require('../models/Order');
 
       const todayStats = await Order.aggregate([
