@@ -488,8 +488,12 @@ export default function Finance() {
                              <td className="px-4 py-3 text-right border-l border-slate-100">
                                 <span className="font-semibold text-slate-700">{orderAmount.toLocaleString()} đ</span>
                              </td>
-                             <td className="px-4 py-3 text-right border-l border-slate-100 bg-red-50/30">
-                                <span className="font-black text-red-600">{(drv.todayDebt || 0).toLocaleString()} đ</span>
+                             <td className={`px-4 py-3 text-right border-l border-slate-100 ${(!drv.todayDebt || drv.todayDebt <= 0) ? 'bg-emerald-50' : 'bg-red-50/30'}`}>
+                                {(!drv.todayDebt || drv.todayDebt <= 0) ? (
+                                   <span className="font-black text-emerald-600">Đã Thu</span>
+                                ) : (
+                                   <span className="font-black text-red-600">{drv.todayDebt.toLocaleString()} đ</span>
+                                )}
                              </td>
                              <td className="px-4 py-3 text-center border-l border-slate-100">
                                 <button
