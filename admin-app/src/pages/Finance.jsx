@@ -457,6 +457,26 @@ export default function Finance() {
                       </tr>
                     ))}
                   </tbody>
+                  {filteredDrivers.length > 0 && (
+                    <tfoot className="bg-slate-50 border-t-2 border-slate-200">
+                      <tr>
+                        <td className="px-4 py-3 font-black text-slate-800 text-right uppercase text-xs tracking-wider">Tổng cộng:</td>
+                        <td className="px-4 py-3 text-center border-l border-slate-200 font-black text-slate-700">
+                          {filteredDrivers.reduce((acc, drv) => acc + (drv.todayOrders || 0), 0).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-center border-l border-slate-200 font-black text-slate-700">
+                          {filteredDrivers.reduce((acc, drv) => acc + (drv.todayDeliveryFee || 0), 0).toLocaleString()} đ
+                        </td>
+                        <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-red-600">
+                          {filteredDrivers.reduce((acc, drv) => acc + (drv.todayDebt || 0), 0).toLocaleString()} đ
+                        </td>
+                        <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-red-600">
+                          {filteredDrivers.reduce((acc, drv) => acc + ((drv.walletDebt - (drv.todayDebt || 0)) > 0 ? (drv.walletDebt - (drv.todayDebt || 0)) : 0), 0).toLocaleString()} đ
+                        </td>
+                        <td className="border-l border-slate-200 bg-slate-50"></td>
+                      </tr>
+                    </tfoot>
+                  )}
                 </table>
              </div>
 
