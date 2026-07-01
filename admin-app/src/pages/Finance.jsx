@@ -7,6 +7,13 @@ const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 };
 
+const getLocalDateString = (d = new Date()) => {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function Finance() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState({
@@ -19,7 +26,7 @@ export default function Finance() {
   const [drivers, setDrivers] = useState([]);
   const [debtModal, setDebtModal] = useState({ isOpen: false, driverId: null });
   const [walletModal, setWalletModal] = useState({ isOpen: false, driverId: null });
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filterDate, setFilterDate] = useState(getLocalDateString());
   const [yesterdayDrivers, setYesterdayDrivers] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -34,7 +41,7 @@ export default function Finance() {
       
       const yesterdayDate = new Date();
       yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-      const yesterdayStr = yesterdayDate.toISOString().split('T')[0];
+      const yesterdayStr = getLocalDateString(yesterdayDate);
       const yesterdayRes = await api.get(`/api/drivers?date=${yesterdayStr}`);
 
       if (res.data.success) {
