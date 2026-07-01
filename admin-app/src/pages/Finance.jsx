@@ -21,6 +21,7 @@ export default function Finance() {
   const [walletModal, setWalletModal] = useState({ isOpen: false, driverId: null });
   const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const [yesterdayDrivers, setYesterdayDrivers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [selectedDebts, setSelectedDebts] = useState([]);
   const [selectedWallets, setSelectedWallets] = useState([]);
@@ -161,6 +162,23 @@ export default function Finance() {
       alert('Lỗi khi xoá lịch sử ví hàng loạt.');
     }
   };
+
+  const removeAccents = (str) => {
+    if (!str) return '';
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  };
+
+  const filteredDrivers = drivers.filter(drv => 
+    removeAccents(drv.name).includes(removeAccents(searchQuery)) ||
+    removeAccents(drv.phone).includes(removeAccents(searchQuery)) ||
+    removeAccents(drv.driverCode).includes(removeAccents(searchQuery))
+  );
+
+  const filteredYesterdayDrivers = yesterdayDrivers.filter(drv => 
+    removeAccents(drv.name).includes(removeAccents(searchQuery)) ||
+    removeAccents(drv.phone).includes(removeAccents(searchQuery)) ||
+    removeAccents(drv.driverCode).includes(removeAccents(searchQuery))
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
@@ -325,24 +343,33 @@ export default function Finance() {
                   </tbody>
                 </table>
              </div>
-             <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-12 mb-4 gap-4">
-               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+             <div className="flex flex-col lg:flex-row lg:items-center justify-between mt-12 mb-4 gap-4">
+               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 shrink-0">
                   <span className="w-2 h-6 bg-blue-400 rounded-full"></span> Danh Sách Quản Lý Công Nợ Tài Xế
                </h2>
-               <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200">
-                  <span className="text-sm font-semibold text-slate-600">Xem thống kê ngày:</span>
+               <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
                   <input
-                    type="date"
-                    value={filterDate}
-                    onChange={(e) => setFilterDate(e.target.value)}
-                    className="border-none bg-white rounded-lg px-3 py-1.5 text-sm font-medium shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    type="text"
+                    placeholder="Tìm kiếm tên, SĐT, mã tài xế..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full sm:w-64 border border-slate-200 bg-white rounded-xl px-4 py-2 text-sm shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   />
+                  <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-200 w-full sm:w-auto shrink-0 justify-center">
+                    <span className="text-sm font-semibold text-slate-600">Xem thống kê ngày:</span>
+                    <input
+                      type="date"
+                      value={filterDate}
+                      onChange={(e) => setFilterDate(e.target.value)}
+                      className="border-none bg-white rounded-lg px-3 py-1.5 text-sm font-medium shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                  </div>
                </div>
              </div>
              
              {/* Quản lý sổ đen: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
-                {drivers.map(drv => (
+                {filteredDrivers.map(drv => (
                    <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3">
                       <div className="flex items-center justify-between">
                         <div>
@@ -390,7 +417,7 @@ export default function Finance() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {drivers.map(drv => (
+                    {filteredDrivers.map(drv => (
                       <tr key={drv._id} className="hover:bg-slate-50">
                          <td className="px-4 py-3">
                             <div className="font-bold text-slate-800">{drv.name}</div>
@@ -444,14 +471,14 @@ export default function Finance() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {yesterdayDrivers.length === 0 ? (
+                    {filteredYesterdayDrivers.length === 0 ? (
                       <tr>
                         <td colSpan="5" className="px-4 py-8 text-center text-slate-500 font-medium italic">
-                          Không có tài xế nào chạy trong ngày hôm qua.
+                          Không có tài xế nào khớp với tìm kiếm.
                         </td>
                       </tr>
                     ) : (
-                      yesterdayDrivers.map(drv => {
+                      filteredYesterdayDrivers.map(drv => {
                         const orderAmount = (drv.todayCodAmount || 0) + (drv.todayDeliveryFee || 0);
                         return (
                           <tr key={drv._id} className="hover:bg-slate-50">
@@ -483,18 +510,18 @@ export default function Finance() {
                       })
                     )}
                   </tbody>
-                  {yesterdayDrivers.length > 0 && (
+                  {filteredYesterdayDrivers.length > 0 && (
                     <tfoot className="bg-slate-50 border-t-2 border-slate-200">
                       <tr>
                         <td className="px-4 py-3 font-black text-slate-800 text-right uppercase text-xs tracking-wider">Tổng cộng:</td>
                         <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-slate-700">
-                          {yesterdayDrivers.reduce((acc, drv) => acc + (drv.todayCodAmount || 0) + (drv.todayDeliveryFee || 0), 0).toLocaleString()} đ
+                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayCodAmount || 0) + (drv.todayDeliveryFee || 0), 0).toLocaleString()} đ
                         </td>
                         <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-orange-600">
-                          {yesterdayDrivers.reduce((acc, drv) => acc + (drv.todayDebt || 0), 0).toLocaleString()} đ
+                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.todayDebt || 0), 0).toLocaleString()} đ
                         </td>
                         <td className="px-4 py-3 text-right border-l border-slate-200 font-black text-red-600 bg-red-50/50">
-                          {yesterdayDrivers.reduce((acc, drv) => acc + (drv.walletDebt > 0 ? drv.walletDebt : 0), 0).toLocaleString()} đ
+                          {filteredYesterdayDrivers.reduce((acc, drv) => acc + (drv.walletDebt > 0 ? drv.walletDebt : 0), 0).toLocaleString()} đ
                         </td>
                         <td className="border-l border-slate-200 bg-slate-50"></td>
                       </tr>
@@ -646,13 +673,22 @@ export default function Finance() {
                   </tbody>
                 </table>
              </div>
-             <h2 className="text-lg font-bold text-slate-800 mt-12 mb-4 flex items-center gap-2">
-                <span className="w-2 h-6 bg-emerald-400 rounded-full"></span> Danh Sách Quản Lý Ví Bóp Tài Xế
-             </h2>
+             <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-12 mb-4 gap-4">
+               <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2 shrink-0">
+                  <span className="w-2 h-6 bg-emerald-400 rounded-full"></span> Danh Sách Quản Lý Ví Bóp Tài Xế
+               </h2>
+               <input
+                  type="text"
+                  placeholder="Tìm kiếm tên, SĐT, mã tài xế..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full sm:w-64 border border-slate-200 bg-white rounded-xl px-4 py-2 text-sm shadow-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+               />
+             </div>
 
              {/* Quản lý ví bóp: MOBILE VIEW */}
              <div className="grid grid-cols-1 gap-3 lg:hidden mb-8">
-                {drivers.map(drv => (
+                {filteredDrivers.map(drv => (
                    <div key={drv._id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between">
                       <div>
                          <div className="font-bold text-slate-800 text-lg mb-1">{drv.name}</div>
@@ -682,7 +718,7 @@ export default function Finance() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {drivers.map(drv => (
+                    {filteredDrivers.map(drv => (
                       <tr key={drv._id} className="hover:bg-slate-50">
                          <td className="px-4 py-3">
                             <div className="font-bold text-slate-800">{drv.name}</div>
