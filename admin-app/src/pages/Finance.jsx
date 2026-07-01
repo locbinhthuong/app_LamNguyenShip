@@ -178,7 +178,13 @@ export default function Finance() {
     removeAccents(drv.name).includes(removeAccents(searchQuery)) ||
     removeAccents(drv.phone).includes(removeAccents(searchQuery)) ||
     removeAccents(drv.driverCode).includes(removeAccents(searchQuery))
-  );
+  ).sort((a, b) => {
+    const aDebt = a.todayDebt || 0;
+    const bDebt = b.todayDebt || 0;
+    if (aDebt > 0 && bDebt <= 0) return -1;
+    if (aDebt <= 0 && bDebt > 0) return 1;
+    return bDebt - aDebt;
+  });
 
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fade-in">
