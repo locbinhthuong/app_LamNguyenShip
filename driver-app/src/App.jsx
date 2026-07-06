@@ -153,7 +153,7 @@ function AppContent() {
         try {
           await NativeAudio.preload({
               assetId: 'chuong_alarm',
-              assetPath: 'chuong.mp3',
+              assetPath: Capacitor.getPlatform() === 'ios' ? 'chuong.mp3' : 'public/chuong.mp3',
               audioChannelNum: 1,
               isUrl: false
           });
