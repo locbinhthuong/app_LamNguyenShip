@@ -178,8 +178,10 @@ function AppContent() {
       document.removeEventListener('click', unlockAudio);
     };
 
-    document.addEventListener('touchstart', unlockAudio, { passive: true });
-    document.addEventListener('click', unlockAudio, { passive: true });
+    if (Capacitor.getPlatform() !== 'ios') {
+      document.addEventListener('touchstart', unlockAudio, { passive: true });
+      document.addEventListener('click', unlockAudio, { passive: true });
+    }
     
     return () => {
       document.removeEventListener('touchstart', unlockAudio);
