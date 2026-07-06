@@ -266,6 +266,10 @@ orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ assignedTo: 1, status: 1 });
 orderSchema.index({ customerPhone: 1 });
 orderSchema.index({ createdBy: 1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ deliveredAt: -1 });
+orderSchema.index({ updatedAt: -1 });
+orderSchema.index({ scheduledPublishAt: 1, status: 1 }); // Cho Cron Job
 
 // Virtual: Mã đơn hàng
 orderSchema.virtual('orderCode').get(function() {
