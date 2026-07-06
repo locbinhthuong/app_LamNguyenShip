@@ -236,11 +236,7 @@ export default function DriverMap() {
             maxNativeZoom: 20
         }).addTo(mapInstance.current);
 
-        // Hệ thống chống cháy: Chuyển qua bản đồ Free (OSM) nếu Google sập / hết requests
-        tileLayer.once('tileerror', function() {
-            console.warn('Google Maps tile load error, falling back to OpenStreetMap...');
-            tileLayer.setUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-        });
+        // Hệ thống chống cháy đã được gỡ bỏ vì gây ra hiện tượng nhảy sang bản đồ cũ (OSM) khi mạng giật
     }
 
     loadInitialData();
