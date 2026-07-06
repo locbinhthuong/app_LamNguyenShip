@@ -21,7 +21,11 @@ function PureMapPreview({ lat, lng, onLocationChange }) {
           maxNativeZoom: 20
       }).addTo(mapInstance.current);
 
-      // Hệ thống chống cháy đã được gỡ bỏ vì gây ra hiện tượng nhảy sang bản đồ cũ (OSM) khi mạng giật
+      // Hệ thống chống cháy an toàn: Chuyển qua bản đồ sạch CartoDB Voyager nếu Google bị lỗi tải gạch
+      tileLayer.once('tileerror', function() {
+          console.warn('Google Maps tile load error, falling back to clean CartoDB map...');
+          tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+      });
       
       const customIcon = L.divIcon({
           className: 'custom-preview-marker',
