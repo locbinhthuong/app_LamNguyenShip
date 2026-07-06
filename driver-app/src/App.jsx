@@ -241,12 +241,20 @@ function AppContent() {
         if (document.visibilityState === 'visible') {
             if (Capacitor.isNativePlatform()) {
                 Haptics.vibrate({ duration: 1000 }).catch(e => {});
-                NativeAudio.loop({ assetId: 'chuong_alarm' }).catch(e => {
-                    console.error('NativeAudio play blocked, falling back to HTML5:', e);
+                if (Capacitor.getPlatform() === 'ios') {
+                    NativeAudio.loop({ assetId: 'chuong_alarm' }).catch(e => {
+                        console.error('NativeAudio play blocked, falling back to HTML5:', e);
+                        if (fallbackAudioRef.current) {
+                            fallbackAudioRef.current.play().catch(console.error);
+                        }
+                    });
+                } else {
+                    // Android: Bypass NativeAudio (SoundPool) which fails silently on large MP3 files.
+                    // WebView is already configured in MainActivity to allow media playback without gesture.
                     if (fallbackAudioRef.current) {
                         fallbackAudioRef.current.play().catch(console.error);
                     }
-                });
+                }
             } else {
                 if (fallbackAudioRef.current) {
                     fallbackAudioRef.current.play().catch(console.error);
