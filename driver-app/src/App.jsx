@@ -382,21 +382,21 @@ function AppContent() {
     if (Capacitor.isNativePlatform()) {
       import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
           LocalNotifications.createChannel({
-            id: 'aloshipp_push_channel_v6',
+            id: 'aloshipp_push_channel_v8',
             name: 'Kênh Báo Đơn Trong App',
             description: 'Kênh âm báo ưu tiên cho đơn hàng',
             importance: 5,
             visibility: 1,
-            sound: 'chuong.mp3',
+            sound: Capacitor.getPlatform() === 'ios' ? 'chuong.mp3' : 'chuong',
             vibration: true
           });
           LocalNotifications.createChannel({
-            id: 'aloshipp_push_channel_v7',
+            id: 'aloshipp_push_channel_v9',
             name: 'Kênh Báo Đơn Ngoài App',
             description: 'Kênh âm báo ưu tiên cho đơn hàng (FCM)',
             importance: 5,
             visibility: 1,
-            sound: 'thongbaongoaiapp.mp3',
+            sound: Capacitor.getPlatform() === 'ios' ? 'thongbaongoaiapp.mp3' : 'thongbaongoaiapp',
             vibration: true
           });
         LocalNotifications.addListener('localNotificationActionPerformed', () => {
@@ -407,12 +407,12 @@ function AppContent() {
 
       import('@capacitor-firebase/messaging').then(({ FirebaseMessaging }) => {
         FirebaseMessaging.createChannel({
-            id: 'aloshipp_push_channel_v7',
+            id: 'aloshipp_push_channel_v9',
             name: 'Kênh Báo Đơn Ngoài App',
             description: 'Kênh âm báo ưu tiên cho đơn hàng (FCM)',
             importance: 5,
             visibility: 1,
-            sound: 'thongbaongoaiapp.mp3',
+            sound: Capacitor.getPlatform() === 'ios' ? 'thongbaongoaiapp.mp3' : 'thongbaongoaiapp',
             vibration: true
         }).catch(e => console.log('FCM createChannel error:', e));
         FirebaseMessaging.addListener('notificationActionPerformed', () => {

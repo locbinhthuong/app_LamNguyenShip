@@ -27,7 +27,7 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         priority: "high",
         notification: {
           sound: "thongbaongoaiapp",
-          channelId: "aloshipp_push_channel_v7",
+          channelId: "aloshipp_push_channel_v9",
           defaultSound: false,
           defaultVibrateTimings: true
         }
@@ -86,7 +86,7 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
         priority: "high",
         notification: {
           sound: "thongbaongoaiapp",
-          channelId: "aloshipp_push_channel_v7",
+          channelId: "aloshipp_push_channel_v9",
           defaultSound: false,
           defaultVibrateTimings: true
         }

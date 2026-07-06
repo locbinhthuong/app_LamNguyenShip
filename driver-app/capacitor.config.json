@@ -17,13 +17,13 @@
       "splashImmersive": true
     },
     "FirebaseMessaging": {
-      "presentationOptions": ["badge"]
+      "presentationOptions": ["badge", "sound", "alert"]
     },
     "PushNotifications": {
-      "presentationOptions": ["badge"]
+      "presentationOptions": ["badge", "sound", "alert"]
     },
     "LocalNotifications": {
-      "presentationOptions": ["sound"]
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   }
 }

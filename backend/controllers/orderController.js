@@ -583,6 +583,7 @@ const orderController = {
         orderToUpdate.acceptedAt = undefined;
         orderToUpdate.pickedUpAt = undefined;
         orderToUpdate.cancelReason = undefined; // Bắt buộc xóa Lý do hủy lỗi cũ để khi Treo lại không bị Rống Chuông Admin
+        orderToUpdate.pendingAssignTo = [];
 
         // Tước đơn khỏi map của Admin và xóa trên App của tài xế (như hủy nhưng thực ra là thu hồi ẩn)
         if (req.io) {
@@ -593,6 +594,7 @@ const orderController = {
       // Xử lý nhánh "Đưa lên Đơn Treo" (Từ DRAFT lên PENDING)
       if (status === 'PENDING' && orderToUpdate.status === 'DRAFT') {
         orderToUpdate.status = 'PENDING';
+        orderToUpdate.pendingAssignTo = [];
         isDraftToPending = true;
       }
 
