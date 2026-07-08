@@ -1,15 +1,31 @@
 const admin = require('firebase-admin');
-const serviceAccount = require('../serviceAccountKey.json');
 
 // Khởi tạo Firebase Admin
 try {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-  console.log('✅ Firebase Admin initialized successfully');
+  let serviceAccount = null;
+  
+  // Thử đọc từ biến môi trường trước (nếu có trên Vercel)
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    // Nếu không có, thử đọc từ file local (trên VPS hoặc máy dev)
+    try {
+      serviceAccount = require('../serviceAccountKey.json');
+    } catch (e) {
+      console.log('⚠️ Không tìm thấy serviceAccountKey.json, Firebase Admin sẽ bị tắt (không ảnh hưởng Demo).');
+    }
+  }
+
+  if (serviceAccount) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+    });
+    console.log('✅ Firebase Admin initialized successfully');
+  }
 } catch (error) {
   console.error('❌ Firebase Admin init error:', error);
 }
+
 
 /**
  * Gửi thông báo đến 1 thiết bị
