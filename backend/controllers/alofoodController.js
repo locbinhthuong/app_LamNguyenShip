@@ -6,7 +6,7 @@ const Order = require('../models/Order');
 exports.getRestaurants = async (req, res) => {
   try {
     const { search, category, limit = 20, page = 1 } = req.query;
-    const query = { role: 'SHOP', isActive: true, isOpen: true };
+    const query = { role: 'SHOP', isActive: { $ne: false }, isOpen: { $ne: false } };
     
     if (search) {
       query.$or = [
