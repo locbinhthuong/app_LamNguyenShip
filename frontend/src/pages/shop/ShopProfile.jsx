@@ -13,12 +13,15 @@ export default function ShopProfile() {
   const [shopPhone, setShopPhone] = useState(customerData.phone || localStorage.getItem('shopPhone') || 'Chưa cập nhật');
   const [shopAddress, setShopAddress] = useState(customerData.shopAddress || localStorage.getItem('shopAddress') || 'Chưa cập nhật');
   const [shopAvatar, setShopAvatar] = useState(customerData.avatar || localStorage.getItem('shopAvatar') || '');
+  const [shopCoverImage, setShopCoverImage] = useState(customerData.coverImage || localStorage.getItem('shopCoverImage') || '');
 
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({ shopName: '', phone: '', avatar: '' });
+  const [editForm, setEditForm] = useState({ shopName: '', phone: '', avatar: '', coverImage: '' });
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
+  const [coverPreview, setCoverPreview] = useState(null);
+  const [coverFile, setCoverFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const [showTermsContent, setShowTermsContent] = useState(false);
@@ -86,6 +89,7 @@ export default function ShopProfile() {
     try {
       setLoading(true);
       let finalAvatarUrl = editForm.avatar;
+      let finalCoverUrl = editForm.coverImage;
       if (avatarFile) {
         try {
           const result = await uploadCustomerAvatar(avatarFile);
@@ -93,7 +97,19 @@ export default function ShopProfile() {
             finalAvatarUrl = result.data.data.url;
           }
         } catch (err) {
-          alert("Lỗi upload ảnh, vui lòng thử lại sau!");
+          alert("Lỗi upload ảnh đại diện, vui lòng thử lại sau!");
+          setLoading(false);
+          return;
+        }
+      }
+      if (coverFile) {
+        try {
+          const result = await uploadCustomerAvatar(coverFile);
+          if (result.data.success) {
+            finalCoverUrl = result.data.data.url;
+          }
+        } catch (err) {
+          alert("Lỗi upload ảnh bìa, vui lòng thử lại sau!");
           setLoading(false);
           return;
         }
@@ -102,7 +118,8 @@ export default function ShopProfile() {
       const res = await api.put('/auth/customer/me', {
         shopName: editForm.shopName,
         phone: editForm.phone,
-        avatar: finalAvatarUrl
+        avatar: finalAvatarUrl,
+        coverImage: finalCoverUrl
       });
       if (res.data.success) {
         const updatedUser = res.data.data;
@@ -114,10 +131,14 @@ export default function ShopProfile() {
         if (updatedUser.avatar) {
           localStorage.setItem('shopAvatar', updatedUser.avatar);
         }
+        if (updatedUser.coverImage) {
+          localStorage.setItem('shopCoverImage', updatedUser.coverImage);
+        }
 
         setShopName(updatedUser.shopName);
         setShopPhone(updatedUser.phone);
         setShopAvatar(updatedUser.avatar || '');
+        setShopCoverImage(updatedUser.coverImage || '');
         setShowEditModal(false);
         alert('Cập nhật thông tin thành công!');
       }
@@ -129,9 +150,11 @@ export default function ShopProfile() {
   };
 
   const openEditModal = () => {
-    setEditForm({ shopName, phone: shopPhone, avatar: shopAvatar });
+    setEditForm({ shopName, phone: shopPhone, avatar: shopAvatar, coverImage: shopCoverImage });
     setAvatarPreview(shopAvatar || null);
     setAvatarFile(null);
+    setCoverPreview(shopCoverImage || null);
+    setCoverFile(null);
     setShowEditModal(true);
   };
 
@@ -179,9 +202,18 @@ export default function ShopProfile() {
       {/* BODY CONTENT */}
       <div className="p-4 sm:p-6 space-y-6">
 
+        {/* COVER IMAGE */}
+        <div className="relative h-32 sm:h-40 bg-gray-300 rounded-3xl overflow-hidden -mb-10 border border-slate-100 shadow-sm">
+          {shopCoverImage ? (
+            <img src={getFullImageUrl(shopCoverImage)} alt="Cover" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-red-400 to-orange-400"></div>
+          )}
+        </div>
+
         {/* SHOP INFO CARD */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-2 border-slate-100 overflow-hidden relative">
+        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex items-center gap-4 relative z-10 mx-2">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 border-4 border-white shadow-sm overflow-hidden relative shrink-0">
             {shopAvatar ? (
               <img src={getFullImageUrl(shopAvatar)} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
@@ -342,8 +374,30 @@ export default function ShopProfile() {
             
             <form id="editShopForm" onSubmit={handleEditSubmit} className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
               
-              <div className="flex flex-col items-center mb-4">
-                 <div className="relative w-24 h-24 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group">
+              <div className="flex flex-col mb-4">
+                 <label className="block text-sm font-semibold text-slate-700 mb-1 ml-1">Ảnh bìa (Banner)</label>
+                 <div className="relative w-full h-32 rounded-xl border-2 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group mb-6">
+                   {coverPreview ? (
+                     <img src={getFullImageUrl(coverPreview)} alt="Cover" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                   ) : (
+                     <div className="w-full h-full bg-gradient-to-br from-red-400 to-orange-400"></div>
+                   )}
+                   
+                   <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                     <Camera size={24} className="text-white mb-1" />
+                     <span className="text-[10px] font-bold text-white uppercase">Đổi ảnh bìa</span>
+                     <input type="file" accept="image/*" className="hidden" onChange={(e) => {
+                       const file = e.target.files[0];
+                       if (file) {
+                         setCoverFile(file);
+                         setCoverPreview(URL.createObjectURL(file));
+                       }
+                     }} />
+                   </label>
+                 </div>
+                 
+                 <label className="block text-sm font-semibold text-slate-700 mb-1 ml-1 text-center">Ảnh đại diện (Avatar)</label>
+                 <div className="relative w-24 h-24 rounded-full border-4 border-gray-100 bg-gray-50 flex items-center justify-center overflow-hidden group mx-auto">
                    {avatarPreview ? (
                      <img src={getFullImageUrl(avatarPreview)} alt="Preview" className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
                    ) : (
