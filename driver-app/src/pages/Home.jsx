@@ -34,6 +34,9 @@ const getServiceBadge = (order) => {
   if (order.serviceType === 'MUA_HO') {
     return <span className={baseClass}><ShoppingCart size={12}/> MUA HỘ</span>;
   }
+  if (order.serviceType === 'ALOFOOD') {
+    return <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded text-[10px] font-bold border border-amber-200 flex items-center gap-1 inline-flex"><ShoppingCart size={12}/> ALOFOOD</span>;
+  }
   return <span className={baseClass}><Package size={12}/> GIAO HÀNG</span>;
 };
 
@@ -131,7 +134,7 @@ function ActiveOrderCard({ order, onAction, loading }) {
     const getNextAction = () => {
     switch (order.status) {
       case 'ACCEPTED':
-        return { label: order.serviceType === 'DAT_XE' ? 'Đã đón khách' : order.serviceType === 'MUA_HO' ? 'Đã mua hàng' : 'Đã lấy hàng', action: 'pickup', color: 'bg-slate-700 hover:bg-slate-600 text-white' };
+        return { label: order.serviceType === 'DAT_XE' ? 'Đã đón khách' : order.serviceType === 'MUA_HO' ? 'Đã mua hàng' : order.serviceType === 'ALOFOOD' ? 'Đã lấy đồ ăn' : 'Đã lấy hàng', action: 'pickup', color: 'bg-slate-700 hover:bg-slate-600 text-white' };
       case 'PICKED_UP':
       case 'DELIVERING':
         return { label: order.serviceType === 'DAT_XE' ? 'Đã trả khách' : 'Hoàn thành', action: 'complete', color: 'bg-slate-800 hover:bg-slate-700 text-white' };

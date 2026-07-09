@@ -186,7 +186,7 @@ export default function OrderDetail() {
     
     if (assignedId === myId) {
       if (order.status === 'ACCEPTED') {
-         const btnText = order.serviceType === 'DAT_XE' ? 'Đã Đón Khách' : order.serviceType === 'MUA_HO' ? 'Đã mua hàng' : 'Đã lấy hàng';
+         const btnText = order.serviceType === 'DAT_XE' ? 'Đã Đón Khách' : order.serviceType === 'MUA_HO' ? 'Đã mua hàng' : order.serviceType === 'ALOFOOD' ? 'Đã lấy đồ ăn' : 'Đã lấy hàng';
          return <button onClick={() => handleAction('pickup')} disabled={actionLoading} className="btn-warning flex items-center justify-center gap-2"><MapPin size={20}/> {btnText}</button>;
       }
       if (order.status === 'PICKED_UP' || order.status === 'DELIVERING') {
@@ -238,6 +238,7 @@ export default function OrderDetail() {
                order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' :
                order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách Xe Máy' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                order.serviceType === 'MUA_HO' ? 'Mua Hàng Hộ' :
+               order.serviceType === 'ALOFOOD' ? 'Đơn AloFood' :
                order.serviceType === 'DIEU_PHOI' ? 'Dịch Vụ Điều Phối' : 'Chi tiết đơn hàng'}
             </h1>
             <p className="truncate text-[11px] font-bold text-blue-600 bg-blue-50 max-w-max px-2 py-0.5 rounded uppercase mt-0.5 border border-blue-100">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
@@ -283,7 +284,7 @@ export default function OrderDetail() {
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <p className="text-xs text-slate-500 font-bold uppercase">
-                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / GIAO DỊCH' : order.serviceType === 'MUA_HO' ? 'MUA HÀNG TẠI' : 'Lấy Hàng Tại'}
+                  {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐÓN KHÁCH' : order.serviceType === 'DIEU_PHOI' ? 'NƠI GẶP MẶT / GIAO DỊCH' : order.serviceType === 'MUA_HO' ? 'MUA HÀNG TẠI' : order.serviceType === 'ALOFOOD' ? 'LẤY ĐỒ ĂN TẠI' : 'Lấy Hàng Tại'}
                 </p>
                 <a 
                   href={`https://www.google.com/maps/dir/?api=1&destination=${order.pickupCoordinates?.lat && order.pickupCoordinates.lat !== 10.045 && order.pickupCoordinates.lat !== 10.050 ? `${order.pickupCoordinates.lat},${order.pickupCoordinates.lng}` : encodeURIComponent(order.pickupAddress)}`} 
@@ -309,7 +310,7 @@ export default function OrderDetail() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <p className="text-xs text-slate-500 font-bold uppercase">
-                      {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'Giao Hàng (Đến)'}
+                      {order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : order.serviceType === 'ALOFOOD' ? 'GIAO ĐỒ ĂN CHO KHÁCH' : 'Giao Hàng (Đến)'}
                     </p>
                     <a 
                       href={`https://www.google.com/maps/dir/?api=1&destination=${order.deliveryCoordinates?.lat && order.deliveryCoordinates.lat !== 10.045 && order.deliveryCoordinates.lat !== 10.050 ? `${order.deliveryCoordinates.lat},${order.deliveryCoordinates.lng}` : encodeURIComponent(order.deliveryAddress)}`} 
@@ -485,6 +486,37 @@ export default function OrderDetail() {
              </div>
           )}
 
+          {/* ALOFOOD INFO */}
+          {order.serviceType === 'ALOFOOD' && order.alofoodDetails && (
+             <div className="mb-4">
+               <p className="text-slate-500 text-xs mb-1 font-bold">Danh sách món ăn:</p>
+               {order.alofoodDetails.cartItems?.length > 0 ? (
+                 <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 mb-2 shadow-inner">
+                   {order.alofoodDetails.cartItems.map((item, i) => (
+                     <div key={i} className="py-2 border-b border-amber-200/50 last:border-0">
+                        <div className="flex justify-between items-start">
+                          <span className="text-slate-800 text-sm font-bold flex-1 pr-2">• {item.name} <span className="text-amber-600">(x{item.quantity})</span></span>
+                          <span className="text-amber-700 font-bold text-sm whitespace-nowrap">{(item.price * item.quantity).toLocaleString()}đ</span>
+                        </div>
+                        {item.note && (
+                          <div className="mt-1 ml-3 p-1.5 bg-white/70 border border-amber-200/50 rounded flex items-start gap-1">
+                            <FileText size={12} className="text-amber-500 mt-0.5 shrink-0" />
+                            <p className="text-xs text-amber-800 font-medium whitespace-pre-wrap leading-snug">Ghi chú món: {item.note}</p>
+                          </div>
+                        )}
+                     </div>
+                   ))}
+                 </div>
+               ) : <p className="text-slate-800 text-sm mb-2 italic">Không tìm thấy danh sách món.</p>}
+               
+               {/* Note about shop paying */}
+               <div className="mt-3 p-2 bg-blue-50 border border-blue-100 rounded-lg flex items-center gap-2">
+                 <Wallet size={16} className="text-blue-500 shrink-0"/>
+                 <p className="text-[11px] text-blue-800 font-medium">Bạn cần ứng trước <b>{order.alofoodDetails.foodTotal?.toLocaleString()}đ</b> cho Quán. Khách sẽ thanh toán lại khi nhận hàng.</p>
+               </div>
+             </div>
+          )}
+
           {/* DIEU_PHOI INFO */}
           {order.serviceType === 'DIEU_PHOI' && (
              <>
@@ -595,11 +627,11 @@ export default function OrderDetail() {
                    })()}
                 </p>
               </div>
-            ) : (order.serviceType === 'GIAO_HANG') && (order.codAmount > 0 || order.codAmount === 0) && (
+            ) : (order.serviceType === 'GIAO_HANG' || order.serviceType === 'ALOFOOD') && (order.codAmount > 0 || order.codAmount === 0) && (
               <div className="bg-white rounded-xl p-3 flex flex-col justify-center relative overflow-hidden group border border-slate-200">
                 <div className="absolute -right-3 -top-1 text-slate-100 opacity-50 group-hover:scale-110 transition-transform"><Diamond size={80}/></div>
-                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">Cần Thu hộ COD</p>
-                <p className="text-blue-600 font-black text-xl sm:text-2xl  relative z-10">{order.codAmount?.toLocaleString() || 0}đ</p>
+                <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider relative z-10 mb-1">{order.serviceType === 'ALOFOOD' ? 'Tiền đồ ăn (Khách trả)' : 'Cần Thu hộ COD'}</p>
+                <p className="text-blue-600 font-black text-xl sm:text-2xl  relative z-10">{order.serviceType === 'ALOFOOD' ? (order.alofoodDetails?.foodTotal || 0).toLocaleString() + 'đ' : (order.codAmount?.toLocaleString() || 0) + 'đ'}</p>
               </div>
             )}
 
@@ -635,20 +667,29 @@ export default function OrderDetail() {
             )}
           </div>
 
-          {/* BLOCK TỔNG KẾT RÕ RÀNG CHO GIAO_HANG */}
-          {order.serviceType === 'GIAO_HANG' && (
+          {/* BLOCK TỔNG KẾT RÕ RÀNG CHO GIAO_HANG & ALOFOOD */}
+          {(order.serviceType === 'GIAO_HANG' || order.serviceType === 'ALOFOOD') && (
             <div className="mt-4">
               {(() => {
                 const totalShipFee = (order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.financialDetails?.surcharge || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0);
-                const shopAmount = order.feePaidBy === 'SENDER' ? ((order.codAmount || 0) - totalShipFee) : (order.codAmount || 0);
-                const customerAmount = order.feePaidBy === 'SENDER' ? (order.codAmount || 0) : ((order.codAmount || 0) + totalShipFee);
+                
+                let shopAmount = 0;
+                let customerAmount = 0;
+                
+                if (order.serviceType === 'ALOFOOD') {
+                  shopAmount = order.alofoodDetails?.foodTotal || 0; // Tài xế ứng tiền món ăn
+                  customerAmount = shopAmount + totalShipFee; // Khách trả món ăn + ship
+                } else {
+                  shopAmount = order.feePaidBy === 'SENDER' ? ((order.codAmount || 0) - totalShipFee) : (order.codAmount || 0);
+                  customerAmount = order.feePaidBy === 'SENDER' ? (order.codAmount || 0) : ((order.codAmount || 0) + totalShipFee);
+                }
                 
                 return (
                   <div className="flex flex-col gap-3 mt-4">
                      <div className="flex justify-between items-center bg-white p-3.5 rounded-xl border border-slate-200">
                        <span className="text-[11px] text-slate-500 font-bold uppercase flex items-center gap-1">
                          <Wallet size={14} /> 
-                         {shopAmount > 0 ? 'TÀI XẾ ỨNG CHO SHOP' : shopAmount < 0 ? 'TÀI XẾ THU TỪ SHOP' : 'KHÔNG ỨNG/THU Ở SHOP'}
+                         {order.serviceType === 'ALOFOOD' ? 'TÀI XẾ CẦN ỨNG CHO QUÁN' : (shopAmount > 0 ? 'TÀI XẾ ỨNG CHO SHOP' : shopAmount < 0 ? 'TÀI XẾ THU TỪ SHOP' : 'KHÔNG ỨNG/THU Ở SHOP')}
                        </span>
                        <span className="font-black text-xl text-slate-700">
                          {shopAmount === 0 ? '0đ' : `${Math.abs(shopAmount).toLocaleString()}đ`}
@@ -658,7 +699,9 @@ export default function OrderDetail() {
                      <div className="flex justify-between items-end bg-red-50 p-4 rounded-xl border-2 border-red-200">
                        <div className="flex flex-col">
                          <span className="text-xs text-red-600 font-bold uppercase">TỔNG THU CỦA KHÁCH</span>
-                         <span className="text-[10px] text-red-500 italic">({order.feePaidBy === 'SENDER' ? 'Chỉ thu COD vì Shop đã trả ship' : 'Đã bao gồm Tiền Ship + COD'})</span>
+                         <span className="text-[10px] text-red-500 italic">
+                           {order.serviceType === 'ALOFOOD' ? '(Bao gồm Tiền Đồ Ăn + Phí Ship)' : (order.feePaidBy === 'SENDER' ? '(Chỉ thu COD vì Shop đã trả ship)' : '(Đã bao gồm Tiền Ship + COD)')}
+                         </span>
                        </div>
                        <span className="font-black text-3xl text-red-600">
                          {customerAmount.toLocaleString()}đ
@@ -688,7 +731,7 @@ export default function OrderDetail() {
                   <span className="text-slate-400"><CheckCircle2 size={16}/></span>
                   <div>
                     <p className="text-slate-800 text-sm">
-                      {order.serviceType === 'DAT_XE' ? 'Tài xế đã Đón Khách' : order.serviceType === 'MUA_HO' ? 'Tài xế đã Mua Hàng' : 'Lấy hàng'}
+                      {order.serviceType === 'DAT_XE' ? 'Tài xế đã Đón Khách' : order.serviceType === 'MUA_HO' ? 'Tài xế đã Mua Hàng' : order.serviceType === 'ALOFOOD' ? 'Tài xế đã Lấy Đồ Ăn' : 'Lấy hàng'}
                     </p>
                     <p className="text-slate-500 text-xs">{new Date(order.pickedUpAt).toLocaleString('vi-VN')}</p>
                   </div>
