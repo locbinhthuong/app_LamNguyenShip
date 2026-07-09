@@ -48,4 +48,3 @@ backend/data/
 # Android / iOS build
 *.apk
 *.ipa
-serviceAccountKey.json
