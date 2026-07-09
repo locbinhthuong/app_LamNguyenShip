@@ -189,36 +189,9 @@ if (!MONGO_URI) {
   process.exit(1);
 }
 
-const connectDB = async () => {
-  try {
-    console.log('Đang thử kết nối MongoDB local...');
-    await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 2000 // Timeout sau 2s
-    });
-    console.log('✅ Kết nối MongoDB thành công!');
-  } catch (error) {
-    if (MONGO_URI.includes('localhost') || MONGO_URI.includes('127.0.0.1')) {
-      console.log('⚠️ Không thể kết nối MongoDB local. Đang khởi chạy MongoDB In-Memory (lần đầu có thể mất chút thời gian tải xuống)...');
-      try {
-        const { MongoMemoryServer } = require('mongodb-memory-server');
-        const mongoServer = await MongoMemoryServer.create();
-        const memoryUri = mongoServer.getUri();
-        await mongoose.connect(memoryUri);
-        console.log('✅ Kết nối MongoDB In-Memory thành công tại:', memoryUri);
-        console.log('⚠️ Lưu ý: Dữ liệu trong in-memory database sẽ bị mất khi khởi động lại server.');
-      } catch (memError) {
-        console.error('❌ Lỗi khi khởi tạo MongoDB In-Memory:', memError);
-        process.exit(1);
-      }
-    } else {
-      console.error('❌ Lỗi kết nối MongoDB:', error);
-      process.exit(1);
-    }
-  }
-};
-
-connectDB()
+mongoose.connect(MONGO_URI)
   .then(() => {
+    console.log('✅ Kết nối MongoDB thành công!');
 
     server.listen(PORT, '0.0.0.0', () => {
       console.log(`
