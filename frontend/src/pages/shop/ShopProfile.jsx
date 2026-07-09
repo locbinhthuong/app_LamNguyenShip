@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera, FileText, HelpCircle, QrCode, X, Loader2, ScrollText, Inbox } from 'lucide-react';
 import { api, getFullImageUrl, uploadCustomerAvatar, getActiveAnnouncements } from '../../services/api';
+import { compressImage } from '../../utils/imageCompressor';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function ShopProfile() {
@@ -92,7 +93,8 @@ export default function ShopProfile() {
       let finalCoverUrl = editForm.coverImage;
       if (avatarFile) {
         try {
-          const result = await uploadCustomerAvatar(avatarFile);
+          const compressedAvatar = await compressImage(avatarFile, 1, 800); // Max 1MB, Max width 800px for avatar
+          const result = await uploadCustomerAvatar(compressedAvatar);
           if (result.data.success) {
             finalAvatarUrl = result.data.data.url;
           }
@@ -104,7 +106,8 @@ export default function ShopProfile() {
       }
       if (coverFile) {
         try {
-          const result = await uploadCustomerAvatar(coverFile);
+          const compressedCover = await compressImage(coverFile, 1, 1920); // Max 1MB, Max width 1920px for cover
+          const result = await uploadCustomerAvatar(compressedCover);
           if (result.data.success) {
             finalCoverUrl = result.data.data.url;
           }
