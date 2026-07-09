@@ -40,6 +40,25 @@ const userSchema = new mongoose.Schema({
     trim: true,
     default: null
   },
+  coverImage: {
+    type: String,
+    default: null
+  },
+  isOpen: {
+    type: Boolean,
+    default: true
+  },
+  rating: {
+    type: Number,
+    default: 5.0
+  },
+  ratingCount: {
+    type: Number,
+    default: 0
+  },
+  categories: [{
+    type: String
+  }],
   // Default location for pinning on map
   defaultLocation: {
     lat: { type: Number, default: null },

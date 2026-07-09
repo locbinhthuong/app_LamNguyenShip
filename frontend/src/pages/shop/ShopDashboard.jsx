@@ -231,8 +231,20 @@ const ShopDashboard = () => {
       {/* DỊCH VỤ NỔI BẬT */}
       <div className="mb-10">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Dịch vụ nổi bật</h2>
-        <div className="grid grid-cols-3 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
+        <div className="grid grid-cols-4 gap-2 md:gap-4 max-w-4xl mx-auto md:mx-0">
           
+          {/* THỰC ĐƠN */}
+          <div 
+            onClick={() => navigate('/shop/menu')}
+            className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 rounded-bl-lg">HOT</div>
+            <div className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-red-50 flex items-center justify-center mb-2.5 text-red-500">
+              <ShoppingCart size={22} className="md:w-7 md:h-7" strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[13px] md:text-[15px] font-bold text-gray-900 text-center">Thực đơn</h3>
+          </div>
+
           {/* GIAO HÀNG */}
           <div 
             onClick={() => navigate('/shop/book/delivery')}

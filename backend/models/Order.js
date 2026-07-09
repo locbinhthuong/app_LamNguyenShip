@@ -4,7 +4,7 @@ const orderSchema = new mongoose.Schema({
   // Phân loại hình thức dịch vụ
   serviceType: {
     type: String,
-    enum: ['GIAO_HANG', 'DAT_XE', 'MUA_HO', 'DIEU_PHOI', 'DON_GHEP'],
+    enum: ['GIAO_HANG', 'DAT_XE', 'MUA_HO', 'DIEU_PHOI', 'DON_GHEP', 'ALOFOOD'],
     default: 'GIAO_HANG',
     index: true
   },
@@ -116,6 +116,19 @@ const orderSchema = new mongoose.Schema({
     bankAccountName: { type: String, default: '' }, // Tên chủ tài khoản
     bankName: { type: String, default: '' },
     transactionAmount: { type: Number, default: 0 }
+  },
+
+  // Chi tiết dịch vụ: ALOFOOD
+  alofoodDetails: {
+    shopId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    foodTotal: { type: Number, default: 0 },
+    cartItems: [{
+      menuItemId: { type: mongoose.Schema.Types.ObjectId, ref: 'MenuItem' },
+      name: { type: String },
+      quantity: { type: Number, default: 1 },
+      price: { type: Number, default: 0 },
+      note: { type: String, default: '' }
+    }]
   },
 
   // Chi tiết dịch vụ: DON_GHEP (Đơn nhiều điểm giao)

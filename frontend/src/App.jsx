@@ -12,10 +12,14 @@ import ShopLayout from './components/ShopLayout';
 import CustomerProfile from './pages/customer/CustomerProfile';
 import CustomerNotifications from './pages/customer/CustomerNotifications';
 import OrderDetail from './pages/customer/OrderDetail';
+import AloFoodHome from './pages/customer/AloFoodHome';
+import AloFoodRestaurantDetail from './pages/customer/AloFoodRestaurantDetail';
+import AloFoodCheckout from './pages/customer/AloFoodCheckout';
 import ShopBookingFlow from './pages/shop/ShopBookingFlow';
 import ShopProfile from './pages/shop/ShopProfile';
 import ShopActivity from './pages/shop/ShopActivity';
 import ShopStatistics from './pages/shop/ShopStatistics';
+import ShopMenuManager from './pages/shop/ShopMenuManager';
 import { useAuthSocket } from './hooks/useAuthSocket';
 import ForceUpdateModal from './components/ForceUpdateModal';
 import { getAppVersionConfig } from './services/api';
@@ -133,6 +137,23 @@ function App() {
             />
           </Route>
 
+          {/* AloFood Flow (Customer) */}
+          <Route path="/alofood" element={
+            <ProtectedRoute allowedRole="CUSTOMER">
+              <AloFoodHome />
+            </ProtectedRoute>
+          } />
+          <Route path="/alofood/restaurant/:id" element={
+            <ProtectedRoute allowedRole="CUSTOMER">
+              <AloFoodRestaurantDetail />
+            </ProtectedRoute>
+          } />
+          <Route path="/alofood/checkout/:id" element={
+            <ProtectedRoute allowedRole="CUSTOMER">
+              <AloFoodCheckout />
+            </ProtectedRoute>
+          } />
+
           {/* Các màn hình KHÔNG có Footer (Ví dụ: Form Lên Đơn, Đăng nhập, Shop) */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -180,6 +201,14 @@ function App() {
             element={
               <ProtectedRoute allowedRole="SHOP">
                 <ShopBookingFlow />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/shop/menu" 
+            element={
+              <ProtectedRoute allowedRole="SHOP">
+                <ShopMenuManager />
               </ProtectedRoute>
             } 
           />

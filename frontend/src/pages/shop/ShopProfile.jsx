@@ -223,6 +223,41 @@ export default function ShopProfile() {
               </div>
             </button>
 
+            <div className="w-full p-4 flex flex-col justify-between border-b border-slate-100 bg-orange-50/30">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                  <Store size={18} />
+                </div>
+                <div className="text-left flex-1">
+                  <p className="font-bold text-slate-800 text-sm">Trạng Thái AloFood</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Quản lý nhận đơn đồ ăn</p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between pl-13 ml-13 border-t border-orange-100 pt-3">
+                <span className="text-sm font-bold text-gray-700">Mở cửa nhận đơn</span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    className="sr-only peer"
+                    checked={customerData.isOpen !== false}
+                    onChange={async (e) => {
+                      const checked = e.target.checked;
+                      try {
+                        await api.put('/shop/profile', { isOpen: checked });
+                        const newData = { ...customerData, isOpen: checked };
+                        localStorage.setItem('customerData', JSON.stringify(newData));
+                        alert(checked ? 'Đã MỞ CỬA nhận đơn' : 'Đã ĐÓNG CỬA nhận đơn');
+                        window.location.reload();
+                      } catch (error) {
+                        alert('Lỗi cập nhật trạng thái');
+                      }
+                    }}
+                  />
+                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-500"></div>
+                </label>
+              </div>
+            </div>
+
             <button onClick={() => fetchTerms('TERMS_CUSTOMER_USAGE', 'Điều khoản sử dụng')} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-600">

@@ -132,6 +132,7 @@ app.get('/api/ping', (req, res) => {
 
 
 const financeRoutes = require('./routes/financeRoutes');
+const alofoodRoutes = require('./routes/alofoodRoutes');
 
 // ==================== ROUTES ====================
 app.use('/api/auth', authRoutes);
@@ -147,6 +148,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/staffs', staffRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/maps', mapRoutes);
+app.use('/api/alofood', alofoodRoutes);
+app.use('/api/shop', require('./routes/shopRoutes'));
 
 // Phục vụ các File tĩnh từ thư mục /uploads
 const path = require('path');
@@ -214,6 +217,28 @@ const connectDB = async () => {
       console.error('❌ Lỗi kết nối MongoDB:', error);
       process.exit(1);
     }
+  }
+
+  // Seed default admin user
+  try {
+    const Admin = require('./models/Admin');
+    const bcrypt = require('bcryptjs');
+    const adminCount = await Admin.countDocuments();
+    if (adminCount === 0) {
+      console.log('Tạo tài khoản Admin mặc định...');
+      const hashedPassword = await bcrypt.hash('123456', 10);
+      const newAdmin = new Admin({
+        name: 'Admin',
+        phone: '0123456789',
+        password: hashedPassword,
+        role: 'admin',
+        status: 'active'
+      });
+      await newAdmin.save();
+      console.log('✅ Tài khoản Admin mặc định đã được tạo: SĐT: 0123456789 | Mật khẩu: 123456');
+    }
+  } catch (seedErr) {
+    console.error('Lỗi khi tạo tài khoản Admin mặc định:', seedErr);
   }
 };
 
