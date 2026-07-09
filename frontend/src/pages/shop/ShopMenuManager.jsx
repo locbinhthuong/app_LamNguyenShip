@@ -99,11 +99,11 @@ const ShopMenuManager = () => {
     form.append('image', file);
 
     try {
-      const res = await api.post('/upload/avatar', form, {
+      const res = await api.post('/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data.success) {
-        setFormData({ ...formData, image: res.data.data.url });
+        setFormData({ ...formData, image: res.data.imageUrl });
       }
     } catch (err) {
       console.error('Upload error', err);
