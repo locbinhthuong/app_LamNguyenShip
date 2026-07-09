@@ -275,6 +275,19 @@ export default function OrderDetail() {
           </div>
         )}
 
+        {/* HẸN GIỜ */}
+        {order.scheduledTime && (
+          <div className="bg-purple-100 rounded-xl p-3.5 sm:p-4 border-2 border-purple-300 mb-4 shadow-md flex items-center gap-3">
+            <span className="text-2xl">⏰</span>
+            <div>
+              <p className="text-purple-700 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-0.5">HẸN GIỜ GIAO ĐƠN</p>
+              <p className="text-purple-900 text-base sm:text-lg font-bold">
+                {new Date(order.scheduledTime).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Addresses */}
         <div className="card">
           <div className="flex items-start gap-3 mb-4">

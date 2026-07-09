@@ -59,6 +59,12 @@ function OrderCard({ order, onAccept, loading }) {
         </span>
       </div>
 
+      {order.scheduledTime && (
+        <div className="bg-purple-100 border border-purple-200 rounded-lg p-2.5 mb-3 text-sm text-purple-800 font-bold flex items-center gap-2">
+          ⏰ Hẹn giờ: {new Date(order.scheduledTime).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+        </div>
+      )}
+
       {order.driverReminder && (
         <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap">
           ⚠️ {order.driverReminder}
@@ -95,6 +101,27 @@ function OrderCard({ order, onAccept, loading }) {
           <ul className="text-sm font-medium text-slate-800 list-disc list-inside space-y-0.5">
             {order.items.map((item, idx) => <li key={idx} className="line-clamp-2">{item}</li>)}
           </ul>
+        </div>
+      )}
+
+      {order.serviceType === 'ALOFOOD' && order.alofoodDetails?.cartItems?.length > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 mb-3">
+          <p className="text-xs font-bold text-orange-600 mb-1">🍔 Món ăn ({order.alofoodDetails.cartItems.length} món):</p>
+          <ul className="text-sm font-medium text-slate-800 space-y-1">
+            {order.alofoodDetails.cartItems.map((item, idx) => (
+              <li key={idx} className="flex justify-between items-start border-b border-orange-100 pb-1 last:border-0 last:pb-0">
+                <span className="flex-1 pr-2">
+                  <span className="font-bold text-orange-700">{item.quantity}x</span> {item.name}
+                  {item.note && <span className="block text-xs text-orange-500 font-normal italic">Ghi chú: {item.note}</span>}
+                </span>
+                <span className="font-bold">{item.price?.toLocaleString()}đ</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 pt-2 border-t border-orange-200 text-sm font-bold text-orange-800 flex justify-between">
+            <span>Tiền ứng cho quán:</span>
+            <span>{order.alofoodDetails.foodTotal?.toLocaleString()}đ</span>
+          </div>
         </div>
       )}
 
@@ -160,6 +187,12 @@ function ActiveOrderCard({ order, onAction, loading }) {
         </span>
       </div>
 
+      {order.scheduledTime && (
+        <div className="bg-purple-100 border border-purple-200 rounded-lg p-2.5 mb-3 text-sm text-purple-800 font-bold flex items-center gap-2">
+          ⏰ Hẹn giờ: {new Date(order.scheduledTime).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}
+        </div>
+      )}
+
       {order.driverReminder && (
         <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap">
           ⚠️ {order.driverReminder}
@@ -201,6 +234,27 @@ function ActiveOrderCard({ order, onAction, loading }) {
           <ul className="text-sm font-medium text-slate-800 list-disc list-inside space-y-0.5">
             {order.items.map((item, idx) => <li key={idx} className="line-clamp-2">{item}</li>)}
           </ul>
+        </div>
+      )}
+
+      {order.serviceType === 'ALOFOOD' && order.alofoodDetails?.cartItems?.length > 0 && (
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 mb-3">
+          <p className="text-xs font-bold text-orange-600 mb-1">🍔 Món ăn ({order.alofoodDetails.cartItems.length} món):</p>
+          <ul className="text-sm font-medium text-slate-800 space-y-1">
+            {order.alofoodDetails.cartItems.map((item, idx) => (
+              <li key={idx} className="flex justify-between items-start border-b border-orange-100 pb-1 last:border-0 last:pb-0">
+                <span className="flex-1 pr-2">
+                  <span className="font-bold text-orange-700">{item.quantity}x</span> {item.name}
+                  {item.note && <span className="block text-xs text-orange-500 font-normal italic">Ghi chú: {item.note}</span>}
+                </span>
+                <span className="font-bold">{item.price?.toLocaleString()}đ</span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 pt-2 border-t border-orange-200 text-sm font-bold text-orange-800 flex justify-between">
+            <span>Tiền ứng cho quán:</span>
+            <span>{order.alofoodDetails.foodTotal?.toLocaleString()}đ</span>
+          </div>
         </div>
       )}
 
