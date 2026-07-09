@@ -6,7 +6,7 @@ import {
   MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon, Bike, 
   ShoppingCart, Headset, Newspaper, Gift, Package, ShoppingBag, Layers, History 
 } from 'lucide-react';
-import { api, getActiveAnnouncements } from '../../services/api';
+import { api, getActiveAnnouncements, getFullImageUrl } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
 const ShopDashboard = () => {
@@ -293,10 +293,10 @@ const ShopDashboard = () => {
               {banners.map(banner => (
                 <div key={banner._id} className="w-full h-full flex-shrink-0 relative flex items-center justify-center p-0">
                   {banner.imageUrl && (
-                    <img src={`https://api.aloshipp.com${banner.imageUrl}`} alt="Banner" className="w-full h-full object-cover object-center" />
+                    <img src={getFullImageUrl(banner.imageUrl)} alt="Banner" className="w-full h-full object-cover object-center" />
                   )}
                   {banner.videoUrl && (
-                    <video src={`https://api.aloshipp.com${banner.videoUrl}`} className="w-full h-full object-cover object-center" autoPlay muted loop playsInline />
+                    <video src={getFullImageUrl(banner.videoUrl)} className="w-full h-full object-cover object-center" autoPlay muted loop playsInline />
                   )}
                 </div>
               ))}
@@ -329,7 +329,7 @@ const ShopDashboard = () => {
           <div className="grid grid-cols-1 gap-5 lg:gap-6">
             {promotions.length > 0 ? promotions.slice(0, 2).map((promo, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(promo)} className="bg-gradient-to-br from-[#1a2b4c] to-[#0a192f] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
-                <img src={promo.imageUrl ? `https://api.aloshipp.com${promo.imageUrl}` : '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                <img src={promo.imageUrl ? getFullImageUrl(promo.imageUrl) : '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-5 left-5 right-5">
                   <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">CHƯƠNG TRÌNH</span>
@@ -361,7 +361,7 @@ const ShopDashboard = () => {
             {news.length > 0 ? news.slice(0, 3).map((item, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(item)} className="flex gap-4 cursor-pointer group">
                 <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm">
-                  <img src={item.imageUrl ? `https://api.aloshipp.com${item.imageUrl}` : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  <img src={item.imageUrl ? getFullImageUrl(item.imageUrl) : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 </div>
                 <div className="flex flex-col justify-center flex-1">
                   <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">
@@ -459,9 +459,9 @@ const ShopDashboard = () => {
             </div>
             <div className="overflow-y-auto w-full flex-1">
               {selectedAnnouncement.videoUrl ? (
-                 <video src={`https://api.aloshipp.com${selectedAnnouncement.videoUrl}`} className="w-full bg-black max-h-[300px]" controls playsInline autoPlay />
+                 <video src={getFullImageUrl(selectedAnnouncement.videoUrl)} className="w-full bg-black max-h-[300px]" controls playsInline autoPlay />
               ) : selectedAnnouncement.imageUrl ? (
-                 <img src={`https://api.aloshipp.com${selectedAnnouncement.imageUrl}`} className="w-full h-auto block" alt="Chi tiết" />
+                 <img src={getFullImageUrl(selectedAnnouncement.imageUrl)} className="w-full h-auto block" alt="Chi tiết" />
               ) : (
                  <div className="w-full h-40 bg-gradient-to-br from-blue-500 to-indigo-600"></div>
               )}

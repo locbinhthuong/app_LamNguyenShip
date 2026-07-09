@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Star, MapPin, Plus, Minus, ShoppingCart } from 'lucide-react';
-import { api } from '../../services/api';
+import { api, getFullImageUrl } from '../../services/api';
 
 const AloFoodRestaurantDetail = () => {
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ const AloFoodRestaurantDetail = () => {
       {/* HEADER & COVER */}
       <div className="relative h-48 bg-gray-300">
         {restaurant.coverImage ? (
-          <img src={`https://api.aloshipp.com${restaurant.coverImage}`} alt={restaurant.shopName} className="w-full h-full object-cover" />
+          <img src={getFullImageUrl(restaurant.coverImage)} alt={restaurant.shopName} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-red-500 to-orange-400"></div>
         )}
@@ -124,7 +124,7 @@ const AloFoodRestaurantDetail = () => {
                     <div key={item._id} className="p-4 flex gap-3">
                       <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
                         {item.image ? (
-                          <img src={`https://api.aloshipp.com${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                          <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gray-200"></div>
                         )}

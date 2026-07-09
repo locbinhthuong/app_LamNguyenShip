@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Star, Clock, MapPin } from 'lucide-react';
-import { api } from '../../services/api';
+import { api, getFullImageUrl } from '../../services/api';
 
 const AloFoodHome = () => {
   const navigate = useNavigate();
@@ -83,7 +83,7 @@ const AloFoodHome = () => {
             >
               <div className="h-36 bg-gray-200 relative">
                 {shop.coverImage ? (
-                  <img src={`https://api.aloshipp.com${shop.coverImage}`} alt={shop.shopName} className="w-full h-full object-cover" />
+                  <img src={getFullImageUrl(shop.coverImage)} alt={shop.shopName} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-r from-red-400 to-orange-400 flex items-center justify-center text-white font-bold text-xl">
                     {shop.shopName}

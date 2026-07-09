@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
-import { api } from '../../services/api';
+import { api, getFullImageUrl } from '../../services/api';
 
 const ShopMenuManager = () => {
   const navigate = useNavigate();
@@ -149,7 +149,7 @@ const ShopMenuManager = () => {
                 
                 <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative z-20">
                   {item.image ? (
-                    <img src={`https://api.aloshipp.com${item.image}`} alt={item.name} className="w-full h-full object-cover" />
+                    <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
                       <ImageIcon size={24} />
@@ -201,7 +201,7 @@ const ShopMenuManager = () => {
                 <label className="w-24 h-24 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group">
                   {formData.image ? (
                     <>
-                      <img src={`https://api.aloshipp.com${formData.image}`} alt="Preview" className="w-full h-full object-cover" />
+                      <img src={getFullImageUrl(formData.image)} alt="Preview" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="text-white text-xs font-bold">Thay Đổi</span>
                       </div>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Gift, Newspaper } from 'lucide-react';
+import { getFullImageUrl } from '../services/api';
 
 const AnnouncementSlider = ({ title, items, type, onSelect }) => {
   if (!items || items.length === 0) return null;
@@ -23,9 +24,9 @@ const AnnouncementSlider = ({ title, items, type, onSelect }) => {
             className={`w-48 md:w-64 bg-white rounded-2xl border ${borderColor} flex-shrink-0 overflow-hidden flex flex-col cursor-pointer hover:shadow-md transition-all active:scale-95`}
           >
             {ann.imageUrl ? (
-              <img src={`https://api.aloshipp.com${ann.imageUrl}`} className="w-full h-40 object-cover bg-gray-100" alt={title} />
+              <img src={getFullImageUrl(ann.imageUrl)} className="w-full h-40 object-cover bg-gray-100" alt={title} />
             ) : ann.videoUrl ? (
-              <video src={`https://api.aloshipp.com${ann.videoUrl}`} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
+              <video src={getFullImageUrl(ann.videoUrl)} className="w-full h-40 object-cover bg-black" autoPlay muted loop playsInline />
             ) : (
               <div className={`w-full h-40 bg-gradient-to-br ${gradientClass} p-4 flex flex-col justify-center text-white relative overflow-hidden`}>
                 <Icon size={32} className="opacity-30 absolute right-2 bottom-2" />

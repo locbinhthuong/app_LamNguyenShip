@@ -5,21 +5,8 @@ const path = require('path');
 const { verifyToken, onlyDriver } = require('../middleware/auth');
 const fs = require('fs');
 
-// Cấu hình Nơi lưu trữ và Tên file
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'avatar-' + uniqueSuffix + ext);
-  }
-});
+// Cấu hình Nơi lưu trữ trên Memory (Do Vercel không cho phép lưu file tĩnh)
+const storage = multer.memoryStorage();
 
 // Bộ lọc Ảnh (Chỉ nhận Image)
 const fileFilter = (req, file, cb) => {
@@ -45,8 +32,8 @@ router.post('/avatar', verifyToken, upload.single('image'), (req, res) => {
       return res.status(400).json({ success: false, message: 'Chưa có file nào được tải lên.' });
     }
 
-    // Gắn đường dẫn tương đối để App Tự Nội Suy từ VITE_API_URL, chống lại lỗi Mixed Content từ Proxy HTTP -> HTTPS
-    const fileUrl = `/uploads/${req.file.filename}`;
+    // Chuyển buffer thành chuỗi Base64 Data URI để frontend lưu thẳng vào Database
+    const fileUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
     res.status(200).json({
       success: true,
@@ -62,21 +49,8 @@ router.post('/avatar', verifyToken, upload.single('image'), (req, res) => {
   }
 });
 
-// Cấu hình Nơi lưu trữ cho Media chung (News, Video, Image)
-const mediaStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '../uploads/media');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'media-' + uniqueSuffix + ext);
-  }
-});
+// Cấu hình Nơi lưu trữ cho Media chung trên Memory
+const mediaStorage = multer.memoryStorage();
 
 const mediaFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
@@ -101,7 +75,8 @@ router.post('/media', verifyToken, uploadMedia.single('media'), (req, res) => {
       return res.status(400).json({ success: false, message: 'Chưa có file nào được tải lên.' });
     }
 
-    const fileUrl = `/uploads/media/${req.file.filename}`;
+    // Chuyển buffer thành chuỗi Base64 Data URI
+    const fileUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
     const fileType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
 
     res.status(200).json({

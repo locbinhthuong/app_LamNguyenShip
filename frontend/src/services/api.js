@@ -155,7 +155,7 @@ export const uploadCustomerAvatar = async (file) => {
 
 export const getFullImageUrl = (path) => {
   if (!path) return '';
-  if (path.startsWith('http') || path.startsWith('blob:')) return path;
+  if (path.startsWith('http') || path.startsWith('blob:') || path.startsWith('data:')) return path;
   let API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com/api';
   
   if (API_URL.endsWith('/api')) {
