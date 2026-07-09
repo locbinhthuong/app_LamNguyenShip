@@ -208,6 +208,12 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  
+  // Khách hàng hẹn giờ nhận đơn
+  scheduledTime: {
+    type: Date,
+    default: null
+  },
 
   // Thông tin thanh toán
   codAmount: {

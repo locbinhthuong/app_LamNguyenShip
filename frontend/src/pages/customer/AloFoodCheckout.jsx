@@ -20,6 +20,12 @@ const AloFoodCheckout = () => {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [note, setNote] = useState('');
+  
+  const [showEditInfo, setShowEditInfo] = useState(false);
+  const [tempName, setTempName] = useState('');
+  const [tempPhone, setTempPhone] = useState('');
+  
+  const [scheduledTime, setScheduledTime] = useState('');
 
   // Dummy distance calculation since we don't have Mapbox setup here directly
   const [deliveryFee, setDeliveryFee] = useState(15000); // Base fee
@@ -112,6 +118,12 @@ const AloFoodCheckout = () => {
     setShowLocationPicker(false);
   };
 
+  const openEditInfo = () => {
+    setTempName(customerName);
+    setTempPhone(customerPhone);
+    setShowEditInfo(true);
+  };
+
   const handlePlaceOrder = async () => {
     if (!deliveryCoordinates) {
       alert('Vui lòng chọn địa chỉ giao hàng!');
@@ -130,7 +142,8 @@ const AloFoodCheckout = () => {
         deliveryCoordinates,
         customerName,
         customerPhone,
-        note
+        note,
+        scheduledTime
       };
 
       const res = await api.post('/alofood/order', payload);
@@ -166,8 +179,8 @@ const AloFoodCheckout = () => {
             <MapPin size={18} className="text-blue-500" /> Giao đến
           </div>
           <div 
-            onClick={() => setShowLocationPicker(true)}
-            className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200 cursor-pointer"
+            onClick={openEditInfo}
+            className="flex items-center justify-between bg-gray-50 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
           >
             <div className="flex-1 pr-3">
               <p className="font-bold text-gray-800 text-sm mb-1">{customerName} - {customerPhone}</p>
@@ -175,6 +188,20 @@ const AloFoodCheckout = () => {
             </div>
             <span className="text-blue-600 text-xs font-bold whitespace-nowrap">Thay đổi</span>
           </div>
+        </div>
+
+        {/* Hẹn giờ nhận đơn */}
+        <div className="bg-white p-4 mb-2 shadow-sm">
+          <div className="flex items-center gap-2 mb-2 text-sm font-bold text-gray-800">
+             Hẹn giờ nhận đơn (Tùy chọn)
+          </div>
+          <input 
+            type="datetime-local" 
+            value={scheduledTime}
+            onChange={e => setScheduledTime(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-blue-500"
+          />
+          <p className="text-xs text-gray-500 mt-1">Bỏ trống nếu bạn muốn tài xế giao ngay bây giờ.</p>
         </div>
 
         {/* Danh sách món */}
@@ -256,6 +283,68 @@ const AloFoodCheckout = () => {
           onSelect={handleLocationSelect}
           initialPosition={deliveryCoordinates}
         />
+      )}
+
+      {/* EDIT DELIVERY INFO MODAL */}
+      {showEditInfo && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md p-5">
+            <h3 className="font-bold text-lg mb-4 text-gray-800">Thông tin nhận hàng</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Tên người nhận</label>
+                <input 
+                  type="text" 
+                  value={tempName} 
+                  onChange={e => setTempName(e.target.value)} 
+                  className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 bg-gray-50 text-sm" 
+                  placeholder="Nhập tên người nhận"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Số điện thoại</label>
+                <input 
+                  type="tel" 
+                  value={tempPhone} 
+                  onChange={e => setTempPhone(e.target.value)} 
+                  className="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 bg-gray-50 text-sm" 
+                  placeholder="Nhập số điện thoại"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1">Địa chỉ giao hàng</label>
+                <div 
+                  onClick={() => setShowLocationPicker(true)} 
+                  className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 flex justify-between items-center"
+                >
+                  <span className="line-clamp-2 flex-1 pr-2">{deliveryAddress}</span>
+                  <span className="text-blue-500 font-bold whitespace-nowrap text-xs">Sửa</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button 
+                onClick={() => setShowEditInfo(false)} 
+                className="flex-1 py-3 rounded-xl bg-gray-100 font-bold text-gray-700 active:scale-95 transition-transform"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={() => { 
+                  if (!tempName || !tempPhone) {
+                    return alert('Vui lòng nhập tên và số điện thoại!');
+                  }
+                  setCustomerName(tempName); 
+                  setCustomerPhone(tempPhone); 
+                  setShowEditInfo(false); 
+                }} 
+                className="flex-1 py-3 rounded-xl bg-blue-600 font-bold text-white active:scale-95 transition-transform shadow-lg shadow-blue-500/30"
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

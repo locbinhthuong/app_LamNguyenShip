@@ -68,7 +68,8 @@ exports.createFoodOrder = async (req, res) => {
       deliveryCoordinates,
       customerName,
       customerPhone,
-      note 
+      note,
+      scheduledTime
     } = req.body;
 
     const shop = await User.findOne({ _id: shopId, role: 'SHOP' });
@@ -91,6 +92,7 @@ exports.createFoodOrder = async (req, res) => {
       deliveryAddress,
       deliveryCoordinates,
       note,
+      scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
       alofoodDetails: {
         shopId,
         foodTotal,
