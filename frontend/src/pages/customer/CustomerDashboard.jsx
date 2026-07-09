@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX, Bike, ShoppingCart, Newspaper, Gift, Phone } from 'lucide-react';
+import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX, Bike, ShoppingCart, Newspaper, Gift, Phone, Utensils } from 'lucide-react';
 import LocationPicker from '../../components/LocationPicker';
 import AnnouncementSlider from '../../components/AnnouncementSlider';
 import { getActiveAnnouncements, api } from '../../services/api';
@@ -187,7 +187,7 @@ const CustomerDashboard = () => {
       {/* DỊCH VỤ NỔI BẬT (Như mẫu) */}
       <div className="mb-10">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Dịch vụ nổi bật</h2>
-        <div className="grid grid-cols-4 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
+        <div className="grid grid-cols-4 md:grid-cols-5 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
           
           {/* GIAO HÀNG */}
           <div 
@@ -209,6 +209,17 @@ const CustomerDashboard = () => {
               <CarFront size={22} strokeWidth={1.5} />
             </div>
             <h3 className="text-[13px] font-bold text-gray-900 text-center">Đặt xe</h3>
+          </div>
+
+          {/* ALOFOOD */}
+          <div 
+            onClick={() => handleServiceClick('ALOFOOD')}
+            className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
+          >
+            <div className="w-11 h-11 rounded-full bg-red-50 flex items-center justify-center mb-2.5 text-red-500">
+              <Utensils size={22} strokeWidth={1.5} />
+            </div>
+            <h3 className="text-[13px] font-bold text-gray-900 text-center">AloFood</h3>
           </div>
 
           {/* MUA HỘ */}
