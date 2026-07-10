@@ -58,15 +58,19 @@ const AloFoodCheckout = () => {
         
         let distKm = 0;
         try {
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${shopLng},${shopLat};${custLng},${custLat}?overview=false`);
+          // Lấy nhiều lộ trình (alternatives=true) để tìm đường gần nhất thay vì đường đi ô tô nhanh nhất
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${shopLng},${shopLat};${custLng},${custLat}?overview=false&alternatives=true`);
           const data = await res.json();
           if (data.routes && data.routes.length > 0) {
-            distKm = data.routes[0].distance / 1000;
+            // Tìm tuyến đường có khoảng cách ngắn nhất (phù hợp xe máy)
+            const shortestRoute = data.routes.reduce((min, r) => r.distance < min.distance ? r : min, data.routes[0]);
+            distKm = shortestRoute.distance / 1000;
           } else {
             throw new Error('No route');
           }
         } catch (err) {
-          distKm = calculateHaversineDistance(shopLat, shopLng, custLat, custLng);
+          // Nếu API lỗi, dùng đường chim bay nhân hệ số ngoằn ngoèo 1.2 (xe máy)
+          distKm = calculateHaversineDistance(shopLat, shopLng, custLat, custLng) * 1.2;
         }
         
         setDistance(distKm);
