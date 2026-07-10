@@ -106,6 +106,7 @@ const ActivityList = () => {
                order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' :
                order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                order.serviceType === 'DIEU_PHOI' ? (order.subServiceType === 'NAP_TIEN' ? 'Nạp Tiền' : order.subServiceType === 'RUT_TIEN' ? 'Rút Tiền' : 'Điều Phối') :
+               order.serviceType === 'ALOFOOD' ? 'Đặt Đồ Ăn (AloFood)' :
                'Mua Hộ'}
             </span>
             <span className="text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
