@@ -25,6 +25,8 @@ const AloFoodCheckout = () => {
   const [showEditInfo, setShowEditInfo] = useState(false);
   const [tempName, setTempName] = useState('');
   const [tempPhone, setTempPhone] = useState('');
+  const [tempDeliveryAddress, setTempDeliveryAddress] = useState('');
+  const [tempDeliveryCoordinates, setTempDeliveryCoordinates] = useState(null);
   
   const [scheduledTime, setScheduledTime] = useState('');
 
@@ -170,15 +172,11 @@ const AloFoodCheckout = () => {
     }
   };
 
-  const handleLocationSelect = (loc) => {
-    setDeliveryCoordinates(loc);
-    setDeliveryAddress(loc.address);
-    setShowLocationPicker(false);
-  };
-
   const openEditInfo = () => {
     setTempName(customerName);
     setTempPhone(customerPhone);
+    setTempDeliveryAddress(deliveryAddress);
+    setTempDeliveryCoordinates(deliveryCoordinates);
     setShowEditInfo(true);
   };
 
@@ -344,8 +342,12 @@ const AloFoodCheckout = () => {
         <LocationPicker 
           isOpen={showLocationPicker}
           onClose={() => setShowLocationPicker(false)}
-          onSelect={handleLocationSelect}
-          initialPosition={deliveryCoordinates}
+          onSelect={(loc) => {
+            setTempDeliveryCoordinates(loc);
+            setTempDeliveryAddress(loc.address);
+            setShowLocationPicker(false);
+          }}
+          initialPosition={tempDeliveryCoordinates}
         />
       )}
 
@@ -381,7 +383,7 @@ const AloFoodCheckout = () => {
                   onClick={() => setShowLocationPicker(true)} 
                   className="p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-600 cursor-pointer hover:bg-gray-100 flex justify-between items-center"
                 >
-                  <span className="line-clamp-2 flex-1 pr-2">{deliveryAddress}</span>
+                  <span className="line-clamp-2 flex-1 pr-2">{tempDeliveryAddress}</span>
                   <span className="text-blue-500 font-bold whitespace-nowrap text-xs">Sửa</span>
                 </div>
               </div>
@@ -400,6 +402,10 @@ const AloFoodCheckout = () => {
                   }
                   setCustomerName(tempName); 
                   setCustomerPhone(tempPhone); 
+                  if (tempDeliveryCoordinates) {
+                    setDeliveryCoordinates(tempDeliveryCoordinates);
+                    setDeliveryAddress(tempDeliveryAddress);
+                  }
                   setShowEditInfo(false); 
                 }} 
                 className="flex-1 py-3 rounded-xl bg-blue-600 font-bold text-white active:scale-95 transition-transform shadow-lg shadow-blue-500/30"
