@@ -115,6 +115,23 @@ exports.createFoodOrder = async (req, res) => {
 
     await newOrder.save();
     
+    // Gửi thông báo đẩy về cho khách hàng
+    try {
+      const { sendNotification } = require('../utils/notification');
+      const customer = await User.findById(customerId);
+      if (customer && customer.fcmToken) {
+        const title = "🥘 Đặt đơn đồ ăn thành công!";
+        const itemsStr = cartItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
+        const body = `Món: ${itemsStr}\nGiao đến: ${deliveryAddress}\nNgười nhận: ${customerName} - ${customerPhone}\nGhi chú: ${note || 'Không có'}`;
+        
+        const finalBody = body.length > 250 ? body.substring(0, 247) + '...' : body;
+        
+        await sendNotification(customer.fcmToken, title, finalBody, { url: `/order/${newOrder._id}` });
+      }
+    } catch (pushErr) {
+      console.error('Error sending push to customer for AloFood:', pushErr);
+    }
+
     // Gửi sự kiện qua socket (nếu cần thiết)
     // const io = require('../sockets').getIo();
     // io.emit('new_order', newOrder);
