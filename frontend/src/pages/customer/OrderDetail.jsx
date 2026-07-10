@@ -233,6 +233,16 @@ export default function OrderDetail() {
           </div>
         )}
 
+        {order.note && (
+          <div className="bg-amber-50 p-4 rounded-3xl border border-amber-100 flex items-start gap-3 mb-2">
+             <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
+             <div className="flex-1">
+               <p className="text-xs font-bold text-amber-800 mb-0.5">GHI CHÚ ĐƠN HÀNG</p>
+               <p className="text-sm text-amber-700">{order.note}</p>
+             </div>
+          </div>
+        )}
+
         {/* Khối Hoá Đơn / Phí Dịch Vụ */}
         <div className="bg-white p-5 rounded-3xl border border-slate-100 mb-2">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1"><DollarSign size={14}/> CHI TIẾT CƯỚC PHÍ</h3>
@@ -462,16 +472,6 @@ export default function OrderDetail() {
             )}
         </div>
         
-        {order.note && (
-          <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-3">
-             <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
-             <div className="flex-1">
-               <p className="text-xs font-bold text-amber-800 mb-0.5">GHI CHÚ ĐƠN HÀNG</p>
-               <p className="text-sm text-amber-700">{order.note}</p>
-             </div>
-          </div>
-        )}
-
         {/* Nút Hủy Đơn & Xác Nhận Đơn */}
         {['WAITING_SHOP', 'PENDING', 'DRAFT'].includes(order.status) && (
           <div className="mt-6 mb-2">
