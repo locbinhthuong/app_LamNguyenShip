@@ -7,6 +7,7 @@ const ShopOrders = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('NEW'); // 'NEW', 'PROCESSING', 'HISTORY'
 
   // Modal Huỷ đơn
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
@@ -157,17 +158,44 @@ const ShopOrders = () => {
       <div className="shrink-0 bg-white px-4 py-3 safe-pt relative z-40 flex items-center justify-center border-b border-gray-100 shadow-sm">
         <span className="font-bold text-gray-800 text-lg">Đơn Khách Đặt (AloFood)</span>
       </div>
+
+      {/* Tabs */}
+      <div className="flex bg-white shadow-sm border-b border-gray-100 z-30 sticky top-[52px]">
+        {[
+          { id: 'NEW', label: 'Đơn mới' },
+          { id: 'PROCESSING', label: 'Đang xử lý' },
+          { id: 'HISTORY', label: 'Lịch sử' }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${activeTab === tab.id ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
       
       <div className="flex-1 w-full overflow-y-auto p-4">
         {loading ? (
           <div className="text-center text-gray-500 mt-10">Đang tải...</div>
-        ) : orders.length === 0 ? (
+        ) : orders.filter(order => {
+          if (activeTab === 'NEW') return order.status === 'WAITING_SHOP';
+          if (activeTab === 'PROCESSING') return ['DRAFT', 'PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(order.status);
+          if (activeTab === 'HISTORY') return ['COMPLETED', 'CANCELLED'].includes(order.status);
+          return true;
+        }).length === 0 ? (
           <div className="text-center text-gray-500 mt-10 flex flex-col items-center">
             <span className="text-4xl mb-3">📋</span>
-            <p>Chưa có đơn khách đặt nào.</p>
+            <p>Chưa có đơn hàng nào.</p>
           </div>
         ) : (
-          orders.map(renderOrder)
+          orders.filter(order => {
+            if (activeTab === 'NEW') return order.status === 'WAITING_SHOP';
+            if (activeTab === 'PROCESSING') return ['DRAFT', 'PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(order.status);
+            if (activeTab === 'HISTORY') return ['COMPLETED', 'CANCELLED'].includes(order.status);
+            return true;
+          }).map(renderOrder)
         )}
       </div>
 
