@@ -18,4 +18,7 @@ router.delete('/menu/:id', verifyToken, shopController.deleteMenuItem);
 // Cập nhật profile quán (Mở cửa, ảnh bìa...)
 router.put('/profile', verifyToken, shopController.updateShopProfile);
 
+// Lấy danh sách đơn khách đặt của quán
+router.get('/orders', verifyToken, shopController.getIncomingOrders);
+
 module.exports = router;

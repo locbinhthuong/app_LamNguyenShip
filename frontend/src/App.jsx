@@ -20,6 +20,7 @@ import ShopProfile from './pages/shop/ShopProfile';
 import ShopActivity from './pages/shop/ShopActivity';
 import ShopStatistics from './pages/shop/ShopStatistics';
 import ShopMenuManager from './pages/shop/ShopMenuManager';
+import ShopOrders from './pages/shop/ShopOrders';
 import { useAuthSocket } from './hooks/useAuthSocket';
 import ForceUpdateModal from './components/ForceUpdateModal';
 import { getAppVersionConfig } from './services/api';
@@ -183,6 +184,11 @@ function App() {
             <Route path="/shop/profile" element={
               <ProtectedRoute allowedRole="SHOP">
                 <ShopProfile />
+              </ProtectedRoute>
+            } />
+            <Route path="/shop/orders" element={
+              <ProtectedRoute allowedRole="SHOP">
+                <ShopOrders />
               </ProtectedRoute>
             } />
             <Route path="/shop/order/:id" element={

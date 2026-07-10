@@ -1,5 +1,6 @@
 const MenuItem = require('../models/MenuItem');
 const User = require('../models/User');
+const Order = require('../models/Order');
 
 // Quán ăn xem danh sách món ăn của mình
 exports.getMyMenu = async (req, res) => {
@@ -118,6 +119,24 @@ exports.updateShopProfile = async (req, res) => {
     res.json({ success: true, data: user });
   } catch (error) {
     console.error('Error updating shop profile:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+// Lấy danh sách đơn hàng khách đặt của quán
+exports.getIncomingOrders = async (req, res) => {
+  try {
+    const shopId = req.user.id;
+    
+    // Tìm các đơn hàng ALOFOOD có shopId trùng với quán
+    const orders = await Order.find({ 
+      serviceType: 'ALOFOOD', 
+      'alofoodDetails.shopId': shopId 
+    }).sort({ createdAt: -1 });
+
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    console.error('Error getting incoming orders:', error);
     res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };
