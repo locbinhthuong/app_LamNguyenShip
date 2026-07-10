@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import AnimatedPage from './AnimatedPage';
 import { Search, Clock, Bell, User, BarChart2, Store } from 'lucide-react';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
-import { updateShopFcmToken } from '../services/api';
+import { updateFcmToken } from '../services/api';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { Capacitor } from '@capacitor/core';
 
