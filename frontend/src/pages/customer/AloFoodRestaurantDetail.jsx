@@ -70,7 +70,7 @@ const AloFoodRestaurantDetail = () => {
   }, 0);
 
   const handleCheckout = () => {
-    navigate(`/customer/alofood/checkout/${id}`);
+    navigate(`/alofood/checkout/${id}`);
   };
 
   const handleSubmitReview = async () => {
