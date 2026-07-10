@@ -232,8 +232,16 @@ const AloFoodCheckout = () => {
       <div className="flex-1 overflow-y-auto pb-32">
         {/* Địa chỉ giao */}
         <div className="bg-white p-4 mb-2 shadow-sm">
-          <div className="flex items-center gap-2 mb-2 text-sm font-bold text-gray-800">
-            <MapPin size={18} className="text-blue-500" /> Giao đến
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 text-sm font-bold text-gray-800">
+              <MapPin size={18} className="text-blue-500" /> Giao đến
+            </div>
+            <button 
+              onClick={() => setShowLocationPicker(true)} 
+              className="text-blue-600 font-bold text-xs flex items-center gap-1 active:scale-95 transition-transform bg-blue-50 px-2 py-1 rounded"
+            >
+              <MapPin size={14} /> Ghim bản đồ
+            </button>
           </div>
           <div 
             onClick={openEditInfo}
@@ -343,11 +351,16 @@ const AloFoodCheckout = () => {
           isOpen={showLocationPicker}
           onClose={() => setShowLocationPicker(false)}
           onSelect={(loc) => {
-            setTempDeliveryCoordinates(loc);
-            setTempDeliveryAddress(loc.address);
+            if (showEditInfo) {
+              setTempDeliveryCoordinates(loc);
+              setTempDeliveryAddress(loc.address);
+            } else {
+              setDeliveryCoordinates(loc);
+              setDeliveryAddress(loc.address);
+            }
             setShowLocationPicker(false);
           }}
-          initialPosition={tempDeliveryCoordinates}
+          initialPosition={showEditInfo ? tempDeliveryCoordinates : deliveryCoordinates}
         />
       )}
 
