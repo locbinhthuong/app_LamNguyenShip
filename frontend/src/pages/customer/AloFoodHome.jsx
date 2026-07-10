@@ -91,7 +91,7 @@ const AloFoodHome = () => {
             {popularItems.map((item) => (
               <div 
                 key={item._id} 
-                onClick={() => navigate(`/customer/alofood/restaurant/${item.shopId._id}`)}
+                onClick={() => navigate(`/alofood/restaurant/${item.shopId._id}`)}
                 className="flex-shrink-0 w-36 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-95 transition-transform"
               >
                 <div className="h-28 bg-gray-100 relative">
