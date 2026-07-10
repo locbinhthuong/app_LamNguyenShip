@@ -18,6 +18,8 @@
   html {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: none;
+    -webkit-user-select: none;
+    user-select: none;
     font-family: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
   }
 
@@ -90,6 +92,8 @@
   
   .input-field {
     @apply w-full px-4 py-3 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 transition-all shadow-sm;
+    user-select: auto;
+    -webkit-user-select: auto;
   }
   
   .card {

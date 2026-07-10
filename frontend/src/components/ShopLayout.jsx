@@ -4,7 +4,9 @@ import { AnimatePresence } from 'framer-motion';
 import AnimatedPage from './AnimatedPage';
 import { Search, Clock, Bell, User, BarChart2, Store } from 'lucide-react';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
-import { updateFcmToken } from '../services/api';
+import { updateShopFcmToken } from '../services/api';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { Capacitor } from '@capacitor/core';
 
 const ShopLayout = () => {
   const navigate = useNavigate();
@@ -53,7 +55,12 @@ const ShopLayout = () => {
     { name: 'Tài khoản', path: '/shop/profile', icon: <User size={22} />, requiresAuth: true }
   ];
 
-  const handleNavClick = (item) => {
+  const handleNavClick = async (item) => {
+    if (Capacitor.isNativePlatform()) {
+      try {
+        await Haptics.impact({ style: ImpactStyle.Light });
+      } catch (e) {}
+    }
     const currIndex = navItems.findIndex(n => n.path === location.pathname || (n.path === '/shop' && location.pathname === '/shop'));
     const targetIndex = navItems.findIndex(n => n.path === item.path);
     const direction = targetIndex > currIndex ? 1 : -1;

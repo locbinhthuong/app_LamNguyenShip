@@ -26,6 +26,9 @@ import ForceUpdateModal from './components/ForceUpdateModal';
 import { getAppVersionConfig } from './services/api';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { Keyboard } from '@capacitor/keyboard';
 import { useEffect, useState } from 'react';
 
 const compareVersions = (v1, v2) => {
@@ -61,9 +64,31 @@ function App() {
       const remainingTime = Math.max(0, 1500 - timeElapsed);
       setTimeout(() => {
         splashScreen.classList.add('fade-out');
-        setTimeout(() => splashScreen.remove(), 400);
+        setTimeout(() => {
+          splashScreen.remove();
+          if (Capacitor.isNativePlatform()) {
+            SplashScreen.hide().catch(() => {});
+          }
+        }, 400);
       }, remainingTime);
+    } else {
+      if (Capacitor.isNativePlatform()) {
+        SplashScreen.hide().catch(() => {});
+      }
     }
+    
+    const initNativeUI = async () => {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          await StatusBar.setStyle({ style: Style.Light });
+          await StatusBar.setBackgroundColor({ color: '#f8fafc' });
+          await Keyboard.setAccessoryBarVisible({ isVisible: false });
+        } catch (e) {
+          console.warn('Native UI plugin error:', e);
+        }
+      }
+    };
+    initNativeUI();
     
     // Check App Version
     const checkAppVersion = async () => {
