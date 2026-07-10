@@ -92,6 +92,21 @@ const ShopOrders = () => {
                <p className="text-[10px] text-gray-400">{alofoodDetails?.cartItems?.length || 0} món</p>
             </div>
           </div>
+          
+          {alofoodDetails?.cartItems?.length > 0 && (
+            <div className="mt-2 bg-gray-50 p-2 rounded-lg space-y-1">
+              {alofoodDetails.cartItems.map((item, idx) => (
+                <div key={idx} className="flex justify-between items-start text-xs">
+                  <div className="flex-1 pr-2">
+                    <span className="font-bold text-gray-700">{item.quantity}x</span> <span className="text-gray-600">{item.name}</span>
+                    {item.note && <p className="text-[10px] text-orange-600 italic mt-0.5">Note: {item.note}</p>}
+                  </div>
+                  <span className="text-gray-500 font-medium">{(item.price * item.quantity).toLocaleString()}đ</span>
+                </div>
+              ))}
+            </div>
+          )}
+
           {order.note && (
             <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded-lg mt-2">Ghi chú: {order.note}</p>
           )}
