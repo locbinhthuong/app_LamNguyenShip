@@ -221,7 +221,6 @@ const AloFoodRestaurantDetail = () => {
             </div>
           ))
         )}
-      </div>
 
       {/* REVIEWS SECTION */}
       <div className="bg-white mt-2 p-5 shadow-sm border-t border-gray-100">
@@ -282,6 +281,7 @@ const AloFoodRestaurantDetail = () => {
             ))
           )}
         </div>
+      </div>
       </div>
 
       {/* ITEM DETAIL MODAL */}
