@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, MapPin, CheckCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, CheckCircle, Loader2 } from 'lucide-react';
 import { api, getCustomerProfile } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
 
@@ -11,6 +11,7 @@ const AloFoodCheckout = () => {
   const [restaurant, setRestaurant] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingFee, setLoadingFee] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
   const [deliveryAddress, setDeliveryAddress] = useState('Đang lấy vị trí...');
@@ -27,10 +28,63 @@ const AloFoodCheckout = () => {
   
   const [scheduledTime, setScheduledTime] = useState('');
 
-  // Dummy distance calculation since we don't have Mapbox setup here directly
+  const [distance, setDistance] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(15000); // Base fee
   const foodTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalAmount = foodTotal + deliveryFee;
+
+  const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    return R * c;
+  };
+
+  useEffect(() => {
+    const fetchDistanceAndFee = async () => {
+      if (!restaurant?.defaultLocation || !deliveryCoordinates) return;
+      
+      setLoadingFee(true);
+      try {
+        const shopLat = restaurant.defaultLocation.lat;
+        const shopLng = restaurant.defaultLocation.lng;
+        const custLat = deliveryCoordinates.lat;
+        const custLng = deliveryCoordinates.lng;
+        
+        let distKm = 0;
+        try {
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${shopLng},${shopLat};${custLng},${custLat}?overview=false`);
+          const data = await res.json();
+          if (data.routes && data.routes.length > 0) {
+            distKm = data.routes[0].distance / 1000;
+          } else {
+            throw new Error('No route');
+          }
+        } catch (err) {
+          distKm = calculateHaversineDistance(shopLat, shopLng, custLat, custLng);
+        }
+        
+        setDistance(distKm);
+        
+        let fee = 15000; // 3km đầu 15k
+        if (distKm > 3) {
+          fee += Math.ceil(distKm - 3) * 5000; // mỗi km tiếp theo 5k
+        }
+        setDeliveryFee(fee);
+      } catch (err) {
+        console.error('Fee calc error', err);
+      } finally {
+        setLoadingFee(false);
+      }
+    };
+    
+    fetchDistanceAndFee();
+  }, [restaurant, deliveryCoordinates]);
 
   useEffect(() => {
     fetchData();
@@ -137,6 +191,7 @@ const AloFoodCheckout = () => {
         cartItems,
         foodTotal,
         deliveryFee,
+        distance: distance ? parseFloat(distance.toFixed(1)) : 0,
         totalAmount,
         deliveryAddress: deliveryCoordinates.address,
         deliveryCoordinates,
@@ -242,8 +297,13 @@ const AloFoodCheckout = () => {
               <span>{foodTotal.toLocaleString('vi-VN')}đ</span>
             </div>
             <div className="flex justify-between text-gray-600">
-              <span>Phí giao hàng (Tạm tính)</span>
-              <span>{deliveryFee.toLocaleString('vi-VN')}đ</span>
+              <span>
+                Phí giao hàng 
+                {distance > 0 && <span className="text-xs text-blue-600 ml-1">({distance.toFixed(1)} km)</span>}
+              </span>
+              <span>
+                {loadingFee ? <Loader2 size={16} className="animate-spin text-gray-400" /> : `${deliveryFee.toLocaleString('vi-VN')}đ`}
+              </span>
             </div>
             <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100">
               <span>Tổng thanh toán</span>
