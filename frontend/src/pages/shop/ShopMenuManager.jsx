@@ -17,7 +17,7 @@ const ShopMenuManager = () => {
     description: '',
     category: 'Khác',
     isAvailable: true,
-    image: ''
+    images: []
   });
 
   useEffect(() => {
@@ -47,7 +47,7 @@ const ShopMenuManager = () => {
         description: item.description || '',
         category: item.category || 'Khác',
         isAvailable: item.isAvailable,
-        image: item.image || ''
+        images: item.images && item.images.length > 0 ? item.images : (item.image ? [item.image] : [])
       });
     } else {
       setEditingItem(null);
@@ -57,7 +57,7 @@ const ShopMenuManager = () => {
         description: '',
         category: 'Khác',
         isAvailable: true,
-        image: ''
+        images: []
       });
     }
     setShowModal(true);
@@ -95,6 +95,11 @@ const ShopMenuManager = () => {
     const file = e.target.files[0];
     if (!file) return;
 
+    if (formData.images.length >= 3) {
+      alert('Chỉ được tải lên tối đa 3 ảnh');
+      return;
+    }
+
     const form = new FormData();
     form.append('image', file);
 
@@ -103,12 +108,18 @@ const ShopMenuManager = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data.success) {
-        setFormData({ ...formData, image: res.data.data.url });
+        setFormData({ ...formData, images: [...formData.images, res.data.data.url] });
       }
     } catch (err) {
       console.error('Upload error', err);
       alert('Lỗi tải ảnh lên');
     }
+  };
+
+  const handleRemoveImage = (index) => {
+    const newImages = [...formData.images];
+    newImages.splice(index, 1);
+    setFormData({ ...formData, images: newImages });
   };
 
   return (
@@ -148,7 +159,9 @@ const ShopMenuManager = () => {
                 )}
                 
                 <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 relative z-20">
-                  {item.image ? (
+                  {item.images && item.images.length > 0 ? (
+                    <img src={getFullImageUrl(item.images[0])} alt={item.name} className="w-full h-full object-cover" />
+                  ) : item.image ? (
                     <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -197,23 +210,30 @@ const ShopMenuManager = () => {
             
             <form onSubmit={handleSave} className="p-4 overflow-y-auto flex-1 space-y-4">
               
-              <div className="flex justify-center mb-4">
-                <label className="w-24 h-24 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group">
-                  {formData.image ? (
-                    <>
-                      <img src={getFullImageUrl(formData.image)} alt="Preview" className="w-full h-full object-cover" />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span className="text-white text-xs font-bold">Thay Đổi</span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="text-blue-400 mb-1" />
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-2">Ảnh món ăn (Tối đa 3 ảnh)</label>
+                <div className="flex flex-wrap gap-3">
+                  {formData.images.map((imgUrl, index) => (
+                    <div key={index} className="relative w-20 h-20 rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                      <img src={getFullImageUrl(imgUrl)} alt="Preview" className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => handleRemoveImage(index)}
+                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  
+                  {formData.images.length < 3 && (
+                    <label className="w-20 h-20 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 flex flex-col items-center justify-center cursor-pointer hover:bg-blue-100 transition-colors">
+                      <ImageIcon className="text-blue-400 mb-1" size={20} />
                       <span className="text-[10px] font-medium text-blue-600">Thêm Ảnh</span>
-                    </>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                    </label>
                   )}
-                  <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                </label>
+                </div>
               </div>
 
               <div>

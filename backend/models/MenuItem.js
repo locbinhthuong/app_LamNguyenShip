@@ -25,6 +25,11 @@ const menuItemSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  images: {
+    type: [String],
+    default: [],
+    validate: [v => v.length <= 3, 'Tối đa 3 ảnh']
+  },
   category: {
     type: String,
     default: 'Khác',

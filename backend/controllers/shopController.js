@@ -17,14 +17,22 @@ exports.getMyMenu = async (req, res) => {
 exports.createMenuItem = async (req, res) => {
   try {
     const shopId = req.user.id;
-    const { name, description, price, image, category, isAvailable } = req.body;
+    const { name, description, price, images, category, isAvailable } = req.body;
+
+    let imageArr = [];
+    if (images && Array.isArray(images)) {
+      imageArr = images.slice(0, 3);
+    } else if (req.body.image) {
+      imageArr = [req.body.image];
+    }
 
     const newItem = new MenuItem({
       shopId,
       name,
       description,
       price,
-      image,
+      images: imageArr,
+      image: imageArr.length > 0 ? imageArr[0] : null,
       category,
       isAvailable
     });
@@ -43,6 +51,15 @@ exports.updateMenuItem = async (req, res) => {
     const shopId = req.user.id;
     const { id } = req.params;
     const updates = req.body;
+
+    if (updates.images && Array.isArray(updates.images)) {
+      updates.images = updates.images.slice(0, 3);
+      if (updates.images.length > 0) {
+        updates.image = updates.images[0];
+      } else {
+        updates.image = null;
+      }
+    }
 
     const item = await MenuItem.findOneAndUpdate(
       { _id: id, shopId },

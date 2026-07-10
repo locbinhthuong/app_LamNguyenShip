@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, Plus, Minus, ShoppingCart, X } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Plus, Minus, ShoppingCart, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
 
 const AloFoodRestaurantDetail = () => {
@@ -10,6 +10,7 @@ const AloFoodRestaurantDetail = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   
   const [cart, setCart] = useState({}); // { itemId: quantity }
 
@@ -125,10 +126,12 @@ const AloFoodRestaurantDetail = () => {
                     <div 
                       key={item._id} 
                       className="p-4 flex gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                      onClick={() => setSelectedItem(item)}
+                      onClick={() => { setSelectedItem(item); setCurrentImageIndex(0); }}
                     >
                       <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
-                        {item.image ? (
+                        {item.images && item.images.length > 0 ? (
+                          <img src={getFullImageUrl(item.images[0])} alt={item.name} className="w-full h-full object-cover" />
+                        ) : item.image ? (
                           <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-gray-200"></div>
@@ -187,13 +190,45 @@ const AloFoodRestaurantDetail = () => {
           ></div>
           <div className="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[90vh] z-10 transform transition-all shadow-2xl">
             <div className="relative h-64 bg-gray-100 flex-shrink-0">
-              {selectedItem.image ? (
-                <img src={getFullImageUrl(selectedItem.image)} alt={selectedItem.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium">Chưa có ảnh</div>
-              )}
+              {(() => {
+                const images = selectedItem.images && selectedItem.images.length > 0 
+                  ? selectedItem.images 
+                  : (selectedItem.image ? [selectedItem.image] : []);
+                
+                if (images.length === 0) {
+                  return <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium">Chưa có ảnh</div>;
+                }
+
+                return (
+                  <>
+                    <img src={getFullImageUrl(images[currentImageIndex])} alt={selectedItem.name} className="w-full h-full object-cover transition-opacity duration-300" />
+                    
+                    {images.length > 1 && (
+                      <>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === 0 ? images.length - 1 : prev - 1); }}
+                          className="absolute top-1/2 left-2 -translate-y-1/2 w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 z-20"
+                        >
+                          <ChevronLeft size={20} />
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => prev === images.length - 1 ? 0 : prev + 1); }}
+                          className="absolute top-1/2 right-2 -translate-y-1/2 w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-black/60 z-20"
+                        >
+                          <ChevronRight size={20} />
+                        </button>
+                        <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-20">
+                          {images.map((_, idx) => (
+                            <div key={idx} className={`h-1.5 rounded-full transition-all ${idx === currentImageIndex ? 'w-4 bg-white' : 'w-1.5 bg-white/50'}`} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </>
+                );
+              })()}
               
-              <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent flex justify-end">
+              <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent flex justify-end z-20">
                 <button 
                   onClick={() => setSelectedItem(null)}
                   className="w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
