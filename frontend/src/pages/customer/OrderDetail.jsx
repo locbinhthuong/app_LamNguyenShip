@@ -234,13 +234,23 @@ export default function OrderDetail() {
         )}
 
         {order.note && (
-          <div className="bg-amber-50 p-4 rounded-3xl border border-amber-100 flex items-start gap-3 mb-2">
-             <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
-             <div className="flex-1">
-               <p className="text-xs font-bold text-amber-800 mb-0.5">GHI CHÚ ĐƠN HÀNG</p>
-               <p className="text-sm text-amber-700">{order.note}</p>
-             </div>
-          </div>
+           <div className="bg-amber-50 p-4 rounded-xl mb-4 border border-amber-100 flex gap-3 items-start shadow-sm">
+               <Info className="text-amber-500 mt-0.5" size={20} />
+               <div className="flex-1">
+                 <h4 className="text-amber-800 font-bold text-sm mb-1">Ghi chú cho quán</h4>
+                 <p className="text-sm text-amber-700">{order.note}</p>
+               </div>
+           </div>
+        )}
+
+        {order.scheduledTime && (
+           <div className="bg-blue-50 p-4 rounded-xl mb-4 border border-blue-100 flex gap-3 items-start shadow-sm">
+               <Clock className="text-blue-500 mt-0.5" size={20} />
+               <div className="flex-1">
+                 <h4 className="text-blue-800 font-bold text-sm mb-1">Hẹn giờ nhận đơn</h4>
+                 <p className="text-sm text-blue-700">{new Date(order.scheduledTime).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</p>
+               </div>
+           </div>
         )}
 
         {/* Khối Hoá Đơn / Phí Dịch Vụ */}

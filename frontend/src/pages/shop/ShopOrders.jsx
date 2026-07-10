@@ -111,6 +111,11 @@ const ShopOrders = () => {
           {order.note && (
             <p className="text-xs text-orange-600 bg-orange-50 p-2 rounded-lg mt-2">Ghi chú: {order.note}</p>
           )}
+          {order.scheduledTime && (
+            <p className="text-xs text-blue-600 bg-blue-50 p-2 rounded-lg mt-2 font-medium flex items-center gap-1">
+              <Clock size={12} /> Hẹn giờ nhận: {new Date(order.scheduledTime).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+            </p>
+          )}
           {order.status === 'CANCELLED' && order.cancelReason && (
             <p className="text-xs text-red-600 bg-red-50 p-2 rounded-lg mt-2 font-medium">Lý do hủy: {order.cancelReason}</p>
           )}
