@@ -115,6 +115,22 @@ exports.createFoodOrder = async (req, res) => {
 
     await newOrder.save();
     
+    // Gửi thông báo đẩy về cho cửa hàng
+    try {
+      if (shop && shop.fcmToken) {
+        const { sendNotification } = require('../utils/notification');
+        const titleShop = "🔔 Có đơn đặt đồ ăn mới!";
+        const itemsStrShop = cartItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
+        const bodyShop = `Khách: ${customerName} - ${customerPhone}\nGiao đến: ${deliveryAddress}\nMón: ${itemsStrShop}\nGhi chú: ${note || 'Không có'}`;
+        
+        const finalBodyShop = bodyShop.length > 250 ? bodyShop.substring(0, 247) + '...' : bodyShop;
+        
+        await sendNotification(shop.fcmToken, titleShop, finalBodyShop, { url: `/shop/orders` });
+      }
+    } catch (pushErr) {
+      console.error('Error sending push to shop for AloFood:', pushErr);
+    }
+
     // Gửi thông báo đẩy về cho khách hàng
     try {
       const { sendNotification } = require('../utils/notification');
