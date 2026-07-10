@@ -198,8 +198,9 @@ exports.addReview = async (req, res) => {
     await review.save();
 
     // Cập nhật lại rating trung bình cho quán
+    const mongoose = require('mongoose');
     const stats = await Review.aggregate([
-      { $match: { shopId: new require('mongoose').Types.ObjectId(shopId) } },
+      { $match: { shopId: new mongoose.Types.ObjectId(shopId) } },
       { $group: { _id: null, avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
     ]);
 
