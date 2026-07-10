@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, Plus, Minus, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, Plus, Minus, ShoppingCart, X } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
 
 const AloFoodRestaurantDetail = () => {
@@ -9,6 +9,7 @@ const AloFoodRestaurantDetail = () => {
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedItem, setSelectedItem] = useState(null);
   
   const [cart, setCart] = useState({}); // { itemId: quantity }
 
@@ -121,7 +122,11 @@ const AloFoodRestaurantDetail = () => {
                 {items.map(item => {
                   const qty = cart[item._id] || 0;
                   return (
-                    <div key={item._id} className="p-4 flex gap-3">
+                    <div 
+                      key={item._id} 
+                      className="p-4 flex gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                      onClick={() => setSelectedItem(item)}
+                    >
                       <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
                         {item.image ? (
                           <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
@@ -139,17 +144,23 @@ const AloFoodRestaurantDetail = () => {
                           <div className="flex justify-end items-center mt-2">
                             {qty > 0 ? (
                               <div className="flex items-center gap-3">
-                                <button onClick={() => updateCart(item._id, -1)} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold border border-gray-200">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); updateCart(item._id, -1); }} 
+                                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold border border-gray-200"
+                                >
                                   <Minus size={14} />
                                 </button>
                                 <span className="font-bold w-4 text-center">{qty}</span>
-                                <button onClick={() => updateCart(item._id, 1)} className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm">
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }} 
+                                  className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm"
+                                >
                                   <Plus size={14} />
                                 </button>
                               </div>
                             ) : (
                               <button 
-                                onClick={() => updateCart(item._id, 1)}
+                                onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }}
                                 className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm"
                               >
                                 <Plus size={16} />
@@ -166,6 +177,65 @@ const AloFoodRestaurantDetail = () => {
           ))
         )}
       </div>
+
+      {/* ITEM DETAIL MODAL */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+            onClick={() => setSelectedItem(null)}
+          ></div>
+          <div className="bg-white w-full sm:w-[400px] rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[90vh] z-10 transform transition-all shadow-2xl">
+            <div className="relative h-64 bg-gray-100 flex-shrink-0">
+              {selectedItem.image ? (
+                <img src={getFullImageUrl(selectedItem.image)} alt={selectedItem.name} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 font-medium">Chưa có ảnh</div>
+              )}
+              
+              <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/50 to-transparent flex justify-end">
+                <button 
+                  onClick={() => setSelectedItem(null)}
+                  className="w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/60 transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <div className="flex justify-between items-start gap-4 mb-3">
+                <h2 className="text-2xl font-bold text-gray-800 leading-tight">{selectedItem.name}</h2>
+              </div>
+              <p className="text-xl font-bold text-red-500 mb-6">{selectedItem.price.toLocaleString('vi-VN')}đ</p>
+              
+              {selectedItem.description && (
+                <div className="mb-6">
+                  <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <div className="w-1 h-4 bg-red-500 rounded-full"></div>
+                    Chi tiết món ăn
+                  </h3>
+                  <p className="text-gray-600 text-[15px] whitespace-pre-line leading-relaxed">{selectedItem.description}</p>
+                </div>
+              )}
+            </div>
+            
+            {restaurant.isOpen && (
+              <div className="p-4 border-t border-gray-100 bg-white drop-shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
+                <button 
+                  onClick={() => {
+                    updateCart(selectedItem._id, 1);
+                    setSelectedItem(null);
+                  }}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-500/30 flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                >
+                  <Plus size={20} /> Thêm vào giỏ ({selectedItem.price.toLocaleString('vi-VN')}đ)
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* FLOATING CART SUMMARY */}
       {totalItems > 0 && restaurant.isOpen && (
