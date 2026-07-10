@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const MenuItem = require('../models/MenuItem');
 const Order = require('../models/Order');
+const Review = require('../models/Review');
 
 // Lấy danh sách quán ăn (dành cho Customer)
 exports.getRestaurants = async (req, res) => {
@@ -156,5 +157,62 @@ exports.createFoodOrder = async (req, res) => {
   } catch (error) {
     console.error('Error creating food order:', error);
     res.status(500).json({ success: false, message: 'Lỗi khi tạo đơn' });
+  }
+};
+
+// Lấy 5 đánh giá mới nhất của quán
+exports.getReviews = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const reviews = await Review.find({ shopId: id })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+      
+    res.json({ success: true, data: reviews });
+  } catch (error) {
+    console.error('Error getting reviews:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+// Khách hàng gửi đánh giá
+exports.addReview = async (req, res) => {
+  try {
+    const customerId = req.user.id;
+    const { id: shopId } = req.params;
+    const { rating, comment, customerName } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'Điểm đánh giá không hợp lệ (1-5)' });
+    }
+
+    const review = new Review({
+      shopId,
+      customerId,
+      customerName: customerName || 'Khách hàng',
+      rating,
+      comment
+    });
+
+    await review.save();
+
+    // Cập nhật lại rating trung bình cho quán
+    const stats = await Review.aggregate([
+      { $match: { shopId: new require('mongoose').Types.ObjectId(shopId) } },
+      { $group: { _id: null, avgRating: { $avg: '$rating' }, count: { $sum: 1 } } }
+    ]);
+
+    if (stats.length > 0) {
+      await User.findByIdAndUpdate(shopId, {
+        rating: Math.round(stats[0].avgRating * 10) / 10,
+        ratingCount: stats[0].count
+      });
+    }
+
+    res.json({ success: true, data: review, message: 'Đánh giá thành công' });
+  } catch (error) {
+    console.error('Error adding review:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };

@@ -14,6 +14,11 @@ const AloFoodRestaurantDetail = () => {
   
   const [cart, setCart] = useState({}); // { itemId: quantity }
 
+  const [reviews, setReviews] = useState([]);
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
   useEffect(() => {
     const fetchMenu = async () => {
       try {
@@ -22,8 +27,14 @@ const AloFoodRestaurantDetail = () => {
           setRestaurant(res.data.data.restaurant);
           setMenuItems(res.data.data.menuItems);
         }
+        
+        // Fetch reviews
+        const reviewRes = await api.get(`/alofood/restaurants/${id}/reviews`);
+        if (reviewRes.data.success) {
+          setReviews(reviewRes.data.data);
+        }
       } catch (error) {
-        console.error('Lỗi lấy menu quán:', error);
+        console.error('Lỗi lấy menu hoặc đánh giá:', error);
       } finally {
         setLoading(false);
       }
@@ -59,8 +70,39 @@ const AloFoodRestaurantDetail = () => {
   }, 0);
 
   const handleCheckout = () => {
-    if (totalItems === 0) return;
-    navigate(`/alofood/checkout/${id}`);
+    navigate(`/customer/alofood/checkout/${id}`);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!newReviewRating || newReviewRating < 1 || newReviewRating > 5) {
+      alert('Vui lòng chọn từ 1 đến 5 sao!');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      const userProfileRaw = localStorage.getItem('user_profile');
+      let customerName = 'Khách hàng';
+      if (userProfileRaw) {
+        const userProfile = JSON.parse(userProfileRaw);
+        customerName = userProfile.name || 'Khách hàng';
+      }
+
+      const res = await api.post(`/alofood/restaurants/${id}/reviews`, {
+        rating: newReviewRating,
+        comment: newReviewComment,
+        customerName
+      });
+      if (res.data.success) {
+        setReviews([res.data.data, ...reviews].slice(0, 5));
+        setNewReviewComment('');
+        setNewReviewRating(5);
+        alert('Gửi đánh giá thành công!');
+      }
+    } catch (error) {
+      alert('Lỗi: ' + (error.response?.data?.message || 'Không thể gửi đánh giá lúc này'));
+    } finally {
+      setSubmittingReview(false);
+    }
   };
 
   if (loading) return <div className="p-10 text-center">Đang tải...</div>;
@@ -179,6 +221,67 @@ const AloFoodRestaurantDetail = () => {
             </div>
           ))
         )}
+      </div>
+
+      {/* REVIEWS SECTION */}
+      <div className="bg-white mt-2 p-5 shadow-sm border-t border-gray-100">
+        <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <Star className="text-yellow-400 fill-current" size={18} /> Đánh giá từ khách hàng
+        </h3>
+        
+        {/* Review Form */}
+        <div className="mb-6 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+          <p className="text-sm font-bold text-gray-700 mb-2">Đánh giá của bạn</p>
+          <div className="flex gap-2 mb-3">
+            {[1, 2, 3, 4, 5].map(star => (
+              <Star 
+                key={star} 
+                size={24} 
+                onClick={() => setNewReviewRating(star)}
+                className={`cursor-pointer transition-colors ${star <= newReviewRating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+              />
+            ))}
+          </div>
+          <textarea 
+            value={newReviewComment}
+            onChange={(e) => setNewReviewComment(e.target.value)}
+            placeholder="Chia sẻ cảm nhận của bạn về quán ăn..."
+            className="w-full bg-white border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-red-500 min-h-[80px] resize-none mb-3"
+          ></textarea>
+          <button 
+            onClick={handleSubmitReview}
+            disabled={submittingReview}
+            className="bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-colors"
+          >
+            {submittingReview ? 'Đang gửi...' : 'Gửi đánh giá'}
+          </button>
+        </div>
+
+        {/* Reviews List */}
+        <div className="space-y-4">
+          {reviews.length === 0 ? (
+            <p className="text-gray-500 text-sm italic text-center py-4">Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá!</p>
+          ) : (
+            reviews.map((rv) => (
+              <div key={rv._id} className="border-b border-gray-50 pb-4 last:border-0 last:pb-0">
+                <div className="flex justify-between items-start mb-1">
+                  <div className="font-bold text-gray-800 text-sm">{rv.customerName}</div>
+                  <div className="text-xs text-gray-400">{new Date(rv.createdAt).toLocaleDateString('vi-VN')}</div>
+                </div>
+                <div className="flex gap-0.5 mb-2">
+                  {[1, 2, 3, 4, 5].map(star => (
+                    <Star 
+                      key={star} 
+                      size={12} 
+                      className={star <= rv.rating ? 'text-yellow-400 fill-current' : 'text-gray-200'}
+                    />
+                  ))}
+                </div>
+                {rv.comment && <p className="text-gray-600 text-sm whitespace-pre-line">{rv.comment}</p>}
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       {/* ITEM DETAIL MODAL */}

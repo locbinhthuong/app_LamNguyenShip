@@ -12,4 +12,8 @@ router.get('/restaurants/:id/menu', alofoodController.getRestaurantMenu);
 // Khách hàng đặt món
 router.post('/order', verifyToken, alofoodController.createFoodOrder);
 
+// Quản lý đánh giá
+router.get('/restaurants/:id/reviews', alofoodController.getReviews);
+router.post('/restaurants/:id/reviews', verifyToken, alofoodController.addReview);
+
 module.exports = router;
