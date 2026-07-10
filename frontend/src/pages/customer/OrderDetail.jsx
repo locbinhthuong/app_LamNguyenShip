@@ -209,6 +209,30 @@ export default function OrderDetail() {
           </div>
         )}
 
+        {/* Khối Thông Tin Món Ăn (Chỉ dành cho ALOFOOD) */}
+        {order.serviceType === 'ALOFOOD' && order.alofoodDetails && (
+          <div className="bg-white p-5 rounded-3xl border border-slate-100 mb-2">
+             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1"><Package size={14}/> THÔNG TIN ĐƠN HÀNG</h3>
+             
+             <div className="space-y-3">
+               {order.alofoodDetails.cartItems?.map((item, idx) => (
+                 <div key={idx} className="flex justify-between items-start bg-slate-50 p-3 rounded-2xl">
+                   <div className="flex-1 pr-2">
+                     <p className="text-sm font-bold text-slate-800"><span className="text-blue-600 mr-1">{item.quantity}x</span> {item.name}</p>
+                     {item.note && <p className="text-[11px] text-orange-600 italic mt-1">Ghi chú: {item.note}</p>}
+                   </div>
+                   <p className="text-sm font-bold text-slate-600">{(item.price * item.quantity).toLocaleString()}đ</p>
+                 </div>
+               ))}
+             </div>
+             
+             <div className="mt-3 flex justify-between items-center px-1 border-t border-dashed border-slate-200 pt-3">
+               <span className="text-sm text-slate-500 font-medium">Tổng tiền món:</span>
+               <span className="font-bold text-slate-800">{(order.alofoodDetails.foodTotal || 0).toLocaleString()}đ</span>
+             </div>
+          </div>
+        )}
+
         {/* Khối Hoá Đơn / Phí Dịch Vụ */}
         <div className="bg-white p-5 rounded-3xl border border-slate-100 mb-2">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1"><DollarSign size={14}/> CHI TIẾT CƯỚC PHÍ</h3>
@@ -442,7 +466,7 @@ export default function OrderDetail() {
           <div className="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-start gap-3">
              <Info size={18} className="text-amber-500 shrink-0 mt-0.5" />
              <div className="flex-1">
-               <p className="text-xs font-bold text-amber-800 mb-0.5">LƯU Ý CỦA BẠN</p>
+               <p className="text-xs font-bold text-amber-800 mb-0.5">GHI CHÚ ĐƠN HÀNG</p>
                <p className="text-sm text-amber-700">{order.note}</p>
              </div>
           </div>
