@@ -140,3 +140,92 @@ exports.getIncomingOrders = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };
+
+// Quán ăn chấp nhận đơn hàng
+exports.acceptAlofoodOrder = async (req, res) => {
+  try {
+    const shopId = req.user.id;
+    const { id } = req.params;
+
+    const order = await Order.findOneAndUpdate(
+      { _id: id, serviceType: 'ALOFOOD', 'alofoodDetails.shopId': shopId, status: 'WAITING_SHOP' },
+      { $set: { status: 'PENDING' } },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Đơn hàng không hợp lệ hoặc đã xử lý' });
+    }
+
+    if (order.customerId) {
+      const User = require('../models/User');
+      const { sendNotification } = require('../utils/notification');
+      const customer = await User.findById(order.customerId);
+      if (customer && customer.fcmToken) {
+        await sendNotification(
+          customer.fcmToken, 
+          "✅ Quán đã nhận đơn!", 
+          `Đơn hàng #${order.orderCode} đã được quán xác nhận và đang tìm tài xế giao cho bạn.`, 
+          { url: `/customer/order/${order._id}` }
+        );
+      }
+    }
+
+    if (req.io) {
+      const { emitNewOrder } = require('../sockets/index');
+      const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+      emitNewOrder(req.io, payload);
+    }
+
+    res.json({ success: true, message: 'Đã nhận đơn', data: order });
+  } catch (error) {
+    console.error('Error acceptAlofoodOrder:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
+// Quán ăn từ chối đơn hàng
+exports.rejectAlofoodOrder = async (req, res) => {
+  try {
+    const shopId = req.user.id;
+    const { id } = req.params;
+    const { cancelReason } = req.body;
+
+    if (!cancelReason) {
+      return res.status(400).json({ success: false, message: 'Vui lòng nhập lý do hủy đơn' });
+    }
+
+    const order = await Order.findOneAndUpdate(
+      { _id: id, serviceType: 'ALOFOOD', 'alofoodDetails.shopId': shopId, status: 'WAITING_SHOP' },
+      { $set: { status: 'CANCELLED', cancelReason } },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Đơn hàng không hợp lệ hoặc đã xử lý' });
+    }
+
+    if (order.customerId) {
+      const User = require('../models/User');
+      const { sendNotification } = require('../utils/notification');
+      const customer = await User.findById(order.customerId);
+      if (customer && customer.fcmToken) {
+        await sendNotification(
+          customer.fcmToken, 
+          "❌ Quán đã hủy đơn", 
+          `Đơn hàng #${order.orderCode} bị hủy. Lý do: ${cancelReason}`, 
+          { url: `/customer/order/${order._id}` }
+        );
+      }
+    }
+
+    if (req.io) {
+      req.io.to('admins').emit('order_updated', order);
+    }
+
+    res.json({ success: true, message: 'Đã hủy đơn', data: order });
+  } catch (error) {
+    console.error('Error rejectAlofoodOrder:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};

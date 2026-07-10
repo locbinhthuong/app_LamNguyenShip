@@ -108,6 +108,12 @@ export default function OrderDetail() {
     { key: 'ACCEPTED', label: 'Tài Xế Đang Xếp Xe' },
     { key: 'PICKED_UP', label: 'Tài Xế Đang Đến Đón' },
     { key: 'COMPLETED', label: 'Hoàn Tất Chuyến Đi' }
+  ] : order?.serviceType === 'ALOFOOD' ? [
+    { key: 'WAITING_SHOP', label: 'Quán Đang Xử Lý' },
+    { key: 'PENDING', label: 'Đang Tìm Tài Xế' },
+    { key: 'ACCEPTED', label: 'Tài Xế Đã Nhận' },
+    { key: 'PICKED_UP', label: 'Xế Đã Lấy Đồ Ăn' },
+    { key: 'COMPLETED', label: 'Hoàn Tất' }
   ] : [
     { key: 'DRAFT', label: 'Chờ Báo Giá' },
     { key: 'PENDING', label: 'Đã Báo Giá (Chờ Xế)' },
@@ -167,6 +173,7 @@ export default function OrderDetail() {
                       </p>
                       {isCurrent && order.status === 'PENDING' && <p className="text-[10px] text-slate-500">Đang tìm tài xế gần nhất...</p>}
                       {isCurrent && order.status === 'DRAFT' && <p className="text-[10px] text-slate-500">Đang chờ tổng đài xét duyệt...</p>}
+                      {isCurrent && order.status === 'WAITING_SHOP' && <p className="text-[10px] text-slate-500">Đang chờ quán ăn xác nhận...</p>}
                     </div>
                   </div>
                 )
@@ -442,7 +449,7 @@ export default function OrderDetail() {
         )}
 
         {/* Nút Hủy Đơn & Xác Nhận Đơn */}
-        {['PENDING', 'DRAFT'].includes(order.status) && (
+        {['WAITING_SHOP', 'PENDING', 'DRAFT'].includes(order.status) && (
           <div className="mt-6 mb-2">
             <div className="grid grid-cols-2 gap-3">
               <button 

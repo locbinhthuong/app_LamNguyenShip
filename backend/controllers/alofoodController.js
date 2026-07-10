@@ -110,7 +110,7 @@ exports.createFoodOrder = async (req, res) => {
       codAmount: foodTotal + deliveryFee, 
       deliveryFee: deliveryFee,
       feePaidBy: 'RECEIVER',
-      status: 'PENDING'
+      status: 'WAITING_SHOP'
     });
 
     await newOrder.save();

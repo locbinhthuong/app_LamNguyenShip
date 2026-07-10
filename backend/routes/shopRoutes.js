@@ -21,4 +21,10 @@ router.put('/profile', verifyToken, shopController.updateShopProfile);
 // Lấy danh sách đơn khách đặt của quán
 router.get('/orders', verifyToken, shopController.getIncomingOrders);
 
+// Chấp nhận đơn hàng
+router.put('/orders/:id/accept', verifyToken, shopController.acceptAlofoodOrder);
+
+// Từ chối đơn hàng
+router.put('/orders/:id/reject', verifyToken, shopController.rejectAlofoodOrder);
+
 module.exports = router;

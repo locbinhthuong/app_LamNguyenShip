@@ -69,6 +69,7 @@ const ActivityList = () => {
   const getStatusConfig = (order) => {
     const { status, serviceType } = order;
     switch(status) {
+      case 'WAITING_SHOP': return { text: 'Chờ quán nhận', color: 'text-amber-500', bg: 'bg-amber-50', icon: <Clock size={16}/> };
       case 'DRAFT': return { text: 'Đang Tính Phí', color: 'text-purple-500', bg: 'bg-purple-50', icon: <Clock size={16}/> };
       case 'PENDING': return { text: 'Đang chờ xế', color: 'text-blue-500', bg: 'bg-blue-50', icon: <Clock size={16}/> };
       case 'ACCEPTED': return { text: 'Đã có xế nhận', color: 'text-blue-500', bg: 'bg-blue-50', icon: <Truck size={16}/> };
@@ -83,7 +84,7 @@ const ActivityList = () => {
   const [filter, setFilter] = useState('pending');
   const scrollRef = useRef(null);
 
-  const pendingOrders = orders.filter(o => ['DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status));
+  const pendingOrders = orders.filter(o => ['WAITING_SHOP', 'DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status));
   const activeOrders = orders.filter(o => ['PICKED_UP', 'DELIVERING'].includes(o.status));
   const historyOrders = orders.filter(o => ['COMPLETED', 'CANCELLED'].includes(o.status));
 

@@ -150,11 +150,11 @@ const orderSchema = new mongoose.Schema({
   }],
 
   // Trạng thái đơn hàng
-  // DRAFT (Lưu nháp/Đang sửa) -> PENDING -> ACCEPTED -> PICKED_UP -> DELIVERING -> COMPLETED
+  // WAITING_SHOP (Chờ quán xác nhận) -> DRAFT -> PENDING -> ACCEPTED -> PICKED_UP -> DELIVERING -> COMPLETED
   //           CANCELLED (hủy bất kỳ lúc nào)
   status: {
     type: String,
-    enum: ['DRAFT', 'PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING', 'COMPLETED', 'CANCELLED'],
+    enum: ['WAITING_SHOP', 'DRAFT', 'PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING', 'COMPLETED', 'CANCELLED'],
     default: 'PENDING',
     index: true
   },
