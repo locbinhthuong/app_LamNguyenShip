@@ -143,6 +143,30 @@ const ShopOrders = () => {
           </div>
         )}
 
+        {['ACCEPTED', 'PENDING'].includes(order.status) && (
+          <div className="mt-3 flex gap-2">
+            <button 
+              onClick={async (e) => {
+                e.stopPropagation();
+                if (window.confirm('Xác nhận đã bàn giao đồ ăn cho tài xế?')) {
+                  try {
+                    const res = await api.put(`/shop/orders/${order._id}/handover`);
+                    if (res.data.success) {
+                      fetchOrders();
+                      alert('Đã giao cho tài xế thành công!');
+                    }
+                  } catch (err) {
+                    alert(err.response?.data?.message || 'Lỗi server');
+                  }
+                }
+              }}
+              className="flex-1 bg-green-500 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-green-600 transition-colors shadow-md shadow-green-500/20"
+            >
+              Đã giao cho tài xế
+            </button>
+          </div>
+        )}
+
         <div className="mt-3 border-t border-gray-50 pt-3 flex justify-between items-center pl-2">
            <span className="text-xs text-blue-500 font-bold flex items-center gap-1">
               <FileText size={14}/> Xem chi tiết

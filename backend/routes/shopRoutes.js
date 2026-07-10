@@ -27,4 +27,7 @@ router.put('/orders/:id/accept', verifyToken, shopController.acceptAlofoodOrder)
 // Từ chối đơn hàng
 router.put('/orders/:id/reject', verifyToken, shopController.rejectAlofoodOrder);
 
+// Giao hàng cho tài xế
+router.put('/orders/:id/handover', verifyToken, shopController.handoverAlofoodOrder);
+
 module.exports = router;

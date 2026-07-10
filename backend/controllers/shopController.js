@@ -229,3 +229,46 @@ exports.rejectAlofoodOrder = async (req, res) => {
     res.status(500).json({ success: false, message: 'Lỗi server' });
   }
 };
+
+// Quán ăn bàn giao cho tài xế
+exports.handoverAlofoodOrder = async (req, res) => {
+  try {
+    const shopId = req.user.id;
+    const { id } = req.params;
+
+    // Chỉ cập nhật nếu đơn hàng đang ở trạng thái ACCEPTED (hoặc PENDING nếu chưa có xế nhưng quán đã xong, tuy nhiên chuẩn nhất là ACCEPTED)
+    const order = await Order.findOneAndUpdate(
+      { _id: id, serviceType: 'ALOFOOD', 'alofoodDetails.shopId': shopId, status: { $in: ['ACCEPTED', 'PENDING'] } },
+      { $set: { status: 'PICKED_UP', pickedUpAt: new Date() } },
+      { new: true }
+    ).populate('assignedTo', 'name phone');
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Đơn hàng không hợp lệ hoặc không thể bàn giao lúc này' });
+    }
+
+    if (order.customerId) {
+      const User = require('../models/User');
+      const { sendNotification } = require('../utils/notification');
+      const customer = await User.findById(order.customerId);
+      if (customer && customer.fcmToken) {
+        await sendNotification(
+          customer.fcmToken, 
+          "📦 Quán đã giao hàng cho tài xế!", 
+          `Tài xế đã nhận hàng và đang trên đường giao đến bạn.`, 
+          { url: `/customer/order/${order._id}` }
+        );
+      }
+    }
+
+    if (req.io) {
+      const { emitOrderPickedUp } = require('../sockets/index');
+      emitOrderPickedUp(req.io, order);
+    }
+
+    res.json({ success: true, message: 'Đã giao cho tài xế', data: order });
+  } catch (error) {
+    console.error('Error handoverAlofoodOrder:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
