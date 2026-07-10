@@ -502,7 +502,7 @@ export default function OrderDetail() {
           {/* ALOFOOD INFO */}
           {order.serviceType === 'ALOFOOD' && order.alofoodDetails && (
              <div className="mb-4">
-               <p className="text-slate-500 text-xs mb-1 font-bold">Danh sách món ăn:</p>
+               <p className="text-slate-500 text-xs mb-1 font-bold uppercase">THÔNG TIN MÓN ĂN:</p>
                {order.alofoodDetails.cartItems?.length > 0 ? (
                  <div className="bg-amber-50 rounded-lg p-3 border border-amber-100 mb-2 shadow-inner">
                    {order.alofoodDetails.cartItems.map((item, i) => (
@@ -579,8 +579,8 @@ export default function OrderDetail() {
 
           {/* GHI CHÚ CHUNG */}
           {order.note && (
-            <div className="bg-rose-50 rounded-xl p-3.5 sm:p-4 border-2 border-rose-200 mb-4 shadow-sm">
-              <p className="text-rose-600 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><FileText size={16}/> LƯU Ý TỪ KHÁCH HÀNG</p>
+            <div className="bg-amber-50 rounded-xl p-3.5 sm:p-4 border-2 border-amber-200 mb-4 shadow-sm">
+              <p className="text-amber-700 text-[11px] sm:text-xs font-black uppercase tracking-wider mb-1.5 flex items-center gap-1.5"><FileText size={16}/> GHI CHÚ ĐƠN HÀNG</p>
               <p className="text-slate-900 text-base sm:text-lg font-bold whitespace-pre-wrap leading-snug">{order.note}</p>
             </div>
           )}
