@@ -1156,6 +1156,16 @@ const orderController = {
         emitOrderCompleted(req.io, order);
       }
 
+      // Tăng số lượng đã bán (soldCount) cho món ăn nếu là đơn ALOFOOD
+      if (order.serviceType === 'ALOFOOD' && order.alofoodDetails && order.alofoodDetails.cartItems) {
+        const MenuItem = require('../models/MenuItem');
+        for (const item of order.alofoodDetails.cartItems) {
+          if (item.menuItemId) {
+            await MenuItem.findByIdAndUpdate(item.menuItemId, { $inc: { soldCount: item.quantity } });
+          }
+        }
+      }
+
       console.log(`[Order] Completed: ${order._id}`);
 
       res.status(200).json({

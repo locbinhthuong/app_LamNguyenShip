@@ -3,6 +3,22 @@ const MenuItem = require('../models/MenuItem');
 const Order = require('../models/Order');
 const Review = require('../models/Review');
 
+// Lấy 6 món ăn phổ biến nhất (dành cho Customer)
+exports.getPopularItems = async (req, res) => {
+  try {
+    const popularItems = await MenuItem.find({ isAvailable: true })
+      .sort({ soldCount: -1, createdAt: -1 })
+      .limit(6)
+      .populate('shopId', 'shopName coverImage')
+      .lean();
+      
+    res.json({ success: true, data: popularItems });
+  } catch (error) {
+    console.error('Error getting popular items:', error);
+    res.status(500).json({ success: false, message: 'Lỗi server' });
+  }
+};
+
 // Lấy danh sách quán ăn (dành cho Customer)
 exports.getRestaurants = async (req, res) => {
   try {

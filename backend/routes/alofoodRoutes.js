@@ -3,6 +3,9 @@ const router = express.Router();
 const alofoodController = require('../controllers/alofoodController');
 const { verifyToken } = require('../middleware/auth');
 
+// Lấy danh sách món ăn phổ biến
+router.get('/popular-items', alofoodController.getPopularItems);
+
 // Khách hàng xem danh sách quán ăn
 router.get('/restaurants', alofoodController.getRestaurants);
 

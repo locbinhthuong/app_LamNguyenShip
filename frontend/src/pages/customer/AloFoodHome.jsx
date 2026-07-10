@@ -9,12 +9,25 @@ const AloFoodHome = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
+  const [popularItems, setPopularItems] = useState([]);
 
   const categories = ['Tất cả', 'Trà Sữa', 'Cơm', 'Đồ Ăn Vặt', 'Đồ Uống', 'Bún/Phở'];
 
   useEffect(() => {
     fetchRestaurants();
+    fetchPopularItems();
   }, [search, activeCategory]);
+
+  const fetchPopularItems = async () => {
+    try {
+      const res = await api.get('/alofood/popular-items');
+      if (res.data.success) {
+        setPopularItems(res.data.data);
+      }
+    } catch (error) {
+      console.error('Lỗi lấy danh sách món phổ biến:', error);
+    }
+  };
 
   const fetchRestaurants = async () => {
     try {
@@ -65,6 +78,44 @@ const AloFoodHome = () => {
           </button>
         ))}
       </div>
+
+      {/* POPULAR ITEMS */}
+      {!search && !activeCategory && popularItems.length > 0 && (
+        <div className="bg-white pt-4 pb-2 border-b border-gray-100">
+          <div className="px-4 flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+              <span className="text-xl">🔥</span> Đề xuất cho bạn
+            </h2>
+          </div>
+          <div className="flex overflow-x-auto gap-3 px-4 pb-2 no-scrollbar">
+            {popularItems.map((item) => (
+              <div 
+                key={item._id} 
+                onClick={() => navigate(`/customer/alofood/restaurant/${item.shopId._id}`)}
+                className="flex-shrink-0 w-36 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer active:scale-95 transition-transform"
+              >
+                <div className="h-28 bg-gray-100 relative">
+                  {item.images && item.images.length > 0 ? (
+                    <img src={getFullImageUrl(item.images[0])} alt={item.name} className="w-full h-full object-cover" />
+                  ) : item.image ? (
+                    <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200"></div>
+                  )}
+                  <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm">
+                    Đã bán {item.soldCount || 0}
+                  </div>
+                </div>
+                <div className="p-2.5">
+                  <h3 className="font-bold text-gray-800 text-sm line-clamp-1 leading-tight mb-1">{item.name}</h3>
+                  <p className="font-bold text-red-500 text-sm mb-1">{item.price.toLocaleString('vi-VN')}đ</p>
+                  <p className="text-[10px] text-gray-500 line-clamp-1">{item.shopId?.shopName}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* LIST RESTAURANTS */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
