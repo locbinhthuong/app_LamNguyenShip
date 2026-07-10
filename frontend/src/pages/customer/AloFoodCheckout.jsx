@@ -143,7 +143,7 @@ const AloFoodCheckout = () => {
         customerName,
         customerPhone,
         note,
-        scheduledTime
+        scheduledTime: scheduledTime ? new Date(scheduledTime).toISOString() : null
       };
 
       const res = await api.post('/alofood/order', payload);
