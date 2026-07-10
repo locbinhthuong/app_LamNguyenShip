@@ -164,13 +164,13 @@ const ActivityList = () => {
         </button>
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'active' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          onClick={() => { setFilter('active'); scrollRef.current?.scrollTo({ left: window.innerWidth > 414 ? 414 : window.innerWidth, behavior: 'smooth' }); }}
+          onClick={() => { setFilter('active'); scrollRef.current?.scrollTo({ left: scrollRef.current.offsetWidth, behavior: 'smooth' }); }}
         >
           Đang giao
         </button>
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'history' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          onClick={() => { setFilter('history'); scrollRef.current?.scrollTo({ left: (window.innerWidth > 414 ? 414 : window.innerWidth) * 2, behavior: 'smooth' }); }}
+          onClick={() => { setFilter('history'); scrollRef.current?.scrollTo({ left: scrollRef.current.offsetWidth * 2, behavior: 'smooth' }); }}
         >
           Lịch sử
         </button>
