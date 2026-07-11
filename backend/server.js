@@ -66,7 +66,7 @@ app.options('*', cors(corsOptions));
 
 // ==================== SECURITY & RATE LIMITING ====================
 // Thiết lập trust proxy để lấy chuẩn IP đằng sau Nginx/Cloudflare
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 
 app.use(helmet({ 
   contentSecurityPolicy: false,
