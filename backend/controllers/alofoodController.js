@@ -83,6 +83,7 @@ exports.createFoodOrder = async (req, res) => {
       foodTotal, 
       deliveryFee, 
       totalAmount,
+      distance,
       deliveryAddress,
       deliveryCoordinates,
       customerName,
@@ -128,6 +129,7 @@ exports.createFoodOrder = async (req, res) => {
       // Nên phần codAmount = foodTotal + deliveryFee
       codAmount: foodTotal + deliveryFee, 
       deliveryFee: deliveryFee,
+      distanceKm: distance || 0,
       feePaidBy: 'RECEIVER',
       status: 'WAITING_SHOP'
     });
