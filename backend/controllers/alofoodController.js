@@ -6,11 +6,13 @@ const Review = require('../models/Review');
 // Lấy 6 món ăn phổ biến nhất (dành cho Customer)
 exports.getPopularItems = async (req, res) => {
   try {
-    const popularItems = await MenuItem.find({ isAvailable: true })
+    const popularItemsRaw = await MenuItem.find({ isAvailable: true })
       .sort({ soldCount: -1, createdAt: -1 })
-      .limit(6)
+      .limit(20)
       .populate('shopId', 'shopName coverImage')
       .lean();
+      
+    const popularItems = popularItemsRaw.filter(item => item.shopId != null).slice(0, 6);
       
     res.json({ success: true, data: popularItems });
   } catch (error) {
