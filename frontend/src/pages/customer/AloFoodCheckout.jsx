@@ -53,37 +53,22 @@ const AloFoodCheckout = () => {
       
       setLoadingFee(true);
       try {
-        const shopLat = restaurant.defaultLocation.lat;
-        const shopLng = restaurant.defaultLocation.lng;
-        const custLat = deliveryCoordinates.lat;
-        const custLng = deliveryCoordinates.lng;
+        const res = await api.post('/orders/estimate-fee', {
+          pickupCoordinates: restaurant.defaultLocation,
+          deliveryCoordinates: deliveryCoordinates,
+          serviceType: 'GIAO_HANG',
+          subServiceType: 'GIAO_DO_AN'
+        });
         
-        let distKm = 0;
-        try {
-          // Lấy nhiều lộ trình (alternatives=true) để tìm đường gần nhất thay vì đường đi ô tô nhanh nhất
-          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${shopLng},${shopLat};${custLng},${custLat}?overview=false&alternatives=true`);
-          const data = await res.json();
-          if (data.routes && data.routes.length > 0) {
-            // Tìm tuyến đường có khoảng cách ngắn nhất (phù hợp xe máy)
-            const shortestRoute = data.routes.reduce((min, r) => r.distance < min.distance ? r : min, data.routes[0]);
-            distKm = shortestRoute.distance / 1000;
-          } else {
-            throw new Error('No route');
-          }
-        } catch (err) {
-          // Nếu API lỗi, dùng đường chim bay nhân hệ số ngoằn ngoèo 1.2 (xe máy)
-          distKm = calculateHaversineDistance(shopLat, shopLng, custLat, custLng) * 1.2;
+        if (res.data?.success && res.data?.data) {
+          setDistance(res.data.data.distanceKm || 0);
+          setDeliveryFee(res.data.data.deliveryFee || 15000);
+        } else {
+          setDeliveryFee(15000); // Fallback
         }
-        
-        setDistance(distKm);
-        
-        let fee = 15000; // 3km đầu 15k
-        if (distKm > 3) {
-          fee += Math.ceil(distKm - 3) * 5000; // mỗi km tiếp theo 5k
-        }
-        setDeliveryFee(fee);
       } catch (err) {
-        console.error('Fee calc error', err);
+        console.error('Lỗi tính phí ship:', err);
+        setDeliveryFee(15000); // Fallback
       } finally {
         setLoadingFee(false);
       }
