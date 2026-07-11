@@ -27,7 +27,7 @@ const ShopMenuManager = () => {
   const fetchMenu = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/shop/menu');
+      const res = await api.get('/merchant/menu');
       if (res.data.success) {
         setMenuItems(res.data.data);
       }
@@ -67,10 +67,10 @@ const ShopMenuManager = () => {
     e.preventDefault();
     try {
       if (editingItem) {
-        await api.put(`/shop/menu/${editingItem._id}`, formData);
+        await api.put(`/merchant/menu/${editingItem._id}`, formData);
         alert('Cập nhật món thành công!');
       } else {
-        await api.post('/shop/menu', formData);
+        await api.post('/merchant/menu', formData);
         alert('Thêm món mới thành công!');
       }
       setShowModal(false);
@@ -83,7 +83,7 @@ const ShopMenuManager = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa món này?')) {
       try {
-        await api.delete(`/shop/menu/${id}`);
+        await api.delete(`/merchant/menu/${id}`);
         fetchMenu();
       } catch (error) {
         alert('Lỗi khi xóa món!');

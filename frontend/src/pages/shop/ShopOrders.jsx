@@ -16,7 +16,7 @@ const ShopOrders = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await api.get('/shop/orders');
+      const res = await api.get('/merchant/orders');
       if (res.data.success) {
         setOrders(res.data.data);
       }
@@ -133,7 +133,7 @@ const ShopOrders = () => {
               onClick={async (e) => {
                 e.stopPropagation();
                 try {
-                  const res = await api.put(`/shop/orders/${order._id}/accept`);
+                  const res = await api.put(`/merchant/orders/${order._id}/accept`);
                   if (res.data.success) {
                     fetchOrders();
                   }
@@ -155,7 +155,7 @@ const ShopOrders = () => {
                 e.stopPropagation();
                 if (window.confirm('Xác nhận đã bàn giao đồ ăn cho tài xế?')) {
                   try {
-                    const res = await api.put(`/shop/orders/${order._id}/handover`);
+                    const res = await api.put(`/merchant/orders/${order._id}/handover`);
                     if (res.data.success) {
                       fetchOrders();
                       alert('Đã giao cho tài xế thành công!');
@@ -251,7 +251,7 @@ const ShopOrders = () => {
                 onClick={async () => {
                   if (!cancelReason.trim()) return alert('Vui lòng nhập lý do');
                   try {
-                    const res = await api.put(`/shop/orders/${cancellingOrderId}/reject`, { cancelReason });
+                    const res = await api.put(`/merchant/orders/${cancellingOrderId}/reject`, { cancelReason });
                     if (res.data.success) {
                       setCancelModalVisible(false);
                       fetchOrders();

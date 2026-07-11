@@ -278,7 +278,7 @@ export default function ShopProfile() {
                     onChange={async (e) => {
                       const checked = e.target.checked;
                       try {
-                        await api.put('/shop/profile', { isOpen: checked });
+                        await api.put('/merchant/profile', { isOpen: checked });
                         const newData = { ...customerData, isOpen: checked };
                         localStorage.setItem('customerData', JSON.stringify(newData));
                         alert(checked ? 'Đã MỞ CỬA nhận đơn' : 'Đã ĐÓNG CỬA nhận đơn');

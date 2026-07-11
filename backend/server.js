@@ -149,7 +149,7 @@ app.use('/api/staffs', staffRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/maps', mapRoutes);
 app.use('/api/alofood', alofoodRoutes);
-app.use('/api/shop', require('./routes/shopRoutes'));
+app.use('/api/merchant', require('./routes/shopRoutes'));
 
 // Phục vụ các File tĩnh từ thư mục /uploads
 const path = require('path');
