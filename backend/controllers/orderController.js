@@ -1194,7 +1194,7 @@ const orderController = {
 
       if (req.customer) {
         const order = await Order.findOneAndUpdate(
-          { _id: id, customerId: req.customer._id, status: { $in: ['PENDING', 'DRAFT'] } },
+          { _id: id, customerId: req.customer._id, status: { $in: ['PENDING', 'DRAFT', 'WAITING_SHOP'] } },
           {
             status: 'CANCELLED',
             cancelledAt: new Date(),
@@ -1217,7 +1217,7 @@ const orderController = {
 
       // VỚI ADMIN: HỦY CHẾT TRƠN ĐƠN HÀNG (CANCELLED)
       const order = await Order.findOneAndUpdate(
-        { _id: id, status: { $in: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'] } },
+        { _id: id, status: { $in: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING', 'WAITING_SHOP'] } },
         {
           status: 'CANCELLED',
           cancelledAt: new Date(),
