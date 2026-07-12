@@ -135,10 +135,9 @@ exports.createFoodOrder = async (req, res) => {
           note: item.note || ''
         }))
       },
-      // Tài xế đến lấy đồ ăn phải trả tiền cho quán (foodTotal)
-      // Khi giao cho khách sẽ thu lại (foodTotal + deliveryFee)
-      // Nên phần codAmount = foodTotal + deliveryFee
-      codAmount: foodTotal + finalDeliveryFee + finalExtraSurcharge, 
+      // Tài xế đến lấy đồ ăn chỉ phải trả tiền cho quán (foodTotal)
+      // Khi giao cho khách, hệ thống sẽ tự động cộng (codAmount + deliveryFee + extraSurcharge)
+      codAmount: foodTotal, 
       deliveryFee: finalDeliveryFee,
       extraSurcharge: finalExtraSurcharge,
       distanceKm: distance || 0,
