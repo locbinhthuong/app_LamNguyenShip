@@ -66,7 +66,7 @@ exports.getRestaurantMenu = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Không tìm thấy quán ăn' });
     }
     
-    const menuItems = await MenuItem.find({ shopId: id, isAvailable: true }).lean();
+    const menuItems = await MenuItem.find({ shopId: id }).lean();
     
     res.json({ success: true, data: { restaurant, menuItems } });
   } catch (error) {

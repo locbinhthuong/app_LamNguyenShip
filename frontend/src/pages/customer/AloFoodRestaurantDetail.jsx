@@ -167,10 +167,16 @@ const AloFoodRestaurantDetail = () => {
                   return (
                     <div 
                       key={item._id} 
-                      className="p-4 flex gap-3 cursor-pointer hover:bg-gray-50 active:bg-gray-100 transition-colors"
-                      onClick={() => { setSelectedItem(item); setCurrentImageIndex(0); }}
+                      className={`p-4 flex gap-3 relative transition-colors ${item.isAvailable ? 'cursor-pointer hover:bg-gray-50 active:bg-gray-100' : 'opacity-60 grayscale-[50%]'}`}
+                      onClick={() => { if(item.isAvailable) { setSelectedItem(item); setCurrentImageIndex(0); } }}
                     >
-                      <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100">
+                      {!item.isAvailable && (
+                        <div className="absolute inset-0 bg-white/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                          <span className="bg-gray-600 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-md">Đã Hết Món</span>
+                        </div>
+                      )}
+                      
+                      <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 border border-gray-100 relative z-0">
                         {item.images && item.images.length > 0 ? (
                           <img src={getFullImageUrl(item.images[0])} alt={item.name} className="w-full h-full object-cover" />
                         ) : item.image ? (
@@ -179,26 +185,26 @@ const AloFoodRestaurantDetail = () => {
                           <div className="w-full h-full bg-gray-200"></div>
                         )}
                       </div>
-                      <div className="flex-1 flex flex-col justify-between">
+                      <div className="flex-1 flex flex-col justify-between relative z-0">
                         <div>
                           <h3 className="font-bold text-gray-800 leading-tight">{item.name}</h3>
                           {item.description && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{item.description}</p>}
                           <p className="font-bold text-blue-600 mt-1">{item.price.toLocaleString('vi-VN')}đ</p>
                         </div>
-                        {restaurant.isOpen && (
+                        {restaurant.isOpen && item.isAvailable && (
                           <div className="flex justify-end items-center mt-2">
                             {qty > 0 ? (
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-3 relative z-20">
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); updateCart(item._id, -1); }} 
-                                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold border border-gray-200"
+                                  className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 font-bold border border-gray-200 active:scale-90 transition-transform"
                                 >
                                   <Minus size={14} />
                                 </button>
                                 <span className="font-bold w-4 text-center">{qty}</span>
                                 <button 
                                   onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }} 
-                                  className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm"
+                                  className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm active:scale-90 transition-transform"
                                 >
                                   <Plus size={14} />
                                 </button>
@@ -206,7 +212,7 @@ const AloFoodRestaurantDetail = () => {
                             ) : (
                               <button 
                                 onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }}
-                                className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm"
+                                className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm active:scale-90 transition-transform relative z-20"
                               >
                                 <Plus size={16} />
                               </button>

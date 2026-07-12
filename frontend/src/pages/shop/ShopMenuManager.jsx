@@ -165,8 +165,8 @@ const ShopMenuManager = () => {
             {menuItems.map(item => (
               <div key={item._id} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex gap-4 relative overflow-hidden">
                 {!item.isAvailable && (
-                  <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center">
-                    <span className="bg-red-500 text-white px-3 py-1 rounded-full font-bold text-sm shadow-md">Hết Hàng</span>
+                  <div className="absolute inset-0 bg-white/60 z-30 flex items-center justify-center backdrop-blur-[1px]">
+                    <span className="bg-red-500 text-white px-4 py-1.5 rounded-full font-bold text-sm shadow-md">Hết Hàng</span>
                   </div>
                 )}
                 
