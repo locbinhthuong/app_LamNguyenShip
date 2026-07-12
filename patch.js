@@ -1,363 +1,66 @@
 const fs = require('fs');
-
-const file = 'backend/controllers/orderController.js';
-let content = fs.readFileSync(file, 'utf8');
-
-const oldBlock = `      let didAdminForceAssign = false;
-
-      // Xử lý nhánh "Thu hồi về Lưu Nháp (DRAFT)" (Gỡ bỏ tài xế, ẩn khỏi chợ)
-      if (status === 'DRAFT' && orderToUpdate.status !== 'DRAFT') {
-        orderToUpdate.status = 'DRAFT';
-        orderToUpdate.assignedTo = null;
-        orderToUpdate.acceptedAt = undefined;
-        orderToUpdate.pickedUpAt = undefined;
-        orderToUpdate.cancelReason = undefined; // Bắt buộc xóa Lý do hủy lỗi cũ để khi Treo lại không bị Rống Chuông Admin
-
-        // Tước đơn khỏi map của Admin và xóa trên App của tài xế (như hủy nhưng thực ra là thu hồi ẩn)
-        if (req.io) {
-          req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn
-          const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-          req.io.to('admins').emit('order_updated', payload); // Cập nhật map admin
+let code = fs.readFileSync('backend/controllers/orderController.js', 'utf8');
+code = code.replace(
+  /try\s*\{\s*const surchargeDoc = await Config\.findOne\(\{ key: 'LATE_NIGHT_SURCHARGE_CONFIG' \}\);[\s\S]*?res\.status\(200\)\.json\(\{\s*success: true,\s*data: \{\s*distanceKm,\s*deliveryFee,\s*routeLine\s*\}\s*\}\);\s*\} catch \(error\) \{/,
+  `      let extraSurcharge = 0;
+      let surchargeNote = '';
+      try {
+        const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
+        let cfg = { level1: { time: '22:30', amount: 3000 }, level2: { time: '23:30', amount: 5000 }, endTime: '06:00' };
+        if (surchargeDoc && surchargeDoc.value) {
+          cfg = surchargeDoc.value;
         }
-      }
-
-      // Xử lý nhánh "Đưa lên Đơn Treo" (Từ DRAFT lên PENDING)
-      if (status === 'PENDING' && orderToUpdate.status === 'DRAFT') {
-        orderToUpdate.status = 'PENDING';
-
-        // Phát socket đăng đơn lại lên chợ cho tài xế
-        if (req.io) {
-          const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-          const { emitNewOrder } = require('../sockets/index');
-          emitNewOrder(req.io, payload, true); // true = isSilentAdmin (Treo lại đơn không báo hú Admin)
-          req.io.to('admins').emit('order_updated', payload); // Cập nhật danh sách bên Admin
-        }
-      }
-
-      // XỬ LÝ KIỂM TRA BẮN ĐƠN MẠNH BẠO TỪ ADMIN (KHÔNG VƯỢT TƯỜNG LỬA CHẶN NỢ)
-      if (forceAssignDriverId && forceAssignDriverId !== orderToUpdate.assignedTo?.toString()) {
-        const Driver = require('../models/Driver');
-        const DebtTransaction = require('../models/DebtTransaction');
-
-        const driver = await Driver.findById(forceAssignDriverId);
-        if (!driver || driver.status !== 'active') {
-          return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
-        }
-
-        // Tường lửa Đòi Nợ y chang App Tài Xế (Không nể nang)
-        let hasUnpaidDebt = false;
-        const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-        const debtByDate = {};
-        transactions.forEach(tx => {
-          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-            debtByDate[dateStr] += tx.amount;
-          }
-        });
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        for (const [dateStr, amount] of Object.entries(debtByDate)) {
-          if (amount > 0 && dateStr !== todayStr) {
-            hasUnpaidDebt = true;
-            break;
-          }
-        }
-
-        if (hasUnpaidDebt) {
-          return res.status(400).json({
-            success: false,
-            message: 'Tài xế này đang MẮC NỢ CŨ CHƯA THANH TOÁN. Hệ thống đã chặn gán đơn!'
-          });
-        }
-
-        // Qua ải, được phép chốt đơn cho Tài Xế này
-        orderToUpdate.assignedTo = forceAssignDriverId;
-
-        // Bắt buộc chuyển Order sang Đã nhận (Bất kể DRAFT hay PENDING)
-        if (['DRAFT', 'PENDING'].includes(orderToUpdate.status)) {
-          orderToUpdate.status = 'ACCEPTED';
-          orderToUpdate.acceptedAt = new Date();
-        }
-
-        didAdminForceAssign = true;
-
-        // Hú Còi Push Notification tận Điện Thoại
-        if (driver.fcmToken) {
-          const { sendMultipleNotifications } = require('../utils/notification');
-          const feeResponse = orderToUpdate.deliveryFee ? \`\${orderToUpdate.deliveryFee.toLocaleString('vi-VN')}đ\` : 'Thỏa thuận';
-          let msgBody = \`📍 Đón: \${orderToUpdate.pickupAddress}\\n💵 Phí: \${feeResponse}\`;
-          await sendMultipleNotifications([driver.fcmToken], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: \`/order/\${orderToUpdate._id}\` }).catch(e => console.log('Push lỗi', e));
-        }
-      }
-
-      // Cập nhật thông tin text
-      if (customerName) orderToUpdate.customerName = customerName;
-      if (customerPhone) orderToUpdate.customerPhone = customerPhone;
-      if (pickupPhone !== undefined) orderToUpdate.pickupPhone = pickupPhone;
-      if (senderPhone !== undefined) orderToUpdate.senderPhone = senderPhone;
-      if (receiverPhone !== undefined) orderToUpdate.receiverPhone = receiverPhone;
-      if (receiverPhone2 !== undefined) orderToUpdate.receiverPhone2 = receiverPhone2;
-      if (pickupAddress !== undefined) orderToUpdate.pickupAddress = pickupAddress;
-      if (deliveryAddress !== undefined) orderToUpdate.deliveryAddress = deliveryAddress;
-      if (items !== undefined) orderToUpdate.items = items;
-      if (note !== undefined) orderToUpdate.note = note;
-      if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
-      let isDeliveryFeeChanged = false;
-      if (deliveryFee !== undefined) {
-        if (orderToUpdate.deliveryFee !== deliveryFee && deliveryFee > 0) isDeliveryFeeChanged = true;
-        orderToUpdate.deliveryFee = deliveryFee;
-      }
-      if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
-      if (commissionRate !== undefined) orderToUpdate.commissionRate = commissionRate;
-
-      // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
-      if (bulkyFee !== undefined || packageDescription !== undefined) {
-        if (!orderToUpdate.packageDetails) orderToUpdate.packageDetails = {};
-        if (bulkyFee !== undefined) orderToUpdate.packageDetails.bulkyFee = bulkyFee;
-        if (packageDescription !== undefined) orderToUpdate.packageDetails.description = packageDescription;
-      }
-      if (surcharge !== undefined) {
-        if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};
-        orderToUpdate.rideDetails.surcharge = surcharge;
-      }
-      if (vehicleClass !== undefined) {
-        if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};
-        orderToUpdate.rideDetails.vehicleClass = vehicleClass;
-      }
-
-      // Tài chính Nạp rút
-      if (bankName !== undefined || bankAccount !== undefined || bankAccountName !== undefined || transactionAmount !== undefined) {
-        if (!orderToUpdate.financialDetails) orderToUpdate.financialDetails = {};
-        if (bankName !== undefined) orderToUpdate.financialDetails.bankName = bankName;
-        if (bankAccount !== undefined) orderToUpdate.financialDetails.bankAccount = bankAccount;
-        if (bankAccountName !== undefined) orderToUpdate.financialDetails.bankAccountName = bankAccountName;
-        if (transactionAmount !== undefined) orderToUpdate.financialDetails.transactionAmount = transactionAmount;
-      }
-
-      await orderToUpdate.save();
-
-      // Gửi push notification cho khách hàng nếu có báo giá mới
-      if (isDeliveryFeeChanged && orderToUpdate.customerId) {
-        try {
-          const user = await User.findById(orderToUpdate.customerId);
-          if (user && user.fcmToken) {
-            const title = '💰 Đơn hàng đã được báo giá!';
-            const body = \`Đơn hàng \${orderToUpdate.serviceType} của bạn đã có phí: \${deliveryFee.toLocaleString('vi-VN')}đ.\`;
-            await sendNotification(user.fcmToken, title, body, { url: \`/customer/order/\${orderToUpdate._id}\` });
-          }
-        } catch (err) {
-          console.error('Lỗi gửi push cho khách hàng:', err);
-        }
-      }
-
-      // Load gắp thông tin tài xế để socket báo chuẩn chữ
-      if (didAdminForceAssign) {
-        await orderToUpdate.populate('assignedTo', 'name phone driverCode');
-      }
-
-      if (req.io) {
-        const { emitToDriver, emitOrderAccepted } = require('../sockets/index');
-        const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-
-        // Quát làng nước là đơn này đã vào túi ai qua emitOrderAccepted
-        if (didAdminForceAssign) {
-          emitOrderAccepted(req.io, payload);
-          // Phát còi báo động riêng cho tài xế xui xẻo/may mắn này
-          req.io.to(\`driver_\${forceAssignDriverId.toString()}\`).emit('force_assigned', payload);
-        } else {
-          // Bắn socket thông thường
-          req.io.to('admins').emit('order_updated', payload);
-        }
-
-        // Emit tới Khách hàng/Shop đã tạo đơn
-        if (orderToUpdate.customerId) {
-          const creatorId = orderToUpdate.customerId._id || orderToUpdate.customerId;
-          req.io.to(\`customer_\${creatorId.toString()}\`).emit('order_updated', payload);
-          req.io.to(\`shop_\${creatorId.toString()}\`).emit('order_updated', payload);
-        }
-      }`;
-
-const newBlock = `      // 1. CẬP NHẬT TRẠNG THÁI (STATUS) THEO YÊU CẦU
-      let isDraftToPending = false;
-
-      // Xử lý nhánh "Thu hồi về Lưu Nháp (DRAFT)" (Gỡ bỏ tài xế, ẩn khỏi chợ)
-      if (status === 'DRAFT' && orderToUpdate.status !== 'DRAFT') {
-        orderToUpdate.status = 'DRAFT';
-        orderToUpdate.assignedTo = null;
-        orderToUpdate.acceptedAt = undefined;
-        orderToUpdate.pickedUpAt = undefined;
-        orderToUpdate.cancelReason = undefined; // Bắt buộc xóa Lý do hủy lỗi cũ để khi Treo lại không bị Rống Chuông Admin
-
-        // Tước đơn khỏi map của Admin và xóa trên App của tài xế (như hủy nhưng thực ra là thu hồi ẩn)
-        if (req.io) {
-          req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn
-        }
-      }
-
-      // Xử lý nhánh "Đưa lên Đơn Treo" (Từ DRAFT lên PENDING)
-      if (status === 'PENDING' && orderToUpdate.status === 'DRAFT') {
-        orderToUpdate.status = 'PENDING';
-        isDraftToPending = true;
-      }
-
-      // 2. GÁN CÁC THÔNG SỐ TEXT VÀ TÀI CHÍNH
-      if (customerName) orderToUpdate.customerName = customerName;
-      if (customerPhone) orderToUpdate.customerPhone = customerPhone;
-      if (pickupPhone !== undefined) orderToUpdate.pickupPhone = pickupPhone;
-      if (senderPhone !== undefined) orderToUpdate.senderPhone = senderPhone;
-      if (receiverPhone !== undefined) orderToUpdate.receiverPhone = receiverPhone;
-      if (receiverPhone2 !== undefined) orderToUpdate.receiverPhone2 = receiverPhone2;
-      if (pickupAddress !== undefined) orderToUpdate.pickupAddress = pickupAddress;
-      if (deliveryAddress !== undefined) orderToUpdate.deliveryAddress = deliveryAddress;
-      if (items !== undefined) orderToUpdate.items = items;
-      if (note !== undefined) orderToUpdate.note = note;
-      if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
-      
-      let isDeliveryFeeChanged = false;
-      if (deliveryFee !== undefined) {
-        if (orderToUpdate.deliveryFee !== deliveryFee && deliveryFee > 0) isDeliveryFeeChanged = true;
-        orderToUpdate.deliveryFee = deliveryFee;
-      }
-      if (adminBonus !== undefined) orderToUpdate.adminBonus = adminBonus;
-      if (commissionRate !== undefined) orderToUpdate.commissionRate = commissionRate;
-
-      // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
-      if (bulkyFee !== undefined || packageDescription !== undefined) {
-        if (!orderToUpdate.packageDetails) orderToUpdate.packageDetails = {};
-        if (bulkyFee !== undefined) orderToUpdate.packageDetails.bulkyFee = bulkyFee;
-        if (packageDescription !== undefined) orderToUpdate.packageDetails.description = packageDescription;
-      }
-      if (surcharge !== undefined) {
-        if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};
-        orderToUpdate.rideDetails.surcharge = surcharge;
-      }
-      if (vehicleClass !== undefined) {
-        if (!orderToUpdate.rideDetails) orderToUpdate.rideDetails = {};
-        orderToUpdate.rideDetails.vehicleClass = vehicleClass;
-      }
-
-      // Tài chính Nạp rút
-      if (bankName !== undefined || bankAccount !== undefined || bankAccountName !== undefined || transactionAmount !== undefined) {
-        if (!orderToUpdate.financialDetails) orderToUpdate.financialDetails = {};
-        if (bankName !== undefined) orderToUpdate.financialDetails.bankName = bankName;
-        if (bankAccount !== undefined) orderToUpdate.financialDetails.bankAccount = bankAccount;
-        if (bankAccountName !== undefined) orderToUpdate.financialDetails.bankAccountName = bankAccountName;
-        if (transactionAmount !== undefined) orderToUpdate.financialDetails.transactionAmount = transactionAmount;
-      }
-
-      // 3. XỬ LÝ KIỂM TRA BẮN ĐƠN MẠNH BẠO TỪ ADMIN (KHÔNG VƯỢT TƯỜNG LỬA CHẶN NỢ)
-      let didAdminForceAssign = false;
-      let forceAssignedDriverFcm = null;
-      if (forceAssignDriverId && forceAssignDriverId !== orderToUpdate.assignedTo?.toString()) {
-        const Driver = require('../models/Driver');
-        const DebtTransaction = require('../models/DebtTransaction');
-
-        const driver = await Driver.findById(forceAssignDriverId);
-        if (!driver || driver.status !== 'active') {
-          return res.status(400).json({ success: false, message: 'Tài xế không hợp lệ hoặc đã bị khóa.' });
-        }
-
-        // Tường lửa Đòi Nợ y chang App Tài Xế (Không nể nang)
-        let hasUnpaidDebt = false;
-        const transactions = await DebtTransaction.find({ driverId: forceAssignDriverId }).select('amount targetDate createdAt status').lean();
-        const debtByDate = {};
-        transactions.forEach(tx => {
-          const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-          if (tx.status !== 'REJECTED' && tx.status !== 'PENDING') {
-            if (!debtByDate[dateStr]) debtByDate[dateStr] = 0;
-            debtByDate[dateStr] += tx.amount;
-          }
-        });
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
-        for (const [dateStr, amount] of Object.entries(debtByDate)) {
-          if (amount > 0 && dateStr !== todayStr) {
-            hasUnpaidDebt = true;
-            break;
-          }
-        }
-
-        if (hasUnpaidDebt) {
-          return res.status(400).json({
-            success: false,
-            message: 'Tài xế này đang MẮC NỢ CŨ CHƯA THANH TOÁN. Hệ thống đã chặn gán đơn!'
-          });
-        }
-
-        // Qua ải, được phép chốt đơn cho Tài Xế này
-        orderToUpdate.assignedTo = forceAssignDriverId;
-
-        // Bắt buộc chuyển Order sang Đã nhận (Bất kể DRAFT hay PENDING)
-        if (['DRAFT', 'PENDING'].includes(orderToUpdate.status)) {
-          orderToUpdate.status = 'ACCEPTED';
-          orderToUpdate.acceptedAt = new Date();
-        }
-
-        didAdminForceAssign = true;
-        forceAssignedDriverFcm = driver.fcmToken;
-      }
-
-      await orderToUpdate.save();
-
-      // Load gắp thông tin tài xế để socket báo chuẩn chữ
-      if (didAdminForceAssign) {
-        await orderToUpdate.populate('assignedTo', 'name phone driverCode');
-      }
-
-      // Gửi push notification cho khách hàng nếu có báo giá mới
-      if (isDeliveryFeeChanged && orderToUpdate.customerId) {
-        try {
-          const User = require('../models/User');
-          const user = await User.findById(orderToUpdate.customerId);
-          if (user && user.fcmToken) {
-            const { sendNotification } = require('../utils/notification');
-            const title = '💰 Đơn hàng đã được báo giá!';
-            const body = \`Đơn hàng \${orderToUpdate.serviceType} của bạn đã có phí: \${deliveryFee.toLocaleString('vi-VN')}đ.\`;
-            await sendNotification(user.fcmToken, title, body, { url: \`/customer/order/\${orderToUpdate._id}\` });
-          }
-        } catch (err) {
-          console.error('Lỗi gửi push cho khách hàng:', err);
-        }
-      }
-
-      // 4. PHÁT SÓNG SOCKET THEO TRẠNG THÁI SAU KHI LƯU
-      if (req.io) {
-        const payload = typeof orderToUpdate.toObject === 'function' ? orderToUpdate.toObject({ virtuals: true }) : orderToUpdate;
-        const { emitNewOrder, emitOrderAccepted } = require('../sockets/index');
-
-        if (didAdminForceAssign) {
-          emitOrderAccepted(req.io, payload);
-          req.io.to(\`driver_\${forceAssignDriverId.toString()}\`).emit('force_assigned', payload);
+        
+        if (cfg) {
+          const parseTime = (timeStr) => {
+            if (!timeStr) return null;
+            const parts = timeStr.split(':');
+            return { h: parseInt(parts[0], 10) || 0, m: parseInt(parts[1], 10) || 0 };
+          };
           
-          if (forceAssignedDriverFcm) {
-            const { sendMultipleNotifications } = require('../utils/notification');
-            const feeResponse = payload.deliveryFee ? \`\${payload.deliveryFee.toLocaleString('vi-VN')}đ\` : 'Thỏa thuận';
-            let msgBody = \`📍 Đón: \${payload.pickupAddress}\\n💵 Phí: \${feeResponse}\`;
-            await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: \`/order/\${payload._id}\` }).catch(e => console.log('Push lỗi', e));
-          }
-        } else if (isDraftToPending) {
-          emitNewOrder(req.io, payload, true); // true = isSilentAdmin (Treo lại đơn không báo hú Admin)
-          req.io.to('admins').emit('order_updated', payload);
-        } else {
-          // Bắn socket thông thường cho Admin
-          req.io.to('admins').emit('order_updated', payload);
+          const l1 = parseTime(cfg.level1?.time);
+          const l2 = parseTime(cfg.level2?.time);
+          const e = parseTime(cfg.endTime);
           
-          // Bắn order_updated cho Driver để App Tài Xế lọc lại đơn nếu chiết khấu (commissionRate) thay đổi
-          if (payload.status === 'PENDING') {
-            req.io.to('drivers').emit('order_updated', payload);
+          if (l1 && l2 && e) {
+            const vnTime = new Date(new Date().toLocaleString('en-US', {timeZone: 'Asia/Ho_Chi_Minh'}));
+            const currentTotalMinutes = vnTime.getHours() * 60 + vnTime.getMinutes();
+            
+            const l1Total = l1.h * 60 + l1.m;
+            const l2Total = l2.h * 60 + l2.m;
+            const eTotal = e.h * 60 + e.m;
+            
+            const isBetween = (startMins, endMins, current) => {
+              if (startMins <= endMins) {
+                return current >= startMins && current <= endMins;
+              } else {
+                return current >= startMins || current <= endMins;
+              }
+            };
+            
+            if (isBetween(l2Total, eTotal, currentTotalMinutes)) {
+              extraSurcharge = (cfg.level2?.amount || 0);
+              surchargeNote = 'Phụ phí đêm khuya (sau ' + cfg.level2?.time + ')';
+            } else if (isBetween(l1Total, eTotal, currentTotalMinutes)) {
+              extraSurcharge = (cfg.level1?.amount || 0);
+              surchargeNote = 'Phụ phí đêm khuya (sau ' + cfg.level1?.time + ')';
+            }
           }
         }
+      } catch (err) {
+        console.error('Lỗi tính phụ phí giờ khuya:', err);
+      }
 
-        // Emit tới Khách hàng/Shop đã tạo đơn
-        if (payload.customerId) {
-          const creatorId = payload.customerId._id || payload.customerId;
-          req.io.to(\`customer_\${creatorId.toString()}\`).emit('order_updated', payload);
-          req.io.to(\`shop_\${creatorId.toString()}\`).emit('order_updated', payload);
+      res.status(200).json({
+        success: true,
+        data: {
+          distanceKm,
+          deliveryFee,
+          extraSurcharge,
+          surchargeNote,
+          routeLine
         }
-      }`;
-
-if (content.includes(oldBlock)) {
-    fs.writeFileSync(file, content.replace(oldBlock, newBlock), 'utf8');
-    console.log("Successfully replaced block.");
-} else {
-    console.log("OLD BLOCK NOT FOUND");
-}
+      });
+    } catch (error) {`
+);
+fs.writeFileSync('backend/controllers/orderController.js', code);

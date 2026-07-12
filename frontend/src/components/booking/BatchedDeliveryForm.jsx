@@ -71,7 +71,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   const handleAddDelivery = () => {
     setDeliveries(prev => [
       ...prev,
-      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '' }
+      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '', extraSurchargeAPI: 0, surchargeNote: '' }
     ]);
   };
 
@@ -264,9 +264,17 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
 
               {/* Phí dự kiến */}
               {delivery.fee > 0 && (
-                <div className="bg-sky-50 text-sky-700 text-[11px] font-bold px-3 py-2 rounded-lg flex items-center justify-between">
-                  <span>Dự kiến phí ship:</span>
-                  <span>{delivery.fee.toLocaleString('vi-VN')}đ {delivery.distanceKm ? `(${delivery.distanceKm.toFixed(1)}km)` : ''}</span>
+                <div className="bg-sky-50 text-sky-700 text-[11px] font-bold px-3 py-2 rounded-lg flex flex-col justify-center">
+                  <div className="flex items-center justify-between">
+                    <span>Dự kiến phí ship:</span>
+                    <span>{delivery.fee.toLocaleString('vi-VN')}đ {delivery.distanceKm ? `(${delivery.distanceKm.toFixed(1)}km)` : ''}</span>
+                  </div>
+                  {delivery.extraSurchargeAPI > 0 && (
+                    <div className="flex items-center justify-between text-red-500 mt-1">
+                      <span>{delivery.surchargeNote}</span>
+                      <span>+{delivery.extraSurchargeAPI.toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  )}
                 </div>
               )}
 

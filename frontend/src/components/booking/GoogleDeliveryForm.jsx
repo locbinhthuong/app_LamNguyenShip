@@ -33,6 +33,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
 
   const [estimatedFee, setEstimatedFee] = useState(null);
   const [distanceKm, setDistanceKm] = useState(null);
+  const [extraSurchargeAPI, setExtraSurchargeAPI] = useState(0);
+  const [surchargeNote, setSurchargeNote] = useState('');
   const [estimating, setEstimating] = useState(false);
   const [routeLine, setRouteLine] = useState([]);
 
@@ -77,6 +79,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           if (res && res.data && res.data.deliveryFee !== null) {
             setEstimatedFee(res.data.deliveryFee);
             setDistanceKm(res.data.distanceKm);
+            setExtraSurchargeAPI(res.data.extraSurcharge || 0);
+            setSurchargeNote(res.data.surchargeNote || '');
             if (res.data.routeLine) {
               setRouteLine(res.data.routeLine);
             } else {
@@ -85,17 +89,23 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           } else {
             setEstimatedFee(null);
             setDistanceKm(null);
+            setExtraSurchargeAPI(0);
+            setSurchargeNote('');
             setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
           }
         } catch (error) {
           setEstimatedFee(null);
           setDistanceKm(null);
+          setExtraSurchargeAPI(0);
+          setSurchargeNote('');
         } finally {
           setEstimating(false);
         }
       } else {
         setEstimatedFee(null);
         setDistanceKm(null);
+        setExtraSurchargeAPI(0);
+        setSurchargeNote('');
         setRouteLine([]);
       }
     };
@@ -432,7 +442,13 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
               <div className="flex-1">
                 <p className={`text-[13px] leading-relaxed font-bold ${estimatedFee !== null ? 'text-blue-800' : 'text-gray-500'}`}>
                   {estimatedFee !== null ? (
-                    <>Cước tạm tính: <strong className="text-lg text-blue-600 block sm:inline sm:ml-1 mt-1 sm:mt-0">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? <span className="text-blue-500 font-bold opacity-80 ml-1">({distanceKm.toFixed(1)}km)</span> : ''}</>
+                    <>Cước tạm tính: <strong className="text-lg text-blue-600 block sm:inline sm:ml-1 mt-1 sm:mt-0">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? <span className="text-blue-500 font-bold opacity-80 ml-1">({distanceKm.toFixed(1)}km)</span> : ''}
+                      {extraSurchargeAPI > 0 && (
+                        <div className="text-red-500 text-xs mt-1">
+                          <strong>+ {extraSurchargeAPI.toLocaleString('vi-VN')}đ</strong> {surchargeNote}
+                        </div>
+                      )}
+                    </>
                   ) : (
                     'Vui lòng chọn đầy đủ cả điểm lấy và điểm giao để xem giá.'
                   )}

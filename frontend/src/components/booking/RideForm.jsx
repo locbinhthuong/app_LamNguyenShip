@@ -24,6 +24,8 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
   const [mapConfig, setMapConfig] = useState(null);
   const [estimatedFee, setEstimatedFee] = useState(null);
   const [distanceKm, setDistanceKm] = useState(null);
+  const [extraSurcharge, setExtraSurcharge] = useState(0);
+  const [surchargeNote, setSurchargeNote] = useState('');
   const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
@@ -60,14 +62,20 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
           if (res && res.data && res.data.deliveryFee !== null) {
             setEstimatedFee(res.data.deliveryFee);
             setDistanceKm(res.data.distanceKm);
+            setExtraSurcharge(res.data.extraSurcharge || 0);
+            setSurchargeNote(res.data.surchargeNote || '');
           } else {
             setEstimatedFee(null);
             setDistanceKm(null);
+            setExtraSurcharge(0);
+            setSurchargeNote('');
           }
         } catch (error) {
           console.error('Lỗi tính phí:', error);
           setEstimatedFee(null);
           setDistanceKm(null);
+          setExtraSurcharge(0);
+          setSurchargeNote('');
         } finally {
           setEstimating(false);
         }
@@ -257,10 +265,15 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       {/* KHUYẾN CÁO */}
       <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
         <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
-        <p className="text-xs text-blue-800 leading-relaxed font-medium">
+        <p className="text-xs text-blue-800 leading-relaxed font-medium flex-1">
           {estimatedFee !== null ? (
             <>
               Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}.
+              {extraSurcharge > 0 && (
+                <div className="text-red-500 text-xs mt-1">
+                  <strong>+ {extraSurcharge.toLocaleString('vi-VN')}đ</strong> {surchargeNote}
+                </div>
+              )}
             </>
           ) : (
             subType === 'XE_OM' 

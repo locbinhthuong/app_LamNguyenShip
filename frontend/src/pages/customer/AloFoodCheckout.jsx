@@ -32,8 +32,11 @@ const AloFoodCheckout = () => {
 
   const [distance, setDistance] = useState(0);
   const [deliveryFee, setDeliveryFee] = useState(15000); // Base fee
+  const [extraSurcharge, setExtraSurcharge] = useState(0);
+  const [surchargeNote, setSurchargeNote] = useState('');
+  
   const foodTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const totalAmount = foodTotal + deliveryFee;
+  const totalAmount = foodTotal + deliveryFee + extraSurcharge;
 
   const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -63,12 +66,18 @@ const AloFoodCheckout = () => {
         if (res.data?.success && res.data?.data) {
           setDistance(res.data.data.distanceKm || 0);
           setDeliveryFee(res.data.data.deliveryFee || 15000);
+          setExtraSurcharge(res.data.data.extraSurcharge || 0);
+          setSurchargeNote(res.data.data.surchargeNote || '');
         } else {
           setDeliveryFee(15000); // Fallback
+          setExtraSurcharge(0);
+          setSurchargeNote('');
         }
       } catch (err) {
         console.error('Lỗi tính phí ship:', err);
         setDeliveryFee(15000); // Fallback
+        setExtraSurcharge(0);
+        setSurchargeNote('');
       } finally {
         setLoadingFee(false);
       }
@@ -300,6 +309,12 @@ const AloFoodCheckout = () => {
                 {loadingFee ? <Loader2 size={16} className="animate-spin text-gray-400" /> : `${deliveryFee.toLocaleString('vi-VN')}đ`}
               </span>
             </div>
+            {extraSurcharge > 0 && (
+              <div className="flex justify-between text-red-500 mt-1">
+                <span className="text-xs">{surchargeNote}</span>
+                <span className="text-sm font-bold">+{extraSurcharge.toLocaleString('vi-VN')}đ</span>
+              </div>
+            )}
             <div className="flex justify-between font-bold text-gray-900 pt-2 border-t border-gray-100">
               <span>Tổng thanh toán</span>
               <span className="text-red-500 text-lg">{totalAmount.toLocaleString('vi-VN')}đ</span>

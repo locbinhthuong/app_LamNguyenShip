@@ -1961,6 +1961,8 @@ const orderController = {
       }
 
       // Phụ phí giờ khuya (LATE_NIGHT_SURCHARGE_CONFIG)
+      let extraSurcharge = 0;
+      let surchargeNote = '';
       try {
         const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
         let cfg = { level1: { time: '22:30', amount: 3000 }, level2: { time: '23:30', amount: 5000 }, endTime: '06:00' };
@@ -1999,9 +2001,11 @@ const orderController = {
             
             // Phải check mức 2 trước vì nó cao hơn
             if (isBetween(l2Total, eTotal, currentTotalMinutes)) {
-              deliveryFee += (cfg.level2?.amount || 0);
+              extraSurcharge = (cfg.level2?.amount || 0);
+              surchargeNote = `Phụ phí đêm khuya (sau ${cfg.level2?.time})`;
             } else if (isBetween(l1Total, eTotal, currentTotalMinutes)) {
-              deliveryFee += (cfg.level1?.amount || 0);
+              extraSurcharge = (cfg.level1?.amount || 0);
+              surchargeNote = `Phụ phí đêm khuya (sau ${cfg.level1?.time})`;
             }
           }
         }
@@ -2014,6 +2018,8 @@ const orderController = {
         data: {
           distanceKm,
           deliveryFee,
+          extraSurcharge,
+          surchargeNote,
           routeLine
         }
       });

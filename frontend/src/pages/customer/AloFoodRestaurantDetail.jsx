@@ -378,8 +378,7 @@ const AloFoodRestaurantDetail = () => {
                 </div>
               )}
             </div>
-            
-            {restaurant.isOpen && (
+            {restaurant.isOpen && selectedItem.isAvailable && (
               <div className="p-4 border-t border-gray-100 bg-white drop-shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
                 <button 
                   onClick={() => {
@@ -390,6 +389,11 @@ const AloFoodRestaurantDetail = () => {
                 >
                   <Plus size={20} /> Thêm vào giỏ ({selectedItem.price.toLocaleString('vi-VN')}đ)
                 </button>
+              </div>
+            )}
+            {restaurant.isOpen && !selectedItem.isAvailable && (
+              <div className="p-4 border-t border-gray-100 bg-gray-100 text-center text-gray-500 font-bold">
+                Món này hiện đang hết
               </div>
             )}
           </div>
