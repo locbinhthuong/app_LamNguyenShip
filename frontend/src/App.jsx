@@ -161,24 +161,24 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-          </Route>
 
-          {/* AloFood Flow (Customer) */}
-          <Route path="/alofood" element={
-            <ProtectedRoute allowedRole="CUSTOMER">
-              <AloFoodHome />
-            </ProtectedRoute>
-          } />
-          <Route path="/alofood/restaurant/:id" element={
-            <ProtectedRoute allowedRole="CUSTOMER">
-              <AloFoodRestaurantDetail />
-            </ProtectedRoute>
-          } />
-          <Route path="/alofood/checkout/:id" element={
-            <ProtectedRoute allowedRole="CUSTOMER">
-              <AloFoodCheckout />
-            </ProtectedRoute>
-          } />
+            {/* AloFood Flow (Customer) */}
+            <Route path="/alofood" element={
+              <ProtectedRoute allowedRole="CUSTOMER">
+                <AloFoodHome />
+              </ProtectedRoute>
+            } />
+            <Route path="/alofood/restaurant/:id" element={
+              <ProtectedRoute allowedRole="CUSTOMER">
+                <AloFoodRestaurantDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/alofood/checkout/:id" element={
+              <ProtectedRoute allowedRole="CUSTOMER">
+                <AloFoodCheckout />
+              </ProtectedRoute>
+            } />
+          </Route>
 
           {/* Các màn hình KHÔNG có Footer (Ví dụ: Form Lên Đơn, Đăng nhập, Shop) */}
           <Route path="/login" element={<Login />} />
