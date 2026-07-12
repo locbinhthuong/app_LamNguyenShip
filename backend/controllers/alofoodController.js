@@ -44,7 +44,8 @@ exports.getRestaurants = async (req, res) => {
       .select('shopName shopAddress coverImage rating ratingCount defaultLocation isOpen')
       .skip(skip)
       .limit(parseInt(limit))
-      .sort({ rating: -1, createdAt: -1 });
+      .sort({ rating: -1, createdAt: -1 })
+      .lean();
       
     res.json({ success: true, data: restaurants });
   } catch (error) {
@@ -58,13 +59,14 @@ exports.getRestaurantMenu = async (req, res) => {
   try {
     const { id } = req.params;
     const restaurant = await User.findOne({ _id: id, role: 'SHOP' })
-      .select('shopName shopAddress coverImage rating ratingCount defaultLocation isOpen');
+      .select('shopName shopAddress coverImage rating ratingCount defaultLocation isOpen')
+      .lean();
       
     if (!restaurant) {
       return res.status(404).json({ success: false, message: 'Không tìm thấy quán ăn' });
     }
     
-    const menuItems = await MenuItem.find({ shopId: id, isAvailable: true });
+    const menuItems = await MenuItem.find({ shopId: id, isAvailable: true }).lean();
     
     res.json({ success: true, data: { restaurant, menuItems } });
   } catch (error) {

@@ -13,10 +13,25 @@ const AloFoodHome = () => {
 
   const categories = ['Tất cả', 'Trà Sữa', 'Cơm', 'Đồ Ăn Vặt', 'Đồ Uống', 'Bún/Phở'];
 
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  // Fetch popular items only once on mount
+  useEffect(() => {
+    fetchPopularItems();
+  }, []);
+
+  // Fetch restaurants when debounced search or category changes
   useEffect(() => {
     fetchRestaurants();
-    fetchPopularItems();
-  }, [search, activeCategory]);
+  }, [debouncedSearch, activeCategory]);
 
   const fetchPopularItems = async () => {
     try {
@@ -33,7 +48,7 @@ const AloFoodHome = () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
-      if (search) params.append('search', search);
+      if (debouncedSearch) params.append('search', debouncedSearch);
       if (activeCategory && activeCategory !== 'Tất cả') params.append('category', activeCategory);
 
       const res = await api.get(`/alofood/restaurants?${params.toString()}`);
