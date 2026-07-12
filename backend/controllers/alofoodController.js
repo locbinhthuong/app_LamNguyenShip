@@ -108,7 +108,8 @@ exports.createFoodOrder = async (req, res) => {
     const surchargeReminder = await orderController.getLateNightSurchargeDriverReminder();
     
     let finalDeliveryFee = deliveryFee || 0;
-    let finalExtraSurcharge = extraSurcharge || 0;
+    let calculatedSurcharge = await orderController.getLateNightSurchargeAmount();
+    let finalExtraSurcharge = extraSurcharge || calculatedSurcharge;
     // Frontend already separated deliveryFee and extraSurcharge
 
     // Prepare order data

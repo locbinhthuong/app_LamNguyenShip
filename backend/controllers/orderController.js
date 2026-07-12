@@ -408,7 +408,8 @@ const orderController = {
       const finalDriverReminder = surchargeReminder ? (driverReminder ? `${driverReminder}\n${surchargeReminder}` : surchargeReminder) : driverReminder;
 
       let finalDeliveryFee = deliveryFee || 0;
-      let finalExtraSurcharge = extraSurcharge || 0;
+      let calculatedSurcharge = await getLateNightSurchargeAmount();
+      let finalExtraSurcharge = extraSurcharge || calculatedSurcharge;
       // Do not re-subtract surcharge here because frontend now separates extraSurcharge and deliveryFee
 
 
