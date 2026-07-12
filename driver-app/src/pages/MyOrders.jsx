@@ -223,7 +223,7 @@ export default function MyOrders() {
               <p className="text-slate-500 text-sm mb-1 flex items-center gap-1"><MapPin size={14}/> {order.deliveryAddress?.slice(0, 50)}...</p>
               <div className="flex justify-between items-center mt-2">
                 <div className="flex flex-col">
-                  <span className="text-green-500 font-bold">+{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0)).toLocaleString()}đ</span>
+                  <span className="text-green-500 font-bold">+{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0)).toLocaleString()}đ</span>
                   {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
                      <span className="text-[10px] text-slate-500 font-bold mt-0.5">{order.feePaidBy === 'SENDER' ? '(Shop trả ship)' : '(Khách trả ship)'}</span>
                   )}

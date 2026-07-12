@@ -206,7 +206,7 @@ const AloFoodRestaurantDetail = () => {
                           {item.description && <p className="text-xs text-gray-500 mt-1 line-clamp-1">{item.description}</p>}
                           <p className="font-bold text-blue-600 mt-1">{item.price.toLocaleString('vi-VN')}đ</p>
                         </div>
-                        {restaurant.isOpen && item.isAvailable && (
+                        {restaurant.isOpen && (item.isAvailable || qty > 0) && (
                           <div className="flex justify-end items-center mt-2">
                             {qty > 0 ? (
                               <div className="flex items-center gap-3 relative z-20">
@@ -217,20 +217,24 @@ const AloFoodRestaurantDetail = () => {
                                   <Minus size={14} />
                                 </button>
                                 <span className="font-bold w-4 text-center">{qty}</span>
-                                <button 
-                                  onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }} 
-                                  className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm active:scale-90 transition-transform"
-                                >
-                                  <Plus size={14} />
-                                </button>
+                                {item.isAvailable && (
+                                  <button 
+                                    onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }} 
+                                    className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm active:scale-90 transition-transform"
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                )}
                               </div>
                             ) : (
-                              <button 
-                                onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }}
-                                className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm active:scale-90 transition-transform relative z-20"
-                              >
-                                <Plus size={16} />
-                              </button>
+                              item.isAvailable && (
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); updateCart(item._id, 1); }}
+                                  className="w-7 h-7 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-sm active:scale-90 transition-transform relative z-20"
+                                >
+                                  <Plus size={16} />
+                                </button>
+                              )
                             )}
                           </div>
                         )}

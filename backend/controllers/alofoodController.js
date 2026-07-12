@@ -91,7 +91,8 @@ exports.createFoodOrder = async (req, res) => {
       customerName,
       customerPhone,
       note,
-      scheduledTime
+      scheduledTime,
+      extraSurcharge
     } = req.body;
 
     const shop = await User.findOne({ _id: shopId, role: 'SHOP' });
@@ -107,14 +108,8 @@ exports.createFoodOrder = async (req, res) => {
     const surchargeReminder = await orderController.getLateNightSurchargeDriverReminder();
     
     let finalDeliveryFee = deliveryFee || 0;
-    let finalExtraSurcharge = 0;
-    const surchargeAmount = await orderController.getLateNightSurchargeAmount();
-    if (surchargeAmount > 0) {
-      if (finalDeliveryFee >= surchargeAmount) {
-         finalDeliveryFee -= surchargeAmount;
-      }
-      finalExtraSurcharge += surchargeAmount;
-    }
+    let finalExtraSurcharge = extraSurcharge || 0;
+    // Frontend already separated deliveryFee and extraSurcharge
 
     // Prepare order data
     const newOrder = new Order({

@@ -149,6 +149,9 @@ const getLateNightSurchargeAmount = async () => {
 };
 
 const orderController = {
+  getLateNightSurchargeDriverReminder,
+  getLateNightSurchargeAmount,
+
   // GET /api/orders - Lấy danh sách đơn hàng
   getAllOrders: async (req, res) => {
     try {
@@ -406,13 +409,8 @@ const orderController = {
 
       let finalDeliveryFee = deliveryFee || 0;
       let finalExtraSurcharge = extraSurcharge || 0;
-      const surchargeAmount = await getLateNightSurchargeAmount();
-      if (surchargeAmount > 0) {
-        if (finalDeliveryFee >= surchargeAmount) {
-           finalDeliveryFee -= surchargeAmount;
-        }
-        finalExtraSurcharge += surchargeAmount;
-      }
+      // Do not re-subtract surcharge here because frontend now separates extraSurcharge and deliveryFee
+
 
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
@@ -570,13 +568,7 @@ const orderController = {
       
       let finalDeliveryFee = req.body.deliveryFee || 0;
       let finalExtraSurcharge = extraSurcharge || 0;
-      const surchargeAmount = await getLateNightSurchargeAmount();
-      if (surchargeAmount > 0) {
-        if (finalDeliveryFee >= surchargeAmount) {
-           finalDeliveryFee -= surchargeAmount;
-        }
-        finalExtraSurcharge += surchargeAmount;
-      }
+      // Do not re-subtract surcharge here because frontend now separates extraSurcharge and deliveryFee
 
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
