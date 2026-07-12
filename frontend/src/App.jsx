@@ -221,6 +221,14 @@ function App() {
                 <OrderDetail />
               </ProtectedRoute>
             } />
+            <Route 
+              path="/shop/menu" 
+              element={
+                <ProtectedRoute allowedRole="SHOP">
+                  <ShopMenuManager />
+                </ProtectedRoute>
+              } 
+            />
           </Route>
 
           <Route 
@@ -232,14 +240,6 @@ function App() {
             element={
               <ProtectedRoute allowedRole="SHOP">
                 <ShopBookingFlow />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/shop/menu" 
-            element={
-              <ProtectedRoute allowedRole="SHOP">
-                <ShopMenuManager />
               </ProtectedRoute>
             } 
           />

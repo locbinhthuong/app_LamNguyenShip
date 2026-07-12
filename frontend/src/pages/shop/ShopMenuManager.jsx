@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Image as ImageIcon, Lock, Unlock } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
 
 const ShopMenuManager = () => {
@@ -91,6 +91,18 @@ const ShopMenuManager = () => {
     }
   };
 
+  const handleToggleAvailability = async (item) => {
+    try {
+      const res = await api.put(`/merchant/menu/${item._id}`, { isAvailable: !item.isAvailable });
+      if (res.data.success) {
+        setMenuItems(prev => prev.map(m => m._id === item._id ? { ...m, isAvailable: !item.isAvailable } : m));
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Lỗi cập nhật trạng thái món ăn');
+    }
+  };
+
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -178,14 +190,23 @@ const ShopMenuManager = () => {
                   </div>
                   <div className="flex items-center gap-2 mt-2 justify-end">
                     <button 
+                      onClick={() => handleToggleAvailability(item)}
+                      className={`p-1.5 rounded-md transition-colors ${item.isAvailable ? 'text-orange-500 bg-orange-50 hover:bg-orange-100' : 'text-green-600 bg-green-50 hover:bg-green-100'}`}
+                      title={item.isAvailable ? 'Đánh dấu hết món' : 'Mở bán lại'}
+                    >
+                      {item.isAvailable ? <Lock size={16} /> : <Unlock size={16} />}
+                    </button>
+                    <button 
                       onClick={() => handleOpenModal(item)}
                       className="p-1.5 text-gray-500 bg-gray-100 rounded-md hover:bg-gray-200"
+                      title="Sửa món"
                     >
                       <Edit size={16} />
                     </button>
                     <button 
                       onClick={() => handleDelete(item._id)}
                       className="p-1.5 text-red-500 bg-red-50 rounded-md hover:bg-red-100"
+                      title="Xóa món"
                     >
                       <Trash2 size={16} />
                     </button>
