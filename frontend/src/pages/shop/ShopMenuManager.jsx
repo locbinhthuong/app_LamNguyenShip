@@ -188,7 +188,7 @@ const ShopMenuManager = () => {
                     <p className="text-sm text-gray-500 line-clamp-1">{item.description}</p>
                     <p className="font-bold text-blue-600 mt-1">{item.price.toLocaleString('vi-VN')}đ</p>
                   </div>
-                  <div className="flex items-center gap-2 mt-2 justify-end">
+                  <div className="flex items-center gap-2 mt-2 justify-end relative z-40">
                     <button 
                       onClick={() => handleToggleAvailability(item)}
                       className={`p-1.5 rounded-md transition-colors ${item.isAvailable ? 'text-orange-500 bg-orange-50 hover:bg-orange-100' : 'text-green-600 bg-green-50 hover:bg-green-100'}`}
