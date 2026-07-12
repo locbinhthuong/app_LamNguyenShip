@@ -49,6 +49,55 @@ const refundOrderDebtIfAny = async (orderId) => {
   }
 };
 
+const checkLateNightSurchargeNote = async (currentNote) => {
+  try {
+    const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
+    if (surchargeDoc && surchargeDoc.value) {
+      const cfg = surchargeDoc.value;
+      const parseTime = (timeStr) => {
+        if (!timeStr) return null;
+        const parts = timeStr.split(':');
+        return { h: parseInt(parts[0], 10) || 0, m: parseInt(parts[1], 10) || 0 };
+      };
+      
+      const l1 = parseTime(cfg.level1?.time);
+      const l2 = parseTime(cfg.level2?.time);
+      const e = parseTime(cfg.endTime);
+      
+      if (l1 && l2 && e) {
+        const vnTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Ho_Chi_Minh"}));
+        const currentTotalMinutes = vnTime.getHours() * 60 + vnTime.getMinutes();
+        
+        const l1Total = l1.h * 60 + l1.m;
+        const l2Total = l2.h * 60 + l2.m;
+        const eTotal = e.h * 60 + e.m;
+        
+        const isBetween = (startMins, endMins, current) => {
+          if (startMins <= endMins) {
+            return current >= startMins && current <= endMins;
+          } else {
+            return current >= startMins || current <= endMins;
+          }
+        };
+        
+        let surchargeStr = '';
+        if (isBetween(l2Total, eTotal, currentTotalMinutes)) {
+          surchargeStr = `[ĐƠN KHUYA SAU ${cfg.level2?.time} - Đã cộng phụ phí ${(cfg.level2?.amount || 0).toLocaleString('vi-VN')}đ vào tiền ship]`;
+        } else if (isBetween(l1Total, eTotal, currentTotalMinutes)) {
+          surchargeStr = `[ĐƠN KHUYA SAU ${cfg.level1?.time} - Đã cộng phụ phí ${(cfg.level1?.amount || 0).toLocaleString('vi-VN')}đ vào tiền ship]`;
+        }
+        
+        if (surchargeStr) {
+          return currentNote ? `${currentNote}\n${surchargeStr}` : surchargeStr;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Lỗi check phụ phí khuya khi tạo đơn:', err);
+  }
+  return currentNote || '';
+};
+
 const orderController = {
   // GET /api/orders - Lấy danh sách đơn hàng
   getAllOrders: async (req, res) => {
@@ -302,6 +351,8 @@ const orderController = {
         forceAssignedDriverFcm = driver.fcmToken;
       }
 
+      const finalNote = await checkLateNightSurchargeNote(note || '');
+
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
         subServiceType: subServiceType || null,
@@ -311,7 +362,7 @@ const orderController = {
         pickupAddress,
         deliveryAddress,
         items: items || [],
-        note: note || '',
+        note: finalNote,
         driverReminder: driverReminder || '',
         codAmount: codAmount || 0,
         deliveryFee: deliveryFee || 0,
@@ -454,6 +505,8 @@ const orderController = {
         items, note, packageDetails, rideDetails, financialDetails, codAmount, extraSurcharge, batchedDeliveries, feePaidBy, autoAssignNearest
       } = req.body;
 
+      const finalNote = await checkLateNightSurchargeNote(note || '');
+
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
         subServiceType: subServiceType || null,
@@ -471,7 +524,7 @@ const orderController = {
         pickupCoordinates,
         deliveryCoordinates: deliveryCoordinates || null,
         items: items || [],
-        note: note || '',
+        note: finalNote,
         packageDetails: packageDetails || {},
         rideDetails: rideDetails || {},
         financialDetails: financialDetails || {},
@@ -1633,7 +1686,45 @@ const orderController = {
         }
       }
 
+      try {
+        const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
+        if (surchargeDoc && surchargeDoc.value) {
+          const cfg = surchargeDoc.value;
+          const parseTime = (timeStr) => {
+            if (!timeStr) return null;
+            const parts = timeStr.split(':');
+            return { h: parseInt(parts[0], 10) || 0, m: parseInt(parts[1], 10) || 0 };
+          };
+          
+          const l1 = parseTime(cfg.level1?.time);
+          const l2 = parseTime(cfg.level2?.time);
+          const e = parseTime(cfg.endTime);
+          
+          if (l1 && l2 && e) {
+            const vnTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Ho_Chi_Minh"}));
+            const currentTotalMinutes = vnTime.getHours() * 60 + vnTime.getMinutes();
+            const l1Total = l1.h * 60 + l1.m;
+            const l2Total = l2.h * 60 + l2.m;
+            const eTotal = e.h * 60 + e.m;
+            const isBetween = (startMins, endMins, current) => {
+              if (startMins <= endMins) {
+                return current >= startMins && current <= endMins;
+              } else {
+                return current >= startMins || current <= endMins;
+              }
+            };
+            
+            if (isBetween(l2Total, eTotal, currentTotalMinutes)) {
+              deliveryFee += (cfg.level2?.amount || 0);
+            } else if (isBetween(l1Total, eTotal, currentTotalMinutes)) {
+              deliveryFee += (cfg.level1?.amount || 0);
+            }
+          }
+        }
+      } catch (err) {}
+
       // Làm tròn tiền đến hàng nghìn (ví dụ 17500 -> 18000 hoặc giữ nguyên tùy ý, tạm giữ nguyên)
+      const finalNote = await checkLateNightSurchargeNote(note || '');
 
       const order = new Order({
         serviceType: 'GIAO_HANG',
@@ -1646,7 +1737,7 @@ const orderController = {
         pickupCoordinates,
         deliveryCoordinates,
         items: items || [],
-        note: note || '',
+        note: finalNote,
         codAmount: codAmount || 0,
         deliveryFee, // Phí ship đã được tính tự động
         status: 'DRAFT', // Chuyển thành DRAFT (Chờ báo giá) thay vì PENDING để chờ Admin xem xét lại trước khi Treo lên cho tài xế
