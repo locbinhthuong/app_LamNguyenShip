@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit2, Trash2, Search, X, Loader2, Calendar } from 'lucide-react';
+import { Users, Plus, Edit2, Trash2, Search, X, Loader2, Calendar, ShieldCheck } from 'lucide-react';
 import { getCustomers, createCustomer, updateCustomer, deleteCustomer, getFullImageUrl, uploadDriverAvatar } from '../services/api';
 import { getRegionConfig } from '../services/configService';
 
@@ -140,6 +140,15 @@ const Customers = () => {
     }
   };
 
+  const handleApprovalToggle = async (id, currentApprovalStatus) => {
+    try {
+      await updateCustomer(id, { isApprovedShop: !currentApprovalStatus });
+      fetchCustomers();
+    } catch (error) {
+      alert('Có lỗi xảy ra khi duyệt cửa hàng');
+    }
+  };
+
   const filteredCustomers = customers.filter(c => 
     c.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
     c.phone?.includes(searchTerm)
@@ -174,6 +183,11 @@ const Customers = () => {
                 <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-100">
                   {customer.role === 'SHOP' ? 'SHOP / Đối tác' : 'KHÁCH'}
                 </span>
+                {customer.role === 'SHOP' && (
+                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${customer.isApprovedShop ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                    {customer.isApprovedShop ? 'Đã duyệt' : 'Chưa duyệt'}
+                  </span>
+                )}
               </div>
             </div>
             
@@ -184,6 +198,14 @@ const Customers = () => {
               </div>
               
               <div className="flex items-center gap-2">
+                {customer.role === 'SHOP' && (
+                  <button 
+                    onClick={() => handleApprovalToggle(customer._id, customer.isApprovedShop)}
+                    className={`p-1.5 rounded-lg transition-colors flex items-center gap-1 font-semibold ${customer.isApprovedShop ? 'text-blue-600 bg-blue-50' : 'text-gray-500 bg-gray-100'}`}
+                  >
+                    <ShieldCheck size={14} /> Duyệt
+                  </button>
+                )}
                 <button 
                   onClick={() => handleOpenModal(customer)}
                   className="p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1 font-semibold"
@@ -242,9 +264,16 @@ const Customers = () => {
                 </td>
                 <td className="py-3 px-4 font-bold text-gray-700">{customer.phone}</td>
                 <td className="py-3 px-4">
-                  <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border border-emerald-100">
-                    {customer.role === 'SHOP' ? 'SHOP / ĐỐI TÁC' : 'KHÁCH HÀNG'}
-                  </span>
+                  <div className="flex flex-col gap-1 items-start">
+                    <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap border border-emerald-100">
+                      {customer.role === 'SHOP' ? 'SHOP / ĐỐI TÁC' : 'KHÁCH HÀNG'}
+                    </span>
+                    {customer.role === 'SHOP' && (
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${customer.isApprovedShop ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {customer.isApprovedShop ? 'Đã duyệt AloFood' : 'Chưa duyệt'}
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className="py-3 px-4 text-sm text-gray-500 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
@@ -262,6 +291,15 @@ const Customers = () => {
                 </td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex items-center justify-end gap-2">
+                    {customer.role === 'SHOP' && (
+                      <button 
+                        onClick={() => handleApprovalToggle(customer._id, customer.isApprovedShop)}
+                        className={`p-2 rounded-lg transition-colors ${customer.isApprovedShop ? 'text-blue-600 hover:bg-blue-50' : 'text-gray-400 hover:bg-gray-100'}`}
+                        title={customer.isApprovedShop ? "Hủy duyệt" : "Duyệt cửa hàng"}
+                      >
+                        <ShieldCheck size={18} />
+                      </button>
+                    )}
                     <button 
                       onClick={() => handleOpenModal(customer)}
                       className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

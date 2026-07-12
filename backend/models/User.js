@@ -59,6 +59,11 @@ const userSchema = new mongoose.Schema({
   categories: [{
     type: String
   }],
+  // For SHOP role approval
+  isApprovedShop: {
+    type: Boolean,
+    default: false
+  },
   // Default location for pinning on map
   defaultLocation: {
     lat: { type: Number, default: null },

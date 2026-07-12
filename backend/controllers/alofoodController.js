@@ -9,10 +9,10 @@ exports.getPopularItems = async (req, res) => {
     const popularItemsRaw = await MenuItem.find({ isAvailable: true })
       .sort({ soldCount: -1, createdAt: -1 })
       .limit(20)
-      .populate('shopId', 'shopName coverImage')
+      .populate('shopId', 'shopName coverImage isApprovedShop')
       .lean();
       
-    const popularItems = popularItemsRaw.filter(item => item.shopId != null).slice(0, 6);
+    const popularItems = popularItemsRaw.filter(item => item.shopId != null && item.shopId.isApprovedShop).slice(0, 6);
       
     res.json({ success: true, data: popularItems });
   } catch (error) {
@@ -25,7 +25,7 @@ exports.getPopularItems = async (req, res) => {
 exports.getRestaurants = async (req, res) => {
   try {
     const { search, category, limit = 20, page = 1 } = req.query;
-    const query = { role: 'SHOP', isActive: { $ne: false }, isOpen: { $ne: false } };
+    const query = { role: 'SHOP', isActive: { $ne: false }, isOpen: { $ne: false }, isApprovedShop: true };
     
     if (search) {
       query.$or = [
@@ -41,7 +41,7 @@ exports.getRestaurants = async (req, res) => {
     const skip = (page - 1) * limit;
     
     const restaurants = await User.find(query)
-      .select('shopName shopAddress coverImage rating ratingCount defaultLocation isOpen')
+      .select('shopName shopAddress coverImage rating ratingCount defaultLocation isOpen isApprovedShop')
       .skip(skip)
       .limit(parseInt(limit))
       .sort({ rating: -1, createdAt: -1 })

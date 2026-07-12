@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Star, MapPin, Plus, Minus, ShoppingCart, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Star, MapPin, ShoppingCart, Info, Clock, Plus, Minus, BadgeCheck, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
 
 const AloFoodRestaurantDetail = () => {
@@ -154,7 +154,10 @@ const AloFoodRestaurantDetail = () => {
         </button>
 
         <div className="absolute bottom-4 left-4 right-4 text-white">
-          <h1 className="font-bold text-2xl mb-1">{restaurant.shopName}</h1>
+          <h1 className="font-bold text-2xl mb-1 flex items-center gap-2">
+            {restaurant.shopName}
+            {restaurant.isApprovedShop && <BadgeCheck size={24} className="text-blue-400" />}
+          </h1>
           <div className="flex items-center text-xs opacity-90 gap-3">
             <span className="flex items-center gap-1 text-yellow-400 font-bold">
               <Star size={14} className="fill-yellow-400" /> {restaurant.rating?.toFixed(1) || '5.0'}

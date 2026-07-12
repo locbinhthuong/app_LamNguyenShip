@@ -57,10 +57,11 @@ const userController = {
 
   updateUser: async (req, res) => {
     try {
-      const { name, phone, password, isActive, region } = req.body;
+      const { name, phone, password, isActive, region, isApprovedShop } = req.body;
       const updateData = {};
       if (name) updateData.name = name;
       if (region !== undefined) updateData.region = region;
+      if (isApprovedShop !== undefined) updateData.isApprovedShop = isApprovedShop;
       if (isActive !== undefined) {
         updateData.isActive = isActive;
         if (isActive === true) {

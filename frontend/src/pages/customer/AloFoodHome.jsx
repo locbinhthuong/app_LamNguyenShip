@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, Star, Clock, MapPin } from 'lucide-react';
+import { ArrowLeft, Search, Star, Clock, MapPin, BadgeCheck } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
 
 const AloFoodHome = () => {
@@ -122,9 +122,14 @@ const AloFoodHome = () => {
                   </div>
                 </div>
                 <div className="p-2.5">
-                  <h3 className="font-bold text-gray-800 text-sm line-clamp-1 leading-tight mb-1">{item.name}</h3>
+                  <h3 className="font-bold text-gray-800 text-sm line-clamp-1 leading-tight mb-1 flex items-center gap-1">
+                    {item.name}
+                  </h3>
                   <p className="font-bold text-red-500 text-sm mb-1">{item.price.toLocaleString('vi-VN')}đ</p>
-                  <p className="text-[10px] text-gray-500 line-clamp-1">{item.shopId?.shopName}</p>
+                  <p className="text-[10px] text-gray-500 line-clamp-1 flex items-center gap-1">
+                    {item.shopId?.shopName}
+                    {item.shopId?.isApprovedShop && <BadgeCheck size={12} className="text-blue-500 shrink-0" />}
+                  </p>
                 </div>
               </div>
             ))}
@@ -163,7 +168,10 @@ const AloFoodHome = () => {
                 )}
               </div>
               <div className="p-3">
-                <h3 className="font-bold text-gray-900 text-base line-clamp-1 mb-1">{shop.shopName}</h3>
+                <h3 className="font-bold text-gray-900 text-base line-clamp-1 mb-1 flex items-center gap-1">
+                  {shop.shopName}
+                  {shop.isApprovedShop && <BadgeCheck size={16} className="text-blue-500 shrink-0" />}
+                </h3>
                 <div className="flex items-center text-xs text-gray-500 gap-3 mb-1">
                   <span className="flex items-center gap-1 text-yellow-500 font-bold">
                     <Star size={14} className="fill-yellow-500" /> {shop.rating?.toFixed(1) || '5.0'}
