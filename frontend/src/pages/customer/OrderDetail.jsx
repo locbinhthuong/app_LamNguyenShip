@@ -292,7 +292,7 @@ export default function OrderDetail() {
                 </div>
               )}
 
-              {order.codAmount > 0 && (
+              {order.serviceType !== 'ALOFOOD' && order.codAmount > 0 && (
                 <div className="flex justify-between items-center bg-blue-50 p-3 rounded-2xl border border-blue-100">
                    <span className="text-sm text-blue-800 font-bold">Thu hộ tiền hàng (COD)</span>
                    <span className="font-black text-blue-600">{order.codAmount.toLocaleString()}đ</span>
@@ -308,14 +308,16 @@ export default function OrderDetail() {
                 
                 return (
                   <div className="flex flex-col gap-3">
-                     <div className="flex justify-between items-center px-1">
-                       <span className="text-[10px] text-slate-500 font-bold uppercase">
-                         {shopAmount > 0 ? 'TÀI XẾ ỨNG CHO SHOP' : shopAmount < 0 ? 'TÀI XẾ THU TỪ SHOP' : 'TÀI XẾ KHÔNG CẦN ỨNG/THU Ở SHOP'}
-                       </span>
-                       <span className="font-black text-lg text-slate-700">
-                         {shopAmount === 0 ? '0đ' : `${Math.abs(shopAmount).toLocaleString()}đ`}
-                       </span>
-                     </div>
+                     {order.serviceType !== 'ALOFOOD' && (
+                       <div className="flex justify-between items-center px-1">
+                         <span className="text-[10px] text-slate-500 font-bold uppercase">
+                           {shopAmount > 0 ? 'TÀI XẾ ỨNG CHO SHOP' : shopAmount < 0 ? 'TÀI XẾ THU TỪ SHOP' : 'TÀI XẾ KHÔNG CẦN ỨNG/THU Ở SHOP'}
+                         </span>
+                         <span className="font-black text-lg text-slate-700">
+                           {shopAmount === 0 ? '0đ' : `${Math.abs(shopAmount).toLocaleString()}đ`}
+                         </span>
+                       </div>
+                     )}
 
                      <div className="flex justify-between items-end px-1 bg-red-50 p-3 rounded-xl border border-red-100">
                        <div className="flex flex-col">
