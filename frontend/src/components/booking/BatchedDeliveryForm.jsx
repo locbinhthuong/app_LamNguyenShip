@@ -117,7 +117,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
         note: `Đơn ghép ${deliveries.length} điểm`,
         codAmount: totalCod,
         deliveryFee: totalFee,
-        extraSurcharge: deliveries.reduce((sum, d) => sum + (d.extraSurcharge ? parseInt(d.extraSurcharge) : 0), 0),
+        extraSurcharge: deliveries.reduce((sum, d) => sum + (d.extraSurcharge ? parseInt(d.extraSurcharge) : 0) + (d.extraSurchargeAPI || 0), 0),
         packageDetails: {
           description: `Giao hàng hóa (Đơn ghép ${deliveries.length} điểm)`,
           weight: '',
@@ -131,7 +131,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
           deliveryCoordinates: d.coordinates || null,
           codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
           fee: d.fee || 0,
-          extraSurcharge: d.extraSurcharge ? parseInt(d.extraSurcharge) : 0,
+          extraSurcharge: (d.extraSurcharge ? parseInt(d.extraSurcharge) : 0) + (d.extraSurchargeAPI || 0),
           feePaidBy: d.feePaidBy || 'RECEIVER',
           distanceKm: d.distanceKm || 0,
           note: d.note.trim()
@@ -151,7 +151,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
         note: d.note.trim(),
         codAmount: d.codAmount ? parseInt(d.codAmount) : 0,
         deliveryFee: d.fee || 0,
-        extraSurcharge: d.extraSurcharge ? parseInt(d.extraSurcharge) : 0,
+        extraSurcharge: (d.extraSurcharge ? parseInt(d.extraSurcharge) : 0) + (d.extraSurchargeAPI || 0),
         feePaidBy: d.feePaidBy || 'RECEIVER',
         receiverName: d.receiverName.trim(),
         receiverPhone: d.receiverPhone.trim(),

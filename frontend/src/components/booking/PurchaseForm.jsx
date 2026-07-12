@@ -98,6 +98,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       receiverPhone: form.receiverPhone.trim() || '',
       receiverPhone2: '',
       deliveryFee: estimatedFee || 0,
+      extraSurcharge: extraSurcharge || 0,
       packageDetails: {
         description: 'MUA HỘ',
         itemsToBuy: []

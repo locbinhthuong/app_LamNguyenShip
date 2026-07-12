@@ -180,7 +180,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       deliveryCoordinates: form.deliveryCoordinates || null,
       note: form.note.trim(),
       codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
-      extraSurcharge: form.extraSurcharge ? parseInt(form.extraSurcharge) : 0,
+      extraSurcharge: (form.extraSurcharge ? parseInt(form.extraSurcharge) : 0) + (extraSurchargeAPI || 0),
       deliveryFee: estimatedFee || 0,
       packageDetails: {
         description: 'Giao hàng hóa/tài liệu',

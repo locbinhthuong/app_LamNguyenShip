@@ -112,6 +112,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       receiverPhone: '',
       receiverPhone2: form.receiverPhone2.trim(),
       deliveryFee: estimatedFee || 0,
+      extraSurcharge: extraSurcharge || 0,
       rideDetails: {
         vehicleType: subType === 'LAI_HO_OTO' ? 'OTO' : 'XE_MAY',
         vehicleClass: (subType === 'LAI_HO_XE_MAY' || subType === 'LAI_HO_OTO') ? vehicleClass : '',

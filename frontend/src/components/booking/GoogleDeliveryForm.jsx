@@ -151,6 +151,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       note: form.note.trim(),
       codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
       deliveryFee: estimatedFee || 0,
+      extraSurcharge: extraSurchargeAPI || 0,
       packageDetails: {
         description: 'Giao hàng hóa/tài liệu',
         weight: '',
