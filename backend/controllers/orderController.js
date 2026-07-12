@@ -49,7 +49,7 @@ const refundOrderDebtIfAny = async (orderId) => {
   }
 };
 
-const checkLateNightSurchargeNote = async (currentNote) => {
+const getLateNightSurchargeDriverReminder = async () => {
   try {
     const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
     if (surchargeDoc && surchargeDoc.value) {
@@ -87,15 +87,13 @@ const checkLateNightSurchargeNote = async (currentNote) => {
           surchargeStr = `[ĐƠN KHUYA SAU ${cfg.level1?.time} - Đã cộng phụ phí ${(cfg.level1?.amount || 0).toLocaleString('vi-VN')}đ vào tiền ship]`;
         }
         
-        if (surchargeStr) {
-          return currentNote ? `${currentNote}\n${surchargeStr}` : surchargeStr;
-        }
+        return surchargeStr;
       }
     }
   } catch (err) {
     console.error('Lỗi check phụ phí khuya khi tạo đơn:', err);
   }
-  return currentNote || '';
+  return '';
 };
 
 const orderController = {
@@ -351,7 +349,8 @@ const orderController = {
         forceAssignedDriverFcm = driver.fcmToken;
       }
 
-      const finalNote = await checkLateNightSurchargeNote(note || '');
+      const surchargeReminder = await getLateNightSurchargeDriverReminder();
+      const finalDriverReminder = surchargeReminder ? (driverReminder ? `${driverReminder}\n${surchargeReminder}` : surchargeReminder) : driverReminder;
 
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
@@ -362,8 +361,8 @@ const orderController = {
         pickupAddress,
         deliveryAddress,
         items: items || [],
-        note: finalNote,
-        driverReminder: driverReminder || '',
+        note: note || '',
+        driverReminder: finalDriverReminder || '',
         codAmount: codAmount || 0,
         deliveryFee: deliveryFee || 0,
         extraSurcharge: extraSurcharge || 0,
@@ -505,8 +504,8 @@ const orderController = {
         items, note, packageDetails, rideDetails, financialDetails, codAmount, extraSurcharge, batchedDeliveries, feePaidBy, autoAssignNearest
       } = req.body;
 
-      const finalNote = await checkLateNightSurchargeNote(note || '');
-
+      const surchargeReminder = await getLateNightSurchargeDriverReminder();
+      
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
         subServiceType: subServiceType || null,
@@ -524,7 +523,8 @@ const orderController = {
         pickupCoordinates,
         deliveryCoordinates: deliveryCoordinates || null,
         items: items || [],
-        note: finalNote,
+        note: note || '',
+        driverReminder: surchargeReminder || '',
         packageDetails: packageDetails || {},
         rideDetails: rideDetails || {},
         financialDetails: financialDetails || {},
@@ -1724,7 +1724,7 @@ const orderController = {
       } catch (err) {}
 
       // Làm tròn tiền đến hàng nghìn (ví dụ 17500 -> 18000 hoặc giữ nguyên tùy ý, tạm giữ nguyên)
-      const finalNote = await checkLateNightSurchargeNote(note || '');
+      const surchargeReminder = await getLateNightSurchargeDriverReminder();
 
       const order = new Order({
         serviceType: 'GIAO_HANG',
@@ -1737,7 +1737,8 @@ const orderController = {
         pickupCoordinates,
         deliveryCoordinates,
         items: items || [],
-        note: finalNote,
+        note: note || '',
+        driverReminder: surchargeReminder || '',
         codAmount: codAmount || 0,
         deliveryFee, // Phí ship đã được tính tự động
         status: 'DRAFT', // Chuyển thành DRAFT (Chờ báo giá) thay vì PENDING để chờ Admin xem xét lại trước khi Treo lên cho tài xế
