@@ -173,6 +173,7 @@ const AloFoodHome = () => {
                   </span>
                 </div>
               </div>
+            </div>
             ))}
           </div>
         )}
