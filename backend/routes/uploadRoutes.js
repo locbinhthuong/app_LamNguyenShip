@@ -5,8 +5,22 @@ const path = require('path');
 const { verifyToken, onlyDriver } = require('../middleware/auth');
 const fs = require('fs');
 
-// Cấu hình Nơi lưu trữ trên Memory (Do Vercel không cho phép lưu file tĩnh)
-const storage = multer.memoryStorage();
+// Đảm bảo thư mục uploads tồn tại
+const uploadDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Cấu hình Nơi lưu trữ trên Ổ cứng
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname || '.jpg'));
+  }
+});
 
 // Bộ lọc Ảnh (Chỉ nhận Image)
 const fileFilter = (req, file, cb) => {
@@ -32,8 +46,8 @@ router.post('/avatar', verifyToken, upload.single('image'), (req, res) => {
       return res.status(400).json({ success: false, message: 'Chưa có file nào được tải lên.' });
     }
 
-    // Chuyển buffer thành chuỗi Base64 Data URI để frontend lưu thẳng vào Database
-    const fileUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    // Trả về đường dẫn ảnh tĩnh
+    const fileUrl = `/uploads/${req.file.filename}`;
 
     res.status(200).json({
       success: true,
@@ -49,8 +63,16 @@ router.post('/avatar', verifyToken, upload.single('image'), (req, res) => {
   }
 });
 
-// Cấu hình Nơi lưu trữ cho Media chung trên Memory
-const mediaStorage = multer.memoryStorage();
+// Cấu hình Nơi lưu trữ cho Media chung
+const mediaStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'media-' + uniqueSuffix + path.extname(file.originalname || '.jpg'));
+  }
+});
 
 const mediaFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
@@ -75,8 +97,7 @@ router.post('/media', verifyToken, uploadMedia.single('media'), (req, res) => {
       return res.status(400).json({ success: false, message: 'Chưa có file nào được tải lên.' });
     }
 
-    // Chuyển buffer thành chuỗi Base64 Data URI
-    const fileUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    const fileUrl = `/uploads/${req.file.filename}`;
     const fileType = req.file.mimetype.startsWith('video/') ? 'video' : 'image';
 
     res.status(200).json({

@@ -133,7 +133,7 @@ const AloFoodHome = () => {
       )}
 
       {/* LIST RESTAURANTS */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+      <div className="flex-1 overflow-y-auto p-4 pb-20">
         {loading ? (
           <div className="text-center py-10 text-gray-500">Đang tìm quán ngon...</div>
         ) : restaurants.length === 0 ? (
@@ -141,13 +141,14 @@ const AloFoodHome = () => {
             <p className="text-gray-500 font-medium">Không tìm thấy quán ăn nào phù hợp</p>
           </div>
         ) : (
-          restaurants.map(shop => (
-            <div 
-              key={shop._id} 
-              onClick={() => navigate(`/alofood/restaurant/${shop._id}`)}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform"
-            >
-              <div className="h-36 bg-gray-200 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            {restaurants.map(shop => (
+              <div 
+                key={shop._id} 
+                onClick={() => navigate(`/alofood/restaurant/${shop._id}`)}
+                className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform flex flex-col"
+              >
+                <div className="h-40 sm:h-36 bg-gray-200 relative shrink-0">
                 {shop.coverImage ? (
                   <img src={getFullImageUrl(shop.coverImage)} alt={shop.shopName} className="w-full h-full object-cover" />
                 ) : (
@@ -172,8 +173,8 @@ const AloFoodHome = () => {
                   </span>
                 </div>
               </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>
