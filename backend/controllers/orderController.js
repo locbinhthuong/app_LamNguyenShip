@@ -52,8 +52,12 @@ const refundOrderDebtIfAny = async (orderId) => {
 const getLateNightSurchargeDriverReminder = async () => {
   try {
     const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
+    let cfg = { level1: { time: '22:30', amount: 3000 }, level2: { time: '23:30', amount: 5000 }, endTime: '06:00' };
     if (surchargeDoc && surchargeDoc.value) {
-      const cfg = surchargeDoc.value;
+      cfg = surchargeDoc.value;
+    }
+
+    if (cfg) {
       const parseTime = (timeStr) => {
         if (!timeStr) return null;
         const parts = timeStr.split(':');
@@ -1688,8 +1692,12 @@ const orderController = {
 
       try {
         const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
+        let cfg = { level1: { time: '22:30', amount: 3000 }, level2: { time: '23:30', amount: 5000 }, endTime: '06:00' };
         if (surchargeDoc && surchargeDoc.value) {
-          const cfg = surchargeDoc.value;
+          cfg = surchargeDoc.value;
+        }
+
+        if (cfg) {
           const parseTime = (timeStr) => {
             if (!timeStr) return null;
             const parts = timeStr.split(':');
@@ -1876,9 +1884,12 @@ const orderController = {
       // Phụ phí giờ khuya (LATE_NIGHT_SURCHARGE_CONFIG)
       try {
         const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
+        let cfg = { level1: { time: '22:30', amount: 3000 }, level2: { time: '23:30', amount: 5000 }, endTime: '06:00' };
         if (surchargeDoc && surchargeDoc.value) {
-          const cfg = surchargeDoc.value;
-          
+          cfg = surchargeDoc.value;
+        }
+        
+        if (cfg) {
           const parseTime = (timeStr) => {
             if (!timeStr) return null;
             const parts = timeStr.split(':');
