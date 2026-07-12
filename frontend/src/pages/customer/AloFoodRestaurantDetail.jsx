@@ -24,8 +24,29 @@ const AloFoodRestaurantDetail = () => {
       try {
         const res = await api.get(`/alofood/restaurants/${id}/menu`);
         if (res.data.success) {
+          const fetchedMenuItems = res.data.data.menuItems;
           setRestaurant(res.data.data.restaurant);
-          setMenuItems(res.data.data.menuItems);
+          setMenuItems(fetchedMenuItems);
+          
+          // Load and validate cart
+          const savedCart = sessionStorage.getItem(`alofood_cart_${id}`);
+          if (savedCart) {
+            const parsedCart = JSON.parse(savedCart);
+            const validCart = {};
+            let changed = false;
+            for (const key in parsedCart) {
+              const item = fetchedMenuItems.find(i => i._id === key);
+              if (item && item.isAvailable) {
+                validCart[key] = parsedCart[key];
+              } else {
+                changed = true;
+              }
+            }
+            setCart(validCart);
+            if (changed) {
+              sessionStorage.setItem(`alofood_cart_${id}`, JSON.stringify(validCart));
+            }
+          }
         }
         
         // Fetch reviews
@@ -40,12 +61,6 @@ const AloFoodRestaurantDetail = () => {
       }
     };
     fetchMenu();
-    
-    // Load cart from session if exists for this shop
-    const savedCart = sessionStorage.getItem(`alofood_cart_${id}`);
-    if (savedCart) {
-      setCart(JSON.parse(savedCart));
-    }
   }, [id]);
 
   const updateCart = (itemId, change) => {

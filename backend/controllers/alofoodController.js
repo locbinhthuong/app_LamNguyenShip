@@ -103,6 +103,19 @@ exports.createFoodOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Quán ăn hiện đang đóng cửa' });
     }
 
+    const orderController = require('./orderController');
+    const surchargeReminder = await orderController.getLateNightSurchargeDriverReminder();
+    
+    let finalDeliveryFee = deliveryFee || 0;
+    let finalExtraSurcharge = 0;
+    const surchargeAmount = await orderController.getLateNightSurchargeAmount();
+    if (surchargeAmount > 0) {
+      if (finalDeliveryFee >= surchargeAmount) {
+         finalDeliveryFee -= surchargeAmount;
+      }
+      finalExtraSurcharge += surchargeAmount;
+    }
+
     // Prepare order data
     const newOrder = new Order({
       serviceType: 'ALOFOOD',
@@ -114,6 +127,7 @@ exports.createFoodOrder = async (req, res) => {
       deliveryAddress,
       deliveryCoordinates,
       note,
+      driverReminder: surchargeReminder || '',
       scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
       alofoodDetails: {
         shopId,
@@ -129,8 +143,9 @@ exports.createFoodOrder = async (req, res) => {
       // Tài xế đến lấy đồ ăn phải trả tiền cho quán (foodTotal)
       // Khi giao cho khách sẽ thu lại (foodTotal + deliveryFee)
       // Nên phần codAmount = foodTotal + deliveryFee
-      codAmount: foodTotal + deliveryFee, 
-      deliveryFee: deliveryFee,
+      codAmount: foodTotal + finalDeliveryFee + finalExtraSurcharge, 
+      deliveryFee: finalDeliveryFee,
+      extraSurcharge: finalExtraSurcharge,
       distanceKm: distance || 0,
       feePaidBy: 'RECEIVER',
       status: 'WAITING_SHOP'
