@@ -29,3 +29,13 @@ export const updateAppVersionConfig = async (configData) => {
   const response = await api.put('/api/config/APP_VERSION_CONFIG', { value: configData });
   return response.data;
 };
+
+export const getLateNightConfig = async () => {
+  const response = await api.get('/api/config/LATE_NIGHT_SURCHARGE_CONFIG');
+  return response.data;
+};
+
+export const updateLateNightConfig = async (configData) => {
+  const response = await api.put('/api/config/LATE_NIGHT_SURCHARGE_CONFIG', { value: configData });
+  return response.data;
+};

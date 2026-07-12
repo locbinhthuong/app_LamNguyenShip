@@ -40,6 +40,14 @@ exports.getConfig = async (req, res) => {
         };
         config = new Config({ key, value: defaultAppVersion });
         await config.save();
+      } else if (key === 'LATE_NIGHT_SURCHARGE_CONFIG') {
+        const defaultSurcharge = {
+          level1: { time: "22:30", amount: 3000 },
+          level2: { time: "23:30", amount: 5000 },
+          endTime: "06:00"
+        };
+        config = new Config({ key, value: defaultSurcharge });
+        await config.save();
       } else {
         return res.status(404).json({ success: false, message: 'Không tìm thấy cấu hình' });
       }

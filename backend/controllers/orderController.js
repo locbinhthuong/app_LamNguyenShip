@@ -1781,8 +1781,52 @@ const orderController = {
         }
       }
 
-      // Nếu là dịch vụ mua hộ, cước có thể tăng hoặc giữ nguyên tùy ý (chưa có quy tắc cụ thể nên dùng bảng giá chung)
-      
+      // Phụ phí giờ khuya (LATE_NIGHT_SURCHARGE_CONFIG)
+      try {
+        const surchargeDoc = await Config.findOne({ key: 'LATE_NIGHT_SURCHARGE_CONFIG' });
+        if (surchargeDoc && surchargeDoc.value) {
+          const cfg = surchargeDoc.value;
+          
+          const parseTime = (timeStr) => {
+            if (!timeStr) return null;
+            const parts = timeStr.split(':');
+            return { h: parseInt(parts[0], 10) || 0, m: parseInt(parts[1], 10) || 0 };
+          };
+          
+          const l1 = parseTime(cfg.level1?.time);
+          const l2 = parseTime(cfg.level2?.time);
+          const e = parseTime(cfg.endTime);
+          
+          if (l1 && l2 && e) {
+            const vnTime = new Date(new Date().toLocaleString("en-US", {timeZone: "Asia/Ho_Chi_Minh"}));
+            const currentTotalMinutes = vnTime.getHours() * 60 + vnTime.getMinutes();
+            
+            const l1Total = l1.h * 60 + l1.m;
+            const l2Total = l2.h * 60 + l2.m;
+            const eTotal = e.h * 60 + e.m;
+            
+            // Xử lý trường hợp vượt qua nửa đêm. Ví dụ bắt đầu 23:30, kết thúc 06:00
+            // Nghĩa là từ 23:30 -> 23:59 VÀ 00:00 -> 06:00
+            const isBetween = (startMins, endMins, current) => {
+              if (startMins <= endMins) {
+                return current >= startMins && current <= endMins;
+              } else {
+                return current >= startMins || current <= endMins;
+              }
+            };
+            
+            // Phải check mức 2 trước vì nó cao hơn
+            if (isBetween(l2Total, eTotal, currentTotalMinutes)) {
+              deliveryFee += (cfg.level2?.amount || 0);
+            } else if (isBetween(l1Total, eTotal, currentTotalMinutes)) {
+              deliveryFee += (cfg.level1?.amount || 0);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Lỗi tính phụ phí giờ khuya:', err);
+      }
+
       res.status(200).json({
         success: true,
         data: {

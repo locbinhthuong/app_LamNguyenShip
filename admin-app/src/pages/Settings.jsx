@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig } from '../services/configService';
+import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig, getLateNightConfig, updateLateNightConfig } from '../services/configService';
 import { getAdminProfile, updateAdminProfile } from '../services/api';
 import { Trash2, Plus, Eye, EyeOff } from 'lucide-react';
 
@@ -17,9 +17,16 @@ export default function Settings() {
     customerApp: { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" }
   });
 
+  const [lateNightConfig, setLateNightConfig] = useState({
+    level1: { time: "22:30", amount: 3000 },
+    level2: { time: "23:30", amount: 5000 },
+    endTime: "06:00"
+  });
+
   const [adminProfile, setAdminProfile] = useState({ name: '', phone: '', oldPassword: '', password: '' });
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+
 
   const [config, setConfig] = useState({
     tiers: [
@@ -43,11 +50,12 @@ export default function Settings() {
   const fetchConfig = async () => {
     try {
       setLoading(true);
-      const [pricingRes, regionRes, appVersionRes, adminProfileRes] = await Promise.all([
+      const [pricingRes, regionRes, appVersionRes, adminProfileRes, lateNightRes] = await Promise.all([
         getPricingConfig(),
         getRegionConfig().catch(() => null),
         getAppVersionConfig().catch(() => null),
-        getAdminProfile().catch(() => null)
+        getAdminProfile().catch(() => null),
+        getLateNightConfig().catch(() => null)
       ]);
 
       if (pricingRes.success && pricingRes.data && pricingRes.data.value && Array.isArray(pricingRes.data.value.tiers)) {
@@ -70,6 +78,10 @@ export default function Settings() {
           driverApp: appVersionRes.data.value.driverApp || { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" },
           customerApp: appVersionRes.data.value.customerApp || { minVersion: "1.0.0", storeUrlAndroid: "", storeUrlIos: "" }
         });
+      }
+
+      if (lateNightRes && lateNightRes.success && lateNightRes.data && lateNightRes.data.value) {
+        setLateNightConfig(lateNightRes.data.value);
       }
 
       if (adminProfileRes && adminProfileRes.success && adminProfileRes.data) {
@@ -130,6 +142,7 @@ export default function Settings() {
       const res = await updatePricingConfig(config);
       await updateRegionConfig(regions);
       await updateAppVersionConfig(appVersion);
+      await updateLateNightConfig(lateNightConfig);
       
       const updateData = {};
       if (adminProfile.name) updateData.name = adminProfile.name;
@@ -489,6 +502,73 @@ export default function Settings() {
                       onChange={(e) => setAppVersion({ ...appVersion, customerApp: { ...appVersion.customerApp, storeUrlIos: e.target.value } })}
                       className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm text-slate-600"
                     />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-8">
+              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span className="text-2xl">🌙</span> Phụ Phí Giờ Khuya
+              </h3>
+              <p className="text-sm text-slate-500 mb-6">Tự động cộng thêm phụ phí vào phí giao hàng khi đặt đơn vào khung giờ khuya.</p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-800 text-lg border-b pb-2">Mức 1</h4>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Bắt đầu từ (VD: 22:30)</label>
+                    <input
+                      type="time"
+                      value={lateNightConfig?.level1?.time || ''}
+                      onChange={(e) => setLateNightConfig({ ...lateNightConfig, level1: { ...lateNightConfig.level1, time: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Số tiền phụ phí (VNĐ)</label>
+                    <input
+                      type="number"
+                      value={lateNightConfig?.level1?.amount || 0}
+                      onChange={(e) => setLateNightConfig({ ...lateNightConfig, level1: { ...lateNightConfig.level1, amount: Number(e.target.value) } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-800 text-lg border-b pb-2">Mức 2</h4>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Bắt đầu từ (VD: 23:30)</label>
+                    <input
+                      type="time"
+                      value={lateNightConfig?.level2?.time || ''}
+                      onChange={(e) => setLateNightConfig({ ...lateNightConfig, level2: { ...lateNightConfig.level2, time: e.target.value } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Số tiền phụ phí (VNĐ)</label>
+                    <input
+                      type="number"
+                      value={lateNightConfig?.level2?.amount || 0}
+                      onChange={(e) => setLateNightConfig({ ...lateNightConfig, level2: { ...lateNightConfig.level2, amount: Number(e.target.value) } })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-bold text-slate-800 text-lg border-b pb-2">Kết Thúc</h4>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-1">Kết thúc phụ phí (VD: 06:00)</label>
+                    <input
+                      type="time"
+                      value={lateNightConfig?.endTime || ''}
+                      onChange={(e) => setLateNightConfig({ ...lateNightConfig, endTime: e.target.value })}
+                      className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold"
+                    />
+                    <p className="text-xs text-slate-500 mt-2">Sau thời gian này, phí giao hàng trở về bình thường.</p>
                   </div>
                 </div>
               </div>
