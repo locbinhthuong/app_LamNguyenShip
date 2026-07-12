@@ -8,6 +8,9 @@ const ShopMenuManager = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isApproved, setIsApproved] = useState(false);
+  
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   
@@ -21,8 +24,24 @@ const ShopMenuManager = () => {
   });
 
   useEffect(() => {
-    fetchMenu();
+    checkApprovalStatus();
   }, []);
+
+  const checkApprovalStatus = async () => {
+    try {
+      setCheckingAuth(true);
+      const res = await api.get('/auth/customer/me');
+      if (res.data.success) {
+        setIsApproved(res.data.data.isApprovedShop);
+        localStorage.setItem('customerData', JSON.stringify(res.data.data));
+      }
+    } catch (error) {
+      console.error('Lỗi kiểm tra quyền:', error);
+    } finally {
+      setCheckingAuth(false);
+      fetchMenu();
+    }
+  };
 
   const fetchMenu = async () => {
     try {
@@ -133,6 +152,36 @@ const ShopMenuManager = () => {
     newImages.splice(index, 1);
     setFormData({ ...formData, images: newImages });
   };
+
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500 font-medium">Đang kiểm tra quyền truy cập...</div>
+      </div>
+    );
+  }
+
+  if (!isApproved) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock size={32} />
+          </div>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">Chưa Được Phê Duyệt</h2>
+          <p className="text-gray-600 mb-6">
+            Cửa hàng của bạn chưa được Admin phê duyệt để đăng sản phẩm lên AloFood. Vui lòng liên hệ với Điều Phối Viên AloShipp để được hỗ trợ trở thành đối tác chính thức.
+          </p>
+          <button 
+            onClick={() => navigate('/shop')}
+            className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors"
+          >
+            Quay lại trang chủ
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col flex-1 w-full max-w-5xl mx-auto bg-gray-50 font-sans min-h-screen">
