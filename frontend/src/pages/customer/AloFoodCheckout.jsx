@@ -332,7 +332,7 @@ const AloFoodCheckout = () => {
       </div>
 
       {/* FOOTER */}
-      <div className="fixed bottom-0 left-0 md:left-[260px] right-0 max-w-5xl mx-auto bg-white border-t border-gray-100 p-4 safe-pb z-40">
+      <div className="fixed bottom-24 md:bottom-0 left-0 md:left-[260px] right-0 max-w-5xl mx-auto bg-white border-t border-gray-100 p-4 safe-pb z-40">
         <button 
           onClick={handlePlaceOrder}
           disabled={submitting}

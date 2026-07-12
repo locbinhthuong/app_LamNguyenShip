@@ -406,7 +406,7 @@ const AloFoodRestaurantDetail = () => {
 
       {/* FLOATING CART SUMMARY */}
       {totalItems > 0 && restaurant.isOpen && (
-        <div className="fixed bottom-0 left-0 md:left-[260px] right-0 max-w-5xl mx-auto p-4 z-40 bg-gradient-to-t from-white via-white to-transparent pb-6">
+        <div className="fixed bottom-24 md:bottom-0 left-0 md:left-[260px] right-0 max-w-5xl mx-auto p-4 z-40 bg-gradient-to-t from-white via-white to-transparent pb-6">
           <div 
             onClick={handleCheckout}
             className="bg-red-500 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-red-500/40 cursor-pointer active:scale-95 transition-transform"
