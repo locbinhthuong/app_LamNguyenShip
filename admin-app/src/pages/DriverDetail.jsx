@@ -268,7 +268,7 @@ export default function DriverDetail() {
                   <div key={order.id} className="bg-white border text-sm border-slate-200 rounded-xl p-4 flex flex-col gap-2">
                     <div className="flex justify-between items-start border-b border-slate-100 pb-2">
                        <span className="font-mono font-bold text-blue-600 truncate">#{order.orderCode}</span>
-                       <span className="font-bold text-sky-600">+{formatCurrency(order.deliveryFee)}</span>
+                       <span className="font-bold text-sky-600">+{formatCurrency((order.deliveryFee || 0) + (order.extraSurcharge || 0))}</span>
                     </div>
                     <div>
                        <span className="text-xs text-slate-500 block uppercase font-semibold">Khách Hàng</span>
@@ -298,7 +298,7 @@ export default function DriverDetail() {
                       <tr key={order.id} className="hover:bg-blue-50 hover:bg-blue-100/30 transition-colors">
                         <td className="px-4 py-3 font-mono text-blue-600">#{order.orderCode}</td>
                         <td className="px-4 py-3 font-medium text-slate-800">{order.customerName}</td>
-                        <td className="px-4 py-3 text-right font-bold text-sky-600">+{formatCurrency(order.deliveryFee)}</td>
+                        <td className="px-4 py-3 text-right font-bold text-sky-600">+{formatCurrency((order.deliveryFee || 0) + (order.extraSurcharge || 0))}</td>
                         <td className="px-4 py-3 text-right text-xs text-slate-500">
                            {new Date(order.date).toLocaleString('vi-VN')}
                         </td>

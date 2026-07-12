@@ -284,7 +284,7 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <p className="text-xs font-bold text-green-600">
-                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.deliveryFee || 0)}
+                      {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format((order.deliveryFee || 0) + (order.extraSurcharge || 0))}
                     </p>
                   </div>
                   
