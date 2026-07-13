@@ -335,12 +335,12 @@ const AloFoodCheckout = () => {
       <div className="fixed bottom-24 md:bottom-0 left-0 md:left-[260px] right-0 max-w-5xl mx-auto bg-white border-t border-gray-100 p-4 safe-pb z-40">
         <button 
           onClick={handlePlaceOrder}
-          disabled={submitting}
-          className="w-full bg-red-500 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-red-500/30 flex items-center justify-between px-5 disabled:opacity-50"
+          disabled={submitting || loadingFee}
+          className={`w-full text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-between px-5 transition-all ${submitting || loadingFee ? 'bg-gray-400 shadow-none' : 'bg-red-500 shadow-red-500/30'}`}
         >
-          <span className="text-sm">Thanh toán tiền mặt</span>
+          <span className="text-sm">{loadingFee ? 'Đang tính phí giao hàng...' : 'Thanh toán tiền mặt'}</span>
           <span className="text-lg flex items-center gap-2">
-            {totalAmount.toLocaleString('vi-VN')}đ
+            {loadingFee ? <Loader2 className="animate-spin" size={20} /> : `${totalAmount.toLocaleString('vi-VN')}đ`}
             <ArrowLeft className="rotate-180" size={18} />
           </span>
         </button>
