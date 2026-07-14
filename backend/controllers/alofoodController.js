@@ -27,15 +27,40 @@ exports.getRestaurants = async (req, res) => {
     const { search, category, limit = 20, page = 1 } = req.query;
     const query = { role: 'SHOP', isActive: { $ne: false }, isOpen: { $ne: false }, isApprovedShop: true };
     
-    if (search) {
-      query.$or = [
-        { shopName: { $regex: search, $options: 'i' } },
-        { name: { $regex: search, $options: 'i' } }
-      ];
+    // Lấy shopId từ MenuItem nếu có filter
+    let categoryShopIds = null;
+    if (category) {
+       categoryShopIds = await MenuItem.distinct('shopId', { category });
     }
     
+    let searchShopIds = null;
+    if (search) {
+       searchShopIds = await MenuItem.distinct('shopId', { name: { $regex: search, $options: 'i' } });
+    }
+
     if (category) {
-      query.categories = category;
+      query.$or = [
+        { categories: category },
+        { _id: { $in: categoryShopIds } }
+      ];
+    }
+
+    if (search) {
+      const searchOr = [
+        { shopName: { $regex: search, $options: 'i' } },
+        { name: { $regex: search, $options: 'i' } },
+        { _id: { $in: searchShopIds } }
+      ];
+      
+      if (query.$or) {
+        query.$and = [
+          { $or: query.$or },
+          { $or: searchOr }
+        ];
+        delete query.$or;
+      } else {
+        query.$or = searchOr;
+      }
     }
 
     const skip = (page - 1) * limit;
