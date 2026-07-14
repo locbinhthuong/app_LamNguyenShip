@@ -160,7 +160,10 @@ const AloFoodHome = () => {
             {restaurants.map(shop => (
               <div 
                 key={shop._id} 
-                onClick={() => navigate(`/alofood/restaurant/${shop._id}`)}
+                onClick={() => {
+                  const navState = (activeCategory && activeCategory !== 'Tất cả') ? { state: { category: activeCategory } } : {};
+                  navigate(`/alofood/restaurant/${shop._id}`, navState);
+                }}
                 className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer active:scale-[0.98] transition-transform flex flex-col"
               >
                 <div className="h-40 sm:h-36 bg-gray-200 relative shrink-0">

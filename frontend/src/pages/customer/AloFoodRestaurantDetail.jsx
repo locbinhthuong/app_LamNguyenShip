@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Star, MapPin, ShoppingCart, Info, Clock, Plus, Minus, BadgeCheck, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
 
 const AloFoodRestaurantDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
+  const targetCategory = location.state?.category;
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,20 +51,40 @@ const AloFoodRestaurantDetail = () => {
             }
           }
         }
-        
-        // Fetch reviews
-        const reviewRes = await api.get(`/alofood/restaurants/${id}/reviews`);
-        if (reviewRes.data.success) {
-          setReviews(reviewRes.data.data);
-        }
       } catch (error) {
-        console.error('Lỗi lấy menu hoặc đánh giá:', error);
+        console.error('Lỗi lấy menu:', error);
       } finally {
         setLoading(false);
       }
     };
     fetchMenu();
   }, [id]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const res = await api.get(`/alofood/restaurants/${id}/reviews`);
+        if (res.data.success) {
+          setReviews(res.data.data);
+        }
+      } catch (error) {
+        console.error('Lỗi lấy đánh giá:', error);
+      }
+    };
+    fetchReviews();
+  }, [id]);
+
+  // Scroll to targeted category when menu is ready
+  useEffect(() => {
+    if (targetCategory && !loading && menuItems.length > 0) {
+      setTimeout(() => {
+        const el = document.getElementById(`category-${targetCategory}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
+  }, [targetCategory, loading, menuItems]);
 
   const updateCart = (itemId, change) => {
     setCart(prev => {
@@ -180,7 +202,7 @@ const AloFoodRestaurantDetail = () => {
           <div className="p-10 text-center text-gray-500">Quán chưa cập nhật thực đơn</div>
         ) : (
           Object.entries(categorizedMenu).map(([category, items]) => (
-            <div key={category} className="mb-2 bg-white">
+            <div key={category} id={`category-${category}`} className="mb-2 bg-white">
               <div className="px-4 py-3 bg-gray-100 border-y border-gray-200 sticky top-0 z-10">
                 <h2 className="font-bold text-gray-800 text-sm uppercase">{category}</h2>
               </div>
