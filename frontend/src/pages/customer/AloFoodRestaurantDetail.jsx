@@ -135,7 +135,7 @@ const AloFoodRestaurantDetail = () => {
     <div className="flex flex-col flex-1 w-full max-w-5xl mx-auto bg-gray-50 font-sans min-h-screen relative">
       {/* Cửa hàng bị đóng */}
       {!restaurant.isOpen && (
-        <div className="fixed top-0 left-0 md:left-[260px] right-0 z-50 bg-gray-900/90 text-white p-3 text-center font-bold text-sm">
+        <div className="bg-gray-900/90 text-white p-3 safe-pt text-center font-bold text-sm z-50 relative">
           Quán ăn hiện đang đóng cửa. Bạn không thể đặt món lúc này.
         </div>
       )}
@@ -149,7 +149,11 @@ const AloFoodRestaurantDetail = () => {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
         
-        <button onClick={() => navigate(-1)} className="absolute top-4 left-4 z-10 w-10 h-10 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center text-white">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="absolute left-4 z-10 w-10 h-10 bg-black/30 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all"
+          style={{ top: restaurant.isOpen ? 'calc(env(safe-area-inset-top, 0px) + 1rem)' : '1rem' }}
+        >
           <ArrowLeft size={22} />
         </button>
 
