@@ -56,6 +56,11 @@ export default function ShopProfile() {
     }
   };
 
+  const handleSwitchToBuyer = () => {
+    localStorage.setItem('activeMode', 'CUSTOMER');
+    window.location.href = '/';
+  };
+
   const handleDeleteAccount = async () => {
     if (window.confirm('CẢNH BÁO: Việc yêu cầu xoá tài khoản sẽ xoá vĩnh viễn mọi dữ liệu giao dịch của bạn trên hệ thống. Bạn có chắc chắn muốn yêu cầu xoá không?')) {
       try {
@@ -325,6 +330,18 @@ export default function ShopProfile() {
                 <div className="text-left">
                   <p className="font-bold text-slate-800 text-sm">Hỗ trợ / Liên hệ</p>
                   <p className="text-[11px] text-slate-400 mt-0.5">Liên hệ tổng đài hoặc hỗ trợ</p>
+                </div>
+              </div>
+            </button>
+
+            <button onClick={handleSwitchToBuyer} className="w-full p-4 flex items-center justify-between border-b border-slate-100 active:bg-slate-50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                  <User size={18} />
+                </div>
+                <div className="text-left">
+                  <p className="font-bold text-slate-800 text-sm">Chuyển sang Mua hàng</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Về giao diện gọi đồ ăn, đặt xe</p>
                 </div>
               </div>
             </button>

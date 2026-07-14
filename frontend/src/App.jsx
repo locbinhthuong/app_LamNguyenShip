@@ -46,7 +46,8 @@ const compareVersions = (v1, v2) => {
 
 const IndexRoute = () => {
   const userRole = localStorage.getItem('customerRole');
-  if (userRole === 'SHOP') {
+  const activeMode = localStorage.getItem('activeMode') || userRole;
+  if (activeMode === 'SHOP') {
     return <Navigate to="/shop" replace />;
   }
   return <CustomerDashboard />;

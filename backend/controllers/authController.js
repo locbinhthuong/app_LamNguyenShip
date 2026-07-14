@@ -603,33 +603,56 @@ const authController = {
     try {
       const { name, phone, password, role, shopName, shopAddress, defaultLocation, region } = req.body;
 
-      // Check phone exists
-      const existingUser = await User.findOne({ phone });
-      if (existingUser) {
-        return res.status(400).json({
-          success: false,
-          message: 'Số điện thoại đã được đăng ký'
-        });
-      }
-
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
       const userRole = (role === 'SHOP') ? 'SHOP' : 'CUSTOMER';
 
-      // Create user
-      const user = new User({
-        name,
-        phone,
-        password: hashedPassword,
-        role: userRole,
-        region: region || null,
-        shopName: userRole === 'SHOP' ? shopName : null,
-        shopAddress: userRole === 'SHOP' ? shopAddress : null,
-        defaultLocation: userRole === 'SHOP' ? defaultLocation : undefined
-      });
-
-      await user.save();
+      // Check phone exists
+      let user = await User.findOne({ phone });
+      
+      if (user) {
+        if (userRole === 'CUSTOMER') {
+          return res.status(400).json({
+            success: false,
+            message: 'Số điện thoại đã được đăng ký. Bạn có thể dùng chung tài khoản để đăng nhập cả 2 ứng dụng.'
+          });
+        }
+        if (userRole === 'SHOP' && user.role === 'SHOP') {
+          return res.status(400).json({
+            success: false,
+            message: 'Số điện thoại này đã là tài khoản cửa hàng. Vui lòng đăng nhập.'
+          });
+        }
+        if (userRole === 'SHOP' && user.role === 'CUSTOMER') {
+          // Check password matches to allow upgrading
+          const isMatch = await bcrypt.compare(password, user.password);
+          if (!isMatch) {
+            return res.status(400).json({
+              success: false,
+              message: 'Số điện thoại này đã là tài khoản khách hàng. Vui lòng nhập đúng mật khẩu cũ để nâng cấp thành cửa hàng.'
+            });
+          }
+          // Upgrade to SHOP
+          user.role = 'SHOP';
+          user.shopName = shopName;
+          user.shopAddress = shopAddress;
+          user.defaultLocation = defaultLocation;
+          if (region) user.region = region;
+          await user.save();
+        }
+      } else {
+        // Create new user
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user = new User({
+          name,
+          phone,
+          password: hashedPassword,
+          role: userRole,
+          region: region || null,
+          shopName: userRole === 'SHOP' ? shopName : null,
+          shopAddress: userRole === 'SHOP' ? shopAddress : null,
+          defaultLocation: userRole === 'SHOP' ? defaultLocation : undefined
+        });
+        await user.save();
+      }
 
       // Generate token
       const token = jwt.sign(

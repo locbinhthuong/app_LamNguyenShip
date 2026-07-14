@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2, FileText, HelpCircle, QrCode, ScrollText, Inbox } from 'lucide-react';
+import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2, FileText, HelpCircle, QrCode, ScrollText, Inbox, Store } from 'lucide-react';
 import { api, uploadCustomerAvatar, getFullImageUrl, deleteMyAccount, getActiveAnnouncements } from '../../services/api';
 
 const CustomerProfile = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
+  const userRole = localStorage.getItem('customerRole');
 
   const [showEdit, setShowEdit] = useState(false);
   const [editForm, setEditForm] = useState({ name: '', phone: '', password: '', avatar: '' });
@@ -63,6 +64,11 @@ const CustomerProfile = () => {
     localStorage.clear();
     // navigate('/login') will be handled by Router redirect or just window location
     navigate('/login');
+  };
+
+  const handleSwitchToSeller = () => {
+    localStorage.setItem('activeMode', 'SHOP');
+    window.location.href = '/shop';
   };
 
   const openEditModal = () => {
@@ -210,6 +216,16 @@ const CustomerProfile = () => {
 
         {/* Action Buttons */}
         <div className="pt-6 space-y-3">
+          {userRole === 'SHOP' && (
+            <button 
+              onClick={handleSwitchToSeller}
+              className="w-full bg-orange-500 p-3.5 rounded-[12px] text-white font-medium border flex items-center justify-center gap-2 active:bg-orange-600 transition-colors"
+            >
+              <Store size={18} />
+              CHUYỂN SANG CHẾ ĐỘ BÁN HÀNG
+            </button>
+          )}
+
           <button 
             onClick={() => setShowLogoutConfirm(true)}
             className="w-full bg-white p-3.5 rounded-[12px] text-[#ef4444] font-medium border border-[#fee2e2] flex items-center justify-center gap-2 active:bg-red-50 transition-colors"

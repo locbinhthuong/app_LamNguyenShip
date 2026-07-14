@@ -25,6 +25,7 @@ const Login = () => {
         localStorage.setItem('customerToken', token);
         localStorage.setItem('customerRole', user.role);
         localStorage.setItem('customerData', JSON.stringify(user));
+        localStorage.setItem('activeMode', user.role);
 
         // Điều hướng dựa trên role
         if (user.role === 'SHOP') {
