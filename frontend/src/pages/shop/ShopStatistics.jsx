@@ -12,10 +12,13 @@ const ShopStatistics = () => {
   const [showShippingModal, setShowShippingModal] = useState(false); // 'day', 'week', 'month'
   const [mainTab, setMainTab] = useState('revenue'); // 'revenue' or 'orders'
   const [selectedStatus, setSelectedStatus] = useState('placed');
+  const [serviceTab, setServiceTab] = useState('delivery'); // 'delivery' or 'alofood'
 
   const fetchOrders = async () => {
+    setLoading(true);
     try {
-      const res = await api.get('/orders/customer/my');
+      const endpoint = serviceTab === 'alofood' ? '/merchant/orders' : '/orders/customer/my';
+      const res = await api.get(endpoint);
       if (res.data.success) {
         setOrders(res.data.data);
       }
@@ -53,7 +56,7 @@ const ShopStatistics = () => {
       window.removeEventListener('order_deleted_event', handleDeleted);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [serviceTab]);
 
   const getStatusConfig = (order) => {
     const { status, serviceType } = order;
@@ -71,6 +74,8 @@ const ShopStatistics = () => {
     const completedOrders = orders.filter(o => o.status === 'COMPLETED');
     const now = new Date();
     now.setHours(23, 59, 59, 999); // Tính đến cuối ngày hôm nay
+    
+    const getRevenue = (o) => serviceTab === 'alofood' ? (o.alofoodDetails?.foodTotal || 0) : (o.codAmount || 0);
     
     let chartData = [];
     let totalRevenue = 0;
@@ -92,7 +97,7 @@ const ShopStatistics = () => {
         const od = new Date(o.createdAt);
         const match = chartData.find(c => c.name === formatDate(od));
         if (match) {
-          match.revenue += (o.codAmount || 0);
+          match.revenue += getRevenue(o);
           match.shipping += (o.deliveryFee || 0);
           if (o.feePaidBy === 'SENDER') match.shopPaid += (o.deliveryFee || 0);
           else match.customerPaid += (o.deliveryFee || 0);
@@ -111,7 +116,7 @@ const ShopStatistics = () => {
         if (diffWeeks < 4) {
           const match = chartData.find(c => c.weekOffset === diffWeeks);
           if (match) {
-            match.revenue += (o.codAmount || 0);
+            match.revenue += getRevenue(o);
             match.shipping += (o.deliveryFee || 0);
           if (o.feePaidBy === 'SENDER') match.shopPaid += (o.deliveryFee || 0);
           else match.customerPaid += (o.deliveryFee || 0);
@@ -129,7 +134,7 @@ const ShopStatistics = () => {
         const od = new Date(o.createdAt);
         const match = chartData.find(c => c.month === od.getMonth() && c.year === od.getFullYear());
         if (match) {
-          match.revenue += (o.codAmount || 0);
+          match.revenue += getRevenue(o);
           match.shipping += (o.deliveryFee || 0);
           if (o.feePaidBy === 'SENDER') match.shopPaid += (o.deliveryFee || 0);
           else match.customerPaid += (o.deliveryFee || 0);
@@ -171,7 +176,7 @@ const ShopStatistics = () => {
     });
 
     return { chartData, totalRevenue, totalShipping, shopPaidShipping, customerPaidShipping, totalOrders, statusCounts, matchedOrders };
-  }, [orders, statFilter]);
+  }, [orders, statFilter, serviceTab]);
 
   const filteredOrders = useMemo(() => {
     if (!statsData.matchedOrders) return [];
@@ -201,6 +206,7 @@ const ShopStatistics = () => {
                order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' :
                order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                order.serviceType === 'DIEU_PHOI' ? (order.subServiceType === 'NAP_TIEN' ? 'Nạp Tiền' : order.subServiceType === 'RUT_TIEN' ? 'Rút Tiền' : 'Điều Phối') :
+               order.serviceType === 'ALOFOOD' ? 'AloFood' :
                'Mua Hộ'}
             </span>
             <span className="text-[10px] text-gray-400">{new Date(order.createdAt).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
@@ -232,7 +238,7 @@ const ShopStatistics = () => {
       return (
         <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-100 text-xs">
           <p className="font-bold text-gray-800 mb-1">{label}</p>
-          <p className="text-blue-600 font-bold mb-0.5">Tiền thu hộ: {payload[0].value.toLocaleString('vi-VN')}đ</p>
+          <p className="text-blue-600 font-bold mb-0.5">{serviceTab === 'alofood' ? 'Doanh thu' : 'Tiền thu hộ'}: {payload[0].value.toLocaleString('vi-VN')}đ</p>
           {payload[1] && <p className="text-emerald-500 font-bold mb-0.5">Tiền ship: {payload[1].value.toLocaleString('vi-VN')}đ</p>}
           {payload[2] && <p className="text-orange-500 font-bold">Số đơn: {payload[2].value}</p>}
         </div>
@@ -247,6 +253,23 @@ const ShopStatistics = () => {
         <div className="px-4 py-3 flex items-center justify-center border-b border-gray-50">
           <span className="font-bold text-gray-800 text-lg">Thống Kê</span>
         </div>
+        
+        {/* Service Tabs */}
+        <div className="flex px-4 py-3 bg-gray-50 border-b border-gray-100">
+          <button 
+            className={`flex-1 py-2 text-sm font-bold rounded-l-lg border transition-all ${serviceTab === 'delivery' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200'}`}
+            onClick={() => setServiceTab('delivery')}
+          >
+            Giao Hàng
+          </button>
+          <button 
+            className={`flex-1 py-2 text-sm font-bold rounded-r-lg border-y border-r transition-all ${serviceTab === 'alofood' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-500 border-gray-200'}`}
+            onClick={() => setServiceTab('alofood')}
+          >
+            AloFood
+          </button>
+        </div>
+
         <div className="flex px-4 pt-1">
           <button 
             className={`flex-1 py-3 text-sm font-bold transition-all ${mainTab === 'revenue' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:bg-gray-50'}`}
@@ -279,7 +302,7 @@ const ShopStatistics = () => {
               <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-4 text-white shadow-lg shadow-blue-500/30">
                 <div className="flex items-center gap-2 mb-2 opacity-80">
                   <DollarSign size={18} />
-                  <span className="text-xs font-medium uppercase tracking-wider">Tổng thu hộ (COD)</span>
+                  <span className="text-xs font-medium uppercase tracking-wider">{serviceTab === 'alofood' ? 'Doanh thu bán hàng' : 'Tổng thu hộ (COD)'}</span>
                 </div>
                 <div className="text-2xl md:text-3xl font-black">
                   {statsData.totalRevenue.toLocaleString('vi-VN')}đ
@@ -317,7 +340,7 @@ const ShopStatistics = () => {
                     <YAxis yAxisId="right" orientation="right" hide={true} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '20px' }} />
-                    <Bar yAxisId="left" dataKey="revenue" name="Tiền thu hộ (đ)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Bar yAxisId="left" dataKey="revenue" name={serviceTab === 'alofood' ? 'Doanh thu (đ)' : 'Tiền thu hộ (đ)'} fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
                     <Bar yAxisId="left" dataKey="shipping" name="Tiền ship (đ)" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
                     <Line yAxisId="right" type="monotone" dataKey="orders" name="Số đơn" stroke="#f97316" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
                   </ComposedChart>
