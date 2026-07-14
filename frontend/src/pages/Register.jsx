@@ -68,6 +68,7 @@ const Register = () => {
         localStorage.setItem('customerToken', token);
         localStorage.setItem('customerRole', user.role);
         localStorage.setItem('customerData', JSON.stringify(user));
+        localStorage.setItem('activeMode', user.role);
 
         if (user.role === 'SHOP') {
           navigate('/shop', { replace: true });

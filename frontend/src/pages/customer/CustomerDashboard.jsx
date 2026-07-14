@@ -21,12 +21,6 @@ const CustomerDashboard = () => {
   const news = announcements.filter(a => a.type === 'NEWS');
   const banners = announcements.filter(a => a.type === 'BANNER');
 
-  useEffect(() => {
-    const role = localStorage.getItem('customerRole');
-    if (role === 'SHOP') {
-      navigate('/shop', { replace: true });
-    }
-  }, [navigate]);
 
   useEffect(() => {
     // Ưu tiên đọc từ sessionStorage (vị trí tạm thời trong phiên làm việc)
