@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Star, MapPin, ShoppingCart, Info, Clock, Plus, Minus, BadgeCheck, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
@@ -317,8 +318,8 @@ const AloFoodRestaurantDetail = () => {
       </div>
 
       {/* ITEM DETAIL MODAL */}
-      {selectedItem && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      {selectedItem && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div 
             className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
             onClick={() => setSelectedItem(null)}
@@ -408,7 +409,8 @@ const AloFoodRestaurantDetail = () => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* FLOATING CART SUMMARY */}
