@@ -95,7 +95,7 @@ const AloFoodHome = () => {
       </div>
 
       {/* POPULAR ITEMS */}
-      {!search && !activeCategory && popularItems.length > 0 && (
+      {!search && (!activeCategory || activeCategory === 'Tất cả') && popularItems.length > 0 && (
         <div className="bg-white pt-4 pb-2 border-b border-gray-100">
           <div className="px-4 flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
