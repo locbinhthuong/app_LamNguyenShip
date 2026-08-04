@@ -1,9 +1,27 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig, getLateNightConfig, updateLateNightConfig } from '../services/configService';
-import { getAdminProfile, updateAdminProfile } from '../services/api';
+import { getAdminProfile, updateAdminProfile, resetAdminSessions } from '../services/api';
 import { Trash2, Plus, Eye, EyeOff } from 'lucide-react';
 
 export default function Settings() {
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  
+  const handleResetSessions = async () => {
+    if (confirm('NGUY HIỂM: Hành động này sẽ lập tức ĐÁ văng tất cả những ai đang dùng chung tài khoản Admin này, BAO GỒM CẢ BẠN. Bạn sẽ phải tự đăng nhập lại. Bạn có chắc chắn muốn làm sạch tài khoản?')) {
+      try {
+        await resetAdminSessions();
+        alert('Thành công! Toàn bộ thiết bị đã bị vô hiệu hóa.');
+        logout();
+        navigate('/login');
+      } catch (err) {
+        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      }
+    }
+  };
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
@@ -646,11 +664,19 @@ export default function Settings() {
               </div>
             </div>
 
-            <div className="pt-6 border-t border-slate-100 flex justify-end">
+            <div className="pt-6 border-t border-slate-100 flex flex-col md:flex-row justify-end gap-4 mt-4">
+              <button
+                type="button"
+                onClick={handleResetSessions}
+                className="px-6 py-4 bg-red-100 text-red-600 font-bold text-lg rounded-2xl hover:bg-red-200 focus:ring-4 focus:ring-red-50 transition-all flex items-center justify-center border border-red-200 active:scale-95 whitespace-nowrap"
+              >
+                ⚠️ ĐĂNG XUẤT MỌI THIẾT BỊ
+              </button>
+
               <button
                 type="submit"
                 disabled={saving}
-                className="px-10 py-4 bg-blue-600 text-white font-black text-lg rounded-2xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all flex items-center shadow-xl shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                className="px-10 py-4 bg-blue-600 text-white font-black text-lg rounded-2xl hover:bg-blue-700 focus:ring-4 focus:ring-blue-100 transition-all flex items-center justify-center shadow-xl shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 whitespace-nowrap"
               >
                 {saving ? (
                   <>
