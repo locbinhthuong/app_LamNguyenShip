@@ -390,7 +390,22 @@ export default function Home() {
     const handleNewOrder = (e) => {
        if (!driver?.isOnline) return; // BỎ QUA NẾU ĐANG OFFLINE
        
-       loadData();
+       const newOrder = e.detail;
+       if (!newOrder || !newOrder._id) return;
+
+       // Lọc bỏ nếu đơn hàng đang được gán độc quyền cho tài xế/nhóm tài xế khác
+       if (newOrder.pendingAssignTo && newOrder.pendingAssignTo.length > 0) {
+           const isDriverInGroup = newOrder.pendingAssignTo.some(id => id.toString() === (driver?._id || driver?.id)?.toString());
+           if (!isDriverInGroup) return;
+       }
+
+       // Chèn trực tiếp đơn mới vào đầu danh sách mà không cần gọi API (tránh hiện loading spinner)
+       setAvailableOrders(prev => {
+          const exists = prev.find(o => o._id === newOrder._id);
+          if (exists) return prev;
+          return [newOrder, ...prev];
+       });
+       
        // Global Alarm in App.jsx tự động lo khoản chuông
        
        if (Capacitor.isNativePlatform() && document.visibilityState !== 'visible') {
