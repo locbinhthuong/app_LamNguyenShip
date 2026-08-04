@@ -60,6 +60,11 @@ export const getAdminProfile = async () => {
   return response.data;
 };
 
+export const resetAdminSessions = async () => {
+  const response = await api.post('/api/auth/admin/reset-sessions');
+  return response.data;
+};
+
 export const updateAdminProfile = async (data) => {
   const response = await api.put('/api/auth/admin/me', data);
   return response.data;

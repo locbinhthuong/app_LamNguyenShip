@@ -140,14 +140,14 @@ export default function Login() {
             <div className="flex-1 h-px bg-slate-600"></div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div>
               <label className="block text-slate-600 text-sm font-medium mb-2">Số điện thoại</label>
-              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0909123456" className="input-field" />
+              <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="0909123456" className="input-field" autoComplete="off" />
             </div>
             <div>
               <label className="block text-slate-600 text-sm font-medium mb-2">Mật khẩu</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="input-field" />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="input-field" autoComplete="new-password" />
             </div>
             <button type="submit" disabled={loading} className="btn-primary w-full">
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}

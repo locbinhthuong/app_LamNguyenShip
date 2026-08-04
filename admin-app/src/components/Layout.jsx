@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useAdminSocket } from '../hooks/useAdminSocket';
 import DebtApprovalModal from './DebtApprovalModal';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
-import { updateFcmToken } from '../services/api';
+import { updateFcmToken, resetAdminSessions } from '../services/api';
 import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset, Settings } from 'lucide-react';
 
 export default function Layout() {
@@ -67,7 +67,20 @@ export default function Layout() {
   }, [admin, location.pathname, navigate]);
 
   const handleLogout = () => {
-    if (confirm('Đăng xuất?')) { logout(); navigate('/login'); }
+    if (confirm('Đăng xuất khỏi thiết bị này?')) { logout(); navigate('/login'); }
+  };
+
+  const handleResetSessions = async () => {
+    if (confirm('NGUY HIỂM: Hành động này sẽ lập tức ĐÁ văng tất cả những ai đang dùng chung tài khoản Admin này, BAO GỒM CẢ BẠN. Bạn sẽ phải tự đăng nhập lại. Bạn có chắc chắn muốn làm sạch tài khoản?')) {
+      try {
+        await resetAdminSessions();
+        alert('Thành công! Toàn bộ thiết bị đã bị vô hiệu hóa.');
+        logout();
+        navigate('/login');
+      } catch (err) {
+        alert('Lỗi: ' + (err.response?.data?.message || err.message));
+      }
+    }
   };
 
   const navClass = ({ isActive }) =>
@@ -152,13 +165,23 @@ export default function Layout() {
               <p className="truncate text-xs text-slate-500">{admin?.role || 'Quản trị'}</p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-red-400 transition-all hover:bg-red-500/10 active:bg-red-500/20"
-          >
-            🚪 Đăng xuất
-          </button>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition-all hover:bg-slate-100 active:bg-slate-200"
+            >
+              🚪 Đăng xuất máy này
+            </button>
+            <button
+              type="button"
+              onClick={handleResetSessions}
+              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-red-500 transition-all hover:bg-red-50 active:bg-red-100 border border-red-100"
+              title="Vô hiệu hóa toàn bộ thiết bị đang đăng nhập"
+            >
+              ⚠️ Đăng xuất MỌI máy
+            </button>
+          </div>
         </div>
       </aside>
 

@@ -506,7 +506,12 @@ const authController = {
 
       // Generate token
       const token = jwt.sign(
-        { id: admin._id, role: admin.role, phone: admin.phone },
+        { 
+          id: admin._id, 
+          role: admin.role, 
+          phone: admin.phone,
+          tokenVersion: admin.tokenVersion || 0
+        },
         process.env.JWT_SECRET,
         { expiresIn: '30d' }
       );
@@ -531,6 +536,26 @@ const authController = {
         success: false,
         message: 'Lỗi server khi đăng nhập',
         error: error.message
+      });
+    }
+  },
+
+  // POST /api/auth/admin/reset-sessions - Đăng xuất mọi thiết bị
+  resetAdminSessions: async (req, res) => {
+    try {
+      const admin = req.admin;
+      admin.tokenVersion = (admin.tokenVersion || 0) + 1;
+      await admin.save();
+      
+      res.status(200).json({
+        success: true,
+        message: 'Đã vô hiệu hóa toàn bộ các phiên đăng nhập khác'
+      });
+    } catch (error) {
+      console.error('Error resetAdminSessions:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi reset phiên đăng nhập'
       });
     }
   },

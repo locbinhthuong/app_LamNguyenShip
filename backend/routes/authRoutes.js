@@ -48,6 +48,9 @@ router.post('/admin/login', [
 // GET /api/auth/admin/me
 router.get('/admin/me', verifyToken, onlyAdmin, authController.getAdminProfile);
 
+// POST /api/auth/admin/reset-sessions
+router.post('/admin/reset-sessions', verifyToken, onlyAdmin, authController.resetAdminSessions);
+
 // PUT /api/auth/admin/me
 router.put('/admin/me', verifyToken, onlyAdmin, authController.updateAdminProfile);
 

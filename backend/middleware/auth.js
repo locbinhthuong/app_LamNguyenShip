@@ -101,6 +101,14 @@ const onlyAdmin = async (req, res, next) => {
     });
   }
 
+  // Token version check
+  if (req.user.tokenVersion !== admin.tokenVersion) {
+    return res.status(401).json({
+      success: false,
+      message: 'Phiên đăng nhập đã bị vô hiệu hóa. Vui lòng đăng nhập lại.'
+    });
+  }
+
   req.admin = admin;
   next();
 };
@@ -143,6 +151,15 @@ const driverOrAdmin = async (req, res, next) => {
         message: 'Admin không tồn tại'
       });
     }
+    
+    // Token version check
+    if (req.user.tokenVersion !== admin.tokenVersion) {
+      return res.status(401).json({
+        success: false,
+        message: 'Phiên đăng nhập đã bị vô hiệu hóa. Vui lòng đăng nhập lại.'
+      });
+    }
+    
     req.admin = admin;
   } else {
     return res.status(403).json({
@@ -216,6 +233,15 @@ const anyAuthenticatedUser = async (req, res, next) => {
   } else if (['ADMIN', 'MANAGER', 'STAFF'].includes(role)) {
     const admin = await Admin.findById(req.user.id);
     if (!admin) return res.status(404).json({ success: false, message: 'Admin không tồn tại' });
+    
+    // Token version check
+    if (req.user.tokenVersion !== admin.tokenVersion) {
+      return res.status(401).json({
+        success: false,
+        message: 'Phiên đăng nhập đã bị vô hiệu hóa. Vui lòng đăng nhập lại.'
+      });
+    }
+
     req.admin = admin;
   } else {
     return res.status(403).json({ success: false, message: 'Không có quyền truy cập' });
