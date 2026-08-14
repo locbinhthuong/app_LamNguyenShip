@@ -704,6 +704,7 @@ const orderController = {
         deliveryFee: finalDeliveryFee,
         feePaidBy: feePaidBy || 'RECEIVER',
         status: autoAssignNearest ? 'PENDING' : 'DRAFT', // Mặc định luôn là DRAFT để bắt buộc Admin duyệt và Treo đơn
+        autoAssignNearest: autoAssignNearest || false,
         ipAddress: req.ip
       });
 
