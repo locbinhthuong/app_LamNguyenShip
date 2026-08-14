@@ -59,6 +59,10 @@ const driverSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isPriority5s: {
+    type: Boolean,
+    default: false
+  },
   currentLocation: {
     lat: { type: Number, default: null },
     lng: { type: Number, default: null },

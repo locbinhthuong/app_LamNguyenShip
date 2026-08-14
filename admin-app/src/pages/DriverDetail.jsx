@@ -30,7 +30,7 @@ export default function DriverDetail() {
   
   // Popup Sửa thông tin
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 15 });
+  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 15, isPriority5s: false });
   const [isUploading, setIsUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -52,7 +52,8 @@ export default function DriverDetail() {
         commissionRate: drRes.data.commissionRate || 15,
         avatar: drRes.data.avatar || '',
         cccd: drRes.data.cccd || '',
-        gplx: drRes.data.gplx || ''
+        gplx: drRes.data.gplx || '',
+        isPriority5s: drRes.data.isPriority5s || false
       });
       setAvatarPreview(drRes.data.avatar || null);
       setAvatarFile(null);
@@ -165,9 +166,16 @@ export default function DriverDetail() {
             <h2 className="text-xl font-bold text-slate-800 mb-1">{driver.name}</h2>
             <p className="text-blue-600 font-mono text-sm mb-3">{driver.phone}</p>
             
-            <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLORS[driver.status]}`}>
-              {STATUS_LABELS[driver.status]}
-            </span>
+            <div className="flex gap-2 justify-center items-center mt-2">
+              <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLORS[driver.status]}`}>
+                {STATUS_LABELS[driver.status]}
+              </span>
+              {driver.isPriority5s && (
+                <span className="inline-block rounded-full px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 shadow-sm">
+                  ⭐ TÀI XẾ ƯU TIÊN
+                </span>
+              )}
+            </div>
 
             <div className="mt-6 border-t border-slate-200 pt-4 text-left text-sm space-y-3">
               <div className="flex justify-between">
@@ -426,6 +434,18 @@ export default function DriverDetail() {
                   <option value={15}>15% (Tiêu chuẩn)</option>
                   <option value={20}>20% (Cao cấp)</option>
                 </select>
+              </div>
+              <div className="flex items-center gap-2 mt-4">
+                <input 
+                  type="checkbox" 
+                  id="priority5s"
+                  checked={editForm.isPriority5s} 
+                  onChange={e => setEditForm({...editForm, isPriority5s: e.target.checked})}
+                  className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
+                />
+                <label htmlFor="priority5s" className="text-sm font-bold text-purple-800 cursor-pointer">
+                  Ưu tiên hiển thị đơn mới trước 5 giây
+                </label>
               </div>
               <div className="mt-6 flex gap-3 pt-2">
                 <button type="button" disabled={isUploading} onClick={() => setShowEdit(false)} className="flex-1 rounded-xl bg-slate-100 hover:bg-slate-200 py-3 font-bold text-slate-600 transition-colors disabled:opacity-50">

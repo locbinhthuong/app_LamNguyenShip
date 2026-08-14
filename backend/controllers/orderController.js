@@ -469,7 +469,60 @@ const orderController = {
             let msgBody = `📍 Đơn: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
-        } else if (autoAssignNearest && payload.pickupCoordinates && payload.pickupCoordinates.lat && payload.pickupCoordinates.lng) {
+        } else {
+          // Xử lý ưu tiên 5s cho tài xế VIP
+          const Driver = require('../models/Driver');
+          const vipDriversFilter = { isOnline: true, isPriority5s: true, status: 'active' };
+          if (commissionRate) vipDriversFilter.commissionRate = commissionRate;
+          const vipDrivers = await Driver.find(vipDriversFilter);
+          
+          if (vipDrivers.length > 0) {
+            const driverIds = vipDrivers.map(d => d._id);
+            payload.pendingAssignTo = driverIds;
+            await Order.findByIdAndUpdate(order._id, { pendingAssignTo: driverIds });
+            
+            const { sendMultipleNotifications } = require('../utils/notification');
+            const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+            let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+            const fcmTokens = [];
+
+            for (const driver of vipDrivers) {
+              req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', payload);
+              if (driver.fcmToken) {
+                fcmTokens.push(driver.fcmToken);
+              }
+            }
+            req.io.to('admins').emit('new_order', payload);
+            
+            if (fcmTokens.length > 0) {
+              await sendMultipleNotifications(fcmTokens, '⭐ ĐƠN HÀNG ƯU TIÊN CHO BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
+            }
+
+            // Fallback timeout: 5s
+            setTimeout(async () => {
+              try {
+                const checkOrder = await Order.findById(order._id);
+                if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+                  const remainingIds = checkOrder.pendingAssignTo;
+                  const forcedOrder = await Order.findOneAndUpdate(
+                    { _id: order._id, status: 'PENDING' },
+                    {
+                      $set: { pendingAssignTo: [] },
+                      $addToSet: { rejectedBy: { $each: remainingIds } }
+                    },
+                    { new: true }
+                  );
+                  if (forcedOrder && req.io) {
+                    const forcedPayload = typeof forcedOrder.toObject === 'function' ? forcedOrder.toObject({ virtuals: true }) : forcedOrder;
+                    const { emitNewOrder } = require('../sockets/index');
+                    emitNewOrder(req.io, forcedPayload, true);
+                  }
+                }
+              } catch (e) {
+                console.error('Fallback timeout error:', e);
+              }
+            }, 5000);
+          } else if (autoAssignNearest && payload.pickupCoordinates && payload.pickupCoordinates.lat && payload.pickupCoordinates.lng) {
           // Gán cho một nhóm tài xế gần nhất
           const nearestDrivers = await findNearestAvailableDriversGroup(
             payload.pickupCoordinates.lat,
@@ -839,7 +892,57 @@ const orderController = {
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
         } else if (isDraftToPending || autoAssignNearest) {
-          if (autoAssignNearest && orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
+          // Xử lý ưu tiên 5s cho tài xế VIP khi đơn từ Draft -> Pending
+          const Driver = require('../models/Driver');
+          const vipDriversFilter = { isOnline: true, isPriority5s: true, status: 'active' };
+          if (orderToUpdate.commissionRate) vipDriversFilter.commissionRate = orderToUpdate.commissionRate;
+          const vipDrivers = await Driver.find(vipDriversFilter);
+          
+          if (vipDrivers.length > 0) {
+            const driverIds = vipDrivers.map(d => d._id);
+            payload.pendingAssignTo = driverIds;
+            await Order.findByIdAndUpdate(orderToUpdate._id, { pendingAssignTo: driverIds });
+            
+            const { sendMultipleNotifications } = require('../utils/notification');
+            const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+            let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+            const fcmTokens = [];
+
+            for (const driver of vipDrivers) {
+              req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', payload);
+              if (driver.fcmToken) {
+                fcmTokens.push(driver.fcmToken);
+              }
+            }
+            
+            if (fcmTokens.length > 0) {
+              await sendMultipleNotifications(fcmTokens, '⭐ ĐƠN HÀNG ƯU TIÊN CHO BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
+            }
+
+            // Fallback timeout: 5s
+            setTimeout(async () => {
+              try {
+                const checkOrder = await Order.findById(orderToUpdate._id);
+                if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+                  const remainingIds = checkOrder.pendingAssignTo;
+                  const forcedOrder = await Order.findOneAndUpdate(
+                    { _id: orderToUpdate._id, status: 'PENDING' },
+                    {
+                      $set: { pendingAssignTo: [] },
+                      $addToSet: { rejectedBy: { $each: remainingIds } }
+                    },
+                    { new: true }
+                  );
+                  if (forcedOrder && req.io) {
+                    const forcedPayload = typeof forcedOrder.toObject === 'function' ? forcedOrder.toObject({ virtuals: true }) : forcedOrder;
+                    emitNewOrder(req.io, forcedPayload, true);
+                  }
+                }
+              } catch (e) {
+                console.error('Fallback timeout error:', e);
+              }
+            }, 5000);
+          } else if (autoAssignNearest && orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
             const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
             const nearestDrivers = await findNearestAvailableDriversGroup(
               orderToUpdate.pickupCoordinates.lat,
