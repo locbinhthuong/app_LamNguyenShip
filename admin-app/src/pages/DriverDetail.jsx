@@ -444,7 +444,7 @@ export default function DriverDetail() {
                   className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
                 />
                 <label htmlFor="priority5s" className="text-sm font-bold text-purple-800 cursor-pointer">
-                  Ưu tiên hiển thị đơn mới trước 5 giây
+                  {/* Text removed as requested */}
                 </label>
               </div>
               <div className="mt-6 flex gap-3 pt-2">
