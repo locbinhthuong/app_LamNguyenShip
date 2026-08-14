@@ -703,8 +703,8 @@ const orderController = {
         extraSurcharge: finalExtraSurcharge,
         deliveryFee: finalDeliveryFee,
         feePaidBy: feePaidBy || 'RECEIVER',
-        status: autoAssignNearest ? 'PENDING' : 'DRAFT', // Mặc định luôn là DRAFT để bắt buộc Admin duyệt và Treo đơn
-        autoAssignNearest: autoAssignNearest || false,
+        status: (String(autoAssignNearest) === 'true' || autoAssignNearest === true) ? 'PENDING' : 'DRAFT', // Mặc định luôn là DRAFT để bắt buộc Admin duyệt và Treo đơn
+        autoAssignNearest: String(autoAssignNearest) === "true",
         ipAddress: req.ip
       });
 
