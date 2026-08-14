@@ -587,6 +587,7 @@ const orderController = {
           const { emitNewOrder } = require('../sockets/index');
           emitNewOrder(req.io, payload, true); // true = isSilentAdmin
         }
+        }
       } else if (req.io && scheduledPublishAt) {
         req.io.to('admins').emit('new_order', order);
       }
