@@ -443,6 +443,7 @@ const orderController = {
         assignedTo: didAdminForceAssign ? forceAssignDriverId : undefined,
         acceptedAt: didAdminForceAssign ? new Date() : undefined,
         scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : null,
+        autoAssignNearest: (String(autoAssignNearest) === 'true' || autoAssignNearest === true),
         createdBy: req.admin._id,
         ipAddress: req.ip
       });
