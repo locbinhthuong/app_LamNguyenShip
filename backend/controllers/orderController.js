@@ -514,8 +514,53 @@ const orderController = {
                   );
                   if (forcedOrder && req.io) {
                     const forcedPayload = typeof forcedOrder.toObject === 'function' ? forcedOrder.toObject({ virtuals: true }) : forcedOrder;
-                    const { emitNewOrder } = require('../sockets/index');
-                    emitNewOrder(req.io, forcedPayload, true);
+                    if (autoAssignNearest && forcedPayload.pickupCoordinates && forcedPayload.pickupCoordinates.lat && forcedPayload.pickupCoordinates.lng) {
+                      const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
+                      const nearestDrivers = await findNearestAvailableDriversGroup(
+                        forcedPayload.pickupCoordinates.lat,
+                        forcedPayload.pickupCoordinates.lng,
+                        forcedPayload.commissionRate,
+                        remainingIds,
+                        5
+                      );
+                      if (nearestDrivers && nearestDrivers.length > 0) {
+                        const driverIds = nearestDrivers.map(d => d._id);
+                        forcedPayload.pendingAssignTo = driverIds;
+                        await Order.findByIdAndUpdate(forcedOrder._id, { pendingAssignTo: driverIds });
+                        const { sendMultipleNotifications } = require('../utils/notification');
+                        const feeResponse = forcedPayload.deliveryFee ? `${forcedPayload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+                        let msgBody = `📍 Đón: ${forcedPayload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+                        const fcmTokens = [];
+                        for (const driver of nearestDrivers) {
+                          req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', forcedPayload);
+                          if (driver.fcmToken) fcmTokens.push(driver.fcmToken);
+                        }
+                        req.io.to('admins').emit('new_order', forcedPayload);
+                        if (fcmTokens.length > 0) {
+                          await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${forcedPayload._id}`, orderId: forcedPayload._id.toString() }).catch(e => console.log('Push lỗi', e));
+                        }
+                        setTimeout(async () => {
+                          try {
+                            const checkOrder = await Order.findById(forcedOrder._id);
+                            if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+                              const remainingIds2 = checkOrder.pendingAssignTo;
+                              const forcedOrder2 = await Order.findOneAndUpdate({ _id: forcedOrder._id, status: 'PENDING' }, { $set: { pendingAssignTo: [] }, $addToSet: { rejectedBy: { $each: remainingIds2 } } }, { new: true });
+                              if (forcedOrder2 && req.io) {
+                                const forcedPayload2 = typeof forcedOrder2.toObject === 'function' ? forcedOrder2.toObject({ virtuals: true }) : forcedOrder2;
+                                const { emitNewOrder } = require('../sockets/index');
+                                emitNewOrder(req.io, forcedPayload2, true);
+                              }
+                            }
+                          } catch (e) { console.error(e); }
+                        }, 30000);
+                      } else {
+                        const { emitNewOrder } = require('../sockets/index');
+                        emitNewOrder(req.io, forcedPayload, true);
+                      }
+                    } else {
+                      const { emitNewOrder } = require('../sockets/index');
+                      emitNewOrder(req.io, forcedPayload, true);
+                    }
                   }
                 }
               } catch (e) {
@@ -936,7 +981,50 @@ const orderController = {
                   );
                   if (forcedOrder && req.io) {
                     const forcedPayload = typeof forcedOrder.toObject === 'function' ? forcedOrder.toObject({ virtuals: true }) : forcedOrder;
-                    emitNewOrder(req.io, forcedPayload, true);
+                    if (autoAssignNearest && forcedPayload.pickupCoordinates && forcedPayload.pickupCoordinates.lat && forcedPayload.pickupCoordinates.lng) {
+                      const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
+                      const nearestDrivers = await findNearestAvailableDriversGroup(
+                        forcedPayload.pickupCoordinates.lat,
+                        forcedPayload.pickupCoordinates.lng,
+                        forcedPayload.commissionRate,
+                        remainingIds,
+                        5
+                      );
+                      if (nearestDrivers && nearestDrivers.length > 0) {
+                        const driverIds = nearestDrivers.map(d => d._id);
+                        forcedPayload.pendingAssignTo = driverIds;
+                        await Order.findByIdAndUpdate(forcedOrder._id, { pendingAssignTo: driverIds });
+                        const { sendMultipleNotifications } = require('../utils/notification');
+                        const feeResponse = forcedPayload.deliveryFee ? `${forcedPayload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+                        let msgBody = `📍 Đón: ${forcedPayload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+                        const fcmTokens = [];
+                        for (const driver of nearestDrivers) {
+                          req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', forcedPayload);
+                          if (driver.fcmToken) fcmTokens.push(driver.fcmToken);
+                        }
+                        req.io.to('admins').emit('new_order', forcedPayload);
+                        if (fcmTokens.length > 0) {
+                          await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${forcedPayload._id}`, orderId: forcedPayload._id.toString() }).catch(e => console.log('Push lỗi', e));
+                        }
+                        setTimeout(async () => {
+                          try {
+                            const checkOrder = await Order.findById(forcedOrder._id);
+                            if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+                              const remainingIds2 = checkOrder.pendingAssignTo;
+                              const forcedOrder2 = await Order.findOneAndUpdate({ _id: forcedOrder._id, status: 'PENDING' }, { $set: { pendingAssignTo: [] }, $addToSet: { rejectedBy: { $each: remainingIds2 } } }, { new: true });
+                              if (forcedOrder2 && req.io) {
+                                const forcedPayload2 = typeof forcedOrder2.toObject === 'function' ? forcedOrder2.toObject({ virtuals: true }) : forcedOrder2;
+                                emitNewOrder(req.io, forcedPayload2, true);
+                              }
+                            }
+                          } catch (e) { console.error(e); }
+                        }, 30000);
+                      } else {
+                        emitNewOrder(req.io, forcedPayload, true);
+                      }
+                    } else {
+                      emitNewOrder(req.io, forcedPayload, true);
+                    }
                   }
                 }
               } catch (e) {
