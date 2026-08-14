@@ -76,6 +76,8 @@ const orderSchema = new mongoose.Schema({
     lat: { type: Number, default: null },
     lng: { type: Number, default: null }
   },
+  isVipAssigning: { type: Boolean, default: false },
+  autoAssignNearest: { type: Boolean, default: false },
   deliveryCoordinates: {
     lat: { type: Number, default: null },
     lng: { type: Number, default: null }

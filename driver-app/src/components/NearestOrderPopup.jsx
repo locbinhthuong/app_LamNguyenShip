@@ -13,7 +13,7 @@ export default function NearestOrderPopup() {
       const newOrder = e.detail;
       if (newOrder) {
         setOrder(newOrder);
-        setTimeLeft(30);
+        setTimeLeft(newOrder.timeoutDuration || 30);
       }
     };
 

@@ -476,10 +476,12 @@ const orderController = {
           if (commissionRate) vipDriversFilter.commissionRate = commissionRate;
           const vipDrivers = await Driver.find(vipDriversFilter);
           
-          if (vipDrivers.length > 0) {
-            const driverIds = vipDrivers.map(d => d._id);
-            payload.pendingAssignTo = driverIds;
-            await Order.findByIdAndUpdate(order._id, { pendingAssignTo: driverIds });
+            if (vipDrivers.length > 0) {
+              const driverIds = vipDrivers.map(d => d._id);
+              payload.pendingAssignTo = driverIds;
+              payload.isVipAssigning = true;
+              payload.timeoutDuration = 5;
+              await Order.findByIdAndUpdate(order._id, { pendingAssignTo: driverIds, isVipAssigning: true });
             
             const { sendMultipleNotifications } = require('../utils/notification');
             const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
@@ -526,7 +528,9 @@ const orderController = {
                       if (nearestDrivers && nearestDrivers.length > 0) {
                         const driverIds = nearestDrivers.map(d => d._id);
                         forcedPayload.pendingAssignTo = driverIds;
-                        await Order.findByIdAndUpdate(forcedOrder._id, { pendingAssignTo: driverIds });
+                        forcedPayload.isVipAssigning = false;
+                        forcedPayload.timeoutDuration = 30;
+                        await Order.findByIdAndUpdate(forcedOrder._id, { pendingAssignTo: driverIds, isVipAssigning: false });
                         const { sendMultipleNotifications } = require('../utils/notification');
                         const feeResponse = forcedPayload.deliveryFee ? `${forcedPayload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
                         let msgBody = `📍 Đón: ${forcedPayload.pickupAddress}\n💵 Phí: ${feeResponse}`;
@@ -580,7 +584,9 @@ const orderController = {
           if (nearestDrivers && nearestDrivers.length > 0) {
             const driverIds = nearestDrivers.map(d => d._id);
             payload.pendingAssignTo = driverIds; // Gửi mảng xuống client
-            await Order.findByIdAndUpdate(order._id, { pendingAssignTo: driverIds });
+            payload.isVipAssigning = false;
+            payload.timeoutDuration = 30;
+            await Order.findByIdAndUpdate(order._id, { pendingAssignTo: driverIds, isVipAssigning: false });
             
             const { sendMultipleNotifications } = require('../utils/notification');
             const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
@@ -839,6 +845,7 @@ const orderController = {
       if (commissionRate !== undefined) orderToUpdate.commissionRate = commissionRate;
       if (scheduledPublishAt !== undefined) orderToUpdate.scheduledPublishAt = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
       if (batchedDeliveries !== undefined) orderToUpdate.batchedDeliveries = batchedDeliveries;
+      if (autoAssignNearest !== undefined) orderToUpdate.autoAssignNearest = autoAssignNearest;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
       if (bulkyFee !== undefined || packageDescription !== undefined) {
@@ -947,7 +954,9 @@ const orderController = {
           if (vipDrivers.length > 0) {
             const driverIds = vipDrivers.map(d => d._id);
             payload.pendingAssignTo = driverIds;
-            await Order.findByIdAndUpdate(orderToUpdate._id, { pendingAssignTo: driverIds });
+            payload.isVipAssigning = true;
+            payload.timeoutDuration = 5;
+            await Order.findByIdAndUpdate(orderToUpdate._id, { pendingAssignTo: driverIds, isVipAssigning: true });
             
             const { sendMultipleNotifications } = require('../utils/notification');
             const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
@@ -993,7 +1002,9 @@ const orderController = {
                       if (nearestDrivers && nearestDrivers.length > 0) {
                         const driverIds = nearestDrivers.map(d => d._id);
                         forcedPayload.pendingAssignTo = driverIds;
-                        await Order.findByIdAndUpdate(forcedOrder._id, { pendingAssignTo: driverIds });
+                        forcedPayload.isVipAssigning = false;
+                        forcedPayload.timeoutDuration = 30;
+                        await Order.findByIdAndUpdate(forcedOrder._id, { pendingAssignTo: driverIds, isVipAssigning: false });
                         const { sendMultipleNotifications } = require('../utils/notification');
                         const feeResponse = forcedPayload.deliveryFee ? `${forcedPayload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
                         let msgBody = `📍 Đón: ${forcedPayload.pickupAddress}\n💵 Phí: ${feeResponse}`;
@@ -1044,7 +1055,9 @@ const orderController = {
             if (nearestDrivers && nearestDrivers.length > 0) {
               const driverIds = nearestDrivers.map(d => d._id);
               payload.pendingAssignTo = driverIds;
-              await Order.findByIdAndUpdate(orderToUpdate._id, { pendingAssignTo: driverIds });
+              payload.isVipAssigning = false;
+              payload.timeoutDuration = 30;
+              await Order.findByIdAndUpdate(orderToUpdate._id, { pendingAssignTo: driverIds, isVipAssigning: false });
               
               const { sendMultipleNotifications } = require('../utils/notification');
               const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
@@ -1241,11 +1254,57 @@ const orderController = {
         // Nếu mảng pendingAssignTo đã trống (tất cả tài xế trong nhóm đều từ chối hoặc hết hạn)
         // và đơn vẫn đang PENDING
         if (updatedOrder && updatedOrder.pendingAssignTo.length === 0 && updatedOrder.status === 'PENDING') {
-          // Phát lại đơn cho tất cả tài xế
           if (req.io) {
             const payload = typeof updatedOrder.toObject === 'function' ? updatedOrder.toObject({ virtuals: true }) : updatedOrder;
-            const { emitNewOrder } = require('../sockets/index');
-            emitNewOrder(req.io, payload, true); // true = isSilentAdmin
+            if (updatedOrder.isVipAssigning && updatedOrder.autoAssignNearest && payload.pickupCoordinates && payload.pickupCoordinates.lat && payload.pickupCoordinates.lng) {
+              const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
+              const nearestDrivers = await findNearestAvailableDriversGroup(
+                payload.pickupCoordinates.lat,
+                payload.pickupCoordinates.lng,
+                payload.commissionRate,
+                updatedOrder.rejectedBy || [],
+                5
+              );
+              if (nearestDrivers && nearestDrivers.length > 0) {
+                const driverIds = nearestDrivers.map(d => d._id);
+                payload.pendingAssignTo = driverIds;
+                payload.isVipAssigning = false;
+                payload.timeoutDuration = 30;
+                const newlyUpdated = await Order.findByIdAndUpdate(updatedOrder._id, { pendingAssignTo: driverIds, isVipAssigning: false }, { new: true });
+                const { sendMultipleNotifications } = require('../utils/notification');
+                const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
+                let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
+                const fcmTokens = [];
+                for (const driver of nearestDrivers) {
+                  req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', payload);
+                  if (driver.fcmToken) fcmTokens.push(driver.fcmToken);
+                }
+                req.io.to('admins').emit('new_order', payload);
+                if (fcmTokens.length > 0) {
+                  await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
+                }
+                setTimeout(async () => {
+                  try {
+                    const checkOrder = await Order.findById(newlyUpdated._id);
+                    if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+                      const remainingIds2 = checkOrder.pendingAssignTo;
+                      const forcedOrder2 = await Order.findOneAndUpdate({ _id: newlyUpdated._id, status: 'PENDING' }, { $set: { pendingAssignTo: [] }, $addToSet: { rejectedBy: { $each: remainingIds2 } } }, { new: true });
+                      if (forcedOrder2 && req.io) {
+                        const forcedPayload2 = typeof forcedOrder2.toObject === 'function' ? forcedOrder2.toObject({ virtuals: true }) : forcedOrder2;
+                        const { emitNewOrder } = require('../sockets/index');
+                        emitNewOrder(req.io, forcedPayload2, true);
+                      }
+                    }
+                  } catch (e) { console.error(e); }
+                }, 30000);
+              } else {
+                const { emitNewOrder } = require('../sockets/index');
+                emitNewOrder(req.io, payload, true);
+              }
+            } else {
+              const { emitNewOrder } = require('../sockets/index');
+              emitNewOrder(req.io, payload, true); // true = isSilentAdmin
+            }
           }
         }
       }
