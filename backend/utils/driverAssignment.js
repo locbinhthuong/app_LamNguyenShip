@@ -46,7 +46,7 @@ const findNearestAvailableDriver = async (pickupLat, pickupLng, commissionRate =
         driver.currentLocation.lat,
         driver.currentLocation.lng
       );
-      if (dist <= 50) { // Bán kính 1.5km
+      if (dist <= 1.5) { // Bán kính 1.5km
         acc.push({ ...driver, distance: dist });
       }
       return acc;
@@ -125,7 +125,7 @@ const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commission
         driver.currentLocation.lat,
         driver.currentLocation.lng
       );
-      if (dist <= 50) { // Bán kính 1.5km
+      if (dist <= 1.5) { // Bán kính 1.5km
         acc.push({ ...driver, distance: dist });
       }
       return acc;
