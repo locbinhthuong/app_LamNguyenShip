@@ -1257,7 +1257,9 @@ const orderController = {
         if (updatedOrder && updatedOrder.pendingAssignTo.length === 0 && updatedOrder.status === 'PENDING') {
           if (req.io) {
             const payload = typeof updatedOrder.toObject === 'function' ? updatedOrder.toObject({ virtuals: true }) : updatedOrder;
+            console.log('[DEBUG] rejectNearestAssignment -> isVipAssigning:', updatedOrder.isVipAssigning, 'autoAssignNearest:', updatedOrder.autoAssignNearest, 'coords:', payload.pickupCoordinates);
             if (updatedOrder.isVipAssigning && updatedOrder.autoAssignNearest && payload.pickupCoordinates && payload.pickupCoordinates.lat && payload.pickupCoordinates.lng) {
+              console.log('[DEBUG] fallback to 1.5km nearest logic');
               const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
               const nearestDrivers = await findNearestAvailableDriversGroup(
                 payload.pickupCoordinates.lat,

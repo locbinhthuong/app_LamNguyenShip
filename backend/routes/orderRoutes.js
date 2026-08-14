@@ -35,6 +35,9 @@ router.get('/', verifyToken, onlyAdmin, orderController.getAllOrders);
 // GET /api/orders/stats/dashboard - Dashboard stats (Admin)
 router.get('/stats/dashboard', verifyToken, onlyAdmin, orderController.getDashboardStats);
 
+// GET /api/orders/debug/last - Debug đơn hàng cuối
+router.get('/debug/last', orderController.debugLastOrder);
+
 // POST /api/orders - Tạo đơn hàng mới (Admin)
 router.post('/', verifyToken, onlyAdmin, [
   body('customerName').trim().notEmpty().withMessage('Tên khách hàng là bắt buộc'),
