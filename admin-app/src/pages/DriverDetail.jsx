@@ -438,7 +438,7 @@ export default function DriverDetail() {
                   </button>
                   
                   {showVehicleDropdown && (
-                    <div className="absolute z-10 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                    <div className="relative mt-2 w-full rounded-xl border border-slate-200 bg-white shadow-md overflow-hidden">
                       <ul className="max-h-60 overflow-auto py-1">
                         <li 
                           onClick={() => { setEditForm({...editForm, vehicleType: 'motorcycle'}); setShowVehicleDropdown(false); }}
