@@ -35,6 +35,20 @@ export default function DriverDetail() {
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const fileInputRef = useRef(null);
+  const [showVehicleDropdown, setShowVehicleDropdown] = useState(false);
+  const vehicleDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (vehicleDropdownRef.current && !vehicleDropdownRef.current.contains(event.target)) {
+        setShowVehicleDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const loadData = useCallback(async () => {
     try {
@@ -409,23 +423,54 @@ export default function DriverDetail() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1 block">Phương Tiện</label>
-                <select 
-                  value={`${editForm.vehicleType}${editForm.isPriority5s ? '_vip' : ''}`}
-                  onChange={e => {
-                    const val = e.target.value;
-                    const isVip = val.endsWith('_vip');
-                    const type = val.replace('_vip', '');
-                    setEditForm({...editForm, vehicleType: type, isPriority5s: isVip});
-                  }}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                >
-                  <option value="motorcycle">Xe Máy (Thường)</option>
-                  <option value="motorcycle_vip">Xe Máy (VIP)</option>
-                  <option value="car">Ô Tô (Thường)</option>
-                  <option value="car_vip">Ô Tô (VIP)</option>
-                  <option value="bike">Xe Đạp (Thường)</option>
-                  <option value="bike_vip">Xe Đạp (VIP)</option>
-                </select>
+                <div className="relative" ref={vehicleDropdownRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowVehicleDropdown(!showVehicleDropdown)}
+                    className="mt-1 w-full rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-left text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 flex justify-between items-center"
+                  >
+                    <span>
+                      {editForm.vehicleType === 'motorcycle' ? 'Xe Máy (Motorcycle)' : 
+                       editForm.vehicleType === 'car' ? 'Ô Tô (Car)' : 
+                       editForm.vehicleType === 'bike' ? 'Xe Đạp (Bike)' : 'Chọn phương tiện'}
+                    </span>
+                    <span className="text-slate-400">▼</span>
+                  </button>
+                  
+                  {showVehicleDropdown && (
+                    <div className="absolute z-10 mt-1 w-full rounded-xl border border-slate-200 bg-white shadow-lg overflow-hidden">
+                      <ul className="max-h-60 overflow-auto py-1">
+                        <li 
+                          onClick={() => { setEditForm({...editForm, vehicleType: 'motorcycle'}); setShowVehicleDropdown(false); }}
+                          className={`cursor-pointer px-4 py-2 hover:bg-blue-50 ${editForm.vehicleType === 'motorcycle' ? 'bg-blue-500 text-white hover:bg-blue-600' : 'text-slate-700'}`}
+                        >
+                          Xe Máy (Motorcycle)
+                        </li>
+                        <li 
+                          onClick={() => { setEditForm({...editForm, vehicleType: 'car'}); setShowVehicleDropdown(false); }}
+                          className={`cursor-pointer px-4 py-2 hover:bg-blue-50 ${editForm.vehicleType === 'car' ? 'bg-blue-500 text-white hover:bg-blue-600' : 'text-slate-700'}`}
+                        >
+                          Ô Tô (Car)
+                        </li>
+                        <li 
+                          onClick={() => { setEditForm({...editForm, vehicleType: 'bike'}); setShowVehicleDropdown(false); }}
+                          className={`cursor-pointer px-4 py-2 hover:bg-blue-50 ${editForm.vehicleType === 'bike' ? 'bg-blue-500 text-white hover:bg-blue-600' : 'text-slate-700'}`}
+                        >
+                          Xe Đạp (Bike)
+                        </li>
+                        <li className="border-t border-slate-100 mt-1 px-4 py-3 flex justify-end items-center bg-slate-50">
+                          <input 
+                            type="checkbox" 
+                            title="Bật/tắt ưu tiên"
+                            checked={editForm.isPriority5s} 
+                            onChange={e => setEditForm({...editForm, isPriority5s: e.target.checked})}
+                            className="w-5 h-5 text-blue-600 border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                          />
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1 block">Mức chiết khấu (%)</label>
