@@ -147,7 +147,7 @@ function OrderCard({ order, onAccept, loading }) {
           disabled={loading}
           className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 w-full text-[15px] rounded-xl shadow-md transition-all uppercase tracking-wider disabled:opacity-50"
         >
-          {loading ? 'Đang xử lý...' : 'NHẬN ĐƠN NGAY'}
+          {loading ? 'ĐANG NHẬN ĐƠN...' : 'NHẬN ĐƠN NGAY'}
         </button>
       </div>
     </div>
@@ -495,10 +495,10 @@ export default function Home() {
     };
   }, [loadData, driver]);
 
-  const handleAccept = async () => {
-    if (!confirmAcceptOrder) return;
-    const orderId = confirmAcceptOrder;
-    setConfirmAcceptOrder(null);
+  const handleAccept = async (directOrderId = null) => {
+    const orderId = directOrderId || confirmAcceptOrder;
+    if (!orderId) return;
+    if (!directOrderId) setConfirmAcceptOrder(null);
 
     if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(orderId);
@@ -510,7 +510,7 @@ export default function Home() {
         return;
       }
       showNotification('Nhận đơn thành công!');
-      await loadData();
+      await loadData(true);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Không thể nhận đơn', 'error');
     } finally {
@@ -528,7 +528,7 @@ export default function Home() {
       };
       await actions[action]();
       showNotification('Cập nhật thành công!');
-      await loadData();
+      await loadData(true);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Thao tác thất bại', 'error');
     } finally {
@@ -732,7 +732,7 @@ export default function Home() {
               <>
                 <p className="text-slate-500 text-sm mb-3 font-medium">Có {availableOrders.length} đơn hàng chờ bạn</p>
                 {availableOrders.map(order => (
-                  <OrderCard key={order._id} order={order} onAccept={() => setConfirmAcceptOrder(order._id)} loading={actionLoading === order._id || confirmAcceptOrder === order._id} />
+                  <OrderCard key={order._id} order={order} onAccept={() => { driver?.isPriority5s ? handleAccept(order._id) : setConfirmAcceptOrder(order._id) }} loading={actionLoading === order._id || confirmAcceptOrder === order._id} />
                 ))}
               </>
             ) : (

@@ -5,6 +5,7 @@ import { acceptOrder, rejectNearestAssignment } from '../services/api';
 export default function NearestOrderPopup() {
   const [order, setOrder] = useState(null);
   const [timeLeft, setTimeLeft] = useState(30);
+  const [initialTime, setInitialTime] = useState(30);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -13,7 +14,9 @@ export default function NearestOrderPopup() {
       const newOrder = e.detail;
       if (newOrder) {
         setOrder(newOrder);
-        setTimeLeft(newOrder.timeoutDuration || 30);
+        const timeout = newOrder.timeoutDuration || 30;
+        setTimeLeft(timeout);
+        setInitialTime(timeout);
       }
     };
 
@@ -90,9 +93,11 @@ export default function NearestOrderPopup() {
         <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-4 -mt-4 w-16 h-16 rounded-full bg-white opacity-20 animate-ping"></div>
           <h3 className="text-white font-bold text-lg relative z-10 flex items-center justify-center gap-2">
-            🚀 ĐƠN MỚI GẦN BẠN
+            {order.isVipAssigning ? '⭐ ĐƠN HÀNG ƯU TIÊN' : '🚀 ĐƠN MỚI GẦN BẠN'}
           </h3>
-          <p className="text-purple-100 text-sm mt-1 relative z-10 font-medium">Bạn là tài xế gần nhất!</p>
+          <p className="text-purple-100 text-sm mt-1 relative z-10 font-medium">
+            {order.isVipAssigning ? 'Đặc quyền dành riêng cho bạn!' : 'Bạn là tài xế gần nhất!'}
+          </p>
         </div>
         
         <div className="p-5 space-y-4">
@@ -146,12 +151,12 @@ export default function NearestOrderPopup() {
           {/* Progress Bar Countdown */}
           <div className="mt-5 relative h-1.5 bg-slate-100 rounded-full overflow-hidden">
              <div 
-               className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-linear ${timeLeft <= 10 ? 'bg-red-500' : 'bg-indigo-500'}`}
-               style={{ width: `${(timeLeft / 30) * 100}%` }}
+               className={`absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-linear ${timeLeft <= (initialTime * 0.3) ? 'bg-red-500' : 'bg-indigo-500'}`}
+               style={{ width: `${(timeLeft / initialTime) * 100}%` }}
              ></div>
           </div>
           <div className="text-center text-xs font-bold mt-2 text-slate-500">
-            Còn lại <span className={timeLeft <= 10 ? 'text-red-500 text-sm' : 'text-indigo-600 text-sm'}>{timeLeft}</span> giây để nhận đơn
+            Còn lại <span className={timeLeft <= (initialTime * 0.3) ? 'text-red-500 text-sm' : 'text-indigo-600 text-sm'}>{timeLeft}</span> giây để nhận đơn
           </div>
         </div>
 
@@ -168,9 +173,7 @@ export default function NearestOrderPopup() {
             disabled={loading}
             className="flex-[2] py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition-transform flex items-center justify-center"
           >
-            {loading ? (
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-            ) : '✅ NHẬN ĐƠN NGAY'}
+            {loading ? 'ĐANG NHẬN ĐƠN...' : '✅ NHẬN ĐƠN NGAY'}
           </button>
         </div>
       </div>

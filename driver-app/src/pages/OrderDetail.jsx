@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getOrderById, acceptOrder, pickedUpOrder, completeOrder, cancelOrder } from '../services/api';
+import ConfirmModal from '../components/ConfirmModal';
 import { Package, Bike, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Phone, Map, Car, Key, Building2, Zap, Droplet, Wallet, Diamond, Trophy, Scale, AlertTriangle, ArrowLeft, RefreshCw, FileText, DollarSign } from 'lucide-react';
 
 const STATUS_STEPS = ['ACCEPTED', 'PICKED_UP', 'COMPLETED'];
@@ -18,6 +19,9 @@ export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { driver } = useAuth();
+  const [driverLocation, setDriverLocation] = useState(null);
+  const [confirmAccept, setConfirmAccept] = useState(false);
+  const mapRef = useRef(null);
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -177,7 +181,21 @@ export default function OrderDetail() {
     
     // Khách hoặc Admin vừa tạo đơn, đang treo
     if (order.status === 'PENDING' && !order.assignedTo) {
-      return <button onClick={() => handleAction('accept')} disabled={actionLoading} className="btn-success">Nhận đơn này</button>;
+      return (
+        <button 
+          onClick={() => {
+            if (driver?.isPriority5s) {
+              handleAction('accept');
+            } else {
+              setConfirmAccept(true);
+            }
+          }} 
+          disabled={actionLoading} 
+          className="btn-success"
+        >
+          Nhận đơn này
+        </button>
+      );
     }
     
     // Kiểm tra xem đơn này có đúng là của tài xế đang login không
@@ -771,6 +789,19 @@ export default function OrderDetail() {
           {getActionButton()}
         </div>
       </div>
+
+      <ConfirmModal 
+        isOpen={confirmAccept}
+        title="Xác Nhận Nhận Đơn"
+        message="Bạn có chắc chắn muốn lấy đơn này không?"
+        confirmText="Xác nhận"
+        cancelText="Hủy"
+        onConfirm={() => {
+          setConfirmAccept(false);
+          handleAction('accept');
+        }}
+        onCancel={() => setConfirmAccept(false)}
+      />
     </div>
   );
 }

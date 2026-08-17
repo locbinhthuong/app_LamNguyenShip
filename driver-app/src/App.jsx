@@ -333,7 +333,7 @@ function AppContent() {
             lastOrderIds.set(order._id, Date.now());
 
             setPushMessage({ 
-                title: '🚀 ĐƠN MỚI GẦN BẠN', 
+                title: order.isVipAssigning ? '⭐ ĐƠN HÀNG ƯU TIÊN' : '🚀 ĐƠN MỚI GẦN BẠN', 
                 message: order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Bạn là tài xế gần nhất!'
             });
         }

@@ -90,7 +90,7 @@ const findNearestAvailableDriver = async (pickupLat, pickupLng, commissionRate =
  * @param {Number} limit Số lượng tối đa tài xế trong nhóm (không dùng nữa, lấy toàn bộ)
  * @returns {Array<Object>} Mảng các tài xế phù hợp nhất
  */
-const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commissionRate = null, excludeDriverIds = [], limit = 9999) => {
+const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commissionRate = null, excludeDriverIds = [], limit = 9999, isVipOnly = false) => {
   if (!pickupLat || !pickupLng) return [];
 
   try {
@@ -101,6 +101,10 @@ const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commission
       'currentLocation.lat': { $ne: null },
       'currentLocation.lng': { $ne: null }
     };
+
+    if (isVipOnly) {
+      query.isPriority5s = true;
+    }
 
     if (excludeDriverIds.length > 0) {
       query._id = { $nin: excludeDriverIds };
