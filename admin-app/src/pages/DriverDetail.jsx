@@ -334,7 +334,7 @@ export default function DriverDetail() {
       {/* Modal Sửa Thông Tin */}
       {showEdit && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
+          <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
             <h3 className="mb-4 text-xl font-bold text-slate-800 text-center">Chỉnh sửa hồ sơ</h3>
             <form onSubmit={handleUpdateInfo} className="space-y-4">
               
