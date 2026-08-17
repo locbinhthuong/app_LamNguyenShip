@@ -170,11 +170,6 @@ export default function DriverDetail() {
               <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLORS[driver.status]}`}>
                 {STATUS_LABELS[driver.status]}
               </span>
-              {driver.isPriority5s && (
-                <span className="inline-block rounded-full px-3 py-1 text-xs font-bold bg-purple-100 text-purple-700 border border-purple-300 shadow-sm">
-                  ⭐ TÀI XẾ ƯU TIÊN
-                </span>
-              )}
             </div>
 
             <div className="mt-6 border-t border-slate-200 pt-4 text-left text-sm space-y-3">
@@ -413,16 +408,25 @@ export default function DriverDetail() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1 block">Phương Tiện</label>
-                <select 
-                  value={editForm.vehicleType} 
-                  onChange={e => setEditForm({...editForm, vehicleType: e.target.value})}
-                  className="mt-1 w-full rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                >
-                  <option value="motorcycle">Xe Máy (Motorcycle)</option>
-                  <option value="car">Ô Tô (Car)</option>
-                  <option value="bike">Xe Đạp (Bike)</option>
-                </select>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">Phương Tiện & Ưu Tiên</label>
+                <div className="flex items-center gap-3 mt-1">
+                  <select 
+                    value={editForm.vehicleType} 
+                    onChange={e => setEditForm({...editForm, vehicleType: e.target.value})}
+                    className="flex-1 rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                  >
+                    <option value="motorcycle">Xe Máy (Motorcycle)</option>
+                    <option value="car">Ô Tô (Car)</option>
+                    <option value="bike">Xe Đạp (Bike)</option>
+                  </select>
+                  <input 
+                    type="checkbox" 
+                    title="Tài xế nhận đơn nhanh"
+                    checked={editForm.isPriority5s} 
+                    onChange={e => setEditForm({...editForm, isPriority5s: e.target.checked})}
+                    className="w-6 h-6 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
+                  />
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1 block">Mức chiết khấu (%)</label>
@@ -434,18 +438,6 @@ export default function DriverDetail() {
                   <option value={15}>15% (Tiêu chuẩn)</option>
                   <option value={20}>20% (Cao cấp)</option>
                 </select>
-              </div>
-              <div className="flex items-center gap-2 mt-4">
-                <input 
-                  type="checkbox" 
-                  id="priority5s"
-                  checked={editForm.isPriority5s} 
-                  onChange={e => setEditForm({...editForm, isPriority5s: e.target.checked})}
-                  className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
-                />
-                <label htmlFor="priority5s" className="text-sm font-bold text-purple-800 cursor-pointer">
-                  {/* Text removed as requested */}
-                </label>
               </div>
               <div className="mt-6 flex gap-3 pt-2">
                 <button type="button" disabled={isUploading} onClick={() => setShowEdit(false)} className="flex-1 rounded-xl bg-slate-100 hover:bg-slate-200 py-3 font-bold text-slate-600 transition-colors disabled:opacity-50">
