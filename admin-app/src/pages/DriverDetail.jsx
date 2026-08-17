@@ -408,25 +408,24 @@ export default function DriverDetail() {
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1 block">Phương Tiện & Ưu Tiên</label>
-                <div className="flex items-center gap-3 mt-1">
-                  <select 
-                    value={editForm.vehicleType} 
-                    onChange={e => setEditForm({...editForm, vehicleType: e.target.value})}
-                    className="flex-1 rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-                  >
-                    <option value="motorcycle">Xe Máy (Motorcycle)</option>
-                    <option value="car">Ô Tô (Car)</option>
-                    <option value="bike">Xe Đạp (Bike)</option>
-                  </select>
-                  <input 
-                    type="checkbox" 
-                    title="Tài xế nhận đơn nhanh"
-                    checked={editForm.isPriority5s} 
-                    onChange={e => setEditForm({...editForm, isPriority5s: e.target.checked})}
-                    className="w-6 h-6 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
-                  />
-                </div>
+                <label className="text-xs font-semibold text-slate-600 mb-1 block">Phương Tiện</label>
+                <select 
+                  value={`${editForm.vehicleType}${editForm.isPriority5s ? '_vip' : ''}`}
+                  onChange={e => {
+                    const val = e.target.value;
+                    const isVip = val.endsWith('_vip');
+                    const type = val.replace('_vip', '');
+                    setEditForm({...editForm, vehicleType: type, isPriority5s: isVip});
+                  }}
+                  className="mt-1 w-full rounded-xl border border-slate-300 bg-blue-50 hover:bg-blue-100 p-3 text-slate-800 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                >
+                  <option value="motorcycle">Xe Máy (Thường)</option>
+                  <option value="motorcycle_vip">Xe Máy (VIP)</option>
+                  <option value="car">Ô Tô (Thường)</option>
+                  <option value="car_vip">Ô Tô (VIP)</option>
+                  <option value="bike">Xe Đạp (Thường)</option>
+                  <option value="bike_vip">Xe Đạp (VIP)</option>
+                </select>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1 block">Mức chiết khấu (%)</label>
