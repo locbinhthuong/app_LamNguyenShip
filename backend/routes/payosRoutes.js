@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const payosController = require('../controllers/payosController');
-const { onlyDriver } = require('../middlewares/authMiddleware');
+const { onlyDriver } = require('../middleware/auth');
 
 // Driver requests payment link
 router.post('/driver/create-link', onlyDriver, payosController.createPaymentLink);
