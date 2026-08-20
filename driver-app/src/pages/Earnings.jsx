@@ -41,18 +41,20 @@ export default function Earnings() {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState(false);
   const [qrImageLoaded, setQrImageLoaded] = useState(false);
+  const [isPayOSError, setIsPayOSError] = useState(false);
 
   useEffect(() => {
-    // Nếu đã có thông tin QR và danh sách ngày nợ, ta tải ngầm (preload) trước các ảnh QR
-    // Để khi tài xế bấm vào là ảnh hiện ra TỨC THÌ (0ms chờ đợi)
-    if (paymentQRData && unpaidDays.length > 0 && driver) {
-      unpaidDays.forEach(debt => {
-        const url = `https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(debt.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (debt.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`;
+    if (paymentQRData?.url && selectedDebt) {
+      // Preload image
+      requestAnimationFrame(() => {
+        const url = getFullImageUrl(paymentQRData.url);
         const img = new Image();
         img.src = url;
       });
     }
-  }, [paymentQRData, unpaidDays, driver]);
+    // Reset error state when modal opens for a new debt
+    setIsPayOSError(false);
+  }, [paymentQRData, selectedDebt]);
 
   const handleRequestPayment = async () => {
     if (!selectedDebt || isRequesting) return;
@@ -63,8 +65,26 @@ export default function Earnings() {
         window.location.href = res.checkoutUrl; // Chuyển hướng sang PayOS
       }
     } catch (error) {
-      const msg = error?.response?.data?.message || 'Lỗi khi tạo link thanh toán. Vui lòng thử lại sau.';
+      setIsPayOSError(true);
+      const msg = error?.response?.data?.message || 'PayOS hiện đang bảo trì. Vui lòng chuyển khoản thủ công bên dưới!';
       alert('❌ ' + msg);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
+  const handleManualRequestPayment = async () => {
+    if (!selectedDebt || isRequesting) return;
+    try {
+      setIsRequesting(true);
+      const res = await requestDebtPayment(selectedDebt.amount, selectedDebt.date);
+      if (res.success) {
+        alert('✅ Đã gửi yêu cầu bù điểm. Vui lòng chờ Kế toán duyệt!');
+        setShowQRModal(false);
+        fetchEarnings();
+      }
+    } catch (error) {
+      alert('❌ ' + (error.response?.data?.message || 'Lỗi gửi yêu cầu bù điểm'));
     } finally {
       setIsRequesting(false);
     }
@@ -494,29 +514,77 @@ export default function Earnings() {
                 </div>
               </div>
 
-              <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2 mb-4">
-                 <div className="flex justify-between text-xs font-semibold">
-                    <span className="text-slate-500">Mã giao dịch:</span>
-                    <span className="text-sky-700 bg-sky-100 px-2 py-0.5 rounded uppercase">{driver?.driverCode || 'N/A'}</span>
-                 </div>
-                 <div className="flex justify-between text-[11px] font-medium text-slate-500">
-                    <p className="text-center w-full">Hệ thống sẽ chuyển hướng bạn sang trang thanh toán tự động của PayOS.</p>
-                 </div>
-              </div>
+              {!isPayOSError ? (
+                <>
+                  <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2 mb-4">
+                     <div className="flex justify-between text-xs font-semibold">
+                        <span className="text-slate-500">Mã giao dịch:</span>
+                        <span className="text-sky-700 bg-sky-100 px-2 py-0.5 rounded uppercase">{driver?.driverCode || 'N/A'}</span>
+                     </div>
+                     <div className="flex justify-between text-[11px] font-medium text-slate-500">
+                        <p className="text-center w-full">Hệ thống sẽ chuyển hướng bạn sang trang thanh toán tự động của PayOS.</p>
+                     </div>
+                  </div>
 
-              <button
-                onClick={handleRequestPayment}
-                disabled={isRequesting}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/30 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
-              >
-                {isRequesting ? (
-                  <span className="animate-spin text-xl"><RefreshCw size={20}/></span>
-                ) : (
-                  <>
-                    <HandCoins size={20} /> THANH TOÁN QUA PAYOS
-                  </>
-                )}
-              </button>
+                  <button
+                    onClick={handleRequestPayment}
+                    disabled={isRequesting}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/30 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
+                  >
+                    {isRequesting ? (
+                      <span className="animate-spin text-xl"><RefreshCw size={20}/></span>
+                    ) : (
+                      <>
+                        <HandCoins size={20} /> THANH TOÁN QUA PAYOS
+                      </>
+                    )}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="relative w-full max-w-[200px] aspect-square bg-white rounded-2xl p-2 shadow-inner border-2 border-slate-100 flex items-center justify-center mb-4">
+                    {qrLoading && !qrImageLoaded && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-white rounded-xl z-10">
+                         <div className="animate-spin text-blue-500"><RefreshCw size={24}/></div>
+                      </div>
+                    )}
+                    {qrError ? (
+                       <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-xl z-10 text-slate-400">
+                          <AlertCircle size={32} className="mb-2 text-rose-400"/>
+                          <p className="text-xs text-center px-4">Không thể tải QR.<br/>Vui lòng nhập tay.</p>
+                       </div>
+                    ) : (
+                      <img 
+                        src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
+                        alt="QR Code" 
+                        className={`w-full h-full object-contain rounded-xl transition-opacity duration-300 ${qrImageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        onLoad={() => { setQrLoading(false); setQrImageLoaded(true); }}
+                        onError={() => { setQrLoading(false); setQrError(true); }}
+                      />
+                    )}
+                  </div>
+                  
+                  <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 w-full space-y-2 mb-4">
+                     <p className="text-[11px] font-medium text-amber-700 text-center leading-relaxed">
+                        Hệ thống tự động đang bảo trì. Bạn vui lòng quét mã QR trên và bấm nút xác nhận bên dưới sau khi đã chuyển khoản thành công.
+                     </p>
+                  </div>
+
+                  <button
+                    onClick={handleManualRequestPayment}
+                    disabled={isRequesting}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100"
+                  >
+                    {isRequesting ? (
+                      <span className="animate-spin text-xl"><RefreshCw size={20}/></span>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={20} /> ĐÃ CHUYỂN KHOẢN - GỬI YÊU CẦU
+                      </>
+                    )}
+                  </button>
+                </>
+              )}
 
             </div>
           </div>
