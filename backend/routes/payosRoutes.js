@@ -9,4 +9,7 @@ router.post('/driver/create-link', verifyToken, onlyDriver, payosController.crea
 // Webhook from PayOS
 router.post('/webhook', payosController.handleWebhook);
 
+router.get('/success', payosController.handleSuccess);
+router.get('/cancel', payosController.handleCancel);
+
 module.exports = router;

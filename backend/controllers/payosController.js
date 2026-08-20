@@ -58,8 +58,8 @@ const payosController = {
       tx.payosOrderCode = orderCode;
       await tx.save();
 
-      const returnUrl = `${process.env.DRIVER_APP_URL || 'http://localhost:5173'}/earnings?payment=success`;
-      const cancelUrl = `${process.env.DRIVER_APP_URL || 'http://localhost:5173'}/earnings?payment=cancel`;
+      const returnUrl = `https://api.aloshipp.com/api/payos/success`;
+      const cancelUrl = `https://api.aloshipp.com/api/payos/cancel`;
 
       const body = {
         orderCode,
@@ -123,6 +123,53 @@ const payosController = {
       console.error('PayOS Webhook Error:', error);
       return res.status(200).json({ success: false }); // Always return 200 to webhook
     }
+  },
+
+  handleSuccess: (req, res) => {
+    res.send(`
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Thanh toán thành công</title>
+        <style>
+          body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; font-family:sans-serif; text-align:center; background-color:#f0fdf4; }
+          .icon { font-size: 80px; margin-bottom: 20px; }
+          h1 { color: #15803d; margin-bottom: 10px; font-size: 24px; }
+          p { color: #374151; font-size: 16px; padding: 0 20px; line-height: 1.5; }
+          .btn { margin-top: 30px; padding: 12px 24px; background-color: #10b981; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4); }
+        </style>
+      </head>
+      <body>
+        <div class="icon">✅</div>
+        <h1>Thanh toán thành công!</h1>
+        <p>Hệ thống đã ghi nhận khoản nạp của bạn.</p>
+        <p>Vui lòng bấm nút <b>"Xong"</b> hoặc <b>"Đóng"</b> ở góc màn hình để quay lại App.</p>
+      </body>
+      </html>
+    `);
+  },
+
+  handleCancel: (req, res) => {
+    res.send(`
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Đã hủy thanh toán</title>
+        <style>
+          body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; font-family:sans-serif; text-align:center; background-color:#fff1f2; }
+          .icon { font-size: 80px; margin-bottom: 20px; }
+          h1 { color: #be123c; margin-bottom: 10px; font-size: 24px; }
+          p { color: #374151; font-size: 16px; padding: 0 20px; line-height: 1.5; }
+        </style>
+      </head>
+      <body>
+        <div class="icon">❌</div>
+        <h1>Đã hủy thanh toán</h1>
+        <p>Giao dịch của bạn đã bị hủy.</p>
+        <p>Vui lòng bấm nút <b>"Xong"</b> hoặc <b>"Đóng"</b> ở góc màn hình để quay lại App.</p>
+      </body>
+      </html>
+    `);
   }
 };
 

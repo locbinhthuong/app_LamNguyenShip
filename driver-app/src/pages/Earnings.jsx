@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { getDriverRevenue, requestDebtPayment, requestPayOSLink, getMyDebtDetail, getMyWalletDetail, requestWithdraw, getActiveAnnouncements, getFullImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CurrencyInput from '../components/CurrencyInput';
+import { Browser } from '@capacitor/browser';
 import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, Eye, EyeOff } from 'lucide-react';
 
 const formatCurrency = (amount) => {
@@ -62,7 +63,10 @@ export default function Earnings() {
       setIsRequesting(true);
       const res = await requestPayOSLink(selectedDebt.amount, selectedDebt.date);
       if (res.success && res.checkoutUrl) {
-        window.location.href = res.checkoutUrl; // Chuyển hướng sang PayOS
+        await Browser.open({ url: res.checkoutUrl, presentationStyle: 'fullscreen' });
+        Browser.addListener('browserFinished', () => {
+          fetchEarnings();
+        });
       }
     } catch (error) {
       setIsPayOSError(true);
@@ -144,17 +148,6 @@ export default function Earnings() {
   useEffect(() => {
     fetchEarnings();
     window.addEventListener('refresh_data', fetchEarnings);
-    
-    // Handle return from PayOS
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('payment') === 'success') {
-      alert('✅ Thanh toán thành công! Cổng thanh toán đang báo về hệ thống để gạch nợ cho bạn...');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    } else if (params.get('payment') === 'cancel') {
-      alert('❌ Bạn đã hủy thanh toán.');
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-
     return () => window.removeEventListener('refresh_data', fetchEarnings);
   }, [fetchEarnings]);
 
