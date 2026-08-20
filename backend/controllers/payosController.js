@@ -3,12 +3,17 @@ const DebtTransaction = require('../models/DebtTransaction');
 const Driver = require('../models/Driver');
 const { getTodayVN } = require('../utils/debtUtils');
 
-// Khởi tạo đối tượng PayOS
-const payos = new PayOS(
-  process.env.PAYOS_CLIENT_ID,
-  process.env.PAYOS_API_KEY,
-  process.env.PAYOS_CHECKSUM_KEY
-);
+// Hàm khởi tạo PayOS gọi khi cần để tránh sập Server lúc khởi động nếu thiếu biến môi trường
+const getPayOS = () => {
+  if (!process.env.PAYOS_CLIENT_ID || !process.env.PAYOS_API_KEY || !process.env.PAYOS_CHECKSUM_KEY) {
+    throw new Error('Thiếu cấu hình PayOS trong file .env');
+  }
+  return new PayOS(
+    process.env.PAYOS_CLIENT_ID,
+    process.env.PAYOS_API_KEY,
+    process.env.PAYOS_CHECKSUM_KEY
+  );
+};
 
 const payosController = {
   createPaymentLink: async (req, res) => {
@@ -64,10 +69,11 @@ const payosController = {
         cancelUrl,
       };
 
-      const paymentLinkRes = await payos.createPaymentLink(body);
+      const payos = getPayOS();
+      const paymentLink = await payos.createPaymentLink(body);
 
       console.log(`[PAYOS] Created payment link for driver ${driver.name}, amount ${amount}`);
-      res.status(200).json({ success: true, checkoutUrl: paymentLinkRes.checkoutUrl });
+      res.status(200).json({ success: true, checkoutUrl: paymentLink.checkoutUrl });
 
     } catch (error) {
       console.error('Error createPaymentLink:', error);
@@ -80,7 +86,8 @@ const payosController = {
       const body = req.body;
       
       // Verify signature
-      const webhookData = payos.verifyPaymentWebhookData(body);
+      const payos = getPayOS();
+      const webhookData = payos.verifyPaymentWebhookData(req.body);
       
       if (webhookData.code === '00' || webhookData.success === true || webhookData.desc === 'success') {
         // Payment success
