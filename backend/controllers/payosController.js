@@ -8,11 +8,11 @@ const getPayOS = () => {
   if (!process.env.PAYOS_CLIENT_ID || !process.env.PAYOS_API_KEY || !process.env.PAYOS_CHECKSUM_KEY) {
     throw new Error('Thiếu cấu hình PayOS trong file .env');
   }
-  return new PayOS(
-    process.env.PAYOS_CLIENT_ID,
-    process.env.PAYOS_API_KEY,
-    process.env.PAYOS_CHECKSUM_KEY
-  );
+  return new PayOS({
+    clientId: process.env.PAYOS_CLIENT_ID,
+    apiKey: process.env.PAYOS_API_KEY,
+    checksumKey: process.env.PAYOS_CHECKSUM_KEY
+  });
 };
 
 const payosController = {
@@ -70,7 +70,7 @@ const payosController = {
       };
 
       const payos = getPayOS();
-      const paymentLink = await payos.createPaymentLink(body);
+      const paymentLink = await payos.paymentRequests.create(body);
 
       console.log(`[PAYOS] Created payment link for driver ${driver.name}, amount ${amount}`);
       res.status(200).json({ success: true, checkoutUrl: paymentLink.checkoutUrl });
@@ -87,7 +87,7 @@ const payosController = {
       
       // Verify signature
       const payos = getPayOS();
-      const webhookData = payos.verifyPaymentWebhookData(req.body);
+      const webhookData = payos.webhooks.verify(req.body);
       
       if (webhookData.code === '00' || webhookData.success === true || webhookData.desc === 'success') {
         // Payment success
