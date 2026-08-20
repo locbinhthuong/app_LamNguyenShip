@@ -20,6 +20,9 @@ const debtTransactionSchema = new mongoose.Schema({
     enum: ['PENDING', 'SUCCESS', 'REJECTED', 'DELETED'],
     default: 'SUCCESS' // Default is SUCCESS for fee_deductions and pre-existing payments
   },
+  payosOrderCode: {
+    type: Number
+  },
   description: {
     type: String,
     required: true
