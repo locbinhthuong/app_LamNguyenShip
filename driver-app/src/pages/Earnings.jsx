@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getDriverRevenue, requestDebtPayment, getMyDebtDetail, getMyWalletDetail, requestWithdraw, getActiveAnnouncements, getFullImageUrl } from '../services/api';
+import { getDriverRevenue, requestDebtPayment, requestPayOSLink, getMyDebtDetail, getMyWalletDetail, requestWithdraw, getActiveAnnouncements, getFullImageUrl } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import CurrencyInput from '../components/CurrencyInput';
 import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, Eye, EyeOff } from 'lucide-react';
@@ -58,18 +58,15 @@ export default function Earnings() {
     if (!selectedDebt || isRequesting) return;
     try {
       setIsRequesting(true);
-      const res = await requestDebtPayment(driver._id || driver.id, selectedDebt.amount, selectedDebt.date);
-      if (res.success) {
-        alert('✅ Đã gửi yêu cầu xác nhận bù điểm đến Tổng đài. Vui lòng chờ Sếp kiểm tra.');
-        setShowQRModal(false);
-        fetchEarnings(); // Refresh UI to change to PENDING status
+      const res = await requestPayOSLink(selectedDebt.amount, selectedDebt.date);
+      if (res.success && res.checkoutUrl) {
+        window.location.href = res.checkoutUrl; // Chuyển hướng sang PayOS
       }
     } catch (error) {
-      const msg = error?.response?.data?.message || 'Lỗi khi gửi yêu cầu. Vui lòng thử lại sau.';
+      const msg = error?.response?.data?.message || 'Lỗi khi tạo link thanh toán. Vui lòng thử lại sau.';
       alert('❌ ' + msg);
     } finally {
-      // Cooldown 3 giây chống spam
-      setTimeout(() => setIsRequesting(false), 3000);
+      setIsRequesting(false);
     }
   };
 
@@ -127,6 +124,17 @@ export default function Earnings() {
   useEffect(() => {
     fetchEarnings();
     window.addEventListener('refresh_data', fetchEarnings);
+    
+    // Handle return from PayOS
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') === 'success') {
+      alert('✅ Thanh toán thành công! Cổng thanh toán đang báo về hệ thống để gạch nợ cho bạn...');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (params.get('payment') === 'cancel') {
+      alert('❌ Bạn đã hủy thanh toán.');
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     return () => window.removeEventListener('refresh_data', fetchEarnings);
   }, [fetchEarnings]);
 
@@ -492,54 +500,13 @@ export default function Earnings() {
                 </div>
               </div>
 
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 relative mb-4">
-                {qrError ? (
-                  <div className="w-56 h-56 flex flex-col items-center justify-center bg-red-50 text-red-500 rounded-xl p-4 text-center">
-                    <AlertCircle size={32} className="mb-2" />
-                    <p className="text-xs font-bold mb-1">Không tạo được mã</p>
-                    <p className="text-[10px]">Sai mã Ngân hàng (VD: ICB, VCB). Xin thử lại sau!</p>
-                  </div>
-                ) : (
-                  <div className="relative w-56 h-56">
-                    {!qrImageLoaded && (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 text-slate-400 rounded-xl z-10">
-                         <RefreshCw size={32} className="animate-spin mb-3 text-sky-500" />
-                         <p className="text-sm font-semibold text-slate-600">Đang tải ảnh mã QR...</p>
-                      </div>
-                    )}
-                    <img 
-                      id="qr-payment-img"
-                      src={`https://img.vietqr.io/image/${paymentQRData?.title || 'MB'}-${paymentQRData?.content || '0857986911'}-compact2.jpg?amount=${Math.round(selectedDebt?.amount || 0)}&addInfo=${encodeURIComponent('THANHTOANNO ' + (driver?.driverCode || '') + ' ' + (selectedDebt?.date || ''))}&accountName=${encodeURIComponent(paymentQRData?.videoUrl || 'NGUYEN LAM NGUYEN')}`} 
-                      alt="QR Code Bù Điểm" 
-                      className={`w-56 h-56 object-contain mix-blend-multiply transition-opacity duration-300 ${qrImageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                      onLoad={() => setQrImageLoaded(true)}
-                      onError={() => setQrError(true)}
-                    />
-                  </div>
-                )}
-                
-                <button 
-                  onClick={() => {
-                    setQrImageLoaded(false);
-                    setQrError(false);
-                    // Force re-render of image by appending a timestamp
-                    const img = document.getElementById('qr-payment-img');
-                    if (img) img.src = img.src.split('&t=')[0] + '&t=' + new Date().getTime();
-                  }}
-                  className="absolute top-2 right-2 bg-slate-100/80 backdrop-blur shadow-sm p-2 rounded-full text-slate-500 hover:text-sky-600 hover:bg-sky-50 transition-colors"
-                  title="Cập nhật lại mã QR"
-                >
-                  <RefreshCw size={16} />
-                </button>
-              </div>
-
               <div className="bg-sky-50 border border-sky-100 rounded-xl p-3 w-full space-y-2 mb-4">
                  <div className="flex justify-between text-xs font-semibold">
                     <span className="text-slate-500">Mã giao dịch:</span>
                     <span className="text-sky-700 bg-sky-100 px-2 py-0.5 rounded uppercase">{driver?.driverCode || 'N/A'}</span>
                  </div>
                  <div className="flex justify-between text-[11px] font-medium text-slate-500">
-                    <p className="text-center w-full">Chuyển khoản bằng App ngân hàng bất kỳ để bù điểm.</p>
+                    <p className="text-center w-full">Hệ thống sẽ chuyển hướng bạn sang trang thanh toán tự động của PayOS.</p>
                  </div>
               </div>
 
@@ -552,7 +519,7 @@ export default function Earnings() {
                   <span className="animate-spin text-xl"><RefreshCw size={20}/></span>
                 ) : (
                   <>
-                    <HandCoins size={20} /> TÔI ĐÃ CHUYỂN KHOẢN
+                    <HandCoins size={20} /> THANH TOÁN QUA PAYOS
                   </>
                 )}
               </button>

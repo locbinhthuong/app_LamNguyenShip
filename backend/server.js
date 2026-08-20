@@ -142,6 +142,7 @@ app.use('/api/revenue', revenueRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/announcements', announcementRoutes);
 app.use('/api/debts', debtRoutes);
+app.use('/api/payos', require('./routes/payosRoutes'));
 app.use('/api/wallets', walletRoutes);
 app.use('/api/finance', financeRoutes);
 app.use('/api/users', userRoutes);

@@ -147,6 +147,11 @@ export const requestDebtPayment = async (driverId, amount, targetDate) => {
   return response.data;
 };
 
+export const requestPayOSLink = async (amount, targetDate) => {
+  const response = await api.post(`/api/payos/driver/create-link`, { amount, targetDate });
+  return response.data;
+};
+
 export const getMyDebtDetail = async () => {
   const response = await api.get('/api/debts/driver/me');
   return response.data;
