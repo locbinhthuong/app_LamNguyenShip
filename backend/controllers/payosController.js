@@ -87,9 +87,9 @@ const payosController = {
       
       // Verify signature
       const payos = getPayOS();
-      const webhookData = payos.webhooks.verify(req.body);
+      const webhookData = await payos.webhooks.verify(req.body);
       
-      if (webhookData.code === '00' || webhookData.success === true || webhookData.desc === 'success') {
+      if (req.body.code === '00' || req.body.success === true || req.body.desc === 'success') {
         // Payment success
         const orderCode = webhookData.orderCode;
         const tx = await DebtTransaction.findOne({ payosOrderCode: orderCode, status: 'PENDING' });
