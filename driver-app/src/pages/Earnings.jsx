@@ -282,23 +282,17 @@ export default function Earnings() {
                      </div>
                    </div>
                    
-                   {isPending ? (
-                      <div className="w-full bg-amber-100 text-amber-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 border border-amber-200">
-                        <Clock size={18} /> Đang chờ Kế toán duyệt...
-                      </div>
-                   ) : (
-                      <button 
-                        onClick={() => {
-                           setSelectedDebt(debt);
-                           setQrImageLoaded(false);
-                           setQrError(false);
-                           setShowQRModal(true);
-                        }}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98]"
-                      >
-                        <Smartphone size={18} /> Chọn Bù Điểm Khung Này
-                      </button>
-                   )}
+                   <button 
+                     onClick={() => {
+                        setSelectedDebt(debt);
+                        setQrImageLoaded(false);
+                        setQrError(false);
+                        setShowQRModal(true);
+                     }}
+                     className={`w-full font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.98] ${isPending ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                   >
+                     {isPending ? <><Clock size={18} /> Thanh toán dở dang - Tiếp tục thanh toán</> : <><Smartphone size={18} /> Chọn Bù Điểm Khung Này</>}
+                   </button>
                  </div>
                )})
             )}
