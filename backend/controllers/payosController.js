@@ -83,6 +83,7 @@ const payosController = {
 
   handleWebhook: async (req, res) => {
     try {
+      console.log('[PAYOS WEBHOOK] Received data:', JSON.stringify(req.body));
       const body = req.body;
       
       // Verify signature
