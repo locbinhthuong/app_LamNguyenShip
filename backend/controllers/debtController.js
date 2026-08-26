@@ -154,7 +154,8 @@ const debtController = {
         driverId,
         type: 'PAYMENT',
         status: 'PENDING',
-        targetDate: finalTargetDate
+        targetDate: finalTargetDate,
+        payosOrderCode: { $exists: false }
       });
 
       if (existingPending) {
@@ -351,7 +352,7 @@ const debtController = {
       const finalTargetDate = targetDate || getTodayVN();
 
       // CHỐNG SPAM 1: Kiểm tra xem tài xế đã có lệnh PENDING nào chưa (bất kỳ ngày nào)
-      const existingPending = await DebtTransaction.findOne({ driverId, type: 'PAYMENT', status: 'PENDING' });
+      const existingPending = await DebtTransaction.findOne({ driverId, type: 'PAYMENT', status: 'PENDING', payosOrderCode: { $exists: false } });
       if (existingPending) {
         return res.status(400).json({ success: false, message: 'Bạn đang có một yêu cầu thanh toán chờ duyệt. Vui lòng đợi Admin xử lý trước khi gửi yêu cầu mới.' });
       }

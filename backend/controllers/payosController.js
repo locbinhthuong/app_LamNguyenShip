@@ -31,7 +31,7 @@ const payosController = {
       const finalTargetDate = targetDate || getTodayVN();
 
       // Check if there is an existing PENDING transaction for this date
-      let tx = await DebtTransaction.findOne({ driverId, type: 'PAYMENT', status: 'PENDING', targetDate: finalTargetDate });
+      let tx = await DebtTransaction.findOne({ driverId, type: 'PAYMENT', status: 'PENDING', targetDate: finalTargetDate, payosOrderCode: { $exists: true } });
       
       if (!tx) {
         tx = new DebtTransaction({

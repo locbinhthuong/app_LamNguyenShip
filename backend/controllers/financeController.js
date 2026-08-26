@@ -7,7 +7,7 @@ const financeController = {
   // Lấy danh sách tất cả các Request (PENDING) của Cả hệ thống
   getAllRequests: async (req, res) => {
     try {
-      const pendingDebts = await DebtTransaction.find({ status: 'PENDING' })
+      const pendingDebts = await DebtTransaction.find({ status: 'PENDING', payosOrderCode: { $exists: false } })
         .populate('driverId', 'name phone driverCode')
         .sort({ createdAt: 1 })
         .lean();
