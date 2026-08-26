@@ -263,6 +263,14 @@ connectDB()
 ║                                                      ║
 ╚══════════════════════════════════════════════════════╝
       `);
+      
+      // Start the reconciliation cron job
+      const { reconcilePayOS } = require('./scripts/reconcile_payos');
+      // Run immediately 1 minute after server starts, then every 5 minutes
+      setTimeout(() => {
+        reconcilePayOS();
+        setInterval(reconcilePayOS, 5 * 60 * 1000);
+      }, 60 * 1000);
 
       // ==================== CRON: HẸN GIỜ LÊN ĐƠN ====================
       const Order = require('./models/Order');
