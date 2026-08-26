@@ -354,7 +354,7 @@ export default function Earnings() {
                         bgClass = 'bg-red-50/70 border-red-200';
                      } else if (dtx.status === 'PENDING') {
                         icon = <Clock size={16} />;
-                        title = 'Đang Chờ Kế Toán Duyệt';
+                        title = dtx.payosOrderCode ? 'Đang Chờ Bank Xác Nhận (Tự Động)' : 'Đang Chờ Kế Toán Duyệt';
                         colorClass = 'text-amber-600';
                         amountClass = 'text-amber-600';
                      }
