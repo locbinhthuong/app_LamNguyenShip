@@ -114,55 +114,52 @@ const payosController = {
       if (req.body.code === '00' || req.body.success === true || req.body.desc === 'success') {
         // Payment success
         const orderCode = webhookData.orderCode;
-        const mongoose = require('mongoose');
-        const session = await mongoose.startSession();
-        session.startTransaction();
+        // Cập nhật trạng thái thành PROCESSING để lock giao dịch
+        const tx = await DebtTransaction.findOneAndUpdate(
+          { payosOrderCode: orderCode, status: 'PENDING' },
+          { $set: { status: 'PROCESSING' } },
+          { new: true }
+        );
+        
         let txProcessed = null;
         let driverUpdated = null;
 
-        try {
-          const tx = await DebtTransaction.findOneAndUpdate(
-            { payosOrderCode: orderCode, status: 'PENDING' },
-            [
-              { 
-                $set: { 
-                  status: 'SUCCESS',
-                  description: { $concat: [{ $ifNull: ["$description", ""] }, " [Thanh toán PayOS tự động]"] }
-                }
-              }
-            ],
-            { new: true, session }
-          );
-          
-          if (tx) {
-            // Update driver wallet within the same transaction
+        if (tx) {
+          try {
+            // Update driver wallet 
             const driver = await Driver.findByIdAndUpdate(
               tx.driverId,
               { $inc: { walletDebt: tx.amount } },
-              { new: true, session }
+              { new: true }
             );
 
-            // FIX: Phải kiểm tra tài xế có tồn tại trước khi commit
+            // Kiểm tra tài xế có tồn tại
             if (!driver) {
-              console.error(`[ERROR] Không tìm thấy tài xế ${tx.driverId} cho orderCode ${orderCode}. Hủy transaction.`);
+              console.error(`[ERROR] Không tìm thấy tài xế ${tx.driverId} cho orderCode ${orderCode}. Rollback về PENDING.`);
+              await DebtTransaction.findByIdAndUpdate(tx._id, { status: 'PENDING' });
               throw new Error(`Không tìm thấy tài xế ${tx.driverId}`);
             }
 
-            await session.commitTransaction();
-            session.endSession();
-            
-            txProcessed = tx;
+            // Hoàn tất: Cập nhật SUCCESS và ghi chú
+            txProcessed = await DebtTransaction.findByIdAndUpdate(
+              tx._id,
+              [
+                { 
+                  $set: { 
+                    status: 'SUCCESS',
+                    description: { $concat: [{ $ifNull: ["$description", ""] }, " [Thanh toán PayOS tự động]"] }
+                  }
+                }
+              ],
+              { new: true }
+            );
             driverUpdated = driver;
-          } else {
-            // Transaction đã được xử lý bởi webhook callback khác hoặc không tìm thấy
-            await session.abortTransaction();
-            session.endSession();
+          } catch (updateError) {
+            // Rollback status to PENDING if wallet update failed
+            console.error('Lỗi khi cập nhật ví tài xế trong Webhook, trả lại PENDING:', updateError);
+            await DebtTransaction.findByIdAndUpdate(tx._id, { status: 'PENDING' });
+            throw updateError;
           }
-        } catch (updateError) {
-          await session.abortTransaction();
-          session.endSession();
-          console.error('Lỗi khi cập nhật ví tài xế trong Webhook Transaction:', updateError);
-          throw updateError;
         }
 
         if (txProcessed && driverUpdated) {

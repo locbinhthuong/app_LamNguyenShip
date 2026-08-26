@@ -52,52 +52,49 @@ const reconcilePayOS = async () => {
         const paymentData = await payos.paymentRequests.get(tx.payosOrderCode);
         
         if (paymentData.status === 'PAID') {
-          console.log(`[PAID] orderCode ${tx.payosOrderCode} đã thanh toán. Tiến hành cập nhật bằng Transaction...`);
+          console.log(`[PAID] orderCode ${tx.payosOrderCode} đã thanh toán. Tiến hành cập nhật...`);
           
-          const session = await mongoose.startSession();
-          session.startTransaction();
+          let txProcessed = null;
 
           try {
             const updatedTx = await DebtTransaction.findOneAndUpdate(
               { payosOrderCode: tx.payosOrderCode, status: 'PENDING' },
-              [
-                { 
-                  $set: { 
-                    status: 'SUCCESS',
-                    description: { $concat: [{ $ifNull: ["$description", ""] }, " [Thanh toán PayOS tự động - ĐỐI SOÁT BOT]"] }
-                  }
-                }
-              ],
-              { new: true, session }
+              { $set: { status: 'PROCESSING' } },
+              { new: true }
             );
 
             if (updatedTx) {
               const driver = await Driver.findByIdAndUpdate(
                 updatedTx.driverId,
                 { $inc: { walletDebt: updatedTx.amount } },
-                { new: true, session }
+                { new: true }
               );
 
-              // FIX: Phải kiểm tra tài xế có tồn tại trước khi commit
               if (!driver) {
-                console.error(`[ERROR] Không tìm thấy tài xế ${updatedTx.driverId} cho orderCode ${tx.payosOrderCode}. Hủy transaction.`);
-                await session.abortTransaction();
-                session.endSession();
+                console.error(`[ERROR] Không tìm thấy tài xế ${updatedTx.driverId} cho orderCode ${tx.payosOrderCode}. Rollback.`);
+                await DebtTransaction.findByIdAndUpdate(updatedTx._id, { status: 'PENDING' });
                 continue;
               }
 
-              await session.commitTransaction();
-              session.endSession();
+              await DebtTransaction.findByIdAndUpdate(
+                updatedTx._id,
+                [
+                  { 
+                    $set: { 
+                      status: 'SUCCESS',
+                      description: { $concat: [{ $ifNull: ["$description", ""] }, " [Thanh toán PayOS tự động - ĐỐI SOÁT BOT]"] }
+                    }
+                  }
+                ]
+              );
+              
               console.log(`[SUCCESS] Đã đối soát và giảm nợ thành công cho orderCode ${tx.payosOrderCode}.`);
             } else {
-              await session.abortTransaction();
-              session.endSession();
               console.log(`[SKIP] Giao dịch ${tx.payosOrderCode} đã được xử lý.`);
             }
           } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-            console.error(`[ERROR] Lỗi khi commit transaction cho orderCode ${tx.payosOrderCode}:`, error);
+            console.error(`[ERROR] Lỗi khi xử lý cho orderCode ${tx.payosOrderCode}:`, error);
+            await DebtTransaction.findOneAndUpdate({ payosOrderCode: tx.payosOrderCode }, { status: 'PENDING' });
           }
         } else if (paymentData.status === 'CANCELLED' || paymentData.status === 'EXPIRED') {
            console.log(`[${paymentData.status}] orderCode ${tx.payosOrderCode}. Đánh dấu hủy.`);
