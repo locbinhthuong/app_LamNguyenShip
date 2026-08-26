@@ -60,12 +60,14 @@ const reconcilePayOS = async () => {
           try {
             const updatedTx = await DebtTransaction.findOneAndUpdate(
               { payosOrderCode: tx.payosOrderCode, status: 'PENDING' },
-              { 
-                $set: { 
-                  status: 'SUCCESS',
-                  description: (tx.description || '') + ' [Thanh toán PayOS tự động - ĐỐI SOÁT BOT]'
+              [
+                { 
+                  $set: { 
+                    status: 'SUCCESS',
+                    description: { $concat: [{ $ifNull: ["$description", ""] }, " [Thanh toán PayOS tự động - ĐỐI SOÁT BOT]"] }
+                  }
                 }
-              },
+              ],
               { new: true, session }
             );
 

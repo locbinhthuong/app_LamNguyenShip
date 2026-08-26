@@ -123,12 +123,14 @@ const payosController = {
         try {
           const tx = await DebtTransaction.findOneAndUpdate(
             { payosOrderCode: orderCode, status: 'PENDING' },
-            { 
-              $set: { 
-                status: 'SUCCESS',
-                description: ' [Thanh toán PayOS tự động]' // Ghi chú lại
+            [
+              { 
+                $set: { 
+                  status: 'SUCCESS',
+                  description: { $concat: [{ $ifNull: ["$description", ""] }, " [Thanh toán PayOS tự động]"] }
+                }
               }
-            },
+            ],
             { new: true, session }
           );
           
@@ -139,6 +141,17 @@ const payosController = {
               { $inc: { walletDebt: tx.amount } },
               { new: true, session }
             );
+
+            // FIX: Phải kiểm tra tài xế có tồn tại trước khi commit
+            if (!driver) {
+              console.error(`[ERROR] Không tìm thấy tài xế ${tx.driverId} cho orderCode ${orderCode}. Hủy transaction.`);
+              await session.abortTransaction();
+              session.endSession();
+              // Không văng lỗi HTTP 500 nếu do tài xế bị xoá cứng (rất hiếm), chỉ skip và báo log
+              // Hoặc có thể văng lỗi để retry, nhưng nếu tài xế bị xoá thì retry mãi vẫn thế.
+              // Ta chọn ném lỗi để nếu do lỗi tạm thời thì retry được, hoặc có log rõ ràng
+              throw new Error(`Không tìm thấy tài xế ${tx.driverId}`);
+            }
 
             await session.commitTransaction();
             session.endSession();
