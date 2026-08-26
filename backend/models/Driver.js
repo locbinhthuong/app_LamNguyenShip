@@ -81,6 +81,9 @@ const driverSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  processedPayOS: [{
+    type: Number
+  }],
   // Thống kê
   stats: {
     totalOrders: { type: Number, default: 0 },

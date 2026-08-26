@@ -35,13 +35,13 @@ const reconcilePayOS = async () => {
 
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
     const pendingTxs = await DebtTransaction.find({
-      status: 'PENDING',
+      status: { $in: ['PENDING', 'PROCESSING'] },
       payosOrderCode: { $exists: true },
       createdAt: { $lte: fiveMinutesAgo }
     });
 
     if (pendingTxs.length > 0) {
-       console.log(`Tìm thấy ${pendingTxs.length} giao dịch PayOS PENDING cần đối soát.`);
+       console.log(`Tìm thấy ${pendingTxs.length} giao dịch PayOS PENDING/PROCESSING cần đối soát.`);
     }
 
     for (const tx of pendingTxs) {
@@ -58,22 +58,30 @@ const reconcilePayOS = async () => {
 
           try {
             const updatedTx = await DebtTransaction.findOneAndUpdate(
-              { payosOrderCode: tx.payosOrderCode, status: 'PENDING' },
+              { payosOrderCode: tx.payosOrderCode, status: { $in: ['PENDING', 'PROCESSING'] } },
               { $set: { status: 'PROCESSING' } },
               { new: true }
             );
 
             if (updatedTx) {
-              const driver = await Driver.findByIdAndUpdate(
-                updatedTx.driverId,
-                { $inc: { walletDebt: updatedTx.amount } },
+              let driver = await Driver.findOneAndUpdate(
+                { _id: updatedTx.driverId, processedPayOS: { $ne: tx.payosOrderCode } },
+                { 
+                  $inc: { walletDebt: updatedTx.amount },
+                  $push: { processedPayOS: tx.payosOrderCode }
+                },
                 { new: true }
               );
 
               if (!driver) {
-                console.error(`[ERROR] Không tìm thấy tài xế ${updatedTx.driverId} cho orderCode ${tx.payosOrderCode}. Rollback.`);
-                await DebtTransaction.findByIdAndUpdate(updatedTx._id, { status: 'PENDING' });
-                continue;
+                driver = await Driver.findById(updatedTx.driverId);
+                if (!driver) {
+                   console.error(`[ERROR] Không tìm thấy tài xế ${updatedTx.driverId} cho orderCode ${tx.payosOrderCode}. Đánh dấu DELETED.`);
+                   await DebtTransaction.findByIdAndUpdate(updatedTx._id, { status: 'DELETED', description: 'Tài xế bị xóa' });
+                   continue;
+                } else {
+                   console.log(`[INFO] orderCode ${tx.payosOrderCode} đã được cộng vào ví trước đó.`);
+                }
               }
 
               await DebtTransaction.findByIdAndUpdate(
@@ -90,11 +98,10 @@ const reconcilePayOS = async () => {
               
               console.log(`[SUCCESS] Đã đối soát và giảm nợ thành công cho orderCode ${tx.payosOrderCode}.`);
             } else {
-              console.log(`[SKIP] Giao dịch ${tx.payosOrderCode} đã được xử lý.`);
+              console.log(`[SKIP] Giao dịch ${tx.payosOrderCode} đã được xử lý (SUCCESS).`);
             }
           } catch (error) {
             console.error(`[ERROR] Lỗi khi xử lý cho orderCode ${tx.payosOrderCode}:`, error);
-            await DebtTransaction.findOneAndUpdate({ payosOrderCode: tx.payosOrderCode }, { status: 'PENDING' });
           }
         } else if (paymentData.status === 'CANCELLED' || paymentData.status === 'EXPIRED') {
            console.log(`[${paymentData.status}] orderCode ${tx.payosOrderCode}. Đánh dấu hủy.`);

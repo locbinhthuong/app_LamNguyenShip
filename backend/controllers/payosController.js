@@ -116,7 +116,7 @@ const payosController = {
         const orderCode = webhookData.orderCode;
         // Cập nhật trạng thái thành PROCESSING để lock giao dịch
         const tx = await DebtTransaction.findOneAndUpdate(
-          { payosOrderCode: orderCode, status: 'PENDING' },
+          { payosOrderCode: orderCode, status: { $in: ['PENDING', 'PROCESSING'] } },
           { $set: { status: 'PROCESSING' } },
           { new: true }
         );
@@ -126,18 +126,29 @@ const payosController = {
 
         if (tx) {
           try {
-            // Update driver wallet 
-            const driver = await Driver.findByIdAndUpdate(
-              tx.driverId,
-              { $inc: { walletDebt: tx.amount } },
+            // Update driver wallet ONLY IF orderCode is not in processedPayOS
+            // This is an atomic, idempotent update on MongoDB standalone.
+            let driver = await Driver.findOneAndUpdate(
+              { _id: tx.driverId, processedPayOS: { $ne: orderCode } },
+              { 
+                $inc: { walletDebt: tx.amount },
+                $push: { processedPayOS: orderCode }
+              },
               { new: true }
             );
 
-            // Kiểm tra tài xế có tồn tại
+            // Nếu driver trả về null, có 2 khả năng: 1 là tài xế đã bị xoá, 2 là đã được processed rồi
             if (!driver) {
-              console.error(`[ERROR] Không tìm thấy tài xế ${tx.driverId} cho orderCode ${orderCode}. Rollback về PENDING.`);
-              await DebtTransaction.findByIdAndUpdate(tx._id, { status: 'PENDING' });
-              throw new Error(`Không tìm thấy tài xế ${tx.driverId}`);
+               // Thử tìm lại xem có phải do đã process không
+               driver = await Driver.findById(tx.driverId);
+               if (!driver) {
+                 console.error(`[ERROR] Không tìm thấy tài xế ${tx.driverId} cho orderCode ${orderCode}. Rollback về DELETED vì tài xế không tồn tại.`);
+                 await DebtTransaction.findByIdAndUpdate(tx._id, { status: 'DELETED', description: 'Tài xế không tồn tại' });
+                 throw new Error(`Không tìm thấy tài xế ${tx.driverId}`);
+               } else {
+                 // Đã processed rồi (bởi tiến trình khác), chỉ cần đánh dấu SUCCESS
+                 console.log(`[INFO] orderCode ${orderCode} đã được cộng vào ví trước đó. Chỉ cập nhật SUCCESS.`);
+               }
             }
 
             // Hoàn tất: Cập nhật SUCCESS và ghi chú
@@ -155,9 +166,8 @@ const payosController = {
             );
             driverUpdated = driver;
           } catch (updateError) {
-            // Rollback status to PENDING if wallet update failed
-            console.error('Lỗi khi cập nhật ví tài xế trong Webhook, trả lại PENDING:', updateError);
-            await DebtTransaction.findByIdAndUpdate(tx._id, { status: 'PENDING' });
+            // Không rollback mù quáng về PENDING nữa. Cứ để PROCESSING để bot xử lý lại đúng chuẩn idempotent.
+            console.error('Lỗi khi cập nhật ví tài xế trong Webhook, giữ nguyên PROCESSING:', updateError);
             throw updateError;
           }
         }
