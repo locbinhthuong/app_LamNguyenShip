@@ -69,8 +69,10 @@ export default function Earnings() {
         });
       }
     } catch (error) {
-      setIsPayOSError(true);
-      const msg = error?.response?.data?.message || 'PayOS hiện đang bảo trì. Vui lòng chuyển khoản thủ công bên dưới!';
+      if (error?.response?.data?.fallbackAllowed === true) {
+         setIsPayOSError(true);
+      }
+      const msg = error?.response?.data?.message || 'PayOS hiện đang bảo trì. Vui lòng thử lại sau!';
       alert('❌ ' + msg);
     } finally {
       setIsRequesting(false);

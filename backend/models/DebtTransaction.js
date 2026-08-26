@@ -21,7 +21,9 @@ const debtTransactionSchema = new mongoose.Schema({
     default: 'SUCCESS' // Default is SUCCESS for fee_deductions and pre-existing payments
   },
   payosOrderCode: {
-    type: Number
+    type: Number,
+    sparse: true,
+    unique: true
   },
   description: {
     type: String,

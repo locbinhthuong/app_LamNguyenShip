@@ -30,24 +30,9 @@ const payosController = {
 
       const finalTargetDate = targetDate || getTodayVN();
 
-      const tx = new DebtTransaction({
-        driverId,
-        type: 'PAYMENT',
-        amount: -Number(amount),
-        status: 'PENDING',
-        targetDate: finalTargetDate,
-        description: `Thanh toán công nợ ngày ${finalTargetDate}`
-      });
-      await tx.save();
-
-      // orderCode must be a number, unique, max length 50.
-      // We can use the last 6 digits of timestamp + random to ensure uniqueness but short enough.
-      // PayOS recommends timestamp.
-      const orderCode = Number(String(Date.now()).slice(-6) + Math.floor(Math.random() * 1000));
-      
-      // Save orderCode in transaction so webhook can find it
-      tx.payosOrderCode = orderCode;
-      await tx.save();
+      // Sinh orderCode trước
+      // PayOS recommends timestamp. Use full Date.now() or safe number to avoid collision
+      const orderCode = Number(String(Date.now()).slice(-9) + Math.floor(Math.random() * 100));
 
       const returnUrl = `https://api.aloshipp.com/api/payos/success`;
       const cancelUrl = `https://api.aloshipp.com/api/payos/cancel`;
@@ -63,12 +48,38 @@ const payosController = {
       const payos = getPayOS();
       const paymentLink = await payos.paymentRequests.create(body);
 
+      // Lưu DB CHỈ KHI tạo link thành công
+      const tx = new DebtTransaction({
+        driverId,
+        type: 'PAYMENT',
+        amount: -Number(amount),
+        status: 'PENDING',
+        targetDate: finalTargetDate,
+        description: `Thanh toán công nợ ngày ${finalTargetDate}`,
+        payosOrderCode: orderCode
+      });
+      await tx.save();
+
       console.log(`[PAYOS] Created payment link for driver ${driver.name}, amount ${amount}`);
       res.status(200).json({ success: true, checkoutUrl: paymentLink.checkoutUrl });
 
     } catch (error) {
       console.error('Error createPaymentLink:', error);
-      res.status(500).json({ success: false, message: 'Lỗi server khi tạo link thanh toán' });
+      
+      let fallbackAllowed = false;
+      const errMsg = error?.response?.data?.message || error?.message || '';
+      
+      // Cho phép thủ công nếu lỗi liên quan đến gói cước, hạn mức, bảo trì PayOS
+      // PayOS limit errors usually contain "limit", "exceed", or similar
+      if (errMsg.toLowerCase().includes('limit') || errMsg.toLowerCase().includes('exceed') || errMsg.toLowerCase().includes('bảo trì') || errMsg.toLowerCase().includes('vượt quá')) {
+         fallbackAllowed = true;
+      }
+
+      res.status(500).json({ 
+        success: false, 
+        message: 'Lỗi khi tạo link thanh toán PayOS', 
+        fallbackAllowed 
+      });
     }
   },
 
@@ -86,28 +97,38 @@ const payosController = {
         const orderCode = webhookData.orderCode;
         const tx = await DebtTransaction.findOneAndUpdate(
           { payosOrderCode: orderCode, status: 'PENDING' },
-          { $set: { status: 'SUCCESS' } }
+          { $set: { status: 'PROCESSING' } },
+          { new: true }
         );
         
         if (tx) {
-          tx.status = 'SUCCESS';
-          tx.description = (tx.description || '') + ' [Thanh toán PayOS tự động]';
-          await tx.save();
+          try {
+            // Update driver wallet FIRST
+            const driver = await Driver.findByIdAndUpdate(
+              tx.driverId,
+              { $inc: { walletDebt: tx.amount } },
+              { new: true }
+            );
 
-          // Update driver wallet
-          const driver = await Driver.findByIdAndUpdate(
-            tx.driverId,
-            { $inc: { walletDebt: tx.amount } },
-            { new: true }
-          );
+            // ONLY AFTER wallet is successfully updated, we mark transaction SUCCESS
+            tx.status = 'SUCCESS';
+            tx.description = (tx.description || '') + ' [Thanh toán PayOS tự động]';
+            await tx.save();
 
-          console.log(`[PAYOS WEBHOOK] Successfully processed orderCode ${orderCode}, Driver ${driver.name} debt reduced by ${Math.abs(tx.amount)}`);
+            console.log(`[PAYOS WEBHOOK] Successfully processed orderCode ${orderCode}, Driver ${driver.name} debt reduced by ${Math.abs(tx.amount)}`);
 
-          // Emit socket event if io is available
-          if (req.io) {
-             try {
-                req.io.to(tx.driverId.toString()).emit('debt_updated', { debt: driver.walletDebt, message: 'Thanh toán PayOS THÀNH CÔNG!' });
-             } catch(e) { console.error('Emit socket error in webhook', e)}
+            // Emit socket event to the correct driver room 'driver_{id}'
+            if (req.io) {
+               try {
+                  req.io.to(`driver_${tx.driverId.toString()}`).emit('debt_updated', { debt: driver.walletDebt, message: 'Thanh toán PayOS THÀNH CÔNG!' });
+               } catch(e) { console.error('Emit socket error in webhook', e)}
+            }
+          } catch (updateError) {
+             // Rollback status to PENDING if wallet update failed (DB error, crash before save)
+             console.error('Lỗi khi cập nhật ví tài xế trong Webhook, trả lại PENDING:', updateError);
+             tx.status = 'PENDING';
+             await tx.save();
+             throw updateError;
           }
         }
       }
@@ -134,10 +155,10 @@ const payosController = {
         </style>
       </head>
       <body>
-        <div class="icon">✅</div>
-        <h1>Thanh toán thành công!</h1>
-        <p>Hệ thống đã ghi nhận khoản nạp của bạn.</p>
-        <p>Vui lòng bấm nút <b>"Xong"</b> hoặc <b>"Đóng"</b> ở góc màn hình để quay lại App.</p>
+        <div class="icon">⏳</div>
+        <h1>Đang xác nhận thanh toán</h1>
+        <p>Hệ thống đang đối soát dữ liệu với ngân hàng.</p>
+        <p>Vui lòng bấm nút <b>"Xong"</b> hoặc <b>"Đóng"</b> ở góc màn hình để quay lại App và chờ trong giây lát.</p>
       </body>
       </html>
     `);
