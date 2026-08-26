@@ -7,7 +7,7 @@ const { verifyToken, onlyAdmin, onlyDriver } = require('../middleware/auth');
 router.use(verifyToken);
 
 // === Route của Driver ===
-router.post('/driver/:driverId/request-payment', onlyDriver, debtController.requestPayment);
+router.post('/driver/request-payment', onlyDriver, debtController.requestPayment);
 router.get('/driver/me', onlyDriver, debtController.getMyDebtDetail);
 
 // === Routes của Admin ===

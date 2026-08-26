@@ -30,24 +30,15 @@ const payosController = {
 
       const finalTargetDate = targetDate || getTodayVN();
 
-      // Check if there is an existing PENDING transaction for this date
-      let tx = await DebtTransaction.findOne({ driverId, type: 'PAYMENT', status: 'PENDING', targetDate: finalTargetDate, payosOrderCode: { $exists: true } });
-      
-      if (!tx) {
-        tx = new DebtTransaction({
-          driverId,
-          type: 'PAYMENT',
-          amount: -Number(amount),
-          status: 'PENDING',
-          targetDate: finalTargetDate,
-          description: `Thanh toán công nợ ngày ${finalTargetDate}`
-        });
-        await tx.save();
-      } else {
-        // Update amount if changed
-        tx.amount = -Number(amount);
-        await tx.save();
-      }
+      const tx = new DebtTransaction({
+        driverId,
+        type: 'PAYMENT',
+        amount: -Number(amount),
+        status: 'PENDING',
+        targetDate: finalTargetDate,
+        description: `Thanh toán công nợ ngày ${finalTargetDate}`
+      });
+      await tx.save();
 
       // orderCode must be a number, unique, max length 50.
       // We can use the last 6 digits of timestamp + random to ensure uniqueness but short enough.
@@ -93,7 +84,10 @@ const payosController = {
       if (req.body.code === '00' || req.body.success === true || req.body.desc === 'success') {
         // Payment success
         const orderCode = webhookData.orderCode;
-        const tx = await DebtTransaction.findOne({ payosOrderCode: orderCode, status: 'PENDING' });
+        const tx = await DebtTransaction.findOneAndUpdate(
+          { payosOrderCode: orderCode, status: 'PENDING' },
+          { $set: { status: 'SUCCESS' } }
+        );
         
         if (tx) {
           tx.status = 'SUCCESS';
@@ -121,7 +115,7 @@ const payosController = {
       return res.status(200).json({ success: true });
     } catch (error) {
       console.error('PayOS Webhook Error:', error);
-      return res.status(200).json({ success: false }); // Always return 200 to webhook
+      return res.status(500).json({ success: false, message: 'Internal Server Error' });
     }
   },
 

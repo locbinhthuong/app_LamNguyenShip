@@ -57,6 +57,10 @@ const financeController = {
         return res.status(400).json({ success: false, message: 'Giao dịch không hợp lệ hoặc đã xử lý' });
       }
 
+      if (tx.payosOrderCode) {
+         return res.status(400).json({ success: false, message: 'Giao dịch PayOS được xử lý tự động, không thể duyệt thủ công' });
+      }
+
       // Duyệt
       tx.status = 'SUCCESS';
       tx.createdByAdminId = adminId;
@@ -81,7 +85,11 @@ const financeController = {
 
       const tx = await DebtTransaction.findById(txId);
       if (!tx || tx.type !== 'PAYMENT' || tx.status !== 'PENDING') {
-        return res.status(400).json({ success: false, message: 'Giao dịch không hợp lệ' });
+        return res.status(400).json({ success: false, message: 'Giao dịch không hợp lệ hoặc đã xử lý' });
+      }
+      
+      if (tx.payosOrderCode) {
+         return res.status(400).json({ success: false, message: 'Giao dịch PayOS được xử lý tự động, không thể duyệt thủ công' });
       }
 
       tx.status = 'REJECTED';
