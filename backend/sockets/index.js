@@ -175,9 +175,7 @@ const broadcastToCreator = (io, order, eventName) => {
 
 const emitNewOrder = async (io, order, isSilentAdmin = false) => {
   if (order.status !== 'DRAFT') {
-    io.to('drivers').emit('new_order', order);
-    
-    // Bắn Push Firebase
+    // 1. Kích hoạt Push Notification (Firebase) TRƯỚC để thông báo bay đi
     try {
       const Driver = require('../models/Driver');
       
@@ -199,11 +197,18 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
         const feeResponse = order.deliveryFee ? `${order.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
         let msgBody = order.driverReminder ? `⚠️ ${order.driverReminder}\n` : '';
         msgBody += `📍 Từ: ${order.pickupAddress}\n🎯 Đến: ${order.deliveryAddress || 'Chưa cập nhật'}\n💵 Phí: ${feeResponse}`;
-        await sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}`, orderId: order._id.toString() });
+        
+        // Gọi Firebase (không cần await để luồng chạy tiếp)
+        sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}`, orderId: order._id.toString() }).catch(err => console.error(err));
       }
     } catch (e) {
       console.log('[FCM-DEBUG] Lời nổ Push emitNewOrder bị lỗi thảm hại:', e.message);
     }
+
+    // 2. Trì hoãn Socket event 2.5 giây để đợi thông báo ngoài app nổ trước
+    setTimeout(() => {
+      io.to('drivers').emit('new_order', order);
+    }, 2500);
   }
   
   if (!isSilentAdmin) {
