@@ -111,7 +111,12 @@ const payosController = {
          // HACK CHO APP CŨ: Nếu app cũ không có cơ chế fallbackAllowed, chúng ta trả về 200 OK 
          // và một checkoutUrl giả trỏ về trang QR thủ công trên server của chúng ta.
          const crypto = require('crypto');
-         const payloadData = JSON.stringify({ driverId: driverId.toString(), amount, targetDate: finalTargetDate, driverCode: driver.driverCode });
+         const payloadData = JSON.stringify({ 
+            driverId: req.driver._id.toString(), 
+            amount: req.body.amount, 
+            targetDate: req.body.targetDate || '', 
+            driverCode: req.driver.driverCode 
+         });
          const signature = crypto.createHmac('sha256', process.env.JWT_SECRET || 'fallback_secret').update(payloadData).digest('hex');
          const payloadB64 = Buffer.from(payloadData).toString('base64');
          const customCheckoutUrl = `https://api.aloshipp.com/api/payos/manual-checkout?payload=${payloadB64}&signature=${signature}`;
