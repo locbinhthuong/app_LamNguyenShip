@@ -8,6 +8,8 @@ router.use(verifyToken);
 
 // === Route của Driver ===
 router.post('/driver/request-payment', onlyDriver, debtController.requestPayment);
+// Tương thích ngược: App cũ gọi api có truyền driverId trên URL
+router.post('/driver/:driverId/request-payment', onlyDriver, debtController.requestPayment);
 router.get('/driver/me', onlyDriver, debtController.getMyDebtDetail);
 
 // === Routes của Admin ===
