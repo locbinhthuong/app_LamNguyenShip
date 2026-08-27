@@ -360,6 +360,23 @@ const payosController = {
          });
          await tx.save();
          console.log(`[MANUAL QR] Tạo yêu cầu thanh toán cho ${data.driverCode}, ${data.amount}đ`);
+
+         if (req.io) {
+            const { emitDebtPaymentRequest } = require('../sockets/index');
+            const driverInfo = await require('../models/Driver').findById(data.driverId);
+            if (driverInfo) {
+               emitDebtPaymentRequest(req.io, {
+                 txId: tx._id,
+                 driverId: driverInfo._id,
+                 name: driverInfo.name,
+                 phone: driverInfo.phone,
+                 driverCode: data.driverCode,
+                 amount: Number(data.amount),
+                 targetDate: data.targetDate,
+                 timestamp: new Date()
+               });
+            }
+         }
        }
        
        res.send(`
