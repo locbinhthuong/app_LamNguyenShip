@@ -94,7 +94,7 @@ const payosController = {
       console.error('Error createPaymentLink:', error);
       
       let fallbackAllowed = false;
-      const errMsg = error?.response?.data?.message || error?.message || '';
+      const errMsg = String(error?.response?.data?.message || error?.message || '');
       
       // Bật QR Code thủ công nếu hết quota HOẶC bị lỗi gói cước MBBank từ PayOS
       if (
