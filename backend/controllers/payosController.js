@@ -103,6 +103,9 @@ const payosController = {
         errMsg.toLowerCase().includes('quota') || 
         errMsg.toLowerCase().includes('vượt hạn mức') ||
         errMsg.toLowerCase().includes('mbbank') ||
+        errMsg.toLowerCase().includes('gói') ||
+        errMsg.includes('215') ||
+        errMsg.includes('218') ||
         errMsg.toLowerCase().includes('kênh thanh toán')
       ) {
          // HACK CHO APP CŨ: Nếu app cũ không có cơ chế fallbackAllowed, chúng ta trả về 200 OK 
