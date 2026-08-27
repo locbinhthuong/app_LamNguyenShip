@@ -73,7 +73,11 @@ export default function Earnings() {
          setIsPayOSError(true);
       }
       const msg = error?.response?.data?.message || 'PayOS hiện đang bảo trì. Vui lòng thử lại sau!';
-      alert('❌ ' + msg);
+      
+      // Delay alert 100ms để React kịp render màn hình QR thủ công trước khi bị alert chặn
+      setTimeout(() => {
+        alert('❌ ' + msg);
+      }, 100);
     } finally {
       setIsRequesting(false);
     }
