@@ -96,14 +96,24 @@ const payosController = {
       let fallbackAllowed = false;
       const errMsg = error?.response?.data?.message || error?.message || '';
       
-      // Cho phép thủ công CHỈ KHI hết gói cước, hạn mức PayOS (không dùng cho lỗi DB, lỗi mạng)
-      if (errMsg.toLowerCase().includes('limit') || errMsg.toLowerCase().includes('exceed') || errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('vượt hạn mức')) {
+      // Bật QR Code thủ công nếu hết quota HOẶC bị lỗi gói cước MBBank từ PayOS
+      if (
+        errMsg.toLowerCase().includes('limit') || 
+        errMsg.toLowerCase().includes('exceed') || 
+        errMsg.toLowerCase().includes('quota') || 
+        errMsg.toLowerCase().includes('vượt hạn mức') ||
+        errMsg.toLowerCase().includes('mbbank') ||
+        errMsg.toLowerCase().includes('kênh thanh toán')
+      ) {
          fallbackAllowed = true;
       }
 
+      // Xóa chữ APIError HTTP 200 đi cho thông báo đẹp hơn
+      const cleanMsg = errMsg.replace('APIError: HTTP 200, ', '').replace('APIError: ', '');
+
       res.status(500).json({ 
         success: false, 
-        message: 'Lỗi khi tạo link thanh toán PayOS', 
+        message: cleanMsg ? `Lỗi PayOS: ${cleanMsg}` : 'Lỗi khi tạo link thanh toán PayOS', 
         fallbackAllowed 
       });
     }
