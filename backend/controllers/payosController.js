@@ -38,7 +38,9 @@ const payosController = {
 
       while (!success && retryCount < 3) {
         try {
-          orderCode = Number(String(Date.now()).slice(-9) + Math.floor(Math.random() * 100));
+          // PayOS yêu cầu orderCode là số nguyên (Int32) tối đa 2147483647.
+          // Lấy 5 số cuối của Date.now() + 4 số ngẫu nhiên = 9 số (chắc chắn < 2.1 tỷ)
+          orderCode = Number(String(Date.now()).slice(-5) + String(Math.floor(Math.random() * 10000)).padStart(4, '0'));
           
           const returnUrl = `https://api.aloshipp.com/api/payos/success`;
           const cancelUrl = `https://api.aloshipp.com/api/payos/cancel`;
@@ -66,8 +68,13 @@ const payosController = {
           await tx.save();
           success = true;
         } catch (err) {
-          // If duplicate key error (code 11000) on payosOrderCode, retry. Otherwise, throw it.
-          if (err.code === 11000 && err.keyPattern && err.keyPattern.payosOrderCode) {
+          const errMsg = err.message || err.response?.data?.message || '';
+          // Nếu lỗi do trùng orderCode (từ MongoDB hoặc PayOS), tiến hành retry
+          if (
+            (err.code === 11000 && err.keyPattern && err.keyPattern.payosOrderCode) || 
+            errMsg.toLowerCase().includes('exist') || 
+            errMsg.toLowerCase().includes('duplicate')
+          ) {
             retryCount++;
             console.log(`[PAYOS] Trùng orderCode ${orderCode}, thử lại lần ${retryCount}...`);
           } else {
