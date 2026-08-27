@@ -348,10 +348,10 @@ const payosController = {
             amount: -Number(data.amount),
             status: 'PENDING',
             targetDate: data.targetDate,
-            description: \`Yêu cầu xác nhận chuyển khoản thủ công cho nợ ngày \${data.targetDate || ''}\`
+            description: `Yêu cầu xác nhận chuyển khoản thủ công cho nợ ngày ${data.targetDate || ''}`
          });
          await tx.save();
-         console.log(\`[MANUAL QR] Tạo yêu cầu thanh toán cho \${data.driverCode}, \${data.amount}đ\`);
+         console.log(`[MANUAL QR] Tạo yêu cầu thanh toán cho ${data.driverCode}, ${data.amount}đ`);
        }
        
        res.send(`
