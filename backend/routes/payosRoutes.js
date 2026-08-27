@@ -12,4 +12,8 @@ router.post('/webhook', payosController.handleWebhook);
 router.get('/success', payosController.handleSuccess);
 router.get('/cancel', payosController.handleCancel);
 
+// Custom routes cho app cũ chưa kịp update
+router.get('/manual-checkout', payosController.manualCheckoutPage);
+router.post('/manual-checkout-submit', payosController.manualCheckoutSubmit);
+
 module.exports = router;

@@ -105,7 +105,15 @@ const payosController = {
         errMsg.toLowerCase().includes('mbbank') ||
         errMsg.toLowerCase().includes('kênh thanh toán')
       ) {
-         fallbackAllowed = true;
+         // HACK CHO APP CŨ: Nếu app cũ không có cơ chế fallbackAllowed, chúng ta trả về 200 OK 
+         // và một checkoutUrl giả trỏ về trang QR thủ công trên server của chúng ta.
+         const crypto = require('crypto');
+         const payloadData = JSON.stringify({ driverId: driverId.toString(), amount, targetDate: finalTargetDate, driverCode: driver.driverCode });
+         const signature = crypto.createHmac('sha256', process.env.JWT_SECRET || 'fallback_secret').update(payloadData).digest('hex');
+         const payloadB64 = Buffer.from(payloadData).toString('base64');
+         const customCheckoutUrl = `https://api.aloshipp.com/api/payos/manual-checkout?payload=${payloadB64}&signature=${signature}`;
+         
+         return res.status(200).json({ success: true, checkoutUrl: customCheckoutUrl, fallbackAllowed: true });
       }
 
       // Xóa chữ APIError HTTP 200 đi cho thông báo đẹp hơn
@@ -253,6 +261,123 @@ const payosController = {
       </body>
       </html>
     `);
+  },
+
+  manualCheckoutPage: async (req, res) => {
+    try {
+      const { payload: payloadB64, signature } = req.query;
+      const payloadData = Buffer.from(payloadB64, 'base64').toString('utf8');
+      const crypto = require('crypto');
+      const expectedSignature = crypto.createHmac('sha256', process.env.JWT_SECRET || 'fallback_secret').update(payloadData).digest('hex');
+      
+      if (signature !== expectedSignature) {
+         return res.status(403).send('Link không hợp lệ hoặc đã hết hạn.');
+      }
+      const data = JSON.parse(payloadData);
+      
+      const Announcement = require('../models/Announcement');
+      const ann = await Announcement.findOne({ type: 'DEBT_QR_INFO', isActive: true });
+      const bankName = ann?.title || 'MB';
+      const bankAccount = ann?.content || '0857986911';
+      const accountName = ann?.videoUrl || 'NGUYEN LAM NGUYEN';
+      const addInfo = 'THANHTOANNO ' + data.driverCode + ' ' + (data.targetDate || '');
+      const amountStr = Math.round(data.amount);
+      const qrUrl = `https://img.vietqr.io/image/${bankName}-${bankAccount}-compact2.jpg?amount=${amountStr}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accountName)}`;
+      
+      res.send(`
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Thanh toán Công Nợ</title>
+          <style>
+            body { font-family: sans-serif; text-align: center; margin: 0; padding: 20px; background: #f3f4f6; }
+            .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+            img { max-width: 100%; border-radius: 8px; margin-bottom: 10px; }
+            h2 { color: #1f2937; font-size: 20px; margin-bottom: 10px; }
+            p { color: #4b5563; font-size: 14px; margin-bottom: 20px; line-height: 1.5;}
+            .btn { display: block; width: 100%; padding: 14px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; text-decoration: none; margin-top: 10px; box-sizing: border-box;}
+            .btn:hover { background: #1d4ed8; }
+            .info-box { background: #eff6ff; padding: 12px; border-radius: 8px; text-align: left; margin-bottom: 20px; border: 1px solid #bfdbfe; }
+            .info-box div { margin-bottom: 6px; font-size: 14px; color: #1e3a8a; }
+          </style>
+        </head>
+        <body>
+          <div class="card">
+            <h2>Chuyển khoản thủ công</h2>
+            <p>Hệ thống tự động đang bảo trì. Vui lòng dùng app Ngân hàng quét mã QR dưới đây để bù điểm.</p>
+            <img src="${qrUrl}" alt="VietQR" />
+            
+            <div class="info-box">
+               <div><b>Số tiền:</b> ${amountStr.toLocaleString('vi-VN')} đ</div>
+               <div><b>Nội dung:</b> ${addInfo}</div>
+            </div>
+            
+            <form action="/api/payos/manual-checkout-submit" method="POST">
+               <input type="hidden" name="payload" value="${payloadB64}" />
+               <input type="hidden" name="signature" value="${signature}" />
+               <button type="submit" class="btn">TÔI ĐÃ CHUYỂN KHOẢN</button>
+            </form>
+          </div>
+        </body>
+        </html>
+      `);
+    } catch (e) {
+      console.error(e);
+      res.send('Lỗi hệ thống');
+    }
+  },
+
+  manualCheckoutSubmit: async (req, res) => {
+     try {
+       const { payload: payloadB64, signature } = req.body;
+       const payloadData = Buffer.from(payloadB64, 'base64').toString('utf8');
+       const crypto = require('crypto');
+       const expectedSignature = crypto.createHmac('sha256', process.env.JWT_SECRET || 'fallback_secret').update(payloadData).digest('hex');
+       
+       if (signature !== expectedSignature) {
+         return res.send('Link không hợp lệ hoặc đã hết hạn.');
+       }
+       const data = JSON.parse(payloadData);
+       
+       const existingPending = await DebtTransaction.findOne({ driverId: data.driverId, type: 'PAYMENT', status: 'PENDING', payosOrderCode: { $exists: false } });
+       
+       if (!existingPending) {
+         const tx = new DebtTransaction({
+            driverId: data.driverId,
+            type: 'PAYMENT',
+            amount: -Number(data.amount),
+            status: 'PENDING',
+            targetDate: data.targetDate,
+            description: \`Yêu cầu xác nhận chuyển khoản thủ công cho nợ ngày \${data.targetDate || ''}\`
+         });
+         await tx.save();
+         console.log(\`[MANUAL QR] Tạo yêu cầu thanh toán cho \${data.driverCode}, \${data.amount}đ\`);
+       }
+       
+       res.send(`
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Đã gửi yêu cầu</title>
+          <style>
+            body { font-family: sans-serif; text-align: center; margin: 0; padding: 20px; background: #f0fdf4; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;}
+            .icon { font-size: 80px; margin-bottom: 20px; }
+            h2 { color: #166534; font-size: 24px; margin-bottom: 10px; }
+            p { color: #374151; font-size: 16px; padding: 0 20px; line-height: 1.5; }
+          </style>
+        </head>
+        <body>
+            <div class="icon">✅</div>
+            <h2>Đã gửi yêu cầu</h2>
+            <p>Kế toán sẽ kiểm tra đối soát và cộng điểm cho bạn sớm nhất.</p>
+            <p>Vui lòng bấm nút <b>"Xong"</b> hoặc <b>"Đóng"</b> ở góc màn hình để quay lại App.</p>
+        </body>
+        </html>
+       `);
+     } catch(e) {
+       console.error(e);
+       res.send('Lỗi xử lý yêu cầu');
+     }
   }
 };
 
