@@ -198,11 +198,8 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
         let msgBody = order.driverReminder ? `⚠️ ${order.driverReminder}\n` : '';
         msgBody += `📍 Từ: ${order.pickupAddress}\n🎯 Đến: ${order.deliveryAddress || 'Chưa cập nhật'}\n💵 Phí: ${feeResponse}`;
         
-        // Trì hoãn Push Notification 3.5 giây để Socket kịp nổ trước, 
-        // giúp app cũ bắt được đơn thật thay vì bị dummy order của FCM đè lên.
-        setTimeout(() => {
-            sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}`, orderId: order._id.toString() }).catch(err => console.error(err));
-        }, 3500);
+        // Bỏ độ trễ để FCM nổ ngay lập tức cùng lúc với Socket
+        sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}`, orderId: order._id.toString() }).catch(err => console.error(err));
       }
     } catch (e) {
       console.log('[FCM-DEBUG] Lời nổ Push emitNewOrder bị lỗi thảm hại:', e.message);
