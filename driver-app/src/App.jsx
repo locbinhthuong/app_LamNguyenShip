@@ -143,10 +143,15 @@ function AppContent() {
     const initAudio = async () => {
       if (!fallbackAudioRef.current) {
         try {
-          fallbackAudioRef.current = new SilentWebAudioPlayer('/chuong.mp3');
+          fallbackAudioRef.current = new SilentWebAudioPlayer('chuong.mp3');
         } catch (e) {
           console.error("Audio init error:", e);
         }
+      }
+
+      if (!window.html5Audio) {
+          window.html5Audio = new Audio('chuong.mp3');
+          window.html5Audio.loop = true;
       }
 
       if (Capacitor.isNativePlatform()) {
@@ -174,6 +179,16 @@ function AppContent() {
               fallbackAudioRef.current.muted = false; // Trả lại tiếng bình thường
           }).catch(e => {});
       }
+      
+      if (window.html5Audio) {
+          window.html5Audio.muted = true;
+          window.html5Audio.play().then(() => {
+              window.html5Audio.pause();
+              window.html5Audio.currentTime = 0;
+              window.html5Audio.muted = false;
+          }).catch(e => {});
+      }
+
       document.removeEventListener('touchstart', unlockAudio);
       document.removeEventListener('click', unlockAudio);
     };
@@ -224,6 +239,12 @@ function AppContent() {
         fallbackAudioRef.current.currentTime = 0; 
       } catch(e){}
     }
+    if (window.html5Audio) {
+      try {
+        window.html5Audio.pause();
+        window.html5Audio.currentTime = 0;
+      } catch(e){}
+    }
   }, []);
 
   const startAlarm = useCallback(() => {
@@ -254,10 +275,16 @@ function AppContent() {
                     if (fallbackAudioRef.current) {
                         fallbackAudioRef.current.play().catch(console.error);
                     }
+                    if (window.html5Audio) {
+                        window.html5Audio.play().catch(e => console.log('HTML5 audio play failed', e));
+                    }
                 }
             } else {
                 if (fallbackAudioRef.current) {
                     fallbackAudioRef.current.play().catch(console.error);
+                }
+                if (window.html5Audio) {
+                    window.html5Audio.play().catch(e => console.log('HTML5 audio play failed', e));
                 }
             }
         }
@@ -293,7 +320,7 @@ function AppContent() {
 
            setPushMessage({ 
                title: '🔥 TING TING', 
-               message: order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Có Đơn Hàng Mới Cho Bạn!'
+               message: order.isDummy ? 'Có Đơn Hàng Mới Cho Bạn!' : (order.pickupAddress ? `Điểm đón: ${order.pickupAddress}` : 'Có Đơn Hàng Mới Cho Bạn!')
            });
        }
 
@@ -371,7 +398,7 @@ function AppContent() {
       }
       // Nếu là sự kiện đơn mới thì FCM_foreground sẽ nổ trực tiếp driver_new_order để xử lý chung
       // Dù tiêu đề là gì (Gán đơn, Đơn mới, Điều phối), cứ có Push tới là bắt App tải lại data ngầm cho chắc
-      window.dispatchEvent(new CustomEvent('driver_new_order', { detail: { pickupAddress: "Vào xem chi tiết ngay", _id: e.detail.orderId || null } }));
+      window.dispatchEvent(new CustomEvent('driver_new_order', { detail: { pickupAddress: "Vào xem chi tiết ngay", _id: e.detail.orderId || null, isDummy: true } }));
       
       if (!e.detail.title || !e.detail.title.toUpperCase().includes('MỚI')) {
          setPushMessage({ title: e.detail.title, message: e.detail.body });
