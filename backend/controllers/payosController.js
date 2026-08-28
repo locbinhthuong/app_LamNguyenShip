@@ -30,6 +30,23 @@ const payosController = {
 
       const finalTargetDate = targetDate || getTodayVN();
 
+      // KIỂM TRA: Đã có QR/Link PayOS nào PENDING cho công nợ ngày này chưa?
+      // Điều này ngăn việc tạo ra nhiều link PayOS cho cùng một khoản nợ khi tài xế thoát ra vào lại
+      const existingPending = await DebtTransaction.findOne({
+        driverId,
+        targetDate: finalTargetDate,
+        status: 'PENDING',
+        payosOrderCode: { $exists: true },
+        checkoutUrl: { $ne: null }
+      });
+
+      if (existingPending) {
+        // Nếu số tiền bằng nhau, tái sử dụng link cũ
+        if (Math.abs(existingPending.amount) === Number(amount)) {
+          console.log(`[PAYOS] Tái sử dụng payment link cho driver ${driver.name}, orderCode ${existingPending.payosOrderCode}`);
+          return res.status(200).json({ success: true, checkoutUrl: existingPending.checkoutUrl });
+        }
+      }
       let orderCode;
       let paymentLink;
       let tx;
@@ -63,7 +80,8 @@ const payosController = {
             status: 'PENDING',
             targetDate: finalTargetDate,
             description: `Thanh toán công nợ ngày ${finalTargetDate}`,
-            payosOrderCode: orderCode
+            payosOrderCode: orderCode,
+            checkoutUrl: paymentLink.checkoutUrl
           });
           await tx.save();
           success = true;

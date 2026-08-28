@@ -25,6 +25,10 @@ const debtTransactionSchema = new mongoose.Schema({
     sparse: true,
     unique: true
   },
+  checkoutUrl: {
+    type: String,
+    default: null
+  },
   description: {
     type: String,
     required: true
