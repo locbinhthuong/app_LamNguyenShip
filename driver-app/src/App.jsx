@@ -294,22 +294,29 @@ function AppContent() {
   }, [stopAlarm]);
 
   useEffect(() => {
-    const handleStopEvent = () => {
+    let lastOrderIds = new Map();
+    
+    const handleStopEvent = (e) => {
       stopAlarm();
       setPushMessage(null);
+      // Xóa orderId khỏi lịch sử để nếu Admin phát lại ngay lập tức thì vẫn kêu chuông
+      const orderId = e?.detail?._id || e?.detail?.id;
+      if (orderId && lastOrderIds.has(orderId)) {
+        lastOrderIds.delete(orderId);
+      }
     };
     window.addEventListener('stop_alarm_event', handleStopEvent);
     
-    let lastOrderIds = new Map();
     const handleNewOrderEvent = (e) => {
        if (!driverRef.current?.isOnline) return;
 
        const order = e.detail;
        if (order && order._id) {
-           // Ngăn hú đúp khi FCM và Socket cùng báo về 1 đơn (Chỉ chặn nếu cùng 1 đơn đến trong vòng 5 giây)
+           // Ngăn hú đúp khi FCM và Socket cùng báo về 1 đơn
+           // Đã bỏ delay ở Backend nên Socket và FCM sẽ nổ cách nhau chỉ vài mili-giây, giảm xuống 1.5s là an toàn
            if (lastOrderIds.has(order._id)) {
                const lastTime = lastOrderIds.get(order._id);
-               if (Date.now() - lastTime < 5000) return;
+               if (Date.now() - lastTime < 1500) return;
            }
            lastOrderIds.set(order._id, Date.now());
            
@@ -336,7 +343,7 @@ function AppContent() {
         const order = e.detail;
         if (order) {
             if (lastOrderIds.has(order._id)) {
-                if (Date.now() - lastOrderIds.get(order._id) < 10000) return;
+                if (Date.now() - lastOrderIds.get(order._id) < 1500) return;
             }
             lastOrderIds.set(order._id, Date.now());
 
@@ -355,7 +362,7 @@ function AppContent() {
         const order = e.detail;
         if (order) {
             if (lastOrderIds.has(order._id)) {
-                if (Date.now() - lastOrderIds.get(order._id) < 10000) return;
+                if (Date.now() - lastOrderIds.get(order._id) < 1500) return;
             }
             lastOrderIds.set(order._id, Date.now());
 
