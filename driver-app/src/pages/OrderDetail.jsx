@@ -23,9 +23,18 @@ export default function OrderDetail() {
   const [confirmAccept, setConfirmAccept] = useState(false);
   const mapRef = useRef(null);
   const [order, setOrder] = useState(null);
+  const [cooldown, setCooldown] = useState(0);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showToast, setShowToast] = useState(null);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown(c => c - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   // Logic vuốt màn hình có hiệu ứng
   const [touchStart, setTouchStart] = useState({ x: null, y: null });
@@ -90,7 +99,13 @@ export default function OrderDetail() {
   const loadOrder = async () => {
     try {
       const response = await getOrderById(id);
-      setOrder(response.data);
+      setOrder(prev => {
+        if (!prev && response.data?.status === 'PENDING' && !response.data?.assignedTo) {
+          const timeDiff = Date.now() - new Date(response.data.updatedAt || response.data.createdAt).getTime();
+          if (timeDiff <= 15000) setCooldown(5);
+        }
+        return response.data;
+      });
     } catch (err) {
       showNotification('Không tìm thấy đơn hàng', 'error');
       navigate('/');
@@ -181,6 +196,17 @@ export default function OrderDetail() {
     
     // Khách hoặc Admin vừa tạo đơn, đang treo
     if (order.status === 'PENDING' && !order.assignedTo) {
+      if (cooldown > 0) {
+        return (
+          <button 
+            disabled 
+            className="btn-success opacity-50 cursor-not-allowed bg-slate-400 border-none"
+          >
+            ĐỌC ĐƠN HÀNG ({cooldown}s)
+          </button>
+        );
+      }
+
       return (
         <button 
           onClick={() => {

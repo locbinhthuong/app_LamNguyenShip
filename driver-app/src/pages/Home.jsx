@@ -43,6 +43,19 @@ const getServiceBadge = (order) => {
 function OrderCard({ order, onAccept, loading }) {
   const navigate = useNavigate();
 
+  const [cooldown, setCooldown] = useState(() => {
+    const timeDiff = Date.now() - new Date(order.updatedAt || order.createdAt).getTime();
+    return timeDiff > 15000 ? 0 : 5;
+  });
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown(c => c - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
   const handleAccept = async () => {
     await onAccept(order._id);
   };
@@ -142,13 +155,23 @@ function OrderCard({ order, onAccept, loading }) {
             <Gift size={14}/> THƯỞNG HIỆU SUẤT HOÀN THÀNH ĐƠN HÀNG: +{order.adminBonus?.toLocaleString()}đ
           </span>
         )}
-        <button
-          onClick={(e) => { e.stopPropagation(); onAccept(); }}
-          disabled={loading}
-          className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 w-full text-[15px] rounded-xl shadow-md transition-all uppercase tracking-wider disabled:opacity-50"
-        >
-          {loading ? 'ĐANG NHẬN ĐƠN...' : 'NHẬN ĐƠN NGAY'}
-        </button>
+        {cooldown > 0 ? (
+          <button
+            disabled
+            onClick={(e) => e.stopPropagation()}
+            className="bg-slate-400 text-white font-bold py-3 w-full text-[15px] rounded-xl shadow-md uppercase tracking-wider"
+          >
+            ĐỌC ĐƠN HÀNG ({cooldown}s)
+          </button>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); onAccept(); }}
+            disabled={loading}
+            className="bg-green-500 hover:bg-green-600 active:bg-green-700 text-white font-bold py-3 w-full text-[15px] rounded-xl shadow-md transition-all uppercase tracking-wider disabled:opacity-50"
+          >
+            {loading ? 'ĐANG NHẬN ĐƠN...' : 'NHẬN ĐƠN NGAY'}
+          </button>
+        )}
       </div>
     </div>
   );
