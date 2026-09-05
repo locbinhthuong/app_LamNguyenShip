@@ -991,6 +991,12 @@ const orderController = {
       }
 
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
+      // KIỂM TRA BẢO MẬT: CHẶN TÀI XẾ GIAN LẬN THỜI GIAN (CHỈNH ĐỒNG HỒ ĐIỆN THOẠI NHANH 5S)
+      const timeSinceUpdate = Date.now() - new Date(existingOrder.updatedAt || existingOrder.createdAt).getTime();
+      if (timeSinceUpdate < 4500) { // Cho phép chênh lệch ping mạng 500ms
+        return res.status(400).json({ success: false, message: 'Thao tác quá nhanh, vui lòng đợi hết 5 giây đếm ngược!' });
+      }
+
       const order = await Order.findOneAndUpdate(
         { _id: id, status: 'PENDING' },
         {
