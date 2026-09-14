@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Device } from '@capacitor/device';
+import { Capacitor } from '@capacitor/core';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://api.aloshipp.com';
 
@@ -15,17 +18,27 @@ export const getFullImageUrl = (path) => {
 
 // Request interceptor - Add token
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
     const token = localStorage.getItem('driver_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const info = await CapacitorApp.getInfo();
+        const device = await Device.getInfo();
+        config.headers['X-App-Version'] = info.version;
+        config.headers['X-Device-Platform'] = device.operatingSystem;
+      }
+    } catch (e) {
+      console.warn("Lỗi lấy thông tin version:", e);
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor - Handle 401
+// Response interceptor - Handle 401 & 426
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -39,6 +52,9 @@ api.interceptors.response.use(
       } else {
         window.location.href = '/login';
       }
+    }
+    if (error.response?.status === 426) {
+      window.dispatchEvent(new CustomEvent('api_upgrade_required', { detail: error.response.data }));
     }
     return Promise.reject(error);
   }

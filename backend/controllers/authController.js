@@ -165,6 +165,8 @@ const authController = {
       // Update sessionToken & last active
       driver.sessionToken = token;
       driver.lastActive = new Date();
+      if (req.headers['x-app-version']) driver.appVersion = req.headers['x-app-version'];
+      if (req.headers['x-device-platform']) driver.devicePlatform = req.headers['x-device-platform'];
       await driver.save();
 
       res.status(200).json({
@@ -271,9 +273,13 @@ const authController = {
       const { lat, lng } = req.body;
       const driverId = req.driver._id;
 
-      const driver = await Driver.findByIdAndUpdate(driverId, {
+      const updateData = {
         currentLocation: { lat, lng, updatedAt: new Date() }
-      }, { new: true });
+      };
+      if (req.headers['x-app-version']) updateData.appVersion = req.headers['x-app-version'];
+      if (req.headers['x-device-platform']) updateData.devicePlatform = req.headers['x-device-platform'];
+
+      const driver = await Driver.findByIdAndUpdate(driverId, updateData, { new: true });
       
       if (req.io && driver) {
         req.io.to('admins').emit('driver_location_update', {
@@ -358,6 +364,9 @@ const authController = {
           updatedAt: new Date()
         };
       }
+      
+      if (req.headers['x-app-version']) updateData.appVersion = req.headers['x-app-version'];
+      if (req.headers['x-device-platform']) updateData.devicePlatform = req.headers['x-device-platform'];
 
       const driver = await Driver.findByIdAndUpdate(
         req.driver._id,

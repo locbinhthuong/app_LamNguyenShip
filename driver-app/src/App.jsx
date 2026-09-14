@@ -394,6 +394,13 @@ function AppContent() {
     };
     window.addEventListener('api_unauthorized', handleUnauthorized);
 
+    const handleUpgradeRequired = (e) => {
+      if (e.detail && e.detail.config) {
+        setForceUpdateConfig(e.detail.config);
+      }
+    };
+    window.addEventListener('api_upgrade_required', handleUpgradeRequired);
+
     const handlePush = (e) => {
       if (Date.now() - appStartTimeRef.current < 5000) {
          console.log("Bỏ qua FCM push lúc khởi động app");
@@ -415,6 +422,7 @@ function AppContent() {
 
     return () => {
       window.removeEventListener('api_unauthorized', handleUnauthorized);
+      window.removeEventListener('api_upgrade_required', handleUpgradeRequired);
       window.removeEventListener('fcm_foreground_alert', handlePush);
     };
   }, []);
@@ -517,6 +525,17 @@ function AppContent() {
 
       socketRef.current.on('driver_deleted', () => {
         setLogoutAlert('Tài khoản của bạn đã bị xóa khỏi hệ thống!');
+      });
+
+      socketRef.current.on('force_app_update', async (config) => {
+        if (Capacitor.isNativePlatform()) {
+          try {
+            const info = await CapacitorApp.getInfo();
+            if (compareVersions(info.version, config.minVersion) < 0) {
+              setForceUpdateConfig(config);
+            }
+          } catch(e) {}
+        }
       });
 
       const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated', 'force_assigned', 'nearest_order_assignment'];

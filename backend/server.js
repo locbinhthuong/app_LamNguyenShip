@@ -312,9 +312,12 @@ connectDB()
 const gracefulShutdown = (signal) => {
   console.log(`\n${signal} received. Shutting down gracefully...`);
   server.close(() => {
-    mongoose.connection.close(false, () => {
+    mongoose.connection.close(false).then(() => {
       console.log('✅ Server và Database đã đóng an toàn.');
       process.exit(0);
+    }).catch((err) => {
+      console.error('❌ Lỗi khi đóng Database:', err);
+      process.exit(1);
     });
   });
 };

@@ -76,6 +76,10 @@ exports.updateConfig = async (req, res) => {
       { new: true, upsert: true } // Nếu chưa có thì tạo mới
     );
 
+    if (key === 'APP_VERSION_CONFIG' && req.io) {
+      req.io.emit('force_app_update', config.value.driverApp);
+    }
+
     res.status(200).json({ success: true, data: config, message: 'Đã cập nhật cấu hình thành công' });
   } catch (error) {
     console.error('Lỗi khi cập nhật cấu hình:', error);

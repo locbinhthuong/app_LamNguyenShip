@@ -99,6 +99,14 @@ const driverSchema = new mongoose.Schema({
   sessionToken: {
     type: String,
     default: null
+  },
+  appVersion: {
+    type: String,
+    default: null
+  },
+  devicePlatform: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true,

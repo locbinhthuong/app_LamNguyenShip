@@ -72,6 +72,35 @@ const onlyDriver = async (req, res, next) => {
     }
   }
 
+  // App version check
+  const Config = require('../models/Config');
+  const conf = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+  if (conf && conf.value && conf.value.driverApp) {
+    const minVersion = conf.value.driverApp.minVersion;
+    const currentVersion = req.headers['x-app-version'];
+    
+    const compareVersions = (v1, v2) => {
+      if (!v1 || !v2) return 0;
+      const p1 = v1.split('.').map(Number);
+      const p2 = v2.split('.').map(Number);
+      for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+        const n1 = p1[i] || 0;
+        const n2 = p2[i] || 0;
+        if (n1 > n2) return 1;
+        if (n1 < n2) return -1;
+      }
+      return 0;
+    };
+
+    if (!currentVersion || compareVersions(currentVersion, minVersion) < 0) {
+      return res.status(426).json({
+        success: false,
+        message: 'Vui lòng cập nhật phiên bản ứng dụng mới nhất.',
+        config: conf.value.driverApp
+      });
+    }
+  }
+
   req.driver = driver;
   next();
 };
@@ -138,6 +167,35 @@ const driverOrAdmin = async (req, res, next) => {
         return res.status(401).json({
           success: false,
           message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác'
+        });
+      }
+    }
+    
+    // App version check
+    const Config = require('../models/Config');
+    const conf = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+    if (conf && conf.value && conf.value.driverApp) {
+      const minVersion = conf.value.driverApp.minVersion;
+      const currentVersion = req.headers['x-app-version'];
+      
+      const compareVersions = (v1, v2) => {
+        if (!v1 || !v2) return 0;
+        const p1 = v1.split('.').map(Number);
+        const p2 = v2.split('.').map(Number);
+        for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+          const n1 = p1[i] || 0;
+          const n2 = p2[i] || 0;
+          if (n1 > n2) return 1;
+          if (n1 < n2) return -1;
+        }
+        return 0;
+      };
+  
+      if (!currentVersion || compareVersions(currentVersion, minVersion) < 0) {
+        return res.status(426).json({
+          success: false,
+          message: 'Vui lòng cập nhật phiên bản ứng dụng mới nhất.',
+          config: conf.value.driverApp
         });
       }
     }
@@ -225,6 +283,35 @@ const anyAuthenticatedUser = async (req, res, next) => {
         return res.status(401).json({
           success: false,
           message: 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác'
+        });
+      }
+    }
+    
+    // App version check
+    const Config = require('../models/Config');
+    const conf = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+    if (conf && conf.value && conf.value.driverApp) {
+      const minVersion = conf.value.driverApp.minVersion;
+      const currentVersion = req.headers['x-app-version'];
+      
+      const compareVersions = (v1, v2) => {
+        if (!v1 || !v2) return 0;
+        const p1 = v1.split('.').map(Number);
+        const p2 = v2.split('.').map(Number);
+        for (let i = 0; i < Math.max(p1.length, p2.length); i++) {
+          const n1 = p1[i] || 0;
+          const n2 = p2[i] || 0;
+          if (n1 > n2) return 1;
+          if (n1 < n2) return -1;
+        }
+        return 0;
+      };
+  
+      if (!currentVersion || compareVersions(currentVersion, minVersion) < 0) {
+        return res.status(426).json({
+          success: false,
+          message: 'Vui lòng cập nhật phiên bản ứng dụng mới nhất.',
+          config: conf.value.driverApp
         });
       }
     }
