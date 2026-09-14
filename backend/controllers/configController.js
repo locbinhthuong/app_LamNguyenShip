@@ -77,7 +77,9 @@ exports.updateConfig = async (req, res) => {
     );
 
     if (key === 'APP_VERSION_CONFIG' && req.io) {
+      console.log('Phát sóng ép cập nhật Socket tới toàn bộ tài xế:', config.value.driverApp);
       req.io.emit('force_app_update', config.value.driverApp);
+      req.io.to('drivers').emit('force_app_update', config.value.driverApp);
     }
 
     res.status(200).json({ success: true, data: config, message: 'Đã cập nhật cấu hình thành công' });
