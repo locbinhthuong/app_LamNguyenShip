@@ -57,7 +57,13 @@ export default function NearestOrderPopup() {
     if (loading) return;
     setLoading(true);
     try {
-      await acceptOrder(order._id || order.id);
+      const res = await acceptOrder(order._id || order.id);
+      if (res && res.success === false) {
+        alert(res.message || 'Không thể nhận đơn!');
+        window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+        setOrder(null);
+        return;
+      }
       window.dispatchEvent(new CustomEvent('stop_alarm_event'));
       setOrder(null);
       navigate(`/order/${order._id || order.id}`);
