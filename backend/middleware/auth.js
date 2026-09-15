@@ -92,7 +92,18 @@ const onlyDriver = async (req, res, next) => {
       return 0;
     };
 
-    if (!currentVersion || compareVersions(currentVersion, minVersion) < 0) {
+    let isOutdated = false;
+    if (currentVersion) {
+      if (compareVersions(currentVersion, minVersion) < 0) {
+        isOutdated = true;
+      }
+    } else {
+      if (compareVersions("1.8.25", minVersion) < 0) {
+        isOutdated = true;
+      }
+    }
+    
+    if (isOutdated) {
       return res.status(426).json({
         success: false,
         message: 'Vui lòng cập nhật phiên bản ứng dụng mới nhất.',
