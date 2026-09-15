@@ -191,7 +191,20 @@ const driverOrAdmin = async (req, res, next) => {
         return 0;
       };
   
-      if (!currentVersion || compareVersions(currentVersion, minVersion) < 0) {
+      let isOutdated = false;
+      if (currentVersion) {
+        if (compareVersions(currentVersion, minVersion) < 0) {
+          isOutdated = true;
+        }
+      } else {
+        // Old apps (<= 1.8.25) don't send X-App-Version.
+        // We assume they are at 1.8.25. If admin requires > 1.8.25, block them.
+        if (compareVersions("1.8.25", minVersion) < 0) {
+          isOutdated = true;
+        }
+      }
+      
+      if (isOutdated) {
         return res.status(426).json({
           success: false,
           message: 'Vui lòng cập nhật phiên bản ứng dụng mới nhất.',
@@ -307,7 +320,20 @@ const anyAuthenticatedUser = async (req, res, next) => {
         return 0;
       };
   
-      if (!currentVersion || compareVersions(currentVersion, minVersion) < 0) {
+      let isOutdated = false;
+      if (currentVersion) {
+        if (compareVersions(currentVersion, minVersion) < 0) {
+          isOutdated = true;
+        }
+      } else {
+        // Old apps (<= 1.8.25) don't send X-App-Version.
+        // We assume they are at 1.8.25. If admin requires > 1.8.25, block them.
+        if (compareVersions("1.8.25", minVersion) < 0) {
+          isOutdated = true;
+        }
+      }
+      
+      if (isOutdated) {
         return res.status(426).json({
           success: false,
           message: 'Vui lòng cập nhật phiên bản ứng dụng mới nhất.',
