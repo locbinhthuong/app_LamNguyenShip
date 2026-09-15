@@ -1051,13 +1051,13 @@ const orderController = {
       const driver = await Driver.findById(req.driver._id).select('walletDebt status');
 
       if (!driver || driver.status !== 'active') {
-        return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
+        return res.status(403).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
       }
 
       // Kiểm tra công nợ (dùng hàm chung — chỉ chặn nợ CŨ, bỏ qua nợ hôm nay)
       const debtCheck = await checkDriverDebtBlock(req.driver._id);
       if (debtCheck.blocked) {
-        return res.status(200).json({
+        return res.status(400).json({
           success: false,
           message: debtCheck.message || 'Bạn chưa thanh toán công nợ'
         });
@@ -1070,7 +1070,7 @@ const orderController = {
       });
 
       if (activeOrdersCount >= 3) {
-        return res.status(200).json({
+        return res.status(400).json({
           success: false,
           message: 'hiện tại bạn đang có 3 đơn hàng hãy đảm bảo thời gian giao hàng'
         });
@@ -1111,7 +1111,7 @@ const orderController = {
       if (!order) {
         return res.status(400).json({
           success: false,
-          message: 'Đơn hàng đã được nhận bởi tài xế khác hoặc không tồn tại'
+          message: 'Đơn hàng đã được tài xế khác nhận hoặc không còn tồn tại'
         });
       }
 
