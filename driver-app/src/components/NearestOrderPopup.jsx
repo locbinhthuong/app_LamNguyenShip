@@ -7,6 +7,7 @@ export default function NearestOrderPopup() {
   const [timeLeft, setTimeLeft] = useState(30);
   const [initialTime, setInitialTime] = useState(30);
   const [loading, setLoading] = useState(false);
+  const [buttonCooldown, setButtonCooldown] = useState(5);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -17,6 +18,9 @@ export default function NearestOrderPopup() {
         const timeout = newOrder.timeoutDuration || 30;
         setTimeLeft(timeout);
         setInitialTime(timeout);
+        // Calculate cooldown based on order creation/update time to prevent cheat
+        const timeDiff = Date.now() - new Date(newOrder.updatedAt || newOrder.createdAt || Date.now()).getTime();
+        setButtonCooldown(timeDiff > 15000 ? 0 : 5);
       }
     };
 
@@ -52,6 +56,14 @@ export default function NearestOrderPopup() {
 
     return () => clearInterval(timer);
   }, [timeLeft, order]);
+
+  useEffect(() => {
+    if (buttonCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setButtonCooldown(prev => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [buttonCooldown]);
 
   const handleAccept = async () => {
     if (loading) return;
@@ -174,13 +186,22 @@ export default function NearestOrderPopup() {
           >
             ❌ BỎ QUA
           </button>
-          <button
-            onClick={handleAccept}
-            disabled={loading}
-            className="flex-[2] py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition-transform flex items-center justify-center"
-          >
-            {loading ? 'ĐANG NHẬN ĐƠN...' : '✅ NHẬN ĐƠN NGAY'}
-          </button>
+          {buttonCooldown > 0 ? (
+            <button
+              disabled
+              className="flex-[2] py-3 px-4 bg-slate-400 text-white font-bold rounded-xl shadow-lg uppercase tracking-wider flex items-center justify-center"
+            >
+              ĐỌC ĐƠN HÀNG ({buttonCooldown}s)
+            </button>
+          ) : (
+            <button
+              onClick={handleAccept}
+              disabled={loading}
+              className="flex-[2] py-3 px-4 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition-transform flex items-center justify-center"
+            >
+              {loading ? 'ĐANG NHẬN ĐƠN...' : '✅ NHẬN ĐƠN NGAY'}
+            </button>
+          )}
         </div>
       </div>
     </div>
