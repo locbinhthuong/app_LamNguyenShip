@@ -103,8 +103,7 @@ export default function OrderDetail() {
 
   // Helper để vẽ Stepper trạng thái
   const STEPS = order?.serviceType === 'DAT_XE' ? [
-    { key: 'DRAFT', label: 'Chờ Báo Giá' },
-    { key: 'PENDING', label: 'Đã Báo Giá (Chờ Tài Xế)' },
+    { key: 'PENDING', label: 'Chờ Tài Xế' },
     { key: 'ACCEPTED', label: 'Tài Xế Đang Xếp Xe' },
     { key: 'PICKED_UP', label: 'Tài Xế Đang Đến Đón' },
     { key: 'COMPLETED', label: 'Hoàn Tất Chuyến Đi' }
@@ -115,8 +114,7 @@ export default function OrderDetail() {
     { key: 'PICKED_UP', label: 'Xế Đã Lấy Đồ Ăn' },
     { key: 'COMPLETED', label: 'Hoàn Tất' }
   ] : [
-    { key: 'DRAFT', label: 'Chờ Báo Giá' },
-    { key: 'PENDING', label: 'Đã Báo Giá (Chờ Xế)' },
+    { key: 'PENDING', label: 'Đang chờ Xế nhận' },
     { key: 'ACCEPTED', label: 'Tài Xế Đã Nhận' },
     { key: 'PICKED_UP', label: order?.serviceType === 'MUA_HO' ? 'Xế Đã Mua Hàng' : 'Xế Đã Lấy Hàng' },
     { key: 'COMPLETED', label: 'Hoàn Tất' }
@@ -124,10 +122,12 @@ export default function OrderDetail() {
 
   // Map status thực tế sang stepper index
   let currentIndex = 0;
-  if (order.status === 'PENDING') currentIndex = 1;
-  else if (order.status === 'ACCEPTED') currentIndex = 2;
-  else if (order.status === 'PICKED_UP' || order.status === 'DELIVERING') currentIndex = 3;
-  else if (order.status === 'COMPLETED') currentIndex = 4;
+  if (order.status === 'PENDING') {
+    currentIndex = order?.serviceType === 'ALOFOOD' ? 1 : 0;
+  }
+  else if (order.status === 'ACCEPTED') currentIndex = order?.serviceType === 'ALOFOOD' ? 2 : 1;
+  else if (order.status === 'PICKED_UP' || order.status === 'DELIVERING') currentIndex = order?.serviceType === 'ALOFOOD' ? 3 : 2;
+  else if (order.status === 'COMPLETED') currentIndex = order?.serviceType === 'ALOFOOD' ? 4 : 3;
   else if (order.status === 'CANCELLED') currentIndex = -1; // Hủy
 
   return (

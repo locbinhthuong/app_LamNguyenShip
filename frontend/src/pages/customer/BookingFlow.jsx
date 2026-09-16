@@ -52,7 +52,7 @@ export default function BookingFlow() {
       const res = await createOrder(payload);
       if (res.success) {
         isSuccess = true;
-        alert('Tạo đơn thành công! Tổng đài sẽ báo cước Phí Ship/Phí Dịch vụ (Nếu có). Đơn đang chờ xử lý.');
+        alert('Tạo đơn thành công! Hệ thống đang tìm tài xế gần nhất để đến lấy hàng và giao ngay cho bạn.');
         // Chuyển trang nhưng KHÔNG reset state loading để ngăn khách bấm đúp nút khi mạng lag
         navigate('/customer/activity');
       }
