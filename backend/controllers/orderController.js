@@ -603,7 +603,7 @@ const orderController = {
         extraSurcharge: finalExtraSurcharge,
         deliveryFee: finalDeliveryFee,
         feePaidBy: feePaidBy || 'RECEIVER',
-        status: (String(autoAssignNearest) === 'true' || autoAssignNearest === true) ? 'PENDING' : 'DRAFT', // Mặc định luôn là DRAFT để bắt buộc Admin duyệt và Treo đơn
+        status: 'PENDING', // Đã đổi thành PENDING để treo thẳng lên cho tài xế nhận luôn (theo yêu cầu)
         autoAssignNearest: String(autoAssignNearest) === "true",
         ipAddress: req.ip
       });
@@ -1884,7 +1884,7 @@ const orderController = {
         codAmount: codAmount || 0,
         deliveryFee: finalDeliveryFee, // Phí ship đã trừ surcharge
         extraSurcharge: finalExtraSurcharge,
-        status: 'DRAFT', // Chuyển thành DRAFT (Chờ báo giá) thay vì PENDING để chờ Admin xem xét lại trước khi Treo lên cho tài xế
+        status: 'PENDING', // Đã đổi thành PENDING để treo thẳng lên cho tài xế nhận luôn (theo yêu cầu) thay vì chờ Admin
         ipAddress: req.ip
       });
 
