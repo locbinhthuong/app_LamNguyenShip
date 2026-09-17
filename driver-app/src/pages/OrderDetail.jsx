@@ -115,7 +115,8 @@ export default function OrderDetail() {
         if (!prev && orderData?.status === 'PENDING' && !orderData?.assignedTo) {
           const currentTime = Date.now() + (window.serverTimeOffset || 0);
           const timeDiff = currentTime - new Date(orderData.updatedAt || orderData.createdAt).getTime();
-          if (timeDiff <= 15000) setCooldown(5);
+          const remaining = 5 - Math.floor(Math.max(0, timeDiff) / 1000);
+          setCooldown(remaining > 0 ? (remaining > 5 ? 5 : remaining) : 0);
         }
         return orderData;
       });
