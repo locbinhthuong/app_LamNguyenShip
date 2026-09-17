@@ -93,13 +93,20 @@ const onlyDriver = async (req, res, next) => {
     };
 
     let isOutdated = false;
-    if (currentVersion) {
-      if (compareVersions(currentVersion, minVersion) < 0) {
-        isOutdated = true;
-      }
-    } else {
-      if (compareVersions("1.8.25", minVersion) < 0) {
-        isOutdated = true;
+    
+    // Bỏ qua check version nếu là bản Web
+    const origin = req.headers['origin'] || req.headers['referer'] || '';
+    const isWeb = origin.includes('driver.aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
+    
+    if (!isWeb) {
+      if (currentVersion) {
+        if (compareVersions(currentVersion, minVersion) < 0) {
+          isOutdated = true;
+        }
+      } else {
+        if (compareVersions("1.8.25", minVersion) < 0) {
+          isOutdated = true;
+        }
       }
     }
     
@@ -203,15 +210,20 @@ const driverOrAdmin = async (req, res, next) => {
       };
   
       let isOutdated = false;
-      if (currentVersion) {
-        if (compareVersions(currentVersion, minVersion) < 0) {
-          isOutdated = true;
-        }
-      } else {
-        // Old apps (<= 1.8.25) don't send X-App-Version.
-        // We assume they are at 1.8.25. If admin requires > 1.8.25, block them.
-        if (compareVersions("1.8.25", minVersion) < 0) {
-          isOutdated = true;
+      const origin = req.headers['origin'] || req.headers['referer'] || '';
+      const isWeb = origin.includes('aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
+      
+      if (!isWeb) {
+        if (currentVersion) {
+          if (compareVersions(currentVersion, minVersion) < 0) {
+            isOutdated = true;
+          }
+        } else {
+          // Old apps (<= 1.8.25) don't send X-App-Version.
+          // We assume they are at 1.8.25. If admin requires > 1.8.25, block them.
+          if (compareVersions("1.8.25", minVersion) < 0) {
+            isOutdated = true;
+          }
         }
       }
       
@@ -332,15 +344,20 @@ const anyAuthenticatedUser = async (req, res, next) => {
       };
   
       let isOutdated = false;
-      if (currentVersion) {
-        if (compareVersions(currentVersion, minVersion) < 0) {
-          isOutdated = true;
-        }
-      } else {
-        // Old apps (<= 1.8.25) don't send X-App-Version.
-        // We assume they are at 1.8.25. If admin requires > 1.8.25, block them.
-        if (compareVersions("1.8.25", minVersion) < 0) {
-          isOutdated = true;
+      const origin = req.headers['origin'] || req.headers['referer'] || '';
+      const isWeb = origin.includes('aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
+      
+      if (!isWeb) {
+        if (currentVersion) {
+          if (compareVersions(currentVersion, minVersion) < 0) {
+            isOutdated = true;
+          }
+        } else {
+          // Old apps (<= 1.8.25) don't send X-App-Version.
+          // We assume they are at 1.8.25. If admin requires > 1.8.25, block them.
+          if (compareVersions("1.8.25", minVersion) < 0) {
+            isOutdated = true;
+          }
         }
       }
       
