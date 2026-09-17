@@ -189,7 +189,29 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
       }
       
       const drivers = await Driver.find(query);
-      const tokens = drivers.map(d => d.fcmToken);
+
+      // Lọc theo phiên bản app
+      const Config = require('../models/Config');
+      const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+      let validDrivers = drivers;
+      if (appVersionConfig?.value?.driverApp?.minVersion) {
+        const minVersion = appVersionConfig.value.driverApp.minVersion;
+        const v2Parts = minVersion.split('.').map(Number);
+        
+        validDrivers = drivers.filter(d => {
+          if (!d.appVersion) return false;
+          const v1Parts = d.appVersion.split('.').map(Number);
+          for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+            const p1 = v1Parts[i] || 0;
+            const p2 = v2Parts[i] || 0;
+            if (p1 < p2) return false;
+            if (p1 > p2) return true;
+          }
+          return true; // Equal
+        });
+      }
+
+      const tokens = validDrivers.map(d => d.fcmToken);
       
       console.log(`[FCM-DEBUG] Phát nổ Đơn mới: TÌM THẤY ${tokens.length} TÀI XẾ hợp lệ để Gửi Push.`);
       

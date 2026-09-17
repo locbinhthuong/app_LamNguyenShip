@@ -12,6 +12,19 @@ const { sendNotification, sendMultipleNotifications } = require('../utils/notifi
 const Config = require('../models/Config');
 const { getDrivingDistance } = require('../utils/distance');
 
+const isAppVersionLower = (driverVersion, minVersion) => {
+  if (!driverVersion) return true;
+  const v1Parts = driverVersion.split('.').map(Number);
+  const v2Parts = minVersion.split('.').map(Number);
+  for (let i = 0; i < Math.max(v1Parts.length, v2Parts.length); i++) {
+    const p1 = v1Parts[i] || 0;
+    const p2 = v2Parts[i] || 0;
+    if (p1 < p2) return true;
+    if (p1 > p2) return false;
+  }
+  return false;
+};
+
 
 const refundOrderDebtIfAny = async (orderId) => {
   try {
@@ -239,6 +252,19 @@ const orderController = {
   getAvailableOrders: async (req, res) => {
     try {
       const driver = await Driver.findById(req.driver._id);
+      
+      const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+      if (appVersionConfig?.value?.driverApp?.minVersion) {
+        if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
+          return res.status(200).json({
+            success: true,
+            count: 0,
+            data: [],
+            message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để xem đơn!'
+          });
+        }
+      }
+
       const driverRate = driver.commissionRate ? Number(driver.commissionRate) : 15;
 
       const orders = await Order.find({ 
@@ -948,10 +974,20 @@ const orderController = {
     try {
       const { id } = req.params;
 
-      const driver = await Driver.findById(req.driver._id).select('walletDebt status');
+      const driver = await Driver.findById(req.driver._id).select('walletDebt status appVersion');
 
       if (!driver || driver.status !== 'active') {
         return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
+      }
+
+      const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+      if (appVersionConfig?.value?.driverApp?.minVersion) {
+        if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
+          return res.status(200).json({ 
+            success: false, 
+            message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để tiếp tục nhận đơn!' 
+          });
+        }
       }
 
       // Kiểm tra công nợ (dùng hàm chung — chỉ chặn nợ CŨ, bỏ qua nợ hôm nay)
