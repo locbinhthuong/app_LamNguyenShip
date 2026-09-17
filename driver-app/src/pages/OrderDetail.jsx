@@ -101,7 +101,8 @@ export default function OrderDetail() {
       const response = await getOrderById(id);
       setOrder(prev => {
         if (!prev && response.data?.status === 'PENDING' && !response.data?.assignedTo) {
-          const timeDiff = Date.now() - new Date(response.data.updatedAt || response.data.createdAt).getTime();
+          const currentTime = Date.now() + (window.serverTimeOffset || 0);
+          const timeDiff = currentTime - new Date(response.data.updatedAt || response.data.createdAt).getTime();
           if (timeDiff <= 15000) setCooldown(5);
         }
         return response.data;

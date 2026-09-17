@@ -44,7 +44,8 @@ function OrderCard({ order, onAccept, loading }) {
   const navigate = useNavigate();
 
   const [cooldown, setCooldown] = useState(() => {
-    const timeDiff = Date.now() - new Date(order.updatedAt || order.createdAt).getTime();
+    const currentTime = Date.now() + (window.serverTimeOffset || 0);
+    const timeDiff = currentTime - new Date(order.updatedAt || order.createdAt).getTime();
     const remaining = 5 - Math.floor(Math.max(0, timeDiff) / 1000);
     return remaining > 0 ? (remaining > 5 ? 5 : remaining) : 0;
   });

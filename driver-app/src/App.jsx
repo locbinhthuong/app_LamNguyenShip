@@ -507,6 +507,17 @@ function AppContent() {
       
       socketRef.current.emit('driver_join', driver._id || driver.id);
 
+      // ĐỒNG BỘ THỜI GIAN VỚI SERVER
+      window.serverTimeOffset = 0;
+      socketRef.current.on('pong', (data) => {
+        window.serverTimeOffset = data.timestamp - Date.now();
+      });
+      
+      const pingInterval = setInterval(() => {
+        socketRef.current?.emit('ping');
+      }, 30000);
+      socketRef.current.emit('ping'); // Gọi ngay lần đầu
+
       socketRef.current.on('force_logout', (data) => {
         setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');
       });
@@ -551,10 +562,11 @@ function AppContent() {
         });
       });
 
-      return () => {
-        if (socketRef.current) socketRef.current.disconnect();
-        window.driverSocket = null;
-      };
+        return () => {
+          clearInterval(pingInterval);
+          if (socketRef.current) socketRef.current.disconnect();
+          window.driverSocket = null;
+        };
     }
   }, [driver]);
 
