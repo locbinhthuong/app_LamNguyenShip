@@ -99,13 +99,25 @@ export default function OrderDetail() {
   const loadOrder = async () => {
     try {
       const response = await getOrderById(id);
+      const orderData = response.data;
+      
+      if (orderData && ['ACCEPTED', 'PICKED_UP', 'DELIVERING', 'COMPLETED'].includes(orderData.status)) {
+         const assignedId = String(orderData.assignedTo?._id || orderData.assignedTo);
+         const myId = String(driver?._id || driver?.id);
+         if (assignedId !== myId && assignedId !== 'undefined') {
+            showNotification('Đơn hàng này đã được tài xế khác nhận!', 'error');
+            navigate('/');
+            return;
+         }
+      }
+
       setOrder(prev => {
-        if (!prev && response.data?.status === 'PENDING' && !response.data?.assignedTo) {
+        if (!prev && orderData?.status === 'PENDING' && !orderData?.assignedTo) {
           const currentTime = Date.now() + (window.serverTimeOffset || 0);
-          const timeDiff = currentTime - new Date(response.data.updatedAt || response.data.createdAt).getTime();
+          const timeDiff = currentTime - new Date(orderData.updatedAt || orderData.createdAt).getTime();
           if (timeDiff <= 15000) setCooldown(5);
         }
-        return response.data;
+        return orderData;
       });
     } catch (err) {
       showNotification('Không tìm thấy đơn hàng', 'error');
@@ -140,8 +152,9 @@ export default function OrderDetail() {
     const handleOrderAccepted = (e) => {
       const eventData = e.detail;
       if (eventData && eventData._id === id) {
-        const assignedDriverId = eventData.assignedTo?._id || eventData.assignedTo;
-        if (assignedDriverId && assignedDriverId !== driver?._id) {
+        const assignedId = String(eventData.assignedTo?._id || eventData.assignedTo);
+        const myId = String(driver?._id || driver?.id);
+        if (assignedId !== myId && assignedId !== 'undefined') {
           showNotification('Đơn hàng đã được tài xế khác nhận.', 'error');
           navigate('/');
         } else {
@@ -180,13 +193,21 @@ export default function OrderDetail() {
       };
       const res = await actions[action](id);
       if (res && res.success === false) {
-        showNotification(res.message || 'Thao tác thất bại', 'error');
+        const msg = res.message || 'Thao tác thất bại';
+        showNotification(msg, 'error');
+        if (msg.includes('khác nhận') || msg.includes('không tồn tại')) {
+          navigate('/');
+        }
         return;
       }
       showNotification('Cập nhật thành công!');
       await loadOrder();
     } catch (err) {
-      showNotification(err.response?.data?.message || 'Thao tác thất bại', 'error');
+      const msg = err.response?.data?.message || 'Thao tác thất bại';
+      showNotification(msg, 'error');
+      if (msg.includes('khác nhận') || msg.includes('không tồn tại')) {
+        navigate('/');
+      }
     } finally {
       setActionLoading(false);
     }
