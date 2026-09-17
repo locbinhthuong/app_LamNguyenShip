@@ -253,15 +253,20 @@ const orderController = {
     try {
       const driver = await Driver.findById(req.driver._id);
       
-      const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
-      if (appVersionConfig?.value?.driverApp?.minVersion) {
-        if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
-          return res.status(200).json({
-            success: true,
-            count: 0,
-            data: [],
-            message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để xem đơn!'
-          });
+      const origin = req.headers['origin'] || req.headers['referer'] || '';
+      const isWeb = origin.includes('aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
+      
+      if (!isWeb) {
+        const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+        if (appVersionConfig?.value?.driverApp?.minVersion) {
+          if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
+            return res.status(200).json({
+              success: true,
+              count: 0,
+              data: [],
+              message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để xem đơn!'
+            });
+          }
         }
       }
 
@@ -980,13 +985,18 @@ const orderController = {
         return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
       }
 
-      const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
-      if (appVersionConfig?.value?.driverApp?.minVersion) {
-        if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
-          return res.status(200).json({ 
-            success: false, 
-            message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để tiếp tục nhận đơn!' 
-          });
+      const origin = req.headers['origin'] || req.headers['referer'] || '';
+      const isWeb = origin.includes('aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
+
+      if (!isWeb) {
+        const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
+        if (appVersionConfig?.value?.driverApp?.minVersion) {
+          if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
+            return res.status(200).json({ 
+              success: false, 
+              message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để tiếp tục nhận đơn!' 
+            });
+          }
         }
       }
 
