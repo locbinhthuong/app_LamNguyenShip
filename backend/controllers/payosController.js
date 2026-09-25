@@ -257,10 +257,10 @@ const payosController = {
         </style>
       </head>
       <body>
-        <div class="icon">⏳</div>
-        <h1>Đang xác nhận thanh toán</h1>
-        <p>Hệ thống đang đối soát dữ liệu với ngân hàng.</p>
-        <p>Vui lòng bấm nút <b>"Xong"</b> hoặc <b>"Đóng"</b> ở góc màn hình để quay lại App và chờ trong giây lát.</p>
+        <div class="icon">✅</div>
+        <h1>Thanh toán thành công</h1>
+        <p>Giao dịch của bạn đã được ghi nhận vào hệ thống.</p>
+        <p>Vui lòng bấm nút <b>"Xong"</b> hoặc <b>"Đóng"</b> ở góc trên màn hình để quay lại App.</p>
       </body>
       </html>
     `);
