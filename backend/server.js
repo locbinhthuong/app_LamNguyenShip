@@ -305,7 +305,7 @@ connectDB()
       const { checkIdleDrivers } = require('./utils/idleDriverMonitor');
       setInterval(() => {
         checkIdleDrivers(io);
-      }, 5 * 1000); // 5 giây quét 1 lần để bắt đúng mốc 30s/1p khi test
+      }, 20 * 1000); // 20 giây quét 1 lần
 
     });
   })

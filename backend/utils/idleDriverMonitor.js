@@ -3,11 +3,15 @@ const Order = require('../models/Order');
 const { emitToDriver, emitDriverStatusChange } = require('../sockets/index');
 const { sendNotification } = require('./notification');
 
-// [CHẾ ĐỘ TEST NHANH] Test xong sẽ đổi lại: 2 tiếng / 45 phút / 15 phút / 12 tiếng
-const TWO_HOURS_MS = 1 * 60 * 1000;             // TEST: 1 phút (Gốc: 2 * 60 * 60 * 1000)
-const FORTY_FIVE_MINS_MS = 30 * 1000;           // TEST: 30 giây (Gốc: 45 * 60 * 1000)
-const LOCK_15_MINS_MS = 1 * 60 * 1000;          // TEST: Khóa 1 phút ở Lần 2 để test tiếp Lần 3 (Gốc: 15 * 60 * 1000)
-const LOCK_12_HOURS_MS = 2 * 60 * 1000;         // TEST: Khóa 2 phút ở Lần 3 để không bị kẹt nick test (Gốc: 12 * 60 * 60 * 1000)
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;        // 2 tiếng
+const FORTY_FIVE_MINS_MS = 45 * 60 * 1000;      // 45 phút
+const LOCK_15_MINS_MS = 15 * 60 * 1000;         // Khóa 15 phút (Lần 2)
+const LOCK_12_HOURS_MS = 12 * 60 * 60 * 1000;   // Khóa 12 tiếng (Lần 3)
+
+// Tạm ẩn/tắt kích hoạt cảnh báo trong lúc chờ duyệt bản mới lên App Store / CH Play
+// Khi bản mới đã lên Store, chỉ cần đổi thành true (hoặc đặt IDLE_MONITOR_ENABLED=true trong .env)
+const IDLE_MONITOR_ENABLED = process.env.IDLE_MONITOR_ENABLED === 'true';
+let didCleanupTestLocks = false;
 
 const WARNING_SOUND_OPTIONS = {
   sound: 'chuong_canhbao',
@@ -22,6 +26,32 @@ const WARNING_SOUND_OPTIONS = {
  */
 const checkIdleDrivers = async (io) => {
   try {
+    if (!IDLE_MONITOR_ENABLED) {
+      if (!didCleanupTestLocks) {
+        didCleanupTestLocks = true;
+        await Driver.updateMany(
+          {
+            $or: [
+              { idleWarningLevel: { $gt: 0 } },
+              { idleLockedUntil: { $ne: null } },
+              { idleAccumulatedMs: { $gt: 0 } }
+            ]
+          },
+          {
+            $set: {
+              idleWarningLevel: 0,
+              idleWarningSentAt: null,
+              idleConfirmedAt: null,
+              idleLockedUntil: null,
+              idleOfflineAt: null,
+              idleAccumulatedMs: 0
+            }
+          }
+        );
+      }
+      return;
+    }
+
     const now = new Date();
 
     // 1. Tự động gỡ trạng thái khóa cho những tài xế đã hết thời gian phạt
