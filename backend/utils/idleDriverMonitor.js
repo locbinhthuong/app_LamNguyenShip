@@ -322,6 +322,7 @@ const checkIdleDrivers = async (io) => {
 
 module.exports = {
   checkIdleDrivers,
+  IDLE_MONITOR_ENABLED,
   TWO_HOURS_MS,
   FORTY_FIVE_MINS_MS,
   LOCK_15_MINS_MS,

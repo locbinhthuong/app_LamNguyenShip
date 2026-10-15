@@ -213,9 +213,18 @@ const authController = {
   getDriverProfile: async (req, res) => {
     try {
       const driver = await Driver.findById(req.driver._id).select('-password');
+      const { IDLE_MONITOR_ENABLED } = require('../utils/idleDriverMonitor');
 
-      // Tự động gỡ khóa nếu đã hết thời gian phạt
-      if (driver && driver.idleLockedUntil && new Date(driver.idleLockedUntil) <= new Date()) {
+      if (driver && !IDLE_MONITOR_ENABLED && (driver.idleWarningLevel > 0 || driver.idleLockedUntil)) {
+        driver.idleWarningLevel = 0;
+        driver.idleWarningSentAt = null;
+        driver.idleConfirmedAt = null;
+        driver.idleLockedUntil = null;
+        driver.idleOfflineAt = null;
+        driver.idleAccumulatedMs = 0;
+        await driver.save();
+      } else if (driver && driver.idleLockedUntil && new Date(driver.idleLockedUntil) <= new Date()) {
+        // Tự động gỡ khóa nếu đã hết thời gian phạt
         driver.idleLockedUntil = null;
         if ((driver.idleWarningLevel || 0) >= 3) {
           driver.idleWarningLevel = 0;
@@ -374,8 +383,10 @@ const authController = {
         });
       }
 
+      const { FORTY_FIVE_MINS_MS, IDLE_MONITOR_ENABLED } = require('../utils/idleDriverMonitor');
+
       // Kiểm tra nếu tài xế đang bị tạm khóa do treo app (Lần 2: 15p hoặc Lần 3: 12h)
-      if (isOnline && req.driver.idleLockedUntil && new Date(req.driver.idleLockedUntil) > now) {
+      if (IDLE_MONITOR_ENABLED && isOnline && req.driver.idleLockedUntil && new Date(req.driver.idleLockedUntil) > now) {
         const remainingMs = new Date(req.driver.idleLockedUntil).getTime() - now.getTime();
         const remainingMins = Math.ceil(remainingMs / 60000);
         const level = req.driver.idleWarningLevel || 2;
@@ -394,12 +405,21 @@ const authController = {
         });
       }
 
-      const { FORTY_FIVE_MINS_MS } = require('../utils/idleDriverMonitor');
       const updateData = {
         isOnline: isOnline !== undefined ? isOnline : req.driver.isOnline
       };
 
-      if (isOnline) {
+      if (!IDLE_MONITOR_ENABLED) {
+        updateData.idleWarningLevel = 0;
+        updateData.idleWarningSentAt = null;
+        updateData.idleConfirmedAt = null;
+        updateData.idleLockedUntil = null;
+        updateData.idleOfflineAt = null;
+        updateData.idleAccumulatedMs = 0;
+        updateData.idleSince = isOnline ? now : null;
+        if (isOnline) updateData.lastActive = now;
+        if (isOnline === false) updateData.currentLocation = null;
+      } else if (isOnline) {
         updateData.lastActive = now;
         updateData.idleOfflineAt = null;
 

@@ -303,6 +303,7 @@ connectDB()
 
       // ==================== CRON: QUÉT TÀI XẾ TREO APP ====================
       const { checkIdleDrivers } = require('./utils/idleDriverMonitor');
+      checkIdleDrivers(io); // Chạy ngay lúc khởi động để dọn sạch trạng thái cũ
       setInterval(() => {
         checkIdleDrivers(io);
       }, 20 * 1000); // 20 giây quét 1 lần

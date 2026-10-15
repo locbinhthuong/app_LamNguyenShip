@@ -16,7 +16,12 @@ const formatDuration = (ms) => {
   return `${pad(minutes)}:${pad(seconds)}`;
 };
 
+// Tạm ẩn bảng cảnh báo treo app khi đang vận hành (chờ lên App Store)
+const IDLE_WARNING_UI_ENABLED = false;
+
 export default function IdleWarningModal() {
+  if (!IDLE_WARNING_UI_ENABLED) return null;
+
   const { driver, setOnline, confirmActive, loadProfile, logout } = useAuth();
   const [socketWarning, setSocketWarning] = useState(null);
   const [submitting, setSubmitting] = useState(false);
