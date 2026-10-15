@@ -18,7 +18,7 @@ const STATUS_LABELS = {
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { driver } = useAuth();
+  const { driver, loadProfile } = useAuth();
   const [driverLocation, setDriverLocation] = useState(null);
   const [confirmAccept, setConfirmAccept] = useState(false);
   const mapRef = useRef(null);
@@ -202,7 +202,7 @@ export default function OrderDetail() {
         return;
       }
       showNotification('Cập nhật thành công!');
-      await loadOrder();
+      await Promise.all([loadOrder(), loadProfile()]);
     } catch (err) {
       const msg = err.response?.data?.message || 'Thao tác thất bại';
       showNotification(msg, 'error');
@@ -249,7 +249,7 @@ export default function OrderDetail() {
     
     // Kiểm tra xem đơn này có đúng là của tài xế đang login không
     const assignedId = String(order.assignedTo?._id || order.assignedTo);
-    const myId = String(driver?._id);
+    const myId = String(driver?._id || driver?.id);
     
     if (assignedId === myId) {
       if (order.status === 'ACCEPTED') {

@@ -14,20 +14,30 @@ try {
 /**
  * Gửi thông báo đến 1 thiết bị
  */
-const sendNotification = async (fcmToken, title, body, data = {}) => {
+const sendNotification = async (fcmToken, title, body, data = {}, options = {}) => {
   if (!fcmToken) return null;
   
   try {
+    const androidSound = options.sound || data.sound || "thongbaongoaiapp";
+    const androidChannelId = options.channelId || data.channelId || "aloshipp_push_channel_v9";
+    const iosSound = androidSound.endsWith('.mp3') ? androidSound : `${androidSound}.mp3`;
+
+    // Firebase Admin yêu cầu mọi giá trị trong data phải là String
+    const stringData = {};
+    for (const [k, v] of Object.entries(data || {})) {
+      if (v !== undefined && v !== null) {
+        stringData[k] = String(v);
+      }
+    }
+
     const message = {
       notification: { title, body },
-      data: {
-        ...data
-      },
+      data: stringData,
       android: {
         priority: "high",
         notification: {
-          sound: "thongbaongoaiapp",
-          channelId: "aloshipp_push_channel_v9",
+          sound: androidSound,
+          channelId: androidChannelId,
           defaultSound: false,
           defaultVibrateTimings: true
         }
@@ -51,7 +61,7 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
         payload: {
           aps: { 
             alert: { title, body },
-            sound: "thongbaongoaiapp.mp3",
+            sound: iosSound,
             badge: 1
           }
         }
@@ -71,22 +81,31 @@ const sendNotification = async (fcmToken, title, body, data = {}) => {
 /**
  * Gửi thông báo đến nhiều thiết bị cùng lúc (Phát sóng)
  */
-const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
+const sendMultipleNotifications = async (tokens, title, body, data = {}, options = {}) => {
   // Lọc bỏ token rỗng và token trùng lặp
   const validTokens = [...new Set(tokens.filter(t => t))];
   if (validTokens.length === 0) return null;
 
   try {
+    const androidSound = options.sound || data.sound || "thongbaongoaiapp";
+    const androidChannelId = options.channelId || data.channelId || "aloshipp_push_channel_v9";
+    const iosSound = androidSound.endsWith('.mp3') ? androidSound : `${androidSound}.mp3`;
+
+    const stringData = {};
+    for (const [k, v] of Object.entries(data || {})) {
+      if (v !== undefined && v !== null) {
+        stringData[k] = String(v);
+      }
+    }
+
     const message = {
       notification: { title, body },
-      data: {
-        ...data
-      },
+      data: stringData,
       android: {
         priority: "high",
         notification: {
-          sound: "thongbaongoaiapp",
-          channelId: "aloshipp_push_channel_v9",
+          sound: androidSound,
+          channelId: androidChannelId,
           defaultSound: false,
           defaultVibrateTimings: true
         }
@@ -110,7 +129,7 @@ const sendMultipleNotifications = async (tokens, title, body, data = {}) => {
         payload: {
           aps: { 
             alert: { title, body },
-            sound: "thongbaongoaiapp.mp3",
+            sound: iosSound,
             badge: 1
           }
         }

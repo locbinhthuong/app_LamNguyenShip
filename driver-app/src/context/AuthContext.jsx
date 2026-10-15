@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { loginDriver, getDriverProfile, updateDriverStatus, registerDriver } from '../services/api';
+import { loginDriver, getDriverProfile, updateDriverStatus, registerDriver, confirmDriverActive } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -55,6 +55,13 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     loadProfile();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible' && localStorage.getItem('driver_token')) {
+        loadProfile();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [loadProfile]);
 
   const login = async (phone, password) => {
@@ -106,11 +113,41 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (err) {
       console.error('Set online error:', err);
+      if (err.response?.data?.code === 'IDLE_LOCKED') {
+        setDriver(prev => {
+          if (!prev) return prev;
+          const updated = {
+            ...prev,
+            isOnline: false,
+            idleWarningLevel: err.response.data.idleWarningLevel ?? prev.idleWarningLevel,
+            idleLockedUntil: err.response.data.idleLockedUntil ?? prev.idleLockedUntil
+          };
+          localStorage.setItem('driver_info', JSON.stringify(updated));
+          return updated;
+        });
+      }
       throw err;
     }
   };
 
-  const value = { driver, loading, error, login, register, logout, setOnline, loadProfile };
+  const confirmActive = async () => {
+    try {
+      const response = await confirmDriverActive();
+      if (response.data) {
+        setDriver(prev => {
+          const updated = { ...(prev || {}), ...response.data };
+          localStorage.setItem('driver_info', JSON.stringify(updated));
+          return updated;
+        });
+      }
+      return response;
+    } catch (err) {
+      console.error('Confirm active error:', err);
+      throw err;
+    }
+  };
+
+  const value = { driver, setDriver, loading, error, login, register, logout, setOnline, confirmActive, loadProfile };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

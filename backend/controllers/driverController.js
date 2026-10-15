@@ -230,12 +230,22 @@ const driverController = {
       if (status) {
         updateData.status = status;
         if (status === 'active') {
+          updateData.idleLockedUntil = null;
+          updateData.idleWarningLevel = 0;
+          updateData.idleWarningSentAt = null;
+          updateData.idleConfirmedAt = null;
           const currentDriver = await Driver.findById(id);
           // Thay thế tất cả các chuỗi '(Đã xoá)' hoặc '(Đã xóa)' trong tên
           if (currentDriver && currentDriver.name) {
             updateData.name = currentDriver.name.replace(/\s*\(Đã (xoá|xóa)\)/gi, '');
           }
         }
+      }
+      if (req.body.unlockIdle) {
+        updateData.idleLockedUntil = null;
+        updateData.idleWarningLevel = 0;
+        updateData.idleWarningSentAt = null;
+        updateData.idleConfirmedAt = null;
       }
       if (avatar !== undefined) updateData.avatar = avatar;
       if (commissionRate !== undefined) updateData.commissionRate = commissionRate;
@@ -262,9 +272,9 @@ const driverController = {
         data: driver
       });
 
-      // Bắn socket cho tài xế nếu admin đổi status
-      if (req.io && status) {
-        emitToDriver(req.io, id, 'driver_status_updated', { status });
+      // Bắn socket cho tài xế nếu admin đổi status hoặc mở khóa
+      if (req.io && (status || req.body.unlockIdle)) {
+        emitToDriver(req.io, id, 'driver_status_updated', { status: driver.status, unlockIdle: !!req.body.unlockIdle });
       }
     } catch (error) {
       console.error('Error updateDriver:', error);
@@ -282,7 +292,14 @@ const driverController = {
       
       const driver = await Driver.findByIdAndUpdate(
         id,
-        { isOnline: false, location: null },
+        {
+          isOnline: false,
+          currentLocation: null,
+          idleSince: null,
+          idleWarningLevel: 0,
+          idleWarningSentAt: null,
+          idleConfirmedAt: null
+        },
         { new: true }
       ).select('-password');
 
@@ -290,12 +307,18 @@ const driverController = {
         return res.status(404).json({ success: false, message: 'Không tìm thấy tài xế' });
       }
 
-      // Phát sự kiện Socket cho tất cả Admin cập nhật map/list
+      // Phát sự kiện Socket cho tất cả Admin cập nhật map/list và báo trực tiếp cho App Tài Xế
       if (req.io) {
         req.io.to('admins').emit('driver_status_change', {
           driverId: driver._id,
           isOnline: false,
+          lat: null,
+          lng: null,
           location: null
+        });
+        emitToDriver(req.io, driver._id.toString(), 'driver_forced_offline', {
+          isOnline: false,
+          message: 'Quản trị viên đã tắt trạng thái hoạt động (Offline) của bạn.'
         });
       }
 

@@ -175,6 +175,7 @@ const authController = {
         data: {
           token,
           driver: {
+            _id: driver._id,
             id: driver._id,
             name: driver.name,
             phone: driver.phone,
@@ -184,10 +185,17 @@ const authController = {
             driverCode: driver.driverCode,
             stats: driver.stats,
             isOnline: driver.isOnline,
+            isPriority5s: driver.isPriority5s,
+            commissionRate: driver.commissionRate,
             completionRate: driver.completionRate,
             avatar: driver.avatar,
             cccd: driver.cccd,
-            gplx: driver.gplx
+            gplx: driver.gplx,
+            idleSince: driver.idleSince,
+            idleWarningLevel: driver.idleWarningLevel || 0,
+            idleWarningSentAt: driver.idleWarningSentAt,
+            idleConfirmedAt: driver.idleConfirmedAt,
+            idleLockedUntil: driver.idleLockedUntil
           }
         }
       });
@@ -205,6 +213,18 @@ const authController = {
   getDriverProfile: async (req, res) => {
     try {
       const driver = await Driver.findById(req.driver._id).select('-password');
+
+      // Tự động gỡ khóa nếu đã hết thời gian phạt
+      if (driver && driver.idleLockedUntil && new Date(driver.idleLockedUntil) <= new Date()) {
+        driver.idleLockedUntil = null;
+        if ((driver.idleWarningLevel || 0) >= 3) {
+          driver.idleWarningLevel = 0;
+          driver.idleWarningSentAt = null;
+          driver.idleConfirmedAt = null;
+          driver.idleSince = null;
+        }
+        await driver.save();
+      }
 
       res.status(200).json({
         success: true,
@@ -338,6 +358,7 @@ const authController = {
   updateDriverStatus: async (req, res) => {
     try {
       const { isOnline, lat, lng } = req.body;
+      const now = new Date();
 
       if (isOnline && req.driver.status === 'pending') {
         return res.status(403).json({
@@ -353,15 +374,60 @@ const authController = {
         });
       }
 
+      // Kiểm tra nếu tài xế đang bị tạm khóa do treo app (Lần 2: 15p hoặc Lần 3: 12h)
+      if (isOnline && req.driver.idleLockedUntil && new Date(req.driver.idleLockedUntil) > now) {
+        const remainingMs = new Date(req.driver.idleLockedUntil).getTime() - now.getTime();
+        const remainingMins = Math.ceil(remainingMs / 60000);
+        const level = req.driver.idleWarningLevel || 2;
+        const lockTimeText = level >= 3
+          ? `${Math.floor(remainingMins / 60)} giờ ${remainingMins % 60} phút`
+          : `${remainingMins} phút`;
+
+        return res.status(403).json({
+          success: false,
+          code: 'IDLE_LOCKED',
+          idleWarningLevel: level,
+          idleLockedUntil: req.driver.idleLockedUntil,
+          message: level >= 3
+            ? `Tài khoản đang bị tạm khóa 12 tiếng do treo app không nhận đơn (Cảnh báo lần 3). Vui lòng quay lại sau ${lockTimeText}!`
+            : `Tài khoản đang bị tạm khóa 15 phút do treo app không nhận đơn (Cảnh báo lần 2). Vui lòng quay lại sau ${lockTimeText}!`
+        });
+      }
+
       const updateData = {
         isOnline: isOnline !== undefined ? isOnline : req.driver.isOnline
       };
 
-      if (lat !== undefined && lng !== undefined) {
+      if (isOnline) {
+        updateData.idleSince = now;
+        updateData.lastActive = now;
+
+        // Nếu thời gian khóa đã hết hạn
+        if (req.driver.idleLockedUntil && new Date(req.driver.idleLockedUntil) <= now) {
+          updateData.idleLockedUntil = null;
+          if ((req.driver.idleWarningLevel || 0) >= 3) {
+            updateData.idleWarningLevel = 0;
+            updateData.idleWarningSentAt = null;
+            updateData.idleConfirmedAt = null;
+          }
+          // Lưu ý: Nếu idleWarningLevel === 2 (vừa hết khóa 15p), giữ nguyên mức 2 để đếm 45p tiếp theo cho Cảnh báo lần 3
+        }
+      } else if (isOnline === false) {
+        updateData.currentLocation = null;
+        updateData.idleSince = null;
+        // Nếu đang ở mức cảnh báo 1 và tài xế chủ động bấm Offline thì xóa cảnh báo lần 1
+        if ((req.driver.idleWarningLevel || 0) === 1) {
+          updateData.idleWarningLevel = 0;
+          updateData.idleWarningSentAt = null;
+          updateData.idleConfirmedAt = null;
+        }
+      }
+
+      if (lat !== undefined && lng !== undefined && isOnline !== false) {
         updateData.currentLocation = {
           lat,
           lng,
-          updatedAt: new Date()
+          updatedAt: now
         };
       }
       
@@ -380,7 +446,7 @@ const authController = {
           isOnline: driver.isOnline,
           lat: driver.currentLocation?.lat,
           lng: driver.currentLocation?.lng,
-          updatedAt: driver.currentLocation?.updatedAt || new Date()
+          updatedAt: driver.currentLocation?.updatedAt || now
         });
       }
 
@@ -394,6 +460,33 @@ const authController = {
       res.status(500).json({
         success: false,
         message: 'Lỗi server'
+      });
+    }
+  },
+
+  // POST /api/auth/driver/confirm-active - Tài xế xác nhận còn đang hoạt động (khi nhận Cảnh báo lần 1)
+  confirmDriverActive: async (req, res) => {
+    try {
+      const now = new Date();
+      const driver = await Driver.findByIdAndUpdate(
+        req.driver._id,
+        {
+          idleConfirmedAt: now,
+          lastActive: now
+        },
+        { new: true }
+      ).select('-password');
+
+      res.status(200).json({
+        success: true,
+        message: 'Đã xác nhận bạn vẫn đang hoạt động!',
+        data: driver
+      });
+    } catch (error) {
+      console.error('Error confirmDriverActive:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Lỗi server khi xác nhận hoạt động'
       });
     }
   },
@@ -451,6 +544,7 @@ const authController = {
         data: {
           token,
           driver: {
+            _id: driver._id,
             id: driver._id,
             name: driver.name,
             phone: driver.phone,
@@ -461,7 +555,14 @@ const authController = {
             driverCode: driver.driverCode,
             stats: driver.stats,
             isOnline: driver.isOnline,
+            isPriority5s: driver.isPriority5s,
+            commissionRate: driver.commissionRate,
             completionRate: driver.completionRate,
+            idleSince: driver.idleSince,
+            idleWarningLevel: driver.idleWarningLevel || 0,
+            idleWarningSentAt: driver.idleWarningSentAt,
+            idleConfirmedAt: driver.idleConfirmedAt,
+            idleLockedUntil: driver.idleLockedUntil,
             isNewUser
           }
         }

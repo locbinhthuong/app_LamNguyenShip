@@ -16,6 +16,7 @@ import api, { getAppVersionConfig } from './services/api';
 import { requestFirebaseToken, setupForegroundListener } from './utils/firebase';
 import ForceUpdateModal from './components/ForceUpdateModal';
 import NearestOrderPopup from './components/NearestOrderPopup';
+import IdleWarningModal from './components/IdleWarningModal';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Capacitor } from '@capacitor/core';
 import { NativeAudio } from '@capacitor-community/native-audio';
@@ -109,7 +110,9 @@ function AppContent() {
 
   // Audio Alarm Global Array
   const fallbackAudioRef = useRef(null);
+  const warningAudioRef = useRef(null);
   const intervalRef = useRef(null);
+  const warningIntervalRef = useRef(null);
   const lastResumeTimeRef = useRef(0);
 
   useEffect(() => {
@@ -149,9 +152,22 @@ function AppContent() {
         }
       }
 
+      if (!warningAudioRef.current) {
+        try {
+          warningAudioRef.current = new SilentWebAudioPlayer('chuong_canhbao.mp3');
+        } catch (e) {
+          console.error("Warning Audio init error:", e);
+        }
+      }
+
       if (!window.html5Audio) {
           window.html5Audio = new Audio('chuong.mp3');
           window.html5Audio.loop = true;
+      }
+
+      if (!window.warningHtml5Audio) {
+          window.warningHtml5Audio = new Audio('chuong_canhbao.mp3');
+          window.warningHtml5Audio.loop = true;
       }
 
       if (Capacitor.isNativePlatform()) {
@@ -164,6 +180,16 @@ function AppContent() {
           });
         } catch (e) {
           console.error("NativeAudio preload error:", e);
+        }
+        try {
+          await NativeAudio.preload({
+              assetId: 'chuong_canhbao',
+              assetPath: Capacitor.getPlatform() === 'ios' ? 'chuong_canhbao.mp3' : 'public/chuong_canhbao.mp3',
+              audioChannelNum: 1,
+              isUrl: false
+          });
+        } catch (e) {
+          console.error("NativeAudio warning preload error:", e);
         }
       }
     };
@@ -179,6 +205,15 @@ function AppContent() {
               fallbackAudioRef.current.muted = false; // Trả lại tiếng bình thường
           }).catch(e => {});
       }
+
+      if (warningAudioRef.current && warningAudioRef.current.paused) {
+          warningAudioRef.current.muted = true;
+          warningAudioRef.current.play().then(() => {
+              warningAudioRef.current.pause();
+              warningAudioRef.current.currentTime = 0;
+              warningAudioRef.current.muted = false;
+          }).catch(e => {});
+      }
       
       if (window.html5Audio) {
           window.html5Audio.muted = true;
@@ -186,6 +221,15 @@ function AppContent() {
               window.html5Audio.pause();
               window.html5Audio.currentTime = 0;
               window.html5Audio.muted = false;
+          }).catch(e => {});
+      }
+
+      if (window.warningHtml5Audio) {
+          window.warningHtml5Audio.muted = true;
+          window.warningHtml5Audio.play().then(() => {
+              window.warningHtml5Audio.pause();
+              window.warningHtml5Audio.currentTime = 0;
+              window.warningHtml5Audio.muted = false;
           }).catch(e => {});
       }
 
@@ -247,6 +291,67 @@ function AppContent() {
     }
   }, []);
 
+  const stopWarningAlarm = useCallback(() => {
+    if (warningIntervalRef.current) {
+      clearTimeout(warningIntervalRef.current);
+      warningIntervalRef.current = null;
+    }
+    if (Capacitor.isNativePlatform()) {
+      NativeAudio.stop({ assetId: 'chuong_canhbao' }).catch(e => {});
+    }
+    if (warningAudioRef.current) {
+      try {
+        warningAudioRef.current.pause();
+        warningAudioRef.current.currentTime = 0;
+      } catch(e){}
+    }
+    if (window.warningHtml5Audio) {
+      try {
+        window.warningHtml5Audio.pause();
+        window.warningHtml5Audio.currentTime = 0;
+      } catch(e){}
+    }
+  }, []);
+
+  const startWarningAlarm = useCallback(() => {
+    if (warningIntervalRef.current) return;
+    stopWarningAlarm();
+
+    warningIntervalRef.current = setTimeout(() => {
+      stopWarningAlarm();
+    }, 45000);
+
+    const playWarning = async () => {
+      if (Capacitor.isNativePlatform()) {
+        Haptics.vibrate({ duration: 1000 }).catch(e => {});
+        if (Capacitor.getPlatform() === 'ios') {
+          NativeAudio.loop({ assetId: 'chuong_canhbao' }).catch(e => {
+            console.error('NativeAudio warning play blocked, falling back to WebAudio:', e);
+            if (warningAudioRef.current) {
+              warningAudioRef.current.play().catch(console.error);
+            }
+          });
+        } else {
+          if (warningAudioRef.current) {
+            warningAudioRef.current.play().catch(console.error);
+          }
+          if (window.warningHtml5Audio) {
+            window.warningHtml5Audio.play().catch(e => console.log('Warning HTML5 audio play failed', e));
+          }
+        }
+      } else {
+        if (warningAudioRef.current) {
+          warningAudioRef.current.play().catch(console.error);
+        }
+        if (window.warningHtml5Audio) {
+          window.warningHtml5Audio.play().catch(e => console.log('Warning HTML5 audio play failed', e));
+        }
+      }
+    };
+
+    playWarning();
+  }, [stopWarningAlarm]);
+
   const startAlarm = useCallback(() => {
     if (intervalRef.current) return; // Nếu đang kêu rồi thì bỏ qua để chống nhiễu (double-call)
     if (Date.now() - lastPushTapTimeRef.current < 5000) {
@@ -298,6 +403,7 @@ function AppContent() {
     
     const handleStopEvent = (e) => {
       stopAlarm();
+      stopWarningAlarm();
       setPushMessage(null);
       // Xóa orderId khỏi lịch sử để nếu Admin phát lại ngay lập tức thì vẫn kêu chuông
       const orderId = e?.detail?._id || e?.detail?.id;
@@ -306,6 +412,9 @@ function AppContent() {
       }
     };
     window.addEventListener('stop_alarm_event', handleStopEvent);
+    window.addEventListener('stop_warning_alarm_event', stopWarningAlarm);
+    window.addEventListener('play_warning_alarm_event', startWarningAlarm);
+    window.addEventListener('driver_idle_warning_event', startWarningAlarm);
     
     const handleNewOrderEvent = (e) => {
        if (!driverRef.current?.isOnline) return;
@@ -378,6 +487,9 @@ function AppContent() {
 
     return () => {
       window.removeEventListener('stop_alarm_event', handleStopEvent);
+      window.removeEventListener('stop_warning_alarm_event', stopWarningAlarm);
+      window.removeEventListener('play_warning_alarm_event', startWarningAlarm);
+      window.removeEventListener('driver_idle_warning_event', startWarningAlarm);
       window.removeEventListener('driver_new_order', handleNewOrderEvent);
       window.removeEventListener('driver_order_accepted', handleStopEvent);
       window.removeEventListener('driver_order_cancelled', handleStopEvent);
@@ -385,7 +497,7 @@ function AppContent() {
       window.removeEventListener('driver_force_assigned', handleForceAssign);
       window.removeEventListener('driver_nearest_order_assignment', handleNearestAssign);
     };
-  }, [startAlarm, stopAlarm]);
+  }, [startAlarm, stopAlarm, startWarningAlarm, stopWarningAlarm]);
 
   useEffect(() => {
     // 1) Lắng nghe sự kiện từ axios interceptor
@@ -402,6 +514,20 @@ function AppContent() {
     window.addEventListener('api_upgrade_required', handleUpgradeRequired);
 
     const handlePush = (e) => {
+      // Nếu là cảnh báo treo app từ FCM Foreground
+      if (e.detail?.type === 'IDLE_WARNING') {
+        const pushData = e.detail.data || {};
+        window.dispatchEvent(new CustomEvent('driver_idle_warning_event', {
+          detail: {
+            level: Number(pushData.level || 1),
+            message: e.detail.body || '',
+            lockedUntil: pushData.lockedUntil || null
+          }
+        }));
+        loadProfile();
+        return;
+      }
+
       if (Date.now() - appStartTimeRef.current < 5000) {
          console.log("Bỏ qua FCM push lúc khởi động app");
          return;
@@ -425,7 +551,7 @@ function AppContent() {
       window.removeEventListener('api_upgrade_required', handleUpgradeRequired);
       window.removeEventListener('fcm_foreground_alert', handlePush);
     };
-  }, []);
+  }, [loadProfile]);
 
   useEffect(() => {
     // Tắt chuông khi bấm vào Local Notification hoặc FCM Notification (App đang chạy ngầm)
@@ -449,6 +575,15 @@ function AppContent() {
             sound: Capacitor.getPlatform() === 'ios' ? 'thongbaongoaiapp.mp3' : 'thongbaongoaiapp',
             vibration: true
           });
+          LocalNotifications.createChannel({
+            id: 'aloshipp_warning_channel_v1',
+            name: 'Kênh Cảnh Báo Treo App',
+            description: 'Kênh âm báo cảnh báo tài xế treo app không nhận đơn',
+            importance: 5,
+            visibility: 1,
+            sound: Capacitor.getPlatform() === 'ios' ? 'chuong_canhbao.mp3' : 'chuong_canhbao',
+            vibration: true
+          });
         LocalNotifications.addListener('localNotificationActionPerformed', () => {
           lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
@@ -465,16 +600,28 @@ function AppContent() {
             sound: Capacitor.getPlatform() === 'ios' ? 'thongbaongoaiapp.mp3' : 'thongbaongoaiapp',
             vibration: true
         }).catch(e => console.log('FCM createChannel error:', e));
+        FirebaseMessaging.createChannel({
+            id: 'aloshipp_warning_channel_v1',
+            name: 'Kênh Cảnh Báo Treo App',
+            description: 'Kênh âm báo cảnh báo tài xế treo app không nhận đơn',
+            importance: 5,
+            visibility: 1,
+            sound: Capacitor.getPlatform() === 'ios' ? 'chuong_canhbao.mp3' : 'chuong_canhbao',
+            vibration: true
+        }).catch(e => console.log('FCM warning createChannel error:', e));
         FirebaseMessaging.addListener('notificationActionPerformed', () => {
           lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+          loadProfile();
         });
       }).catch(console.error);
     }
-  }, []);
+  }, [loadProfile]);
+
+  const currentDriverId = driver?._id || driver?.id;
 
   useEffect(() => {
-    if (driver) {
+    if (currentDriverId) {
       // Bật Màng Lọc Cảnh Báo Khẩn (Firebase Push)
       const setupPush = async () => {
         try {
@@ -490,13 +637,16 @@ function AppContent() {
       setupPush();
 
       // Loa kêu khi Lái xe đang Mở Màn Hình
-      setupForegroundListener((payload) => {
+      const unsubForeground = setupForegroundListener((payload) => {
         console.log('[FCM] FOREGROUND ALERT:', payload);
         const title = payload.notification?.title || 'Thông báo';
         const body = payload.notification?.body || '';
         const orderId = payload.data?.orderId || null;
+        const type = payload.data?.type || null;
         // Phát tín hiệu ra toàn App thay vì che màn hình ngay
-        window.dispatchEvent(new CustomEvent('fcm_foreground_alert', { detail: { title, body, orderId } }));
+        window.dispatchEvent(new CustomEvent('fcm_foreground_alert', {
+          detail: { title, body, orderId, type, data: payload.data || {} }
+        }));
       });
 
       socketRef.current = io(SOCKET_URL, { 
@@ -505,7 +655,7 @@ function AppContent() {
       });
       window.driverSocket = socketRef.current;
       
-      socketRef.current.emit('driver_join', driver._id || driver.id);
+      socketRef.current.emit('driver_join', currentDriverId);
 
       // ĐỒNG BỘ THỜI GIAN VỚI SERVER
       window.serverTimeOffset = 0;
@@ -534,6 +684,24 @@ function AppContent() {
         }
       });
 
+      socketRef.current.on('driver_idle_warning', (data) => {
+        window.dispatchEvent(new CustomEvent('driver_idle_warning_event', { detail: data }));
+        loadProfile();
+      });
+
+      socketRef.current.on('driver_idle_unlocked', (data) => {
+        window.dispatchEvent(new CustomEvent('driver_idle_unlocked_event', { detail: data }));
+        loadProfile();
+      });
+
+      socketRef.current.on('driver_forced_offline', (data) => {
+        setPushMessage({
+          title: '⚠️ TẠM DỪNG NHẬN ĐƠN',
+          message: data?.message || 'Admin đã chuyển bạn sang trạng thái Offline.'
+        });
+        loadProfile();
+      });
+
       socketRef.current.on('driver_deleted', () => {
         setLogoutAlert('Tài khoản của bạn đã bị xóa khỏi hệ thống!');
       });
@@ -553,7 +721,7 @@ function AppContent() {
       forwardEvents.forEach(event => {
         socketRef.current.on(event, (data) => {
           if (event === 'new_order') {
-            const driverRate = driver.commissionRate || 15;
+            const driverRate = driverRef.current?.commissionRate || 15;
             if (data && data.commissionRate != null && Number(data.commissionRate) !== Number(driverRate)) {
               return; // Bỏ qua đơn hàng không khớp chiết khấu
             }
@@ -564,11 +732,12 @@ function AppContent() {
 
         return () => {
           clearInterval(pingInterval);
+          if (typeof unsubForeground === 'function') unsubForeground();
           if (socketRef.current) socketRef.current.disconnect();
           window.driverSocket = null;
         };
     }
-  }, [driver]);
+  }, [currentDriverId, loadProfile]);
 
   const handleForceLogoutClose = () => {
     setLogoutAlert(null);
@@ -623,6 +792,7 @@ function AppContent() {
         </div>
       )}
       <NearestOrderPopup />
+      <IdleWarningModal />
     </div>
     </>
   );

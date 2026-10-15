@@ -54,6 +54,9 @@ const findNearestAvailableDriver = async (pickupLat, pickupLng, commissionRate =
 
     // 3. Kiểm tra các điều kiện chuyên sâu theo thứ tự (Nợ, Số đơn đang chạy)
     for (const driver of driversWithDistance) {
+      if (driver.idleLockedUntil && new Date(driver.idleLockedUntil) > new Date()) {
+        continue;
+      }
       // 3.1 Kiểm tra nợ
       const debtCheck = await checkDriverDebtBlock(driver._id);
       if (debtCheck.blocked) {
@@ -141,6 +144,9 @@ const findNearestAvailableDriversGroup = async (pickupLat, pickupLng, commission
 
     // 3. Kiểm tra các điều kiện chuyên sâu theo thứ tự
     for (const driver of driversWithDistance) {
+      if (driver.idleLockedUntil && new Date(driver.idleLockedUntil) > new Date()) {
+        continue;
+      }
 
       // 3.1 Kiểm tra nợ
       const debtCheck = await checkDriverDebtBlock(driver._id);

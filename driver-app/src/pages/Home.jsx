@@ -540,7 +540,7 @@ export default function Home() {
         return;
       }
       showNotification('Nhận đơn thành công!');
-      await loadData(true);
+      await Promise.all([loadData(true), loadProfile()]);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Không thể nhận đơn', 'error');
     } finally {
@@ -558,7 +558,7 @@ export default function Home() {
       };
       await actions[action]();
       showNotification('Cập nhật thành công!');
-      await loadData(true);
+      await Promise.all([loadData(true), loadProfile()]);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Thao tác thất bại', 'error');
     } finally {
@@ -571,6 +571,12 @@ export default function Home() {
 
     if (!driver?.isOnline && driver?.status === 'pending') {
       setShowPendingModal(true);
+      return;
+    }
+
+    if (!driver?.isOnline && driver?.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()) {
+      const remainMins = Math.ceil((new Date(driver.idleLockedUntil).getTime() - Date.now()) / 60000);
+      showNotification(`Tài khoản đang bị tạm khóa do treo app! Còn khoảng ${remainMins} phút.`, 'error');
       return;
     }
 
@@ -652,14 +658,18 @@ export default function Home() {
             disabled={isOnlineToggling}
             onClick={toggleOnline}
             className={`rounded-full px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-bold transition-all flex items-center shadow-sm ${
-              driver?.isOnline 
-                ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-600' 
-                   : gpsStatus === 'FINDING' ? 'bg-yellow-400 text-yellow-900 border border-yellow-500 animate-pulse'
-                   : 'bg-red-500 text-white border border-red-600') 
-                : 'bg-slate-800 text-white border border-slate-900 shadow-md'
+              driver?.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()
+                ? 'bg-red-600 text-white border border-red-700'
+                : driver?.isOnline 
+                  ? (gpsStatus === 'TRACKING' ? 'bg-green-500 text-white border border-green-600' 
+                     : gpsStatus === 'FINDING' ? 'bg-yellow-400 text-yellow-900 border border-yellow-500 animate-pulse'
+                     : 'bg-red-500 text-white border border-red-600') 
+                  : 'bg-slate-800 text-white border border-slate-900 shadow-md'
             } ${isOnlineToggling ? 'opacity-70 cursor-wait' : ''}`}
           >
-            {driver?.isOnline ? (
+            {driver?.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now() ? (
+              '🔒 Đang khóa'
+            ) : driver?.isOnline ? (
               <>
                 {gpsStatus === 'TRACKING' ? '🟢 Online' : gpsStatus === 'FINDING' ? '⏳ Đang dò...' : '🔴 Lỗi GPS'}
               </>

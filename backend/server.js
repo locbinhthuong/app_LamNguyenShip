@@ -301,6 +301,12 @@ connectDB()
         }
       }, 60 * 1000); // 1 phút quét 1 lần
 
+      // ==================== CRON: QUÉT TÀI XẾ TREO APP ====================
+      const { checkIdleDrivers } = require('./utils/idleDriverMonitor');
+      setInterval(() => {
+        checkIdleDrivers(io);
+      }, 20 * 1000); // 20 giây quét 1 lần
+
     });
   })
   .catch((error) => {

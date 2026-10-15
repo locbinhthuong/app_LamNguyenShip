@@ -81,6 +81,11 @@ export const updateDriverStatus = async (isOnline, lat, lng) => {
   return response.data;
 };
 
+export const confirmDriverActive = async () => {
+  const response = await api.post('/api/auth/driver/confirm-active');
+  return response.data;
+};
+
 export const updateDriverLocationApi = async (lat, lng) => {
   const response = await api.put('/api/auth/driver/location', { lat, lng });
   return response.data;

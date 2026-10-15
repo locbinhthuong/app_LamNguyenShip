@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { acceptOrder, rejectNearestAssignment } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function NearestOrderPopup() {
+  const { loadProfile } = useAuth();
   const [order, setOrder] = useState(null);
   const [timeLeft, setTimeLeft] = useState(30);
   const [initialTime, setInitialTime] = useState(30);
@@ -58,6 +60,7 @@ export default function NearestOrderPopup() {
     setLoading(true);
     try {
       await acceptOrder(order._id || order.id);
+      loadProfile();
       window.dispatchEvent(new CustomEvent('stop_alarm_event'));
       setOrder(null);
       navigate(`/order/${order._id || order.id}`);

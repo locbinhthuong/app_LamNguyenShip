@@ -96,6 +96,27 @@ const driverSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  // Theo dõi treo app (online không nhận đơn) & khóa tạm thời
+  idleSince: {
+    type: Date,
+    default: null
+  },
+  idleWarningLevel: {
+    type: Number,
+    default: 0 // 0: bình thường, 1: đã cảnh báo 2h, 2: đã cảnh báo + khóa 15p, 3: đã cảnh báo + khóa 12h
+  },
+  idleWarningSentAt: {
+    type: Date,
+    default: null
+  },
+  idleConfirmedAt: {
+    type: Date,
+    default: null
+  },
+  idleLockedUntil: {
+    type: Date,
+    default: null
+  },
   sessionToken: {
     type: String,
     default: null

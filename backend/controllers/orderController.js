@@ -433,6 +433,13 @@ const orderController = {
 
         didAdminForceAssign = true;
         forceAssignedDriverFcm = driver.fcmToken;
+        await Driver.findByIdAndUpdate(forceAssignDriverId, {
+          idleSince: new Date(),
+          idleWarningLevel: 0,
+          idleWarningSentAt: null,
+          idleConfirmedAt: null,
+          idleLockedUntil: null
+        });
       }
 
       const surchargeReminder = await getLateNightSurchargeDriverReminder();
@@ -834,6 +841,13 @@ const orderController = {
 
         didAdminForceAssign = true;
         forceAssignedDriverFcm = driver.fcmToken;
+        await Driver.findByIdAndUpdate(forceAssignDriverId, {
+          idleSince: new Date(),
+          idleWarningLevel: 0,
+          idleWarningSentAt: null,
+          idleConfirmedAt: null,
+          idleLockedUntil: null
+        });
       }
 
       await orderToUpdate.save();
@@ -979,10 +993,20 @@ const orderController = {
     try {
       const { id } = req.params;
 
-      const driver = await Driver.findById(req.driver._id).select('walletDebt status appVersion');
+      const driver = await Driver.findById(req.driver._id).select('walletDebt status appVersion idleLockedUntil idleWarningLevel');
 
       if (!driver || driver.status !== 'active') {
         return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
+      }
+
+      if (driver.idleLockedUntil && new Date(driver.idleLockedUntil) > new Date()) {
+        const level = driver.idleWarningLevel || 2;
+        return res.status(200).json({
+          success: false,
+          message: level >= 3
+            ? 'Tài khoản đang bị tạm khóa 12 tiếng do treo app không nhận đơn!'
+            : 'Tài khoản đang bị tạm khóa 15 phút do treo app không nhận đơn!'
+        });
       }
 
       const origin = req.headers['origin'] || req.headers['referer'] || '';
@@ -1061,9 +1085,18 @@ const orderController = {
         });
       }
 
-      // Update driver stats
+      // Update driver stats & reset trạng thái cảnh báo treo app
+      const now = new Date();
       await Driver.findByIdAndUpdate(req.driver._id, {
-        $inc: { 'stats.totalOrders': 1 }
+        $inc: { 'stats.totalOrders': 1 },
+        $set: {
+          idleSince: now,
+          idleWarningLevel: 0,
+          idleWarningSentAt: null,
+          idleConfirmedAt: null,
+          idleLockedUntil: null,
+          lastActive: now
+        }
       });
 
       // Emit socket
@@ -1363,7 +1396,18 @@ const orderController = {
         await order.save();
       }
 
-      await Driver.findByIdAndUpdate(req.driver._id, { $inc: walletInc });
+      const nowCompleted = new Date();
+      await Driver.findByIdAndUpdate(req.driver._id, {
+        $inc: walletInc,
+        $set: {
+          idleSince: nowCompleted,
+          idleWarningLevel: 0,
+          idleWarningSentAt: null,
+          idleConfirmedAt: null,
+          idleLockedUntil: null,
+          lastActive: nowCompleted
+        }
+      });
 
       // Rating from customer
       if (rating && rating >= 1 && rating <= 5) {

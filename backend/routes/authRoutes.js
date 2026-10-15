@@ -34,6 +34,9 @@ router.put('/driver/location', verifyToken, onlyDriver, authController.updateDri
 // PUT /api/auth/driver/status
 router.put('/driver/status', verifyToken, onlyDriver, authController.updateDriverStatus);
 
+// POST /api/auth/driver/confirm-active - Xác nhận còn hoạt động khi có cảnh báo treo app
+router.post('/driver/confirm-active', verifyToken, onlyDriver, authController.confirmDriverActive);
+
 // POST /api/auth/zalo/login
 router.post('/zalo/login', authController.zaloLogin);
 
