@@ -117,6 +117,14 @@ const driverSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  idleOfflineAt: {
+    type: Date,
+    default: null
+  },
+  idleAccumulatedMs: {
+    type: Number,
+    default: 0
+  },
   sessionToken: {
     type: String,
     default: null

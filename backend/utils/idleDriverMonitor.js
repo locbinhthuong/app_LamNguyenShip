@@ -39,6 +39,8 @@ const checkIdleDrivers = async (io) => {
         lockedDrv.idleWarningSentAt = null;
         lockedDrv.idleConfirmedAt = null;
         lockedDrv.idleSince = null;
+        lockedDrv.idleOfflineAt = null;
+        lockedDrv.idleAccumulatedMs = 0;
       }
       await lockedDrv.save();
 
@@ -49,6 +51,27 @@ const checkIdleDrivers = async (io) => {
         });
       }
     }
+
+    // 1b. Tự động reset Cảnh báo lần 1 (hoặc thời gian cộng dồn) nếu tài xế đã chủ động Offline đủ hết 45 phút
+    const offlineResetCutoff = new Date(now.getTime() - FORTY_FIVE_MINS_MS);
+    await Driver.updateMany(
+      {
+        isOnline: false,
+        idleWarningLevel: { $lte: 1 },
+        idleOfflineAt: { $ne: null, $lte: offlineResetCutoff },
+        $or: [{ idleWarningLevel: 1 }, { idleAccumulatedMs: { $gt: 0 } }]
+      },
+      {
+        $set: {
+          idleWarningLevel: 0,
+          idleWarningSentAt: null,
+          idleConfirmedAt: null,
+          idleOfflineAt: null,
+          idleAccumulatedMs: 0,
+          idleSince: null
+        }
+      }
+    );
 
     // 2. Lấy danh sách các tài xế đang Online và hoạt động
     const onlineDrivers = await Driver.find({
@@ -78,6 +101,8 @@ const checkIdleDrivers = async (io) => {
           driver.idleWarningSentAt = null;
           driver.idleConfirmedAt = null;
           driver.idleLockedUntil = null;
+          driver.idleOfflineAt = null;
+          driver.idleAccumulatedMs = 0;
           await driver.save();
         }
         continue;
@@ -99,6 +124,8 @@ const checkIdleDrivers = async (io) => {
           driver.idleWarningLevel = 1;
           driver.idleWarningSentAt = now;
           driver.idleConfirmedAt = null;
+          driver.idleOfflineAt = null;
+          driver.idleAccumulatedMs = 0;
           await driver.save();
 
           const title = '⚠️ CẢNH BÁO TREO APP (LẦN 1)';
@@ -148,6 +175,8 @@ const checkIdleDrivers = async (io) => {
           driver.idleConfirmedAt = null;
           driver.idleLockedUntil = lockedUntil;
           driver.idleSince = null;
+          driver.idleOfflineAt = null;
+          driver.idleAccumulatedMs = 0;
           await driver.save();
 
           const title = '🔒 CẢNH BÁO LẦN 2 - KHÓA APP 15 PHÚT';
@@ -208,6 +237,8 @@ const checkIdleDrivers = async (io) => {
           driver.idleConfirmedAt = null;
           driver.idleLockedUntil = lockedUntil;
           driver.idleSince = null;
+          driver.idleOfflineAt = null;
+          driver.idleAccumulatedMs = 0;
           await driver.save();
 
           const title = '🚫 CẢNH BÁO LẦN 3 - KHÓA APP 12 TIẾNG';

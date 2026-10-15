@@ -394,32 +394,73 @@ const authController = {
         });
       }
 
+      const { FORTY_FIVE_MINS_MS } = require('../utils/idleDriverMonitor');
       const updateData = {
         isOnline: isOnline !== undefined ? isOnline : req.driver.isOnline
       };
 
       if (isOnline) {
-        updateData.idleSince = now;
         updateData.lastActive = now;
+        updateData.idleOfflineAt = null;
+
+        let effectiveLevel = req.driver.idleWarningLevel || 0;
 
         // Nếu thời gian khóa đã hết hạn
         if (req.driver.idleLockedUntil && new Date(req.driver.idleLockedUntil) <= now) {
           updateData.idleLockedUntil = null;
-          if ((req.driver.idleWarningLevel || 0) >= 3) {
+          if (effectiveLevel >= 3) {
+            effectiveLevel = 0;
             updateData.idleWarningLevel = 0;
             updateData.idleWarningSentAt = null;
             updateData.idleConfirmedAt = null;
+            updateData.idleAccumulatedMs = 0;
           }
           // Lưu ý: Nếu idleWarningLevel === 2 (vừa hết khóa 15p), giữ nguyên mức 2 để đếm 45p tiếp theo cho Cảnh báo lần 3
+        }
+
+        // Kiểm tra thời gian tài xế đã Offline trước khi bật Online lại
+        const offlineDurationMs = req.driver.idleOfflineAt
+          ? now.getTime() - new Date(req.driver.idleOfflineAt).getTime()
+          : Infinity;
+
+        if (effectiveLevel <= 1 && offlineDurationMs >= FORTY_FIVE_MINS_MS) {
+          // Đã Offline đủ hết 45 phút -> Cho phép reset lại từ đầu (Lần 0)
+          updateData.idleWarningLevel = 0;
+          updateData.idleWarningSentAt = null;
+          updateData.idleConfirmedAt = null;
+          updateData.idleAccumulatedMs = 0;
+          updateData.idleSince = now;
+        } else {
+          // Chưa Offline đủ 45 phút (tài xế tắt Offline rồi mở Online lại sớm để lách luật) hoặc đang ở mức 2 chờ lên mức 3
+          // -> Giữ nguyên mức cảnh báo và nối tiếp thời gian treo đã tích lũy trước đó
+          const accruedMs = req.driver.idleAccumulatedMs || 0;
+          const resumedRefTime = new Date(now.getTime() - accruedMs);
+          updateData.idleSince = resumedRefTime;
+          if (effectiveLevel === 1) {
+            updateData.idleWarningLevel = 1;
+            updateData.idleConfirmedAt = resumedRefTime;
+          }
         }
       } else if (isOnline === false) {
         updateData.currentLocation = null;
         updateData.idleSince = null;
-        // Nếu đang ở mức cảnh báo 1 và tài xế chủ động bấm Offline thì xóa cảnh báo lần 1
-        if ((req.driver.idleWarningLevel || 0) === 1) {
-          updateData.idleWarningLevel = 0;
-          updateData.idleWarningSentAt = null;
-          updateData.idleConfirmedAt = null;
+        updateData.idleOfflineAt = now;
+
+        const currentLevel = req.driver.idleWarningLevel || 0;
+        if (currentLevel === 1) {
+          // Khi đang ở Cảnh báo lần 1 mà bấm Offline: KHÔNG xóa cảnh báo ngay (phải đợi Offline đủ 45p mới xóa)
+          if (!req.driver.idleConfirmedAt) {
+            // Vừa bấm nút Offline trên bảng Cảnh báo lần 1
+            updateData.idleConfirmedAt = now;
+            updateData.idleAccumulatedMs = 0;
+          } else {
+            // Đã xác nhận trước đó rồi mới bấm Offline -> lưu lại số phút đã treo ở mức 1
+            const elapsed = Math.max(0, now.getTime() - new Date(req.driver.idleConfirmedAt).getTime());
+            updateData.idleAccumulatedMs = elapsed;
+          }
+        } else if (req.driver.idleSince) {
+          const elapsed = Math.max(0, now.getTime() - new Date(req.driver.idleSince).getTime());
+          updateData.idleAccumulatedMs = elapsed;
         }
       }
 
@@ -472,6 +513,8 @@ const authController = {
         req.driver._id,
         {
           idleConfirmedAt: now,
+          idleOfflineAt: null,
+          idleAccumulatedMs: 0,
           lastActive: now
         },
         { new: true }

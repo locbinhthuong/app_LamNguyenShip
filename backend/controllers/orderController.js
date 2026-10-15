@@ -438,7 +438,9 @@ const orderController = {
           idleWarningLevel: 0,
           idleWarningSentAt: null,
           idleConfirmedAt: null,
-          idleLockedUntil: null
+          idleLockedUntil: null,
+          idleOfflineAt: null,
+          idleAccumulatedMs: 0
         });
       }
 
@@ -846,7 +848,9 @@ const orderController = {
           idleWarningLevel: 0,
           idleWarningSentAt: null,
           idleConfirmedAt: null,
-          idleLockedUntil: null
+          idleLockedUntil: null,
+          idleOfflineAt: null,
+          idleAccumulatedMs: 0
         });
       }
 
@@ -1095,6 +1099,8 @@ const orderController = {
           idleWarningSentAt: null,
           idleConfirmedAt: null,
           idleLockedUntil: null,
+          idleOfflineAt: null,
+          idleAccumulatedMs: 0,
           lastActive: now
         }
       });
@@ -1405,6 +1411,8 @@ const orderController = {
           idleWarningSentAt: null,
           idleConfirmedAt: null,
           idleLockedUntil: null,
+          idleOfflineAt: null,
+          idleAccumulatedMs: 0,
           lastActive: nowCompleted
         }
       });
