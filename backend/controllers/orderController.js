@@ -1733,7 +1733,7 @@ const orderController = {
       endOfWeek.setDate(startOfWeek.getDate() + 6);
       endOfWeek.setHours(23, 59, 59, 999);
 
-      const weeklyDriverStats = await Order.aggregate([
+      const weeklyDriverOrders = await Order.aggregate([
         { 
           $match: { 
             status: 'COMPLETED',
@@ -1749,12 +1749,110 @@ const orderController = {
             totalOrders: { $sum: 1 }, 
             totalMoney: { $sum: '$deliveryFee' }
           } 
-        },
-        { $sort: { totalOrders: -1, totalMoney: -1 } }
+        }
+      ]);
+
+      const DriverOnlineSession = require('../models/DriverOnlineSession');
+      const { formatOnlineDuration } = require('../utils/onlineSessionHelper');
+
+      // Lấy tất cả các phiên Online có giao thoa với khoảng thời gian tuần này
+      const sessions = await DriverOnlineSession.find({
+        startTime: { $lte: endOfWeek },
+        $or: [
+          { endTime: { $gte: startOfWeek } },
+          { endTime: null }
+        ]
+      }).lean();
+
+      const now = new Date();
+      const driverOnlineMap = {};
+      for (const s of sessions) {
+        if (!s.driverId) continue;
+        const dId = s.driverId.toString();
+        const sStart = new Date(s.startTime);
+        const sEnd = s.endTime ? new Date(s.endTime) : (now < endOfWeek ? now : endOfWeek);
+        const effectiveStart = Math.max(sStart.getTime(), startOfWeek.getTime());
+        const effectiveEnd = Math.min(sEnd.getTime(), endOfWeek.getTime());
+
+        if (effectiveEnd > effectiveStart) {
+          const sec = Math.round((effectiveEnd - effectiveStart) / 1000);
+          driverOnlineMap[dId] = (driverOnlineMap[dId] || 0) + sec;
+        }
+      }
+
+      const orderStatsMap = {};
+      for (const stat of weeklyDriverOrders) {
+        if (stat._id) {
+          orderStatsMap[stat._id.toString()] = {
+            totalOrders: stat.totalOrders || 0,
+            totalMoney: stat.totalMoney || 0
+          };
+        }
+      }
+
+      // Tập hợp tất cả tài xế có hoàn thành đơn hoặc có online trong tuần
+      const allDriverIdsSet = new Set([
+        ...Object.keys(orderStatsMap),
+        ...Object.keys(driverOnlineMap)
       ]);
 
       const DriverModel = require('../models/Driver');
-      await DriverModel.populate(weeklyDriverStats, { path: '_id', select: 'name phone driverCode' });
+      const driversInfo = await DriverModel.find({
+        _id: { $in: Array.from(allDriverIdsSet) },
+        status: { $ne: 'deleted' }
+      }).select('name phone driverCode isOnline driverTier avatar').lean();
+
+      const fullWeeklyStats = driversInfo.map(driverDoc => {
+        const dId = driverDoc._id.toString();
+        const orderData = orderStatsMap[dId] || { totalOrders: 0, totalMoney: 0 };
+        const totalOrders = orderData.totalOrders;
+        const totalMoney = orderData.totalMoney;
+        const onlineSeconds = driverOnlineMap[dId] || 0;
+        const onlineHours = Number((onlineSeconds / 3600).toFixed(2));
+        const onlineTimeStr = formatOnlineDuration(onlineSeconds);
+
+        // Hiệu suất: Số đơn / giờ online
+        let ordersPerHour = 0;
+        let efficiencyPercent = 0;
+
+        if (onlineHours > 0) {
+          ordersPerHour = Number((totalOrders / onlineHours).toFixed(2));
+          // Định mức chuẩn: 1.5 đơn/giờ tương đương 100% hiệu suất chuẩn
+          efficiencyPercent = Math.min(100, Math.round((totalOrders / (onlineHours * 1.5)) * 100));
+        } else if (totalOrders > 0) {
+          ordersPerHour = totalOrders;
+          efficiencyPercent = 100;
+        }
+
+        return {
+          _id: driverDoc,
+          totalOrders,
+          totalMoney,
+          onlineSeconds,
+          onlineHours,
+          onlineTimeStr,
+          ordersPerHour,
+          efficiencyPercent
+        };
+      });
+
+      const sortBy = req.query.sortBy || 'orders'; // 'orders' | 'online' | 'efficiency'
+
+      fullWeeklyStats.sort((a, b) => {
+        if (sortBy === 'online') {
+          if (b.onlineSeconds !== a.onlineSeconds) return b.onlineSeconds - a.onlineSeconds;
+          return b.totalOrders - a.totalOrders;
+        }
+        if (sortBy === 'efficiency') {
+          if (b.ordersPerHour !== a.ordersPerHour) return b.ordersPerHour - a.ordersPerHour;
+          return b.totalOrders - a.totalOrders;
+        }
+        // Mặc định: Xếp theo số đơn
+        if (b.totalOrders !== a.totalOrders) return b.totalOrders - a.totalOrders;
+        return b.totalMoney - a.totalMoney;
+      });
+
+      const weeklyDriverStats = fullWeeklyStats;
 
       res.status(200).json({
         success: true,

@@ -2,6 +2,7 @@ const Driver = require('../models/Driver');
 const Order = require('../models/Order');
 const { emitToDriver, emitDriverStatusChange } = require('../sockets/index');
 const { sendNotification } = require('./notification');
+const { endDriverOnlineSession } = require('./onlineSessionHelper');
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;        // 2 tiếng
 const ONE_HOUR_MS = 60 * 60 * 1000;             // 1 tiếng (Offline trên 1 tiếng ở Mức 0 mới tính lại từ đầu 2 tiếng)
@@ -212,6 +213,7 @@ const checkIdleDrivers = async (io) => {
 
           driver.isOnline = false;
           driver.currentLocation = null;
+          driver.currentOnlineSessionId = null;
           driver.idleWarningLevel = 2;
           driver.idleWarningSentAt = now;
           driver.idleConfirmedAt = null;
@@ -220,6 +222,7 @@ const checkIdleDrivers = async (io) => {
           driver.idleOfflineAt = null;
           driver.idleAccumulatedMs = 0;
           await driver.save();
+          await endDriverOnlineSession(driver._id, now, 'IDLE_TIMEOUT');
 
           const title = '🔒 CẢNH BÁO LẦN 2 - KHÓA APP 15 PHÚT';
           const message = 'Sau 45 phút kể từ cảnh báo lần 1 bạn vẫn treo app không nhận đơn. Hệ thống tạm khóa app 15 phút và chuyển sang Offline!';
@@ -274,6 +277,7 @@ const checkIdleDrivers = async (io) => {
 
           driver.isOnline = false;
           driver.currentLocation = null;
+          driver.currentOnlineSessionId = null;
           driver.idleWarningLevel = 3;
           driver.idleWarningSentAt = now;
           driver.idleConfirmedAt = null;
@@ -282,6 +286,7 @@ const checkIdleDrivers = async (io) => {
           driver.idleOfflineAt = null;
           driver.idleAccumulatedMs = 0;
           await driver.save();
+          await endDriverOnlineSession(driver._id, now, 'IDLE_TIMEOUT');
 
           const title = '🚫 CẢNH BÁO LẦN 3 - KHÓA APP 12 TIẾNG';
           const message = 'Sau 15 phút khóa app, bạn vẫn mở lên treo 45 phút không nhận đơn. Hệ thống tạm khóa app của bạn trong 12 tiếng!';

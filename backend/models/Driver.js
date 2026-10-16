@@ -160,6 +160,16 @@ const driverSchema = new mongoose.Schema({
   devicePlatform: {
     type: String,
     default: null
+  },
+  // Quản lý phiên online để thống kê thời gian hoạt động
+  currentOnlineSessionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'DriverOnlineSession',
+    default: null
+  },
+  lastOnlineAt: {
+    type: Date,
+    default: null
   }
 }, {
   timestamps: true,

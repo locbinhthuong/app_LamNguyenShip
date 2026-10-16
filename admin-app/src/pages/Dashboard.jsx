@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { getDashboardStats, cleanupOldOrders, API_BASE_URL } from '../services/api';
 import { startOfTodayVietnam } from '../utils/todayVietnam';
@@ -29,10 +29,36 @@ export default function Dashboard() {
   // Bộ lọc
   const [selectedDate, setSelectedDate] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
+  const [rankingSortBy, setRankingSortBy] = useState('orders'); // 'orders' | 'online' | 'efficiency'
 
   // Trạng thái cho Dọn dẹp dữ liệu
   const [cleanupMonths, setCleanupMonths] = useState(6);
   const [isCleaning, setIsCleaning] = useState(false);
+
+  // Danh sách tài xế xếp hạng tuần theo tiêu chí được chọn
+  const sortedWeeklyDrivers = useMemo(() => {
+    if (!stats?.weeklyDriverStats) return [];
+    const list = [...stats.weeklyDriverStats];
+    return list.sort((a, b) => {
+      if (rankingSortBy === 'online') {
+        if ((b.onlineSeconds || 0) !== (a.onlineSeconds || 0)) {
+          return (b.onlineSeconds || 0) - (a.onlineSeconds || 0);
+        }
+        return (b.totalOrders || 0) - (a.totalOrders || 0);
+      }
+      if (rankingSortBy === 'efficiency') {
+        if ((b.ordersPerHour || 0) !== (a.ordersPerHour || 0)) {
+          return (b.ordersPerHour || 0) - (a.ordersPerHour || 0);
+        }
+        return (b.totalOrders || 0) - (a.totalOrders || 0);
+      }
+      // Mặc định: Nhiều đơn nhất
+      if ((b.totalOrders || 0) !== (a.totalOrders || 0)) {
+        return (b.totalOrders || 0) - (a.totalOrders || 0);
+      }
+      return (b.totalMoney || 0) - (a.totalMoney || 0);
+    });
+  }, [stats?.weeklyDriverStats, rankingSortBy]);
 
   const load = useCallback(async () => {
     try {
@@ -363,6 +389,44 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+
+        {/* Nút lọc tiêu chí xếp hạng */}
+        <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1">
+          <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Sắp xếp theo:</span>
+          <button 
+            type="button"
+            onClick={() => setRankingSortBy('orders')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              rankingSortBy === 'orders' 
+                ? 'bg-blue-600 text-white shadow-sm' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <span>📦</span> Nhiều đơn nhất
+          </button>
+          <button 
+            type="button"
+            onClick={() => setRankingSortBy('online')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              rankingSortBy === 'online' 
+                ? 'bg-emerald-600 text-white shadow-sm' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <span>⏱️</span> Online nhiều nhất
+          </button>
+          <button 
+            type="button"
+            onClick={() => setRankingSortBy('efficiency')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              rankingSortBy === 'efficiency' 
+                ? 'bg-purple-600 text-white shadow-sm' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <span>⚡</span> Hiệu suất cao nhất
+          </button>
+        </div>
         
         <div className="overflow-x-auto rounded-xl border border-slate-100">
           <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap">
@@ -370,43 +434,76 @@ export default function Dashboard() {
               <tr>
                 <th className="px-4 py-3 text-center w-16">Hạng</th>
                 <th className="px-4 py-3">Tài xế</th>
+                <th className="px-4 py-3 text-center">Thời gian Online</th>
                 <th className="px-4 py-3 text-center">Số đơn</th>
+                <th className="px-4 py-3 text-center">Hiệu suất</th>
                 <th className="px-4 py-3 text-right">Tổng cước</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {(stats?.weeklyDriverStats || []).length === 0 ? (
+              {sortedWeeklyDrivers.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="px-4 py-12 text-center text-sm text-slate-500">
+                  <td colSpan="6" className="px-4 py-12 text-center text-sm text-slate-500">
                     <p className="text-2xl mb-2">📭</p>
                     <p>Chưa có dữ liệu tuần này</p>
                   </td>
                 </tr>
               ) : (
-                stats?.weeklyDriverStats?.map((driver, index) => (
-                  <tr key={driver._id?._id || index} className="group hover:bg-slate-50/80 transition-colors">
-                    <td className="px-4 py-3 text-center">
-                      {index === 0 ? <span className="text-xl drop-shadow-sm">🥇</span> : 
-                       index === 1 ? <span className="text-xl drop-shadow-sm">🥈</span> : 
-                       index === 2 ? <span className="text-xl drop-shadow-sm">🥉</span> : 
-                       <span className="text-sm font-bold text-slate-400 group-hover:text-slate-600">#{index + 1}</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-bold text-slate-800 text-sm">{driver._id?.name || 'Không rõ'}</div>
-                      <div className="text-[10px] sm:text-xs font-medium text-slate-500 mt-0.5">{driver._id?.phone || '---'}</div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <span className="inline-flex h-6 min-w-[28px] items-center justify-center rounded-full bg-blue-50 border border-blue-100 px-2 text-xs font-black text-blue-600 shadow-sm">
-                        {driver.totalOrders}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <span className="font-bold text-green-600 sm:text-base text-sm bg-green-50/50 px-2 py-1 rounded-lg">
-                        {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(driver.totalMoney || 0)}
-                      </span>
-                    </td>
-                  </tr>
-                ))
+                sortedWeeklyDrivers.map((driver, index) => {
+                  const efficiency = driver.efficiencyPercent || 0;
+                  const ordersPerHour = driver.ordersPerHour || 0;
+                  return (
+                    <tr key={driver._id?._id || index} className="group hover:bg-slate-50/80 transition-colors">
+                      <td className="px-4 py-3 text-center">
+                        {index === 0 ? <span className="text-xl drop-shadow-sm">🥇</span> : 
+                         index === 1 ? <span className="text-xl drop-shadow-sm">🥈</span> : 
+                         index === 2 ? <span className="text-xl drop-shadow-sm">🥉</span> : 
+                         <span className="text-sm font-bold text-slate-400 group-hover:text-slate-600">#{index + 1}</span>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div>
+                          <div className="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                            {driver._id?.name || 'Không rõ'}
+                            {driver._id?.driverCode && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                                {driver._id?.driverCode}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] sm:text-xs font-medium text-slate-500 mt-0.5">{driver._id?.phone || '---'}</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100 shadow-sm">
+                          <span>⏱️</span> {driver.onlineTimeStr || '0p'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span className="inline-flex h-6 min-w-[28px] items-center justify-center rounded-full bg-blue-50 border border-blue-100 px-2 text-xs font-black text-blue-600 shadow-sm">
+                          {driver.totalOrders}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="inline-flex items-center gap-1.5">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
+                            efficiency >= 80 
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                              : efficiency >= 40 
+                              ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                              : 'bg-rose-50 text-rose-600 border-rose-200'
+                          }`}>
+                            ⚡ {ordersPerHour} đơn/g ({efficiency}%)
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <span className="font-bold text-green-600 sm:text-base text-sm bg-green-50/50 px-2 py-1 rounded-lg">
+                          {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(driver.totalMoney || 0)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

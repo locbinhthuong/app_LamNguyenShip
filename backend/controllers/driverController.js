@@ -3,6 +3,7 @@ const Driver = require('../models/Driver');
 const DebtTransaction = require('../models/DebtTransaction');
 const WalletTransaction = require('../models/WalletTransaction');
 const { emitToDriver } = require('../sockets/index');
+const { endDriverOnlineSession } = require('../utils/onlineSessionHelper');
 
 const driverController = {
   // GET /api/drivers - Lấy danh sách tài xế (Admin)
@@ -242,6 +243,11 @@ const driverController = {
           if (currentDriver && currentDriver.name) {
             updateData.name = currentDriver.name.replace(/\s*\(Đã (xoá|xóa)\)/gi, '');
           }
+        } else {
+          updateData.isOnline = false;
+          updateData.currentLocation = null;
+          updateData.currentOnlineSessionId = null;
+          await endDriverOnlineSession(id, new Date(), 'ADMIN_FORCE');
         }
       }
       if (req.body.unlockIdle) {
@@ -299,12 +305,16 @@ const driverController = {
   forceOffline: async (req, res) => {
     try {
       const { id } = req.params;
+      const now = new Date();
+
+      await endDriverOnlineSession(id, now, 'ADMIN_FORCE');
       
       const driver = await Driver.findByIdAndUpdate(
         id,
         {
           isOnline: false,
           currentLocation: null,
+          currentOnlineSessionId: null,
           idleSince: null,
           idleWarningLevel: 0,
           idleWarningSentAt: null,

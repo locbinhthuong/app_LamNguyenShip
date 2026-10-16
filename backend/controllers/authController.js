@@ -5,6 +5,7 @@ const Driver = require('../models/Driver');
 const Admin = require('../models/Admin');
 const User = require('../models/User'); // Thêm model User
 const { emitDriverStatusChange } = require('../sockets/index');
+const { startDriverOnlineSession, endDriverOnlineSession } = require('../utils/onlineSessionHelper');
 
 // Helper: Lấy thông tin user từ Zalo OAuth code
 const exchangeZaloCode = async (code) => {
@@ -417,9 +418,32 @@ const authController = {
         });
       }
 
+      const wasOnline = !!req.driver.isOnline;
+      const targetOnline = isOnline !== undefined ? Boolean(isOnline) : wasOnline;
+
       const updateData = {
-        isOnline: isOnline !== undefined ? isOnline : req.driver.isOnline
+        isOnline: targetOnline
       };
+
+      if (!wasOnline && targetOnline) {
+        // Tài xế bật Online -> Bắt đầu phiên mới
+        const session = await startDriverOnlineSession(req.driver._id, now);
+        if (session) {
+          updateData.currentOnlineSessionId = session._id;
+          updateData.lastOnlineAt = now;
+        }
+      } else if (targetOnline && !req.driver.currentOnlineSessionId) {
+        // Đang Online nhưng chưa có session -> Tự động mở phiên
+        const session = await startDriverOnlineSession(req.driver._id, now);
+        if (session) {
+          updateData.currentOnlineSessionId = session._id;
+          updateData.lastOnlineAt = now;
+        }
+      } else if (wasOnline && !targetOnline) {
+        // Tài xế tắt Online -> Đóng phiên
+        await endDriverOnlineSession(req.driver._id, now, 'MANUAL');
+        updateData.currentOnlineSessionId = null;
+      }
 
       if (!IDLE_MONITOR_ENABLED) {
         updateData.idleWarningLevel = 0;
