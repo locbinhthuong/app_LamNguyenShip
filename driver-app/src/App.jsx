@@ -694,6 +694,28 @@ function AppContent() {
         loadProfile();
       });
 
+      socketRef.current.on('driver_tier_upgraded', (data) => {
+        setPushMessage({
+          title: '🎉 CHÚC MỪNG LÊN HẠNG!',
+          message: data?.message || 'Bạn vừa thăng hạng và được giảm phí chiết khấu!'
+        });
+        loadProfile();
+        window.dispatchEvent(new CustomEvent('driver_tier_upgraded_event', { detail: data }));
+      });
+
+      socketRef.current.on('driver_weekly_reset', (data) => {
+        setPushMessage({
+          title: '🔄 BẮT ĐẦU TUẦN MỚI',
+          message: data?.message || 'Điểm xếp hạng tuần đã được làm mới!'
+        });
+        loadProfile();
+        window.dispatchEvent(new CustomEvent('driver_weekly_reset_event', { detail: data }));
+      });
+
+      socketRef.current.on('driver_updated', () => {
+        loadProfile();
+      });
+
       socketRef.current.on('driver_forced_offline', (data) => {
         setPushMessage({
           title: '⚠️ TẠM DỪNG NHẬN ĐƠN',

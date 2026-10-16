@@ -70,8 +70,32 @@ const driverSchema = new mongoose.Schema({
   },
   commissionRate: {
     type: Number,
-    enum: [15, 20],
-    default: 15
+    default: 20
+  },
+  // Hệ thống tính điểm và cấp bậc theo tuần
+  driverTier: {
+    type: Number,
+    default: 1 // 1: Cấp 1 (Đồng), 2: Cấp 2 (Bạc), 3: Cấp 3 (Vàng)
+  },
+  weeklyPoints: {
+    type: Number,
+    default: 0 // 1 đơn hoàn thành = 1 điểm
+  },
+  currentWeek: {
+    type: String,
+    default: null // Ví dụ: "2026-W42"
+  },
+  lastWeekTier: {
+    type: Number,
+    default: 1 // Cấp bậc đạt được ở tuần trước
+  },
+  lastWeekPoints: {
+    type: Number,
+    default: 0 // Điểm tuần trước
+  },
+  isCustomCommission: {
+    type: Boolean,
+    default: false // Nếu true, admin chỉnh tay cố định, hệ thống không tự động ghi đè
   },
   walletDebt: {
     type: Number,

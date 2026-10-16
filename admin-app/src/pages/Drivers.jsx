@@ -238,8 +238,13 @@ export default function Drivers() {
                   <p className="text-[10px] text-slate-500">Hoàn thành</p>
                 </div>
                 <div className="rounded-xl bg-orange-50/50 p-2 text-center">
-                  <p className="text-sm font-bold text-orange-500">{driver.commissionRate || 15}%</p>
-                  <p className="text-[10px] text-slate-500">Chiết khấu</p>
+                  <p className="text-sm font-bold text-orange-500">
+                    {driver.commissionRate || 20}%
+                    {driver.isCustomCommission && <span className="text-[10px] ml-0.5" title="Admin cài đặt cố định">🔒</span>}
+                  </p>
+                  <p className="text-[10px] text-slate-500">
+                    {driver.driverTier === 3 ? '🥇 Cấp 3' : (driver.driverTier === 2 ? '🥈 Cấp 2' : '🥉 Cấp 1')} ({driver.weeklyPoints || 0}đ)
+                  </p>
                 </div>
                 <div className="rounded-xl bg-blue-50/50 p-2 text-center">
                   <p className="text-sm font-bold text-blue-600">{driver.driverCode}</p>
@@ -298,6 +303,7 @@ export default function Drivers() {
                   <th className="table-th">Mã</th>
                   <th className="table-th">Xe</th>
                   <th className="table-th">Trạng thái</th>
+                  <th className="table-th">Cấp hạng</th>
                   <th className="table-th">Hoàn thành</th>
                   <th className="table-th">Chiết khấu</th>
                   <th className="table-th">Hành động</th>
@@ -336,8 +342,25 @@ export default function Drivers() {
                         )}
                       </div>
                     </td>
+                    <td className="table-td">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        driver.driverTier === 3 
+                          ? 'bg-amber-100 text-amber-800 border border-amber-300' 
+                          : driver.driverTier === 2 
+                            ? 'bg-cyan-100 text-cyan-800 border border-cyan-300' 
+                            : 'bg-orange-100 text-orange-800 border border-orange-200'
+                      }`}>
+                        {driver.driverTier === 3 ? '🥇 Cấp 3' : (driver.driverTier === 2 ? '🥈 Cấp 2' : '🥉 Cấp 1')}
+                        <span className="text-[10px] font-normal text-slate-500">({driver.weeklyPoints || 0}đ)</span>
+                      </span>
+                    </td>
                     <td className="table-td font-bold text-green-400">{driver.stats?.completedOrders || 0}</td>
-                    <td className="table-td font-bold text-orange-500">{driver.commissionRate || 15}%</td>
+                    <td className="table-td font-bold text-orange-500">
+                      {driver.commissionRate || 20}%
+                      {driver.isCustomCommission && (
+                        <span className="ml-1 text-[10px] text-amber-700 bg-amber-100 px-1 py-0.5 rounded font-normal" title="Admin cài đặt cố định">🔒</span>
+                      )}
+                    </td>
                     <td className="table-td">
                         <div className="flex gap-2 flex-wrap">
                           

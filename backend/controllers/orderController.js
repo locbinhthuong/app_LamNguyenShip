@@ -1314,11 +1314,15 @@ const orderController = {
 
       // Update driver stats
       const driver = await Driver.findById(req.driver._id);
+      const { checkAndResetDriverWeek, getTierConfig } = require('../utils/weekHelper');
+      if (driver) {
+        checkAndResetDriverWeek(driver);
+      }
 
       // LOGIC CỘNG CÔNG NỢ TỰ ĐỘNG KHI HOÀN THÀNH ĐƠN
       // Tiền nợ = Tổng Phí Giao Hàng * Phần Trăm Chiết Khấu Hiện Tại Của Tài Xế
       const deliveryFee = order.deliveryFee || 0;
-      const commissionRate = order.commissionRate != null ? order.commissionRate : (driver.commissionRate || 15);
+      const commissionRate = order.commissionRate != null ? order.commissionRate : (driver?.commissionRate || 20);
       const debtAmount = Math.round(deliveryFee * (commissionRate / 100));
 
       if (debtAmount > 0) {
@@ -1403,19 +1407,46 @@ const orderController = {
       }
 
       const nowCompleted = new Date();
+      const currentWeeklyPoints = (driver?.weeklyPoints || 0) + 1;
+      const tierConfig = getTierConfig(currentWeeklyPoints);
+      const oldTier = driver?.driverTier || 1;
+      const newTier = tierConfig.tier;
+
+      const driverSetFields = {
+        idleSince: nowCompleted,
+        idleWarningLevel: 0,
+        idleWarningSentAt: null,
+        idleConfirmedAt: null,
+        idleLockedUntil: null,
+        idleOfflineAt: null,
+        idleAccumulatedMs: 0,
+        lastActive: nowCompleted,
+        weeklyPoints: currentWeeklyPoints,
+        driverTier: newTier,
+        currentWeek: driver?.currentWeek
+      };
+
+      // Nếu không bị admin khóa cố định thì tự động cập nhật chiết khấu theo cấp bậc mới
+      if (!driver?.isCustomCommission) {
+        driverSetFields.commissionRate = tierConfig.commissionRate;
+      }
+
       await Driver.findByIdAndUpdate(req.driver._id, {
         $inc: walletInc,
-        $set: {
-          idleSince: nowCompleted,
-          idleWarningLevel: 0,
-          idleWarningSentAt: null,
-          idleConfirmedAt: null,
-          idleLockedUntil: null,
-          idleOfflineAt: null,
-          idleAccumulatedMs: 0,
-          lastActive: nowCompleted
-        }
+        $set: driverSetFields
       });
+
+      // Nếu được nâng cấp bậc tuần, gửi sự kiện chúc mừng qua Socket
+      if (newTier > oldTier && req.io) {
+        req.io.to(`driver_${req.driver._id}`).emit('driver_tier_upgraded', {
+          oldTier,
+          newTier,
+          tierName: tierConfig.tierName,
+          commissionRate: driver?.isCustomCommission ? driver.commissionRate : tierConfig.commissionRate,
+          weeklyPoints: currentWeeklyPoints,
+          message: `🎉 Chúc mừng bạn đã thăng lên ${tierConfig.tierName}! Chiết khấu của bạn là ${driver?.isCustomCommission ? driver.commissionRate : tierConfig.commissionRate}%.`
+        });
+      }
 
       // Rating from customer
       if (rating && rating >= 1 && rating <= 5) {

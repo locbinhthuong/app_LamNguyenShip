@@ -235,11 +235,26 @@ const authController = {
         await driver.save();
       }
 
+      // Kiểm tra reset tuần cho tài xế nếu đã sang tuần mới
+      let tierInfo = null;
+      let weekTimeRemainingMs = 0;
+      if (driver) {
+        const { checkAndResetDriverWeek, getTierConfig, getWeekTimeRemainingVN } = require('../utils/weekHelper');
+        const wasReset = checkAndResetDriverWeek(driver);
+        if (wasReset) {
+          await driver.save();
+        }
+        tierInfo = getTierConfig(driver.weeklyPoints || 0);
+        weekTimeRemainingMs = getWeekTimeRemainingVN();
+      }
+
       res.status(200).json({
         success: true,
         data: {
           ...driver.toJSON(),
-          completionRate: driver.completionRate
+          completionRate: driver.completionRate,
+          tierInfo,
+          weekTimeRemainingMs
         }
       });
     } catch (error) {

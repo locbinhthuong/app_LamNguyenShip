@@ -63,7 +63,10 @@ export default function DriverDetail() {
         name: drRes.data.name || '',
         vehicleType: drRes.data.vehicleType || 'motorcycle',
         licensePlate: drRes.data.licensePlate || '',
-        commissionRate: drRes.data.commissionRate || 15,
+        commissionRate: drRes.data.commissionRate || 20,
+        isCustomCommission: drRes.data.isCustomCommission || false,
+        driverTier: drRes.data.driverTier || 1,
+        weeklyPoints: drRes.data.weeklyPoints || 0,
         avatar: drRes.data.avatar || '',
         cccd: drRes.data.cccd || '',
         gplx: drRes.data.gplx || '',
@@ -191,9 +194,30 @@ export default function DriverDetail() {
                 <span className="text-slate-500">Biển số:</span>
                 <span className="text-slate-800 font-medium">{driver.licensePlate || '—'}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Cấp bậc tuần:</span>
+                <span className="font-bold text-slate-800">
+                  {driver.driverTier === 3 ? '🥇 Cấp 3 (Vàng)' : (driver.driverTier === 2 ? '🥈 Cấp 2 (Bạc)' : '🥉 Cấp 1 (Đồng)')}
+                </span>
+              </div>
               <div className="flex justify-between">
+                <span className="text-slate-500">Điểm tuần này:</span>
+                <span className="text-slate-800 font-bold">{driver.weeklyPoints || 0} đơn</span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="text-slate-500">Mức chiết khấu:</span>
-                <span className="text-slate-800 font-bold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">{driver.commissionRate || 15}%</span>
+                <div className="text-right">
+                  <span className="text-slate-800 font-bold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">{driver.commissionRate || 20}%</span>
+                  {driver.isCustomCommission && (
+                    <span className="ml-1 text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-semibold">🔒 Cố định</span>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Tuần trước:</span>
+                <span className="text-slate-600 font-medium">
+                  {driver.lastWeekTier ? `Cấp ${driver.lastWeekTier} (${driver.lastWeekPoints || 0} đơn)` : '—'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Loại xe:</span>
@@ -479,9 +503,51 @@ export default function DriverDetail() {
                   onChange={e => setEditForm({...editForm, commissionRate: Number(e.target.value)})}
                   className="mt-1 w-full rounded-xl border border-sky-300 bg-sky-50 hover:bg-sky-100 p-3 text-sky-800 font-bold focus:border-sky-600 focus:outline-none focus:ring-1 focus:ring-sky-600"
                 >
-                  <option value={15}>15% (Tiêu chuẩn)</option>
-                  <option value={20}>20% (Cao cấp)</option>
+                  <option value={12}>12% (Cấp 3 - Vàng)</option>
+                  <option value={15}>15% (Cấp 2 - Bạc)</option>
+                  <option value={20}>20% (Cấp 1 - Đồng)</option>
                 </select>
+              </div>
+
+              {/* Checkbox Khóa chiết khấu thủ công */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2.5">
+                <input
+                  type="checkbox"
+                  id="isCustomCommission"
+                  checked={editForm.isCustomCommission || false}
+                  onChange={e => setEditForm({ ...editForm, isCustomCommission: e.target.checked })}
+                  className="mt-1 h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                />
+                <label htmlFor="isCustomCommission" className="text-xs text-amber-900 cursor-pointer">
+                  <span className="font-bold block">Khóa chiết khấu cố định (Admin chỉnh tay)</span>
+                  Nếu bật, hệ thống sẽ <strong>KHÔNG</strong> tự động thay đổi chiết khấu khi tài xế tăng/giảm cấp bậc tuần.
+                </label>
+              </div>
+
+              {/* Tùy chỉnh Cấp bậc & Điểm tuần */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 mb-1 block">Cấp bậc tuần</label>
+                  <select 
+                    value={editForm.driverTier || 1} 
+                    onChange={e => setEditForm({...editForm, driverTier: Number(e.target.value)})}
+                    className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700"
+                  >
+                    <option value={1}>🥉 Cấp 1 (Đồng)</option>
+                    <option value={2}>🥈 Cấp 2 (Bạc)</option>
+                    <option value={3}>🥇 Cấp 3 (Vàng)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-600 mb-1 block">Điểm tuần (đơn)</label>
+                  <input 
+                    type="number"
+                    min="0"
+                    value={editForm.weeklyPoints || 0}
+                    onChange={e => setEditForm({...editForm, weeklyPoints: Number(e.target.value)})}
+                    className="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700"
+                  />
+                </div>
               </div>
               <div className="mt-6 flex gap-3 pt-2">
                 <button type="button" disabled={isUploading} onClick={() => setShowEdit(false)} className="flex-1 rounded-xl bg-slate-100 hover:bg-slate-200 py-3 font-bold text-slate-600 transition-colors disabled:opacity-50">

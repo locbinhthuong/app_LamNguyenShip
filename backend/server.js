@@ -308,6 +308,13 @@ connectDB()
         checkIdleDrivers(io);
       }, 20 * 1000); // 20 giây quét 1 lần
 
+      // ==================== CRON: RESET CẤP HẠNG TUẦN TÀI XẾ (00:00 THỨ HAI VN) ====================
+      const { checkAndResetAllDriversWeekly } = require('./utils/weekHelper');
+      checkAndResetAllDriversWeekly(io); // Quét ngay lúc khởi động server
+      setInterval(() => {
+        checkAndResetAllDriversWeekly(io);
+      }, 5 * 60 * 1000); // 5 phút kiểm tra 1 lần
+
     });
   })
   .catch((error) => {

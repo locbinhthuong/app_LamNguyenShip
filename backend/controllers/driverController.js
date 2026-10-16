@@ -176,7 +176,7 @@ const driverController = {
   // POST /api/drivers - Tạo tài xế mới (Admin)
   createDriver: async (req, res) => {
     try {
-      const { name, phone, password, vehicleType, licensePlate, commissionRate } = req.body;
+      const { name, phone, password, vehicleType, licensePlate, commissionRate, isCustomCommission } = req.body;
 
       // Check phone exists
       const existing = await Driver.findOne({ phone });
@@ -195,7 +195,10 @@ const driverController = {
         password: hashedPassword,
         vehicleType: vehicleType || 'motorcycle',
         licensePlate,
-        commissionRate: commissionRate || 15
+        commissionRate: commissionRate !== undefined ? Number(commissionRate) : 20,
+        isCustomCommission: isCustomCommission !== undefined ? Boolean(isCustomCommission) : false,
+        driverTier: 1,
+        weeklyPoints: 0
       });
 
       await driver.save();
@@ -221,7 +224,7 @@ const driverController = {
   updateDriver: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, vehicleType, licensePlate, status, avatar, commissionRate, cccd, gplx, isPriority5s } = req.body;
+      const { name, vehicleType, licensePlate, status, avatar, commissionRate, cccd, gplx, isPriority5s, isCustomCommission, driverTier, weeklyPoints } = req.body;
 
       const updateData = {};
       if (name) updateData.name = name;
@@ -248,7 +251,10 @@ const driverController = {
         updateData.idleConfirmedAt = null;
       }
       if (avatar !== undefined) updateData.avatar = avatar;
-      if (commissionRate !== undefined) updateData.commissionRate = commissionRate;
+      if (commissionRate !== undefined) updateData.commissionRate = Number(commissionRate);
+      if (isCustomCommission !== undefined) updateData.isCustomCommission = Boolean(isCustomCommission);
+      if (driverTier !== undefined) updateData.driverTier = Number(driverTier);
+      if (weeklyPoints !== undefined) updateData.weeklyPoints = Number(weeklyPoints);
       if (cccd !== undefined) updateData.cccd = cccd;
       if (gplx !== undefined) updateData.gplx = gplx;
       if (isPriority5s !== undefined) updateData.isPriority5s = isPriority5s;
@@ -264,6 +270,10 @@ const driverController = {
           success: false,
           message: 'Không tìm thấy tài xế'
         });
+      }
+
+      if (req.io) {
+        req.io.to(`driver_${driver._id}`).emit('driver_updated', driver);
       }
 
       res.status(200).json({
