@@ -4,6 +4,7 @@ const { emitToDriver, emitDriverStatusChange } = require('../sockets/index');
 const { sendNotification } = require('./notification');
 
 const TWO_HOURS_MS = 2 * 60 * 60 * 1000;        // 2 tiếng
+const ONE_HOUR_MS = 60 * 60 * 1000;             // 1 tiếng (Offline trên 1 tiếng ở Mức 0 mới tính lại từ đầu 2 tiếng)
 const FORTY_FIVE_MINS_MS = 45 * 60 * 1000;      // 45 phút
 const LOCK_15_MINS_MS = 15 * 60 * 1000;         // Khóa 15 phút (Lần 2)
 const LOCK_12_HOURS_MS = 12 * 60 * 60 * 1000;   // Khóa 12 tiếng (Lần 3)
@@ -82,14 +83,25 @@ const checkIdleDrivers = async (io) => {
       }
     }
 
-    // 1b. Tự động reset Cảnh báo lần 1 (hoặc thời gian cộng dồn) nếu tài xế đã chủ động Offline đủ hết 45 phút
-    const offlineResetCutoff = new Date(now.getTime() - FORTY_FIVE_MINS_MS);
+    // 1b. Tự động reset khi tài xế đã chủ động Offline đủ thời gian quy định:
+    // - Trước Cảnh báo lần 1 (Mức 0): Phải Offline trên 1 tiếng mới reset lại 2 tiếng từ đầu
+    // - Đang ở Cảnh báo lần 1 (Mức 1): Phải Offline đủ 45 phút mới reset lại từ đầu
+    const offlineResetLevel0Cutoff = new Date(now.getTime() - ONE_HOUR_MS);
+    const offlineResetLevel1Cutoff = new Date(now.getTime() - FORTY_FIVE_MINS_MS);
     await Driver.updateMany(
       {
         isOnline: false,
-        idleWarningLevel: { $lte: 1 },
-        idleOfflineAt: { $ne: null, $lte: offlineResetCutoff },
-        $or: [{ idleWarningLevel: 1 }, { idleAccumulatedMs: { $gt: 0 } }]
+        $or: [
+          {
+            idleWarningLevel: 0,
+            idleAccumulatedMs: { $gt: 0 },
+            idleOfflineAt: { $ne: null, $lte: offlineResetLevel0Cutoff }
+          },
+          {
+            idleWarningLevel: 1,
+            idleOfflineAt: { $ne: null, $lte: offlineResetLevel1Cutoff }
+          }
+        ]
       },
       {
         $set: {
@@ -324,6 +336,7 @@ module.exports = {
   checkIdleDrivers,
   IDLE_MONITOR_ENABLED,
   TWO_HOURS_MS,
+  ONE_HOUR_MS,
   FORTY_FIVE_MINS_MS,
   LOCK_15_MINS_MS,
   LOCK_12_HOURS_MS

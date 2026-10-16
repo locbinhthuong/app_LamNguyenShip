@@ -383,7 +383,7 @@ const authController = {
         });
       }
 
-      const { FORTY_FIVE_MINS_MS, IDLE_MONITOR_ENABLED } = require('../utils/idleDriverMonitor');
+      const { ONE_HOUR_MS, FORTY_FIVE_MINS_MS, IDLE_MONITOR_ENABLED } = require('../utils/idleDriverMonitor');
 
       // Kiểm tra nếu tài xế đang bị tạm khóa do treo app (Lần 2: 15p hoặc Lần 3: 12h)
       if (IDLE_MONITOR_ENABLED && isOnline && req.driver.idleLockedUntil && new Date(req.driver.idleLockedUntil) > now) {
@@ -443,15 +443,18 @@ const authController = {
           ? now.getTime() - new Date(req.driver.idleOfflineAt).getTime()
           : Infinity;
 
-        if (effectiveLevel <= 1 && offlineDurationMs >= FORTY_FIVE_MINS_MS) {
-          // Đã Offline đủ hết 45 phút -> Cho phép reset lại từ đầu (Lần 0)
+        // - Trước Cảnh báo lần 1 (Mức 0): Phải Offline trên 1 tiếng (ONE_HOUR_MS) mới được tính lại từ đầu 2 tiếng
+        // - Đang ở Cảnh báo lần 1 (Mức 1): Phải Offline đủ 45 phút (FORTY_FIVE_MINS_MS) mới được reset về ban đầu
+        const requiredOfflineResetMs = effectiveLevel === 0 ? ONE_HOUR_MS : FORTY_FIVE_MINS_MS;
+
+        if (effectiveLevel <= 1 && offlineDurationMs >= requiredOfflineResetMs) {
           updateData.idleWarningLevel = 0;
           updateData.idleWarningSentAt = null;
           updateData.idleConfirmedAt = null;
           updateData.idleAccumulatedMs = 0;
           updateData.idleSince = now;
         } else {
-          // Chưa Offline đủ 45 phút (tài xế tắt Offline rồi mở Online lại sớm để lách luật) hoặc đang ở mức 2 chờ lên mức 3
+          // Chưa Offline đủ thời gian quy định (Mức 0 < 1 tiếng, Mức 1 < 45 phút, hoặc đang ở Mức 2 chờ lên Mức 3)
           // -> Giữ nguyên mức cảnh báo và nối tiếp thời gian treo đã tích lũy trước đó
           const accruedMs = req.driver.idleAccumulatedMs || 0;
           const resumedRefTime = new Date(now.getTime() - accruedMs);
