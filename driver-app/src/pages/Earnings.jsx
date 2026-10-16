@@ -6,6 +6,11 @@ import CurrencyInput from '../components/CurrencyInput';
 import { Browser } from '@capacitor/browser';
 import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, Eye, EyeOff, Trophy, Award, Flame, Zap, ShieldCheck, Sparkles } from 'lucide-react';
 
+// CẤU HÌNH HIỂN THỊ CẤP HẠNG TUẦN TRÊN APP TÀI XẾ
+// Tạm ẩn (false) trong lúc chưa cập nhật bản mới lên App Store / CH Play
+// Khi nào duyệt xong lên App Store chỉ cần đổi thành true
+const SHOW_TIER_FEATURE = false;
+
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);
 };
@@ -244,12 +249,14 @@ export default function Earnings() {
            >
              <Building2 size={16} /> Tài Khoản Điểm
            </button>
-           <button 
-             onClick={() => { setActiveTab('rank'); loadProfile(); }}
-             className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'rank' ? 'bg-white text-amber-600 shadow-md' : 'text-white/80 hover:text-white'}`}
-           >
-             <Trophy size={16} /> Cấp Hạng Tuần
-           </button>
+           {SHOW_TIER_FEATURE && (
+             <button 
+               onClick={() => { setActiveTab('rank'); loadProfile(); }}
+               className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'rank' ? 'bg-white text-amber-600 shadow-md' : 'text-white/80 hover:text-white'}`}
+             >
+               <Trophy size={16} /> Cấp Hạng Tuần
+             </button>
+           )}
         </div>
       </div>
 
@@ -519,7 +526,7 @@ export default function Earnings() {
       )}
 
         {/* ===================== TAB 3: CẤP HẠNG TUẦN ===================== */}
-        {activeTab === 'rank' && (
+        {SHOW_TIER_FEATURE && activeTab === 'rank' && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4">
             {(() => {
               const currentTier = driver?.driverTier || 1;

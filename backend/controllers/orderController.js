@@ -1425,8 +1425,9 @@ const orderController = {
         currentWeek: driver.currentWeek
       };
 
-      // Nếu không bị admin khóa cố định thì tự động cập nhật chiết khấu theo cấp bậc mới
-      if (!driver?.isCustomCommission && tierConfig) {
+      // Nếu tính năng cấp bậc được bật và không bị admin khóa cố định thì tự động cập nhật chiết khấu theo cấp bậc mới
+      const { ENABLE_TIER_SYSTEM } = require('../utils/weekHelper');
+      if (ENABLE_TIER_SYSTEM && !driver?.isCustomCommission && tierConfig) {
         driverSetFields.commissionRate = tierConfig.commissionRate;
       }
 
@@ -1435,8 +1436,8 @@ const orderController = {
         $set: driverSetFields
       });
 
-      // Nếu được nâng cấp bậc tuần, gửi sự kiện chúc mừng qua Socket
-      if (newTier > oldTier && req.io) {
+      // Nếu được nâng cấp bậc tuần và tính năng đang bật, gửi sự kiện chúc mừng qua Socket
+      if (ENABLE_TIER_SYSTEM && newTier > oldTier && req.io) {
         req.io.to(`driver_${req.driver._id}`).emit('driver_tier_upgraded', {
           oldTier,
           newTier,

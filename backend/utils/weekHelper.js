@@ -2,6 +2,11 @@
  * Tiện ích quản lý chu kỳ tuần và cấp bậc tài xế theo múi giờ Việt Nam (Asia/Ho_Chi_Minh)
  */
 
+// BẬT / TẮT HỆ THỐNG CẤP BẬC VÀ TỰ ĐỘNG THAY ĐỔI CHIẾT KHẤU TÀI XẾ
+// Tạm tắt (false) trong lúc chờ cập nhật bản mới lên App Store / CH Play để không tự ý đổi chiết khấu của tài xế
+// Khi App Store duyệt xong, chỉ cần đổi thành true (hoặc đặt TIER_SYSTEM_ENABLED=true trong .env)
+const ENABLE_TIER_SYSTEM = process.env.TIER_SYSTEM_ENABLED === 'true';
+
 // BẬT / TẮT CHẾ ĐỘ TEST
 // Khi đang test: Cấp 1: <= 2 đơn | Cấp 2: 3-5 đơn | Cấp 3: >= 6 đơn
 // Khi lên chính thức (Production): Cấp 1: <= 15 đơn | Cấp 2: 16-75 đơn | Cấp 3: > 75 đơn
@@ -186,8 +191,8 @@ const syncDriverWeeklyStats = async (driver) => {
   const tierConfig = getTierConfig(driver.weeklyPoints);
   driver.driverTier = tierConfig.tier;
 
-  // Nếu không bị Admin khóa chiết khấu thủ công thì tự động cập nhật chiết khấu theo cấp
-  if (!driver.isCustomCommission) {
+  // Nếu tính năng Cấp Bậc được bật và không bị Admin khóa chiết khấu thủ công thì tự động cập nhật chiết khấu theo cấp
+  if (ENABLE_TIER_SYSTEM && !driver.isCustomCommission) {
     driver.commissionRate = tierConfig.commissionRate;
   }
 
@@ -211,7 +216,7 @@ const checkAndResetAllDriversWeekly = async (io = null) => {
       await driver.save();
       updatedCount++;
 
-      if (io && (driver.driverTier !== oldTier || driver.commissionRate !== oldRate)) {
+      if (ENABLE_TIER_SYSTEM && io && (driver.driverTier !== oldTier || driver.commissionRate !== oldRate)) {
         io.to(`driver_${driver._id}`).emit('driver_updated', driver);
       }
     }
@@ -227,6 +232,7 @@ const checkAndResetAllDriversWeekly = async (io = null) => {
 const checkAndResetDriverWeek = syncDriverWeeklyStats;
 
 module.exports = {
+  ENABLE_TIER_SYSTEM,
   IS_TEST_TIER,
   TIER_THRESHOLDS,
   getCurrentWeekVN,
