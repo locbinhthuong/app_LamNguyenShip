@@ -235,16 +235,13 @@ const authController = {
         await driver.save();
       }
 
-      // Kiểm tra reset tuần cho tài xế nếu đã sang tuần mới
+      // Đồng bộ điểm tuần và cấp bậc của tài xế từ đơn hàng thực tế
       let tierInfo = null;
       let weekTimeRemainingMs = 0;
       if (driver) {
-        const { checkAndResetDriverWeek, getTierConfig, getWeekTimeRemainingVN } = require('../utils/weekHelper');
-        const wasReset = checkAndResetDriverWeek(driver);
-        if (wasReset) {
-          await driver.save();
-        }
-        tierInfo = getTierConfig(driver.weeklyPoints || 0);
+        const { syncDriverWeeklyStats, getWeekTimeRemainingVN } = require('../utils/weekHelper');
+        tierInfo = await syncDriverWeeklyStats(driver);
+        await driver.save();
         weekTimeRemainingMs = getWeekTimeRemainingVN();
       }
 

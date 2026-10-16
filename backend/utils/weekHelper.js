@@ -99,96 +99,142 @@ const getTierConfig = (weeklyPoints = 0) => {
 };
 
 /**
- * Kiểm tra và tự động reset tuần cho tài xế nếu đã sang tuần mới (Lazy Check)
- * Trả về true nếu vừa thực hiện reset
+ * Lấy mốc thời gian bắt đầu của tuần hiện tại (00:00:00 Thứ Hai giờ VN)
  */
-const checkAndResetDriverWeek = (driver) => {
-  if (!driver) return false;
+const getStartOfWeekVN = () => {
+  const now = new Date();
+  const vnNow = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+  const currentDay = vnNow.getDay() || 7; // 1 = Thứ Hai ... 7 = Chủ Nhật
+  const diffToMonday = currentDay - 1;
+  const mondayDate = new Date(vnNow);
+  mondayDate.setDate(vnNow.getDate() - diffToMonday);
   
-  const currentWeekStr = getCurrentWeekVN();
-  
-  // Nếu chưa có tuần hoặc tuần lưu trong DB khác tuần hiện tại -> Thực hiện Reset tuần
-  if (!driver.currentWeek || driver.currentWeek !== currentWeekStr) {
-    driver.lastWeekTier = driver.driverTier || 1;
-    driver.lastWeekPoints = driver.weeklyPoints || 0;
-    driver.currentWeek = currentWeekStr;
-    driver.weeklyPoints = 0;
-    driver.driverTier = 1;
-
-    // Nếu không bị Admin khóa chiết khấu thủ công thì trả về 20%
-    if (!driver.isCustomCommission) {
-      driver.commissionRate = 20;
-    }
-    return true;
-  }
-  
-  return false;
+  const yyyy = mondayDate.getFullYear();
+  const mm = String(mondayDate.getMonth() + 1).padStart(2, '0');
+  const dd = String(mondayDate.getDate()).padStart(2, '0');
+  return new Date(`${yyyy}-${mm}-${dd}T00:00:00.000+07:00`);
 };
 
 /**
- * Quét toàn bộ tài xế trong hệ thống và reset nếu đã sang tuần mới
+ * Lấy khoảng thời gian của tuần trước (Thứ Hai 00:00:00 đến Chủ Nhật 23:59:59.999 giờ VN)
+ */
+const getLastWeekRangeVN = () => {
+  const startOfThisWeek = getStartOfWeekVN();
+  const startOfLastWeek = new Date(startOfThisWeek.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const endOfLastWeek = new Date(startOfThisWeek.getTime() - 1);
+  return { startOfLastWeek, endOfLastWeek };
+};
+
+/**
+ * Đồng bộ dữ liệu điểm tuần và cấp bậc của tài xế từ các đơn hàng thực tế
+ */
+const syncDriverWeeklyStats = async (driver) => {
+  if (!driver) return null;
+  const Order = require('../models/Order');
+
+  const currentWeekStr = getCurrentWeekVN();
+  const startOfThisWeek = getStartOfWeekVN();
+  const { startOfLastWeek, endOfLastWeek } = getLastWeekRangeVN();
+
+  // Đếm số đơn hoàn thành thực tế trong tuần này
+  // Phù hợp với cách tính của MyOrders (deliveredAt hoặc updatedAt hoặc createdAt)
+  const thisWeekOrdersCount = await Order.countDocuments({
+    assignedTo: driver._id,
+    status: 'COMPLETED',
+    $or: [
+      { deliveredAt: { $gte: startOfThisWeek } },
+      { updatedAt: { $gte: startOfThisWeek } },
+      { createdAt: { $gte: startOfThisWeek } }
+    ]
+  });
+
+  // Nếu sang tuần mới hoặc chưa từng lưu tuần
+  if (!driver.currentWeek || driver.currentWeek !== currentWeekStr) {
+    const lastWeekOrdersCount = await Order.countDocuments({
+      assignedTo: driver._id,
+      status: 'COMPLETED',
+      $or: [
+        { deliveredAt: { $gte: startOfLastWeek, $lte: endOfLastWeek } },
+        { updatedAt: { $gte: startOfLastWeek, $lte: endOfLastWeek } },
+        { createdAt: { $gte: startOfLastWeek, $lte: endOfLastWeek } }
+      ]
+    });
+    driver.lastWeekPoints = lastWeekOrdersCount;
+    driver.lastWeekTier = getTierConfig(lastWeekOrdersCount).tier;
+    driver.currentWeek = currentWeekStr;
+  } else if (driver.lastWeekPoints === undefined || driver.lastWeekPoints === null || (driver.lastWeekPoints === 0 && driver.lastWeekTier === 1)) {
+    // Nếu tuần trước chưa tính
+    const lastWeekOrdersCount = await Order.countDocuments({
+      assignedTo: driver._id,
+      status: 'COMPLETED',
+      $or: [
+        { deliveredAt: { $gte: startOfLastWeek, $lte: endOfLastWeek } },
+        { updatedAt: { $gte: startOfLastWeek, $lte: endOfLastWeek } },
+        { createdAt: { $gte: startOfLastWeek, $lte: endOfLastWeek } }
+      ]
+    });
+    if (lastWeekOrdersCount > 0) {
+      driver.lastWeekPoints = lastWeekOrdersCount;
+      driver.lastWeekTier = getTierConfig(lastWeekOrdersCount).tier;
+    }
+  }
+
+  // Số điểm tuần = Số đơn đã hoàn thành trong tuần này
+  driver.weeklyPoints = thisWeekOrdersCount;
+
+  // Cập nhật Cấp bậc và Chiết khấu
+  const tierConfig = getTierConfig(driver.weeklyPoints);
+  driver.driverTier = tierConfig.tier;
+
+  // Nếu không bị Admin khóa chiết khấu thủ công thì tự động cập nhật chiết khấu theo cấp
+  if (!driver.isCustomCommission) {
+    driver.commissionRate = tierConfig.commissionRate;
+  }
+
+  return tierConfig;
+};
+
+/**
+ * Quét toàn bộ tài xế trong hệ thống và đồng bộ số đơn tuần từ dữ liệu thực tế
  */
 const checkAndResetAllDriversWeekly = async (io = null) => {
   try {
     const Driver = require('../models/Driver');
-    const currentWeekStr = getCurrentWeekVN();
-    
-    // Tìm các tài xế chưa đồng bộ sang tuần mới
-    const staleDrivers = await Driver.find({
-      $or: [
-        { currentWeek: { $ne: currentWeekStr } },
-        { currentWeek: null },
-        { currentWeek: { $exists: false } }
-      ]
-    });
+    const drivers = await Driver.find({ status: { $ne: 'deleted' } });
+    if (!drivers || drivers.length === 0) return 0;
 
-    if (!staleDrivers || staleDrivers.length === 0) return 0;
-
-    let resetCount = 0;
-    for (const driver of staleDrivers) {
-      driver.lastWeekTier = driver.driverTier || 1;
-      driver.lastWeekPoints = driver.weeklyPoints || 0;
-      driver.currentWeek = currentWeekStr;
-      driver.weeklyPoints = 0;
-      driver.driverTier = 1;
-
-      if (!driver.isCustomCommission) {
-        driver.commissionRate = 20;
-      }
-
+    let updatedCount = 0;
+    for (const driver of drivers) {
+      const oldTier = driver.driverTier || 1;
+      const oldRate = driver.commissionRate;
+      await syncDriverWeeklyStats(driver);
       await driver.save();
-      resetCount++;
+      updatedCount++;
 
-      if (io) {
-        io.to(`driver_${driver._id}`).emit('driver_weekly_reset', {
-          currentWeek: currentWeekStr,
-          driverTier: 1,
-          commissionRate: driver.commissionRate,
-          lastWeekTier: driver.lastWeekTier,
-          lastWeekPoints: driver.lastWeekPoints,
-          message: 'Tuần mới đã bắt đầu! Điểm xếp hạng tuần đã được làm mới.'
-        });
+      if (io && (driver.driverTier !== oldTier || driver.commissionRate !== oldRate)) {
+        io.to(`driver_${driver._id}`).emit('driver_updated', driver);
       }
     }
 
-    if (io && resetCount > 0) {
-      io.to('admins').emit('driver_weekly_reset_all', { resetCount, week: currentWeekStr });
-    }
-
-    console.log(`[WeeklyReset] Đã reset điểm và cấp bậc tuần cho ${resetCount} tài xế (Tuần: ${currentWeekStr})`);
-    return resetCount;
+    console.log(`[WeeklySync] Đã đồng bộ điểm tuần từ đơn hàng thực tế cho ${updatedCount} tài xế`);
+    return updatedCount;
   } catch (error) {
-    console.error('[WeeklyReset] Lỗi checkAndResetAllDriversWeekly:', error);
+    console.error('[WeeklySync] Lỗi checkAndResetAllDriversWeekly:', error);
     return 0;
   }
 };
+
+const checkAndResetDriverWeek = syncDriverWeeklyStats;
 
 module.exports = {
   IS_TEST_TIER,
   TIER_THRESHOLDS,
   getCurrentWeekVN,
   getWeekTimeRemainingVN,
+  getStartOfWeekVN,
+  getLastWeekRangeVN,
   getTierConfig,
+  syncDriverWeeklyStats,
   checkAndResetDriverWeek,
   checkAndResetAllDriversWeekly
 };

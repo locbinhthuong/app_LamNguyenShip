@@ -177,9 +177,14 @@ export default function Earnings() {
 
   useEffect(() => {
     fetchEarnings();
-    window.addEventListener('refresh_data', fetchEarnings);
-    return () => window.removeEventListener('refresh_data', fetchEarnings);
-  }, [fetchEarnings]);
+    loadProfile();
+    const handleRefresh = () => {
+      fetchEarnings();
+      loadProfile();
+    };
+    window.addEventListener('refresh_data', handleRefresh);
+    return () => window.removeEventListener('refresh_data', handleRefresh);
+  }, [fetchEarnings, loadProfile]);
 
   useEffect(() => {
     const handleWalletUpdated = () => fetchEarnings();
@@ -240,7 +245,7 @@ export default function Earnings() {
              <Building2 size={16} /> Tài Khoản Điểm
            </button>
            <button 
-             onClick={() => setActiveTab('rank')}
+             onClick={() => { setActiveTab('rank'); loadProfile(); }}
              className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'rank' ? 'bg-white text-amber-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
              <Trophy size={16} /> Cấp Hạng Tuần

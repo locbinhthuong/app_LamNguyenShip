@@ -1314,9 +1314,9 @@ const orderController = {
 
       // Update driver stats
       const driver = await Driver.findById(req.driver._id);
-      const { checkAndResetDriverWeek, getTierConfig } = require('../utils/weekHelper');
+      const { syncDriverWeeklyStats, getTierConfig } = require('../utils/weekHelper');
       if (driver) {
-        checkAndResetDriverWeek(driver);
+        await syncDriverWeeklyStats(driver);
       }
 
       // LOGIC CỘNG CÔNG NỢ TỰ ĐỘNG KHI HOÀN THÀNH ĐƠN
@@ -1407,10 +1407,9 @@ const orderController = {
       }
 
       const nowCompleted = new Date();
-      const currentWeeklyPoints = (driver?.weeklyPoints || 0) + 1;
-      const tierConfig = getTierConfig(currentWeeklyPoints);
       const oldTier = driver?.driverTier || 1;
-      const newTier = tierConfig.tier;
+      const tierConfig = await syncDriverWeeklyStats(driver);
+      const newTier = tierConfig ? tierConfig.tier : (driver?.driverTier || 1);
 
       const driverSetFields = {
         idleSince: nowCompleted,
@@ -1421,13 +1420,13 @@ const orderController = {
         idleOfflineAt: null,
         idleAccumulatedMs: 0,
         lastActive: nowCompleted,
-        weeklyPoints: currentWeeklyPoints,
+        weeklyPoints: driver.weeklyPoints,
         driverTier: newTier,
-        currentWeek: driver?.currentWeek
+        currentWeek: driver.currentWeek
       };
 
       // Nếu không bị admin khóa cố định thì tự động cập nhật chiết khấu theo cấp bậc mới
-      if (!driver?.isCustomCommission) {
+      if (!driver?.isCustomCommission && tierConfig) {
         driverSetFields.commissionRate = tierConfig.commissionRate;
       }
 
