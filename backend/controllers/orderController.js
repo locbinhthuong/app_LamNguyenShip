@@ -1753,16 +1753,36 @@ const orderController = {
       ]);
 
       const DriverOnlineSession = require('../models/DriverOnlineSession');
-      const { formatOnlineDuration } = require('../utils/onlineSessionHelper');
+      const { 
+        formatOnlineDuration, 
+        ensureActiveDriversHaveSession, 
+        backfillWeeklyOnlineSessionsFromOrders 
+      } = require('../utils/onlineSessionHelper');
+
+      // Đảm bảo các tài xế đang isOnline: true có phiên hoạt động ngay
+      await ensureActiveDriversHaveSession();
 
       // Lấy tất cả các phiên Online có giao thoa với khoảng thời gian tuần này
-      const sessions = await DriverOnlineSession.find({
+      let sessions = await DriverOnlineSession.find({
         startTime: { $lte: endOfWeek },
         $or: [
           { endTime: { $gte: startOfWeek } },
           { endTime: null }
         ]
       }).lean();
+
+      // Nếu tuần này chưa có dữ liệu phiên online nhưng đã có đơn hàng hoàn thành
+      // -> Tự động tái tạo các phiên online từ lịch sử đơn hàng tuần này để có số giờ thực tế
+      if (sessions.length === 0 && weeklyDriverOrders.length > 0) {
+        await backfillWeeklyOnlineSessionsFromOrders(startOfWeek, endOfWeek);
+        sessions = await DriverOnlineSession.find({
+          startTime: { $lte: endOfWeek },
+          $or: [
+            { endTime: { $gte: startOfWeek } },
+            { endTime: null }
+          ]
+        }).lean();
+      }
 
       const now = new Date();
       const driverOnlineMap = {};
@@ -1819,9 +1839,9 @@ const orderController = {
           ordersPerHour = Number((totalOrders / onlineHours).toFixed(2));
           // Định mức chuẩn: 1.5 đơn/giờ tương đương 100% hiệu suất chuẩn
           efficiencyPercent = Math.min(100, Math.round((totalOrders / (onlineHours * 1.5)) * 100));
-        } else if (totalOrders > 0) {
-          ordersPerHour = totalOrders;
-          efficiencyPercent = 100;
+        } else {
+          ordersPerHour = 0;
+          efficiencyPercent = 0;
         }
 
         return {

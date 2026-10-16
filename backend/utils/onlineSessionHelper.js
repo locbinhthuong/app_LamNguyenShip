@@ -131,9 +131,141 @@ const formatOnlineDuration = (totalSeconds = 0) => {
   return `${minutes}p`;
 };
 
+/**
+ * Lấy mã tuần ISO cho bất kỳ ngày nào theo giờ VN
+ */
+const getWeekIdentifierForDate = (date) => {
+  const d = new Date(date);
+  const vnTime = new Date(d.toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh' }));
+  const target = new Date(vnTime.valueOf());
+  const dayNr = (vnTime.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  const weekNumber = 1 + Math.ceil((firstThursday - target) / 604800000);
+  const year = vnTime.getFullYear();
+  return `${year}-W${String(weekNumber).padStart(2, '0')}`;
+};
+
+/**
+ * Đảm bảo các tài xế đang isOnline: true có phiên hoạt động
+ */
+const ensureActiveDriversHaveSession = async () => {
+  try {
+    const Driver = require('../models/Driver');
+    const onlineDrivers = await Driver.find({ isOnline: true, status: 'active' });
+    const now = new Date();
+    for (const d of onlineDrivers) {
+      if (!d.currentOnlineSessionId) {
+        await startDriverOnlineSession(d._id, now);
+      }
+    }
+  } catch (e) {
+    console.error('[OnlineSession] Lỗi ensureActiveDriversHaveSession:', e.message);
+  }
+};
+
+/**
+ * Tự động tạo dữ liệu phiên Online cho một tuần dựa trên các đơn hàng đã hoàn thành
+ * (Dùng để khởi tạo dữ liệu quá khứ cho tuần này hoặc các tuần trước khi nâng cấp hệ thống)
+ */
+const backfillWeeklyOnlineSessionsFromOrders = async (startOfWeek, endOfWeek) => {
+  try {
+    const Order = require('../models/Order');
+    const DriverOnlineSession = require('../models/DriverOnlineSession');
+
+    // Lấy tất cả đơn hoàn thành trong khoảng thời gian này
+    const completedOrders = await Order.find({
+      status: 'COMPLETED',
+      assignedTo: { $ne: null },
+      $or: [
+        { deliveredAt: { $gte: startOfWeek, $lte: endOfWeek } },
+        { deliveredAt: null, updatedAt: { $gte: startOfWeek, $lte: endOfWeek } },
+        { deliveredAt: null, createdAt: { $gte: startOfWeek, $lte: endOfWeek } }
+      ]
+    }).select('assignedTo createdAt acceptedAt deliveredAt updatedAt').lean();
+
+    if (!completedOrders || completedOrders.length === 0) return 0;
+
+    // Gom nhóm đơn hàng theo [driverId][dateString]
+    const driverDayMap = {};
+
+    for (const order of completedOrders) {
+      const driverId = order.assignedTo?.toString();
+      if (!driverId) continue;
+
+      const orderTime = order.deliveredAt || order.updatedAt || order.createdAt;
+      const dateStr = new Date(orderTime).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const groupKey = `${driverId}_${dateStr}`;
+
+      const tStart = new Date(order.acceptedAt || order.createdAt || orderTime).getTime();
+      const tEnd = new Date(order.deliveredAt || order.updatedAt || orderTime).getTime();
+
+      if (!driverDayMap[groupKey]) {
+        driverDayMap[groupKey] = {
+          driverId,
+          dateStr,
+          minTime: tStart,
+          maxTime: tEnd,
+          sampleDate: orderTime
+        };
+      } else {
+        driverDayMap[groupKey].minTime = Math.min(driverDayMap[groupKey].minTime, tStart);
+        driverDayMap[groupKey].maxTime = Math.max(driverDayMap[groupKey].maxTime, tEnd);
+      }
+    }
+
+    let createdCount = 0;
+    const now = new Date();
+
+    for (const item of Object.values(driverDayMap)) {
+      // Kiểm tra xem ngày đó tài xế đã có session nào chưa
+      const existing = await DriverOnlineSession.findOne({
+        driverId: item.driverId,
+        date: item.dateStr
+      });
+
+      if (!existing) {
+        // Thêm buffer 15 phút trước đơn đầu và sau đơn cuối để thể hiện thời gian chuẩn bị/nhận đơn
+        const bufferedStart = new Date(item.minTime - 15 * 60 * 1000);
+        const rawEnd = new Date(item.maxTime + 15 * 60 * 1000);
+        const bufferedEnd = rawEnd > now ? now : rawEnd;
+
+        const durSec = Math.max(300, Math.round((bufferedEnd.getTime() - bufferedStart.getTime()) / 1000));
+
+        const session = new DriverOnlineSession({
+          driverId: item.driverId,
+          startTime: bufferedStart,
+          endTime: bufferedEnd,
+          durationSeconds: durSec,
+          durationMinutes: Math.round(durSec / 60),
+          date: item.dateStr,
+          weekIdentifier: getWeekIdentifierForDate(item.sampleDate),
+          endReason: 'MANUAL'
+        });
+        await session.save();
+        createdCount++;
+      }
+    }
+
+    if (createdCount > 0) {
+      console.log(`[OnlineSession] Đã tái tạo thành công ${createdCount} phiên Online từ đơn hàng.`);
+    }
+    return createdCount;
+  } catch (err) {
+    console.error('[OnlineSession] Lỗi backfillWeeklyOnlineSessionsFromOrders:', err.message);
+    return 0;
+  }
+};
+
 module.exports = {
   startDriverOnlineSession,
   endDriverOnlineSession,
   getDriverOnlineSecondsInRange,
-  formatOnlineDuration
+  formatOnlineDuration,
+  ensureActiveDriversHaveSession,
+  backfillWeeklyOnlineSessionsFromOrders
 };

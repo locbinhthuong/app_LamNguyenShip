@@ -484,17 +484,23 @@ export default function Dashboard() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <div className="inline-flex items-center gap-1.5">
-                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
-                            efficiency >= 80 
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                              : efficiency >= 40 
-                              ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                              : 'bg-rose-50 text-rose-600 border-rose-200'
-                          }`}>
-                            ⚡ {ordersPerHour} đơn/g ({efficiency}%)
+                        {driver.onlineSeconds > 0 ? (
+                          <div className="inline-flex items-center gap-1.5">
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
+                              efficiency >= 80 
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                : efficiency >= 40 
+                                ? 'bg-amber-50 text-amber-700 border-amber-200' 
+                                : 'bg-rose-50 text-rose-600 border-rose-200'
+                            }`}>
+                              ⚡ {ordersPerHour} đơn/g ({efficiency}%)
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs font-medium text-slate-400">
+                            ---
                           </span>
-                        </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span className="font-bold text-green-600 sm:text-base text-sm bg-green-50/50 px-2 py-1 rounded-lg">
