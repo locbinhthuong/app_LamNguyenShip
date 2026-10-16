@@ -151,8 +151,12 @@ const revenueController = {
         monthlyRevenue += stat.monthFee;
 
         const todayOnlineSec = dailyOnlineMap[dId] || 0;
+        const todayOnlineMinutes = Math.floor(todayOnlineSec / 60);
         const todayOnlineHours = Number((todayOnlineSec / 3600).toFixed(2));
         const todayOnlineTimeStr = formatOnlineDuration(todayOnlineSec);
+        const todayOrderPoints = stat.todayOrders;
+        const todayTimePoints = Math.round(todayOnlineMinutes / 10);
+        const todayTotalPoints = todayOrderPoints + todayTimePoints;
 
         let todayOrdersPerHour = 0;
         let todayEfficiencyPercent = 0;
@@ -162,8 +166,12 @@ const revenueController = {
         }
 
         const weekOnlineSec = weeklyOnlineMap[dId] || 0;
+        const weekOnlineMinutes = Math.floor(weekOnlineSec / 60);
         const weekOnlineHours = Number((weekOnlineSec / 3600).toFixed(2));
         const weekOnlineTimeStr = formatOnlineDuration(weekOnlineSec);
+        const weekOrderPoints = stat.weekOrders;
+        const weekTimePoints = Math.round(weekOnlineMinutes / 10);
+        const weekTotalPoints = weekOrderPoints + weekTimePoints;
 
         let weekOrdersPerHour = 0;
         let weekEfficiencyPercent = 0;
@@ -185,16 +193,24 @@ const revenueController = {
           todayFee: stat.todayFee,
           todayBonus: stat.todayBonus,
           todayOnlineSeconds: todayOnlineSec,
+          todayOnlineMinutes,
           todayOnlineHours,
           todayOnlineTimeStr,
+          todayOrderPoints,
+          todayTimePoints,
+          todayTotalPoints,
           todayOrdersPerHour,
           todayEfficiencyPercent,
           weekOrders: stat.weekOrders,
           weekFee: stat.weekFee,
           weekBonus: stat.weekBonus,
           weekOnlineSeconds: weekOnlineSec,
+          weekOnlineMinutes,
           weekOnlineHours,
           weekOnlineTimeStr,
+          weekOrderPoints,
+          weekTimePoints,
+          weekTotalPoints,
           weekOrdersPerHour,
           weekEfficiencyPercent,
           monthOrders: stat.monthOrders,

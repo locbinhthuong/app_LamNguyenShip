@@ -22,7 +22,7 @@ const toDisplayDate = (dateStr) => {
 export default function Revenue() {
   const [selectedDate, setSelectedDate] = useState(() => toDateString(new Date()));
   const [viewTab, setViewTab] = useState('revenue'); // 'revenue' | 'online'
-  const [onlineSortBy, setOnlineSortBy] = useState('onlineDay'); // 'onlineDay' | 'ordersDay' | 'efficiencyDay' | 'onlineWeek'
+  const [onlineSortBy, setOnlineSortBy] = useState('pointsDay'); // 'pointsDay' | 'pointsWeek' | 'onlineDay' | 'ordersDay' | 'onlineWeek'
   const [stats, setStats] = useState({
     totalRevenue: 0,
     dailyRevenue: 0,
@@ -50,13 +50,19 @@ export default function Revenue() {
     if (!drivers || drivers.length === 0) return [];
     const list = [...drivers];
     return list.sort((a, b) => {
+      if (onlineSortBy === 'pointsWeek') {
+        if ((b.weekTotalPoints || 0) !== (a.weekTotalPoints || 0)) {
+          return (b.weekTotalPoints || 0) - (a.weekTotalPoints || 0);
+        }
+        return (b.weekOrders || 0) - (a.weekOrders || 0);
+      }
       if (onlineSortBy === 'ordersDay') {
         if ((b.todayOrders || 0) !== (a.todayOrders || 0)) return (b.todayOrders || 0) - (a.todayOrders || 0);
         return (b.todayOnlineSeconds || 0) - (a.todayOnlineSeconds || 0);
       }
-      if (onlineSortBy === 'efficiencyDay') {
-        if ((b.todayEfficiencyPercent || 0) !== (a.todayEfficiencyPercent || 0)) {
-          return (b.todayEfficiencyPercent || 0) - (a.todayEfficiencyPercent || 0);
+      if (onlineSortBy === 'onlineDay') {
+        if ((b.todayOnlineSeconds || 0) !== (a.todayOnlineSeconds || 0)) {
+          return (b.todayOnlineSeconds || 0) - (a.todayOnlineSeconds || 0);
         }
         return (b.todayOrders || 0) - (a.todayOrders || 0);
       }
@@ -66,11 +72,14 @@ export default function Revenue() {
         }
         return (b.weekOrders || 0) - (a.weekOrders || 0);
       }
-      // Mặc định: Online ngày nhiều nhất
-      if ((b.todayOnlineSeconds || 0) !== (a.todayOnlineSeconds || 0)) {
-        return (b.todayOnlineSeconds || 0) - (a.todayOnlineSeconds || 0);
+      // Mặc định: Điểm Ngày (1 đơn = 1đ, 10p online = 1đ)
+      if ((b.todayTotalPoints || 0) !== (a.todayTotalPoints || 0)) {
+        return (b.todayTotalPoints || 0) - (a.todayTotalPoints || 0);
       }
-      return (b.todayOrders || 0) - (a.todayOrders || 0);
+      if ((b.todayOrders || 0) !== (a.todayOrders || 0)) {
+        return (b.todayOrders || 0) - (a.todayOrders || 0);
+      }
+      return (b.todayOnlineSeconds || 0) - (a.todayOnlineSeconds || 0);
     });
   }, [drivers, onlineSortBy]);
 
@@ -316,55 +325,66 @@ export default function Revenue() {
              </div>
 
              {/* Nút sắp xếp dành riêng cho Tab Online */}
-             {viewTab === 'online' && (
-               <div className="flex items-center gap-1.5 flex-wrap">
-                 <span className="text-xs font-semibold text-slate-500">Sắp xếp:</span>
-                 <button
-                   type="button"
-                   onClick={() => setOnlineSortBy('onlineDay')}
-                   className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                     onlineSortBy === 'onlineDay'
-                       ? 'bg-emerald-600 text-white shadow-sm'
-                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                   }`}
-                 >
-                   ⏱️ Online Ngày
-                 </button>
-                 <button
-                   type="button"
-                   onClick={() => setOnlineSortBy('ordersDay')}
-                   className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                     onlineSortBy === 'ordersDay'
-                       ? 'bg-blue-600 text-white shadow-sm'
-                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                   }`}
-                 >
-                   ☀️ Đơn Ngày
-                 </button>
-                 <button
-                   type="button"
-                   onClick={() => setOnlineSortBy('efficiencyDay')}
-                   className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                     onlineSortBy === 'efficiencyDay'
-                       ? 'bg-purple-600 text-white shadow-sm'
-                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                   }`}
-                 >
-                   ⚡ Hiệu Suất Ngày
-                 </button>
-                 <button
-                   type="button"
-                   onClick={() => setOnlineSortBy('onlineWeek')}
-                   className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                     onlineSortBy === 'onlineWeek'
-                       ? 'bg-indigo-600 text-white shadow-sm'
-                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                   }`}
-                 >
-                   ⏱️ Online Tuần
-                 </button>
-               </div>
-             )}
+              {viewTab === 'online' && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-semibold text-slate-500">Sắp xếp:</span>
+                  <button
+                    type="button"
+                    onClick={() => setOnlineSortBy('pointsDay')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                      onlineSortBy === 'pointsDay'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    🏆 Điểm Ngày
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlineSortBy('pointsWeek')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                      onlineSortBy === 'pointsWeek'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    🏆 Điểm Tuần
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlineSortBy('onlineDay')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                      onlineSortBy === 'onlineDay'
+                        ? 'bg-emerald-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    ⏱️ Online Ngày
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlineSortBy('ordersDay')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                      onlineSortBy === 'ordersDay'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    ☀️ Đơn Ngày
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOnlineSortBy('onlineWeek')}
+                    className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                      onlineSortBy === 'onlineWeek'
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    }`}
+                  >
+                    ⏱️ Online Tuần
+                  </button>
+                </div>
+              )}
           </div>
 
           {/* TAB 1: BẢNG DOANH THU CHI TIẾT */}
@@ -431,11 +451,11 @@ export default function Revenue() {
                   <th className="px-4 py-3.5 text-center">Trạng thái</th>
                   <th className="px-4 py-3.5 text-center bg-emerald-50/60 text-emerald-800">⏱️ Online Ngày</th>
                   <th className="px-4 py-3.5 text-center bg-emerald-50/60 text-emerald-800">☀️ Đơn Ngày</th>
-                  <th className="px-4 py-3.5 text-center bg-emerald-50/60 text-emerald-800">⚡ Hiệu Suất Ngày</th>
+                  <th className="px-4 py-3.5 text-center bg-emerald-50/60 text-amber-800">🏆 Điểm Ngày</th>
                   <th className="px-4 py-3.5 text-right bg-emerald-50/60 text-emerald-800">Ship Ngày</th>
                   <th className="px-4 py-3.5 text-center bg-indigo-50/50 text-indigo-800">⏱️ Online Tuần</th>
                   <th className="px-4 py-3.5 text-center bg-indigo-50/50 text-indigo-800">📊 Đơn Tuần</th>
-                  <th className="px-4 py-3.5 text-center bg-indigo-50/50 text-indigo-800">⚡ Hiệu Suất Tuần</th>
+                  <th className="px-4 py-3.5 text-center bg-indigo-50/50 text-amber-800">🏆 Điểm Tuần</th>
                   <th className="px-4 py-3.5 text-right bg-indigo-50/50 text-indigo-800">Ship Tuần</th>
                 </tr>
               </thead>
@@ -488,19 +508,14 @@ export default function Revenue() {
                           </span>
                         </td>
                         <td className="px-4 py-3.5 text-center bg-emerald-50/20">
-                          {d.todayOnlineSeconds > 0 ? (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
-                              todayEff >= 80 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                : todayEff >= 40 
-                                ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                                : 'bg-rose-50 text-rose-600 border-rose-200'
-                            }`}>
-                              ⚡ {d.todayOrdersPerHour || 0} đơn/g ({todayEff}%)
+                          <div className="inline-flex flex-col items-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-100 text-amber-800 border border-amber-300 shadow-sm">
+                              🏆 {d.todayTotalPoints || 0} điểm
                             </span>
-                          ) : (
-                            <span className="text-xs text-slate-400 font-medium">---</span>
-                          )}
+                            <span className="text-[10px] text-slate-500 font-medium mt-0.5">
+                              {d.todayOrderPoints || 0}đ đơn + {d.todayTimePoints || 0}đ giờ
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3.5 text-right font-bold text-emerald-600 bg-emerald-50/20">
                           {formatCurrency(d.todayFee || 0)}
@@ -516,19 +531,14 @@ export default function Revenue() {
                           </span>
                         </td>
                         <td className="px-4 py-3.5 text-center bg-indigo-50/20">
-                          {d.weekOnlineSeconds > 0 ? (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
-                              weekEff >= 80 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                : weekEff >= 40 
-                                ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                                : 'bg-rose-50 text-rose-600 border-rose-200'
-                            }`}>
-                              ⚡ {d.weekOrdersPerHour || 0} đơn/g ({weekEff}%)
+                          <div className="inline-flex flex-col items-center">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-100 text-indigo-800 border border-indigo-300 shadow-sm">
+                              🏆 {d.weekTotalPoints || 0} điểm
                             </span>
-                          ) : (
-                            <span className="text-xs text-slate-400 font-medium">---</span>
-                          )}
+                            <span className="text-[10px] text-slate-500 font-medium mt-0.5">
+                              {d.weekOrderPoints || 0}đ đơn + {d.weekTimePoints || 0}đ giờ
+                            </span>
+                          </div>
                         </td>
                         <td className="px-4 py-3.5 text-right font-bold text-indigo-600 bg-indigo-50/20">
                           {formatCurrency(d.weekFee || 0)}

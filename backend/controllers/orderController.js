@@ -1823,13 +1823,20 @@ const orderController = {
         const onlineHours = Number((onlineSeconds / 3600).toFixed(2));
         const onlineTimeStr = formatOnlineDuration(onlineSeconds);
 
+        // Tính Điểm Đua Top Tuần theo quy tắc:
+        // - 1 đơn hoàn thành = 1 điểm
+        // - 10 phút online = 1 điểm (onlineSeconds / 600)
+        const onlineMinutes = Math.floor(onlineSeconds / 60);
+        const timePoints = Math.round(onlineMinutes / 10);
+        const orderPoints = totalOrders;
+        const totalPoints = orderPoints + timePoints;
+
         // Hiệu suất: Số đơn / giờ online
         let ordersPerHour = 0;
         let efficiencyPercent = 0;
 
         if (onlineHours > 0) {
           ordersPerHour = Number((totalOrders / onlineHours).toFixed(2));
-          // Định mức chuẩn: 1.5 đơn/giờ tương đương 100% hiệu suất chuẩn
           efficiencyPercent = Math.min(100, Math.round((totalOrders / (onlineHours * 1.5)) * 100));
         } else {
           ordersPerHour = 0;
@@ -1841,16 +1848,24 @@ const orderController = {
           totalOrders,
           totalMoney,
           onlineSeconds,
+          onlineMinutes,
           onlineHours,
           onlineTimeStr,
+          orderPoints,
+          timePoints,
+          totalPoints,
           ordersPerHour,
           efficiencyPercent
         };
       });
 
-      const sortBy = req.query.sortBy || 'orders'; // 'orders' | 'online' | 'efficiency'
+      const sortBy = req.query.sortBy || 'points'; // 'points' | 'orders' | 'online' | 'efficiency'
 
       fullWeeklyStats.sort((a, b) => {
+        if (sortBy === 'orders') {
+          if (b.totalOrders !== a.totalOrders) return b.totalOrders - a.totalOrders;
+          return b.totalMoney - a.totalMoney;
+        }
         if (sortBy === 'online') {
           if (b.onlineSeconds !== a.onlineSeconds) return b.onlineSeconds - a.onlineSeconds;
           return b.totalOrders - a.totalOrders;
@@ -1859,7 +1874,8 @@ const orderController = {
           if (b.ordersPerHour !== a.ordersPerHour) return b.ordersPerHour - a.ordersPerHour;
           return b.totalOrders - a.totalOrders;
         }
-        // Mặc định: Xếp theo số đơn
+        // Mặc định: Xếp theo Tổng Điểm Đua Top Tuần (Điểm đơn + Điểm thời gian)
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints;
         if (b.totalOrders !== a.totalOrders) return b.totalOrders - a.totalOrders;
         return b.totalMoney - a.totalMoney;
       });

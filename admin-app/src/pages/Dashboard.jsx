@@ -29,7 +29,7 @@ export default function Dashboard() {
   // Bộ lọc
   const [selectedDate, setSelectedDate] = useState('');
   const [weekOffset, setWeekOffset] = useState(0);
-  const [rankingSortBy, setRankingSortBy] = useState('orders'); // 'orders' | 'online' | 'efficiency'
+  const [rankingSortBy, setRankingSortBy] = useState('points'); // 'points' | 'orders' | 'online'
 
   // Trạng thái cho Dọn dẹp dữ liệu
   const [cleanupMonths, setCleanupMonths] = useState(6);
@@ -40,19 +40,22 @@ export default function Dashboard() {
     if (!stats?.weeklyDriverStats) return [];
     const list = [...stats.weeklyDriverStats];
     return list.sort((a, b) => {
+      if (rankingSortBy === 'orders') {
+        if ((b.totalOrders || 0) !== (a.totalOrders || 0)) {
+          return (b.totalOrders || 0) - (a.totalOrders || 0);
+        }
+        return (b.totalMoney || 0) - (a.totalMoney || 0);
+      }
       if (rankingSortBy === 'online') {
         if ((b.onlineSeconds || 0) !== (a.onlineSeconds || 0)) {
           return (b.onlineSeconds || 0) - (a.onlineSeconds || 0);
         }
         return (b.totalOrders || 0) - (a.totalOrders || 0);
       }
-      if (rankingSortBy === 'efficiency') {
-        if ((b.ordersPerHour || 0) !== (a.ordersPerHour || 0)) {
-          return (b.ordersPerHour || 0) - (a.ordersPerHour || 0);
-        }
-        return (b.totalOrders || 0) - (a.totalOrders || 0);
+      // Mặc định: Điểm thưởng Top tuần (1 đơn = 1đ, 10p online = 1đ)
+      if ((b.totalPoints || 0) !== (a.totalPoints || 0)) {
+        return (b.totalPoints || 0) - (a.totalPoints || 0);
       }
-      // Mặc định: Nhiều đơn nhất
       if ((b.totalOrders || 0) !== (a.totalOrders || 0)) {
         return (b.totalOrders || 0) - (a.totalOrders || 0);
       }
@@ -395,6 +398,17 @@ export default function Dashboard() {
           <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">Sắp xếp theo:</span>
           <button 
             type="button"
+            onClick={() => setRankingSortBy('points')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              rankingSortBy === 'points' 
+                ? 'bg-amber-500 text-white shadow-sm' 
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <span>🏆</span> Điểm Đua Top Tuần
+          </button>
+          <button 
+            type="button"
             onClick={() => setRankingSortBy('orders')}
             className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
               rankingSortBy === 'orders' 
@@ -415,17 +429,6 @@ export default function Dashboard() {
           >
             <span>⏱️</span> Online nhiều nhất
           </button>
-          <button 
-            type="button"
-            onClick={() => setRankingSortBy('efficiency')}
-            className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 whitespace-nowrap ${
-              rankingSortBy === 'efficiency' 
-                ? 'bg-purple-600 text-white shadow-sm' 
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            }`}
-          >
-            <span>⚡</span> Hiệu suất cao nhất
-          </button>
         </div>
         
         <div className="overflow-x-auto rounded-xl border border-slate-100">
@@ -436,7 +439,7 @@ export default function Dashboard() {
                 <th className="px-4 py-3">Tài xế</th>
                 <th className="px-4 py-3 text-center">Thời gian Online</th>
                 <th className="px-4 py-3 text-center">Số đơn</th>
-                <th className="px-4 py-3 text-center">Hiệu suất</th>
+                <th className="px-4 py-3 text-center bg-amber-50/60 text-amber-800">🏆 Điểm Đua Top</th>
                 <th className="px-4 py-3 text-right">Tổng cước</th>
               </tr>
             </thead>
@@ -450,8 +453,6 @@ export default function Dashboard() {
                 </tr>
               ) : (
                 sortedWeeklyDrivers.map((driver, index) => {
-                  const efficiency = driver.efficiencyPercent || 0;
-                  const ordersPerHour = driver.ordersPerHour || 0;
                   return (
                     <tr key={driver._id?._id || index} className="group hover:bg-slate-50/80 transition-colors">
                       <td className="px-4 py-3 text-center">
@@ -483,24 +484,15 @@ export default function Dashboard() {
                           {driver.totalOrders}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center">
-                        {driver.onlineSeconds > 0 ? (
-                          <div className="inline-flex items-center gap-1.5">
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold border shadow-sm ${
-                              efficiency >= 80 
-                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                : efficiency >= 40 
-                                ? 'bg-amber-50 text-amber-700 border-amber-200' 
-                                : 'bg-rose-50 text-rose-600 border-rose-200'
-                            }`}>
-                              ⚡ {ordersPerHour} đơn/g ({efficiency}%)
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs font-medium text-slate-400">
-                            ---
+                      <td className="px-4 py-3 text-center bg-amber-50/20">
+                        <div className="inline-flex flex-col items-center">
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-amber-50 text-amber-700 border border-amber-200 shadow-sm">
+                            <span>🏆</span> {driver.totalPoints || 0} điểm
                           </span>
-                        )}
+                          <span className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                            {driver.orderPoints || driver.totalOrders || 0}đ đơn + {driver.timePoints || 0}đ giờ
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right">
                         <span className="font-bold text-green-600 sm:text-base text-sm bg-green-50/50 px-2 py-1 rounded-lg">
