@@ -239,7 +239,7 @@ export default function Drivers() {
                 </div>
                 <div className="rounded-xl bg-orange-50/50 p-2 text-center">
                   <p className="text-sm font-bold text-orange-500">
-                    {driver.commissionRate || 20}%
+                    {driver.commissionRate || 15}%
                     {driver.isCustomCommission && <span className="text-[10px] ml-0.5" title="Admin cài đặt cố định">🔒</span>}
                   </p>
                   <p className="text-[10px] text-slate-500">
@@ -356,7 +356,7 @@ export default function Drivers() {
                     </td>
                     <td className="table-td font-bold text-green-400">{driver.stats?.completedOrders || 0}</td>
                     <td className="table-td font-bold text-orange-500">
-                      {driver.commissionRate || 20}%
+                      {driver.commissionRate || 15}%
                       {driver.isCustomCommission && (
                         <span className="ml-1 text-[10px] text-amber-700 bg-amber-100 px-1 py-0.5 rounded font-normal" title="Admin cài đặt cố định">🔒</span>
                       )}

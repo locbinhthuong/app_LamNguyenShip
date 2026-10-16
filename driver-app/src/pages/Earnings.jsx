@@ -532,7 +532,7 @@ export default function Earnings() {
               const currentTier = driver?.driverTier || 1;
               const points = driver?.weeklyPoints || 0;
               const isCustom = driver?.isCustomCommission;
-              const commission = driver?.commissionRate || (currentTier === 3 ? 12 : (currentTier === 2 ? 15 : 20));
+              const commission = driver?.commissionRate || 15;
               const thresholds = driver?.tierInfo?.thresholds || { TIER_1_MAX: 2, TIER_2_MAX: 5, TIER_3_MIN: 6 };
 
               // Cấu hình theme theo cấp bậc

@@ -1322,7 +1322,7 @@ const orderController = {
       // LOGIC CỘNG CÔNG NỢ TỰ ĐỘNG KHI HOÀN THÀNH ĐƠN
       // Tiền nợ = Tổng Phí Giao Hàng * Phần Trăm Chiết Khấu Hiện Tại Của Tài Xế
       const deliveryFee = order.deliveryFee || 0;
-      const commissionRate = order.commissionRate != null ? order.commissionRate : (driver?.commissionRate || 20);
+      const commissionRate = order.commissionRate != null ? order.commissionRate : (driver?.commissionRate || 15);
       const debtAmount = Math.round(deliveryFee * (commissionRate / 100));
 
       if (debtAmount > 0) {

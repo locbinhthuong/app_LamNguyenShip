@@ -30,7 +30,7 @@ export default function DriverDetail() {
   
   // Popup Sửa thông tin
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 20, isCustomCommission: false, driverTier: 1, weeklyPoints: 0, isPriority5s: false });
+  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 15, isCustomCommission: false, driverTier: 1, weeklyPoints: 0, isPriority5s: false });
   const [isUploading, setIsUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -63,7 +63,7 @@ export default function DriverDetail() {
         name: drRes.data.name || '',
         vehicleType: drRes.data.vehicleType || 'motorcycle',
         licensePlate: drRes.data.licensePlate || '',
-        commissionRate: drRes.data.commissionRate || 20,
+        commissionRate: drRes.data.commissionRate || 15,
         isCustomCommission: drRes.data.isCustomCommission || false,
         driverTier: drRes.data.driverTier || 1,
         weeklyPoints: drRes.data.weeklyPoints || 0,
@@ -207,7 +207,7 @@ export default function DriverDetail() {
               <div className="flex justify-between items-center">
                 <span className="text-slate-500">Mức chiết khấu:</span>
                 <div className="text-right">
-                  <span className="text-slate-800 font-bold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">{driver.commissionRate || 20}%</span>
+                  <span className="text-slate-800 font-bold bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full">{driver.commissionRate || 15}%</span>
                   {driver.isCustomCommission && (
                     <span className="ml-1 text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-semibold">🔒 Cố định</span>
                   )}
@@ -503,9 +503,9 @@ export default function DriverDetail() {
                   onChange={e => setEditForm({...editForm, commissionRate: Number(e.target.value)})}
                   className="mt-1 w-full rounded-xl border border-sky-300 bg-sky-50 hover:bg-sky-100 p-3 text-sky-800 font-bold focus:border-sky-600 focus:outline-none focus:ring-1 focus:ring-sky-600"
                 >
-                  <option value={12}>12% (Cấp 3 - Vàng)</option>
-                  <option value={15}>15% (Cấp 2 - Bạc)</option>
-                  <option value={20}>20% (Cấp 1 - Đồng)</option>
+                  <option value={15}>15% (Tiêu chuẩn)</option>
+                  <option value={20}>20% (Cao cấp)</option>
+                  <option value={12}>12% (Ưu đãi đặc biệt)</option>
                 </select>
               </div>
 

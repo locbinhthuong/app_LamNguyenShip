@@ -70,7 +70,7 @@ const driverSchema = new mongoose.Schema({
   },
   commissionRate: {
     type: Number,
-    default: 20
+    default: 15
   },
   // Hệ thống tính điểm và cấp bậc theo tuần
   driverTier: {

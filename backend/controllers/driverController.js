@@ -196,7 +196,7 @@ const driverController = {
         password: hashedPassword,
         vehicleType: vehicleType || 'motorcycle',
         licensePlate,
-        commissionRate: commissionRate !== undefined ? Number(commissionRate) : 20,
+        commissionRate: commissionRate !== undefined ? Number(commissionRate) : 15,
         isCustomCommission: isCustomCommission !== undefined ? Boolean(isCustomCommission) : false,
         driverTier: 1,
         weeklyPoints: 0
