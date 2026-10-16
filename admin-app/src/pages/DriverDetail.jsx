@@ -30,7 +30,7 @@ export default function DriverDetail() {
   
   // Popup Sửa thông tin
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 15, isPriority5s: false });
+  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 20, isCustomCommission: false, driverTier: 1, weeklyPoints: 0, isPriority5s: false });
   const [isUploading, setIsUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
