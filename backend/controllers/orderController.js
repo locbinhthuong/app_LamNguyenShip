@@ -1759,30 +1759,22 @@ const orderController = {
         backfillWeeklyOnlineSessionsFromOrders 
       } = require('../utils/onlineSessionHelper');
 
-      // Đảm bảo các tài xế đang isOnline: true có phiên hoạt động ngay
+      // 1. Đảm bảo các tài xế đang isOnline: true có phiên hoạt động ngay
       await ensureActiveDriversHaveSession();
 
-      // Lấy tất cả các phiên Online có giao thoa với khoảng thời gian tuần này
-      let sessions = await DriverOnlineSession.find({
+      // 2. Tự động tái tạo các phiên online từ lịch sử đơn hàng cho các ngày tài xế chạy đơn mà chưa có phiên
+      if (weeklyDriverOrders.length > 0) {
+        await backfillWeeklyOnlineSessionsFromOrders(startOfWeek, endOfWeek);
+      }
+
+      // 3. Lấy tất cả các phiên Online có giao thoa với khoảng thời gian tuần này
+      const sessions = await DriverOnlineSession.find({
         startTime: { $lte: endOfWeek },
         $or: [
           { endTime: { $gte: startOfWeek } },
           { endTime: null }
         ]
       }).lean();
-
-      // Nếu tuần này chưa có dữ liệu phiên online nhưng đã có đơn hàng hoàn thành
-      // -> Tự động tái tạo các phiên online từ lịch sử đơn hàng tuần này để có số giờ thực tế
-      if (sessions.length === 0 && weeklyDriverOrders.length > 0) {
-        await backfillWeeklyOnlineSessionsFromOrders(startOfWeek, endOfWeek);
-        sessions = await DriverOnlineSession.find({
-          startTime: { $lte: endOfWeek },
-          $or: [
-            { endTime: { $gte: startOfWeek } },
-            { endTime: null }
-          ]
-        }).lean();
-      }
 
       const now = new Date();
       const driverOnlineMap = {};

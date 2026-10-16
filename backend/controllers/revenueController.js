@@ -72,11 +72,73 @@ const revenueController = {
       // Lấy danh sách ID tài xế để truy vấn thông tin
       const driverIds = statsAgg.map(s => s._id).filter(id => id != null);
       const Driver = require('../models/Driver');
-      const driversInfo = await Driver.find({ _id: { $in: driverIds } }).select('name phone walletDebt');
+      const allActiveDrivers = await Driver.find({ 
+        $or: [
+          { _id: { $in: driverIds } },
+          { status: 'active' }
+        ]
+      }).select('name phone walletDebt driverCode isOnline avatar');
+
       const driverMap = {};
-      driversInfo.forEach(d => {
+      allActiveDrivers.forEach(d => {
         driverMap[d._id.toString()] = d;
       });
+
+      const DriverOnlineSession = require('../models/DriverOnlineSession');
+      const { 
+        formatOnlineDuration, 
+        ensureActiveDriversHaveSession, 
+        backfillWeeklyOnlineSessionsFromOrders 
+      } = require('../utils/onlineSessionHelper');
+
+      // Tự động kiểm tra và tái tạo phiên online
+      await ensureActiveDriversHaveSession();
+      await backfillWeeklyOnlineSessionsFromOrders(startOfWeek, endOfWeek);
+
+      // 1. Phiên online trong ngày đã chọn
+      const dailySessions = await DriverOnlineSession.find({
+        startTime: { $lte: endOfDay },
+        $or: [
+          { endTime: { $gte: today } },
+          { endTime: null }
+        ]
+      }).lean();
+
+      // 2. Phiên online trong tuần của ngày đã chọn
+      const weeklySessions = await DriverOnlineSession.find({
+        startTime: { $lte: endOfWeek },
+        $or: [
+          { endTime: { $gte: startOfWeek } },
+          { endTime: null }
+        ]
+      }).lean();
+
+      const now = new Date();
+      const dailyOnlineMap = {};
+      for (const s of dailySessions) {
+        if (!s.driverId) continue;
+        const dId = s.driverId.toString();
+        const sStart = new Date(s.startTime);
+        const sEnd = s.endTime ? new Date(s.endTime) : (now < endOfDay ? now : endOfDay);
+        const effStart = Math.max(sStart.getTime(), today.getTime());
+        const effEnd = Math.min(sEnd.getTime(), endOfDay.getTime());
+        if (effEnd > effStart) {
+          dailyOnlineMap[dId] = (dailyOnlineMap[dId] || 0) + Math.round((effEnd - effStart) / 1000);
+        }
+      }
+
+      const weeklyOnlineMap = {};
+      for (const s of weeklySessions) {
+        if (!s.driverId) continue;
+        const dId = s.driverId.toString();
+        const sStart = new Date(s.startTime);
+        const sEnd = s.endTime ? new Date(s.endTime) : (now < endOfWeek ? now : endOfWeek);
+        const effStart = Math.max(sStart.getTime(), startOfWeek.getTime());
+        const effEnd = Math.min(sEnd.getTime(), endOfWeek.getTime());
+        if (effEnd > effStart) {
+          weeklyOnlineMap[dId] = (weeklyOnlineMap[dId] || 0) + Math.round((effEnd - effStart) / 1000);
+        }
+      }
 
       const driversResult = statsAgg.filter(s => s._id != null).map(stat => {
         const dId = stat._id.toString();
@@ -88,19 +150,53 @@ const revenueController = {
         weeklyRevenue += stat.weekFee;
         monthlyRevenue += stat.monthFee;
 
+        const todayOnlineSec = dailyOnlineMap[dId] || 0;
+        const todayOnlineHours = Number((todayOnlineSec / 3600).toFixed(2));
+        const todayOnlineTimeStr = formatOnlineDuration(todayOnlineSec);
+
+        let todayOrdersPerHour = 0;
+        let todayEfficiencyPercent = 0;
+        if (todayOnlineHours > 0) {
+          todayOrdersPerHour = Number((stat.todayOrders / todayOnlineHours).toFixed(2));
+          todayEfficiencyPercent = Math.min(100, Math.round((stat.todayOrders / (todayOnlineHours * 1.5)) * 100));
+        }
+
+        const weekOnlineSec = weeklyOnlineMap[dId] || 0;
+        const weekOnlineHours = Number((weekOnlineSec / 3600).toFixed(2));
+        const weekOnlineTimeStr = formatOnlineDuration(weekOnlineSec);
+
+        let weekOrdersPerHour = 0;
+        let weekEfficiencyPercent = 0;
+        if (weekOnlineHours > 0) {
+          weekOrdersPerHour = Number((stat.weekOrders / weekOnlineHours).toFixed(2));
+          weekEfficiencyPercent = Math.min(100, Math.round((stat.weekOrders / (weekOnlineHours * 1.5)) * 100));
+        }
+
         return {
           driverId: dId,
           name: info ? info.name : 'Tài xế đã xóa',
           phone: info ? info.phone : '',
+          driverCode: info?.driverCode || `TX${dId.slice(-6).toUpperCase()}`,
+          isOnline: !!info?.isOnline,
           totalOrders: stat.totalOrders,
           totalFee: stat.totalFee,
           totalBonus: stat.totalBonus,
           todayOrders: stat.todayOrders,
           todayFee: stat.todayFee,
           todayBonus: stat.todayBonus,
+          todayOnlineSeconds: todayOnlineSec,
+          todayOnlineHours,
+          todayOnlineTimeStr,
+          todayOrdersPerHour,
+          todayEfficiencyPercent,
           weekOrders: stat.weekOrders,
           weekFee: stat.weekFee,
           weekBonus: stat.weekBonus,
+          weekOnlineSeconds: weekOnlineSec,
+          weekOnlineHours,
+          weekOnlineTimeStr,
+          weekOrdersPerHour,
+          weekEfficiencyPercent,
           monthOrders: stat.monthOrders,
           monthFee: stat.monthFee,
           monthBonus: stat.monthBonus,
