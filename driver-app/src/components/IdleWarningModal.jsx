@@ -16,8 +16,8 @@ const formatDuration = (ms) => {
   return `${pad(minutes)}:${pad(seconds)}`;
 };
 
-// Tạm ẩn bảng cảnh báo treo app khi đang vận hành (chờ lên App Store)
-const IDLE_WARNING_UI_ENABLED = false;
+// Bật bảng cảnh báo treo app trên App Tài xế
+const IDLE_WARNING_UI_ENABLED = true;
 
 export default function IdleWarningModal() {
   if (!IDLE_WARNING_UI_ENABLED) return null;

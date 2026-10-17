@@ -5,8 +5,8 @@ import { getOrderById, acceptOrder, pickedUpOrder, completeOrder, cancelOrder, u
 import ConfirmModal from '../components/ConfirmModal';
 import { Package, Bike, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Phone, Map, Car, Key, Building2, Zap, Droplet, Wallet, Diamond, Trophy, Scale, AlertTriangle, ArrowLeft, RefreshCw, FileText, DollarSign } from 'lucide-react';
 
-// Tạm ẩn UI cảnh báo thời gian đi đơn trên App Tài xế cho tới khi cập nhật bản mới lên App Store / CH Play
-const SHOW_ORDER_SLA_WARNING = false;
+// Bật UI cảnh báo thời gian đi đơn (15p lấy hàng / 35p giao hàng) trên App Tài xế
+const SHOW_ORDER_SLA_WARNING = true;
 
 const LATE_DELIVERY_REASONS = [
   'Shop chuẩn bị hàng lâu',

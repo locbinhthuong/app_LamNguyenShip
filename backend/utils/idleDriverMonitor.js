@@ -10,9 +10,8 @@ const FORTY_FIVE_MINS_MS = 45 * 60 * 1000;      // 45 phút
 const LOCK_15_MINS_MS = 15 * 60 * 1000;         // Khóa 15 phút (Lần 2)
 const LOCK_12_HOURS_MS = 12 * 60 * 60 * 1000;   // Khóa 12 tiếng (Lần 3)
 
-// Tạm ẩn/tắt kích hoạt cảnh báo trong lúc chờ duyệt bản mới lên App Store / CH Play
-// Khi bản mới đã lên Store, chỉ cần đổi thành true (hoặc đặt IDLE_MONITOR_ENABLED=true trong .env)
-const IDLE_MONITOR_ENABLED = process.env.IDLE_MONITOR_ENABLED === 'true';
+// BẬT GIÁM SÁT & CẢNH BÁO TÀI XẾ TREO APP TRÊN PRODUCTION
+const IDLE_MONITOR_ENABLED = process.env.IDLE_MONITOR_ENABLED !== 'false';
 let didCleanupTestLocks = false;
 
 const WARNING_SOUND_OPTIONS = {

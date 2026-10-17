@@ -2,10 +2,8 @@
  * Tiện ích quản lý chu kỳ tuần và cấp bậc tài xế theo múi giờ Việt Nam (Asia/Ho_Chi_Minh)
  */
 
-// BẬT / TẮT HỆ THỐNG CẤP BẬC VÀ TỰ ĐỘNG THAY ĐỔI CHIẾT KHẤU TÀI XẾ
-// Tạm tắt (false) trong lúc chờ cập nhật bản mới lên App Store / CH Play để không tự ý đổi chiết khấu của tài xế
-// Khi App Store duyệt xong, chỉ cần đổi thành true (hoặc đặt TIER_SYSTEM_ENABLED=true trong .env)
-const ENABLE_TIER_SYSTEM = process.env.TIER_SYSTEM_ENABLED === 'true';
+// BẬT HỆ THỐNG CẤP BẬC VÀ TỰ ĐỘNG THAY ĐỔI CHIẾT KHẤU TÀI XẾ (20% - 15% - 10%)
+const ENABLE_TIER_SYSTEM = process.env.TIER_SYSTEM_ENABLED !== 'false';
 
 // BẬT / TẮT CHẾ ĐỘ TEST
 // Khi đang test: Cấp 1: <= 2 đơn | Cấp 2: 3-5 đơn | Cấp 3: >= 6 đơn

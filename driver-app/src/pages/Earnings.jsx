@@ -7,9 +7,7 @@ import { Browser } from '@capacitor/browser';
 import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, Eye, EyeOff, Trophy, Award, Flame, Zap, ShieldCheck, Sparkles } from 'lucide-react';
 
 // CẤU HÌNH HIỂN THỊ CẤP HẠNG TUẦN TRÊN APP TÀI XẾ
-// Tạm ẩn (false) trong lúc chưa cập nhật bản mới lên App Store / CH Play
-// Khi nào duyệt xong lên App Store chỉ cần đổi thành true
-const SHOW_TIER_FEATURE = false;
+const SHOW_TIER_FEATURE = true;
 
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount || 0);

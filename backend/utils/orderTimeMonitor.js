@@ -10,10 +10,8 @@ const DELIVERY_LIMIT_MINUTES = 35;             // 35 phút từ lúc Đã lấy 
 const PICKUP_LIMIT_MS = PICKUP_LIMIT_MINUTES * 60 * 1000;
 const DELIVERY_LIMIT_MS = DELIVERY_LIMIT_MINUTES * 60 * 1000;
 
-// Tạm ẩn bắn chuông/popup cảnh báo về App Tài xế trong lúc chờ duyệt bản mới lên App Store
-// (Hệ thống vẫn tự động ghi nhận đơn trễ và thống kê đầy đủ trên trang Admin)
-// Khi bản mới đã lên App Store, đổi thành true (hoặc đặt ORDER_WARNING_PUSH_ENABLED=true trong .env)
-const ORDER_WARNING_PUSH_ENABLED = process.env.ORDER_WARNING_PUSH_ENABLED === 'true';
+// BẬT BẮN CHUÔNG/POPUP CẢNH BÁO THỜI GIAN ĐI ĐƠN (15P LẤY HÀNG / 35P GIAO HÀNG) VỀ APP TÀI XẾ
+const ORDER_WARNING_PUSH_ENABLED = process.env.ORDER_WARNING_PUSH_ENABLED !== 'false';
 
 const WARNING_SOUND_OPTIONS = {
   sound: 'chuong_canhbao',
