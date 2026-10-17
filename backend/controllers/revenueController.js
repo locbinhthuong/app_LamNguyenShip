@@ -155,7 +155,7 @@ const revenueController = {
         const todayOnlineHours = Number((todayOnlineSec / 3600).toFixed(2));
         const todayOnlineTimeStr = formatOnlineDuration(todayOnlineSec);
         const todayOrderPoints = stat.todayOrders;
-        const todayTimePoints = Math.round(todayOnlineMinutes / 10);
+        const todayTimePoints = Math.floor(todayOnlineMinutes / 30);
         const todayTotalPoints = todayOrderPoints + todayTimePoints;
 
         let todayOrdersPerHour = 0;
@@ -170,7 +170,7 @@ const revenueController = {
         const weekOnlineHours = Number((weekOnlineSec / 3600).toFixed(2));
         const weekOnlineTimeStr = formatOnlineDuration(weekOnlineSec);
         const weekOrderPoints = stat.weekOrders;
-        const weekTimePoints = Math.round(weekOnlineMinutes / 10);
+        const weekTimePoints = Math.floor(weekOnlineMinutes / 30);
         const weekTotalPoints = weekOrderPoints + weekTimePoints;
 
         let weekOrdersPerHour = 0;

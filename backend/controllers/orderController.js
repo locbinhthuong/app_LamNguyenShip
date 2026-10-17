@@ -1826,9 +1826,9 @@ const orderController = {
 
         // Tính Điểm Đua Top Tuần theo quy tắc:
         // - 1 đơn hoàn thành = 1 điểm
-        // - 10 phút online = 1 điểm (onlineSeconds / 600)
+        // - 30 phút online = 1 điểm (onlineMinutes / 30)
         const onlineMinutes = Math.floor(onlineSeconds / 60);
-        const timePoints = Math.round(onlineMinutes / 10);
+        const timePoints = Math.floor(onlineMinutes / 30);
         const orderPoints = totalOrders;
         const totalPoints = orderPoints + timePoints;
 

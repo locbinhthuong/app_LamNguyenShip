@@ -72,7 +72,7 @@ export default function Revenue() {
         }
         return (b.weekOrders || 0) - (a.weekOrders || 0);
       }
-      // Mặc định: Điểm Ngày (1 đơn = 1đ, 10p online = 1đ)
+      // Mặc định: Điểm Ngày (1 đơn = 1đ, 30p online = 1đ)
       if ((b.todayTotalPoints || 0) !== (a.todayTotalPoints || 0)) {
         return (b.todayTotalPoints || 0) - (a.todayTotalPoints || 0);
       }

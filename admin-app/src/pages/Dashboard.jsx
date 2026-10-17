@@ -52,7 +52,7 @@ export default function Dashboard() {
         }
         return (b.totalOrders || 0) - (a.totalOrders || 0);
       }
-      // Mặc định: Điểm thưởng Top tuần (1 đơn = 1đ, 10p online = 1đ)
+      // Mặc định: Điểm thưởng Top tuần (1 đơn = 1đ, 30p online = 1đ)
       if ((b.totalPoints || 0) !== (a.totalPoints || 0)) {
         return (b.totalPoints || 0) - (a.totalPoints || 0);
       }
