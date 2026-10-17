@@ -1,0 +1,125 @@
+Build iOS App	Upload to App Store Connect	﻿2026-09-16T17:00:58.4038590Z ##[group]Run IPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -n 1)
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4039180Z [36;1mIPA_PATH=$(find $RUNNER_TEMP/export -name "*.ipa" | head -n 1)[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4039510Z [36;1m[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4039810Z [36;1mecho "Uploading $IPA_PATH to App Store Connect using fastlane..."[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4040180Z [36;1mcat <<EOF > generate_api_key.rb[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4040430Z [36;1mrequire 'json'[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4040660Z [36;1mrequire 'base64'[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4041010Z [36;1mraw_secret = ENV['APP_STORE_CONNECT_API_KEY_P8_BASE64'][0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4041510Z [36;1mkey_content = raw_secret.include?('BEGIN PRIVATE KEY') ? raw_secret : Base64.decode64(raw_secret)[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4041940Z [36;1m[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4042230Z [36;1mFile.write('api_key.json', {[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4042590Z [36;1m  key_id: ENV['APP_STORE_CONNECT_API_KEY_KEY_ID'],[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4042970Z [36;1m  issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4043370Z [36;1m  key: key_content,[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4043620Z [36;1m  in_house: false[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4043860Z [36;1m}.to_json)[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4044050Z [36;1mEOF[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4044260Z [36;1mruby generate_api_key.rb[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4044490Z [36;1m[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.4044920Z [36;1mfastlane pilot upload --api_key_path api_key.json --ipa "$IPA_PATH" --skip_waiting_for_build_processing true[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.5927980Z shell: /bin/bash -e {0}
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.5928300Z env:
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.5928930Z   APP_STORE_CONNECT_API_KEY_ISSUER_ID: ***
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.5929280Z   APP_STORE_CONNECT_API_KEY_KEY_ID: ***
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.5931300Z   APP_STORE_CONNECT_API_KEY_P8_BASE64: ***
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.5931570Z ##[endgroup]
+Build iOS App	Upload to App Store Connect	2026-09-16T17:00:58.6684140Z Uploading /Users/runner/work/_temp/export/App.ipa to App Store Connect using fastlane...
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:00.8604640Z [17:01:00]: [33mGet started using a Gemfile for fastlane https://docs.fastlane.tools/getting-started/ios/setup/#use-a-gemfile[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.0283630Z [17:01:03]: Sending anonymous analytics information
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.0392260Z [17:01:03]: Learn more at https://docs.fastlane.tools/#metrics
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.0487230Z [17:01:03]: No personal or sensitive data is sent.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.0591220Z [17:01:03]: You can disable this by adding `opt_out_usage` at the top of your Fastfile
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.0793900Z [17:01:03]: Creating authorization token for App Store Connect API
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.6466210Z [17:01:03]: [32mReady to upload new build to TestFlight (App: 6764319400)...[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.7274160Z [17:01:03]: Going to upload updated app to App Store Connect
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:03.7378320Z [17:01:03]: [32mThis might take a few minutes. Please don't interrupt the script.[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1326670Z [17:01:11]: [33m[altool] Running altool at path '/Applications/Xcode_26.6.app/Contents/SharedFrameworks/ContentDelivery.framework/Resources/altool'...
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1431500Z [31m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1432000Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1534470Z [!] Error uploading ipa file: 
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1535940Z [17:01:11]: [33m[altool] 
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1668110Z  [Application Loader Error Output]: [ContentDelivery.Uploader.C58C487C0] The provided entity includes an attribute with a value that has already been used (-19232) The bundle version must be higher than the previously uploaded version: ‘81’. (ID: c9b96eb6-d286-4d17-afee-db00ef1c7ed3)
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1680320Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1782100Z [Application Loader Error Output]: [altool.C58C487C0] Failed to upload package.[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1784120Z [17:01:11]: [33m[altool] 2026-09-16 17:01:11.105 [1m[31mERROR: [ContentDelivery.Uploader.C58C487C0] The provided entity includes an attribute with a value that has already been used (-19232) The bundle version must be higher than the previously uploaded version: ‘81’. (ID: c9b96eb6-d286-4d17-afee-db00ef1c7ed3)
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1894570Z [Application Loader Error Output]: [altool.C58C487C0] The provided entity includes an attribute with a value that has already been used (-19232) The bundle version must be higher than the previously uploaded version: ‘81’. (ID: c9b96eb6-d286-4d17-afee-db00ef1c7ed3)
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.1897480Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2001850Z [Application Loader Error Output]: [altool.102982E50] ExitFailure (31)[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2004770Z [17:01:11]: [33m[altool]    NSUnderlyingError : The provided entity includes an attribute with a value that has already been used (-19241) The bundle version must be higher than the previously uploaded version.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2107340Z [Application Loader Error Output]: The call to the altool completed with a non-zero exit status: 1. This indicates a failure.[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2108220Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2210960Z [17:01:11]: [33m[altool]       status : 409
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2313150Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2415210Z [17:01:11]: [33m[altool]       detail : The bundle version must be higher than the previously uploaded version.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2521710Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2624810Z [17:01:11]: [33m[altool]       source : 
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2729980Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2835790Z [17:01:11]: [33m[altool]          pointer : /data/attributes/cfBundleVersion
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.2948280Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.3054320Z [17:01:11]: [33m[altool]       id : c9b96eb6-d286-4d17-afee-db00ef1c7ed3
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.3161600Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.3264930Z [17:01:11]: [33m[altool]       code : ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.3370290Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.3472530Z [17:01:11]: [33m[altool]       title : The provided entity includes an attribute with a value that has already been used
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.3692930Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.3960540Z [17:01:11]: [33m[altool]       meta : 
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4065320Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4257030Z [17:01:11]: [33m[altool]          previousBundleVersion : 81
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4368810Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4472460Z [17:01:11]: [33m[altool]    previousBundleVersion : 81
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4473380Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4577330Z [17:01:11]: [33m[altool]    iris-code : ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4681900Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4795590Z [17:01:11]: [33m[altool] 2026-09-16 17:01:11.106 [1m[31mERROR: [altool.C58C487C0] Failed to upload package.[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.4925110Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5067290Z [17:01:11]: [33m[altool] Failed to upload archive at '/var/folders/36/tjdph2t965j8snz9_vkdnw0r0000gn/T/0fb6ce5d-f349-4eca-90c3-3738449708ec.ipa'.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5183560Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5286310Z [17:01:11]: [33m[altool] 2026-09-16 17:01:11.107 [1m[31mERROR: [altool.C58C487C0] The provided entity includes an attribute with a value that has already been used (-19232) The bundle version must be higher than the previously uploaded version: ‘81’. (ID: c9b96eb6-d286-4d17-afee-db00ef1c7ed3)
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5386090Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5491840Z [17:01:11]: [33m[altool]    NSUnderlyingError : The provided entity includes an attribute with a value that has already been used (-19241) The bundle version must be higher than the previously uploaded version.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5592880Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5795870Z [17:01:11]: [33m[altool]       status : 409
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.5897060Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6004640Z [17:01:11]: [33m[altool]       detail : The bundle version must be higher than the previously uploaded version.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6005770Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6109270Z [17:01:11]: [33m[altool]       source : 
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6212710Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6316220Z [17:01:11]: [33m[altool]          pointer : /data/attributes/cfBundleVersion
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6419560Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6521720Z [17:01:11]: [33m[altool]       id : c9b96eb6-d286-4d17-afee-db00ef1c7ed3
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6624420Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6726850Z [17:01:11]: [33m[altool]       code : ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6829690Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.6945120Z [17:01:11]: [33m[altool]       title : The provided entity includes an attribute with a value that has already been used
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7053730Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7155190Z [17:01:11]: [33m[altool]       meta : 
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7381880Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7486030Z [17:01:11]: [33m[altool]          previousBundleVersion : 81
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7589460Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7702110Z [17:01:11]: [33m[altool]    previousBundleVersion : 81
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7811710Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.7917590Z [17:01:11]: [33m[altool]    iris-code : ENTITY_ERROR.ATTRIBUTE.INVALID.DUPLICATE
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8018550Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8120280Z [17:01:11]: [33m[altool] [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8222800Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8325140Z [17:01:11]: [33m[altool] 2026-09-16 17:01:11.112 [1m[31mERROR: [altool.102982E50] ExitFailure (31)[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8432820Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8539740Z [17:01:11]: Application Loader output above ^
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8650730Z [17:01:11]: [31m[ContentDelivery.Uploader.C58C487C0] The provided entity includes an attribute with a value that has already been used (-19232) The bundle version must be higher than the previously uploaded version: ‘81’. (ID: c9b96eb6-d286-4d17-afee-db00ef1c7ed3)
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8751400Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8856260Z [17:01:11]: [31m[altool.C58C487C0] Failed to upload package.[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.8955880Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9061720Z [17:01:11]: [31m[altool.C58C487C0] The provided entity includes an attribute with a value that has already been used (-19232) The bundle version must be higher than the previously uploaded version: ‘81’. (ID: c9b96eb6-d286-4d17-afee-db00ef1c7ed3)
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9166620Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9273470Z [17:01:11]: [31m[altool.102982E50] ExitFailure (31)[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9384430Z [0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9386550Z [17:01:11]: [31mThe call to the altool completed with a non-zero exit status: 1. This indicates a failure.[0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9512000Z [17:01:11]: [31mCould not download/upload from App Store Connect![0m
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9633750Z 
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9761180Z #######################################################################
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9870400Z # fastlane 2.240.1 is available. You are on 2.239.0.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:11.9978700Z # You should use the latest version.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:12.0194360Z # Please update using `gem install fastlane`.
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:12.0309210Z #######################################################################
+Build iOS App	Upload to App Store Connect	2026-09-16T17:01:12.0459370Z ##[error]Process completed with exit code 1.

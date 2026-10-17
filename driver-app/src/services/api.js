@@ -146,8 +146,13 @@ export const deliveringOrder = async (id) => {
   return response.data;
 };
 
-export const completeOrder = async (id) => {
-  const response = await api.post(`/api/orders/${id}/complete`);
+export const completeOrder = async (id, payload = {}) => {
+  const response = await api.post(`/api/orders/${id}/complete`, payload);
+  return response.data;
+};
+
+export const updateOrderLateReason = async (id, lateReason) => {
+  const response = await api.put(`/api/orders/${id}/late-reason`, { lateReason });
   return response.data;
 };
 

@@ -1,9 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getOrderById, acceptOrder, pickedUpOrder, completeOrder, cancelOrder } from '../services/api';
+import { getOrderById, acceptOrder, pickedUpOrder, completeOrder, cancelOrder, updateOrderLateReason } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import { Package, Bike, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Phone, Map, Car, Key, Building2, Zap, Droplet, Wallet, Diamond, Trophy, Scale, AlertTriangle, ArrowLeft, RefreshCw, FileText, DollarSign } from 'lucide-react';
+
+// Tạm ẩn UI cảnh báo thời gian đi đơn trên App Tài xế cho tới khi cập nhật bản mới lên App Store / CH Play
+const SHOW_ORDER_SLA_WARNING = false;
+
+const LATE_DELIVERY_REASONS = [
+  'Shop chuẩn bị hàng lâu',
+  'Đợi khách nhận hàng lâu',
+  'Liên hệ khách không được',
+  'Kẹt xe / Đường đông',
+  'Thời tiết xấu (Mưa lớn / Ngập)',
+  'Sự cố xe cộ dọc đường',
+  'Khác'
+];
 
 const STATUS_STEPS = ['ACCEPTED', 'PICKED_UP', 'COMPLETED'];
 const STATUS_LABELS = {
@@ -27,6 +40,15 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showToast, setShowToast] = useState(null);
+  const [selectedLateReason, setSelectedLateReason] = useState('');
+  const [customLateReason, setCustomLateReason] = useState('');
+  const [savingLateReason, setSavingLateReason] = useState(false);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+
+  useEffect(() => {
+    const tickTimer = setInterval(() => setNowTick(Date.now()), 15000);
+    return () => clearInterval(tickTimer);
+  }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -111,6 +133,15 @@ export default function OrderDetail() {
          }
       }
 
+      if (orderData?.lateReason) {
+        if (LATE_DELIVERY_REASONS.includes(orderData.lateReason)) {
+          setSelectedLateReason(orderData.lateReason);
+        } else {
+          setSelectedLateReason('Khác');
+          setCustomLateReason(orderData.lateReason);
+        }
+      }
+
       setOrder(prev => {
         if (!prev && orderData?.status === 'PENDING' && !orderData?.assignedTo) {
           const currentTime = Date.now() + (window.serverTimeOffset || 0);
@@ -145,7 +176,7 @@ export default function OrderDetail() {
 
     const handleOrderUpdate = (e) => {
       const eventData = e.detail;
-      if ((typeof eventData === 'string' && eventData === id) || (eventData && eventData._id === id)) {
+      if ((typeof eventData === 'string' && eventData === id) || (eventData && (eventData._id === id || eventData.orderId === id))) {
         loadOrder();
       }
     };
@@ -171,6 +202,7 @@ export default function OrderDetail() {
     window.addEventListener('driver_order_picked_up', handleOrderUpdate);
     window.addEventListener('driver_order_delivering', handleOrderUpdate);
     window.addEventListener('driver_order_completed', handleOrderUpdate);
+    window.addEventListener('driver_order_time_warning', handleOrderUpdate);
 
     return () => {
       window.removeEventListener('driver_order_accepted', handleOrderAccepted);
@@ -180,19 +212,63 @@ export default function OrderDetail() {
       window.removeEventListener('driver_order_picked_up', handleOrderUpdate);
       window.removeEventListener('driver_order_delivering', handleOrderUpdate);
       window.removeEventListener('driver_order_completed', handleOrderUpdate);
+      window.removeEventListener('driver_order_time_warning', handleOrderUpdate);
     };
   }, [id, navigate, driver]);
+
+  const getFinalLateReason = () => {
+    if (selectedLateReason === 'Khác') {
+      return customLateReason.trim() || 'Khác';
+    }
+    return selectedLateReason.trim();
+  };
+
+  const handleSelectLateReason = async (reasonOption) => {
+    setSelectedLateReason(reasonOption);
+    if (reasonOption === 'Khác') return;
+    try {
+      setSavingLateReason(true);
+      await updateOrderLateReason(id, reasonOption);
+      setOrder(prev => prev ? { ...prev, lateReason: reasonOption, isLateDelivery: true } : prev);
+      showNotification('Đã lưu lý do giao đơn trễ!');
+    } catch (err) {
+      console.error('Lỗi lưu lý do trễ:', err);
+    } finally {
+      setSavingLateReason(false);
+    }
+  };
+
+  const handleSaveCustomLateReason = async () => {
+    const finalReason = customLateReason.trim();
+    if (!finalReason) {
+      showNotification('Vui lòng nhập lý do cụ thể', 'error');
+      return;
+    }
+    try {
+      setSavingLateReason(true);
+      await updateOrderLateReason(id, finalReason);
+      setOrder(prev => prev ? { ...prev, lateReason: finalReason, isLateDelivery: true } : prev);
+      showNotification('Đã lưu lý do giao đơn trễ!');
+    } catch (err) {
+      showNotification('Không thể lưu lý do', 'error');
+    } finally {
+      setSavingLateReason(false);
+    }
+  };
 
   const handleAction = async (action) => {
     if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(true);
     try {
-      const actions = {
-        accept: acceptOrder,
-        pickup: pickedUpOrder,
-        complete: completeOrder
-      };
-      const res = await actions[action](id);
+      let res;
+      if (action === 'accept') {
+        res = await acceptOrder(id);
+      } else if (action === 'pickup') {
+        res = await pickedUpOrder(id);
+      } else if (action === 'complete') {
+        const finalReason = getFinalLateReason();
+        res = await completeOrder(id, finalReason ? { lateReason: finalReason } : {});
+      }
       if (res && res.success === false) {
         const msg = res.message || 'Thao tác thất bại';
         showNotification(msg, 'error');
@@ -274,6 +350,15 @@ export default function OrderDetail() {
 
   if (!order) return null;
 
+  const elapsedPickupMins = order.acceptedAt
+    ? Math.max(0, Math.floor((nowTick - new Date(order.acceptedAt).getTime()) / 60000))
+    : 0;
+  const elapsedDeliveryMins = order.pickedUpAt
+    ? Math.max(0, Math.floor((nowTick - new Date(order.pickedUpAt).getTime()) / 60000))
+    : 0;
+  const showPickupWarning = SHOW_ORDER_SLA_WARNING && order.status === 'ACCEPTED' && (order.isLatePickup || elapsedPickupMins >= 15);
+  const showDeliveryWarning = SHOW_ORDER_SLA_WARNING && (order.status === 'PICKED_UP' || order.status === 'DELIVERING') && (order.isLateDelivery || elapsedDeliveryMins >= 35);
+
   return (
     <div 
       className="min-h-screen bg-slate-50 pb-36 sm:pb-40"
@@ -331,6 +416,93 @@ export default function OrderDetail() {
       </div>
 
       <div className="mx-auto max-w-lg space-y-4 p-4 sm:max-w-xl">
+        {/* CẢNH BÁO GIAI ĐOẠN 1: QUÁ 15 PHÚT CHƯA BẤM ĐÃ LẤY HÀNG */}
+        {showPickupWarning && (
+          <div className="bg-amber-50 rounded-2xl p-4 border-2 border-amber-400 shadow-md">
+            <div className="flex items-start gap-2.5">
+              <span className="text-2xl shrink-0">⏰</span>
+              <div>
+                <p className="text-amber-800 text-xs font-black uppercase tracking-wider">
+                  NHẮC NHỞ LẤY ĐƠN ({elapsedPickupMins} PHÚT)
+                </p>
+                <p className="text-amber-900 text-sm font-bold mt-1 leading-snug">
+                  Bạn hãy nhanh chóng tới shop lấy đơn để đảm bảo thời gian giao hàng và chất lượng đơn hàng!
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CẢNH BÁO GIAI ĐOẠN 2: QUÁ 35 PHÚT CHƯA GIAO XONG + CHỌN LÝ DO GIAO TRỄ */}
+        {showDeliveryWarning && (
+          <div className="bg-red-50 rounded-2xl p-4 border-2 border-red-400 shadow-md space-y-3">
+            <div className="flex items-start gap-2.5">
+              <span className="text-2xl shrink-0">🚨</span>
+              <div>
+                <p className="text-red-700 text-xs font-black uppercase tracking-wider">
+                  CẢNH BÁO GIAO ĐƠN TRỄ ({elapsedDeliveryMins} PHÚT &gt; 35 PHÚT)
+                </p>
+                <p className="text-red-900 text-sm font-bold mt-1 leading-snug">
+                  Bạn hãy nhanh chóng giao hàng! Đơn hàng đã quá 35 phút kể từ lúc lấy hàng, vui lòng chọn lý do giao đơn trễ bên dưới:
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-3 border border-red-200 space-y-2">
+              <p className="text-xs font-extrabold text-slate-700 uppercase">
+                Chọn lý do giao đơn trễ:
+              </p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {LATE_DELIVERY_REASONS.map((reasonOption) => {
+                  const isSelected = selectedLateReason === reasonOption;
+                  return (
+                    <button
+                      key={reasonOption}
+                      type="button"
+                      disabled={savingLateReason}
+                      onClick={() => handleSelectLateReason(reasonOption)}
+                      className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold border transition-all flex items-center justify-between ${
+                        isSelected
+                          ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-red-50/50'
+                      }`}
+                    >
+                      <span>{reasonOption}</span>
+                      {isSelected && <span>✓ Đã chọn</span>}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {selectedLateReason === 'Khác' && (
+                <div className="pt-2 space-y-2">
+                  <input
+                    type="text"
+                    value={customLateReason}
+                    onChange={(e) => setCustomLateReason(e.target.value)}
+                    placeholder="Nhập lý do giao trễ cụ thể..."
+                    className="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 focus:outline-none focus:border-red-500"
+                  />
+                  <button
+                    type="button"
+                    disabled={savingLateReason}
+                    onClick={handleSaveCustomLateReason}
+                    className="w-full py-2 rounded-xl bg-red-600 text-white text-xs font-bold shadow hover:bg-red-700 active:scale-95 transition-all"
+                  >
+                    {savingLateReason ? 'Đang lưu...' : '💾 Lưu lý do giao trễ'}
+                  </button>
+                </div>
+              )}
+
+              {order.lateReason && (
+                <p className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1.5 rounded-lg border border-emerald-200">
+                  ✅ Đã ghi nhận lý do: {order.lateReason}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* LỜI NHẮN TỪ ADMIN */}
         {order.driverReminder && (
           <div className="bg-red-50 rounded-xl p-3.5 sm:p-4 border-2 border-red-300 mb-4 shadow-md overflow-hidden relative">

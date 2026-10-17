@@ -140,6 +140,114 @@ const revenueController = {
         }
       }
 
+      // 3. Thống kê Đơn Đi Trễ (Giao hàng > 35 phút từ lúc Đã lấy hàng, hoặc Lấy hàng >= 15 phút từ lúc Nhận đơn)
+      const weekOrderDocs = await Order.find({
+        assignedTo: { $ne: null },
+        $or: [
+          {
+            status: 'COMPLETED',
+            $or: [
+              { deliveredAt: { $gte: startOfWeek, $lte: endOfWeek } },
+              { deliveredAt: null, updatedAt: { $gte: startOfWeek, $lte: endOfWeek } }
+            ]
+          },
+          {
+            status: { $in: ['ACCEPTED', 'PICKED_UP', 'DELIVERING'] },
+            createdAt: { $gte: startOfWeek, $lte: endOfWeek }
+          }
+        ]
+      })
+        .select('orderCode status assignedTo customerName customerPhone pickupAddress deliveryAddress deliveryFee acceptedAt pickedUpAt deliveredAt updatedAt createdAt isLatePickup isLateDelivery pickupDurationMinutes deliveryDurationMinutes lateReason')
+        .sort({ deliveredAt: -1, updatedAt: -1 })
+        .lean();
+
+      const dailyLateDeliveryCountMap = {};
+      const weeklyLateDeliveryCountMap = {};
+      const dailyLatePickupCountMap = {};
+      const weeklyLatePickupCountMap = {};
+      const todayLateOrdersList = [];
+      const weekLateOrdersList = [];
+
+      for (const ord of weekOrderDocs) {
+        if (!ord.assignedTo) continue;
+        const dId = ord.assignedTo.toString();
+        const dInfo = driverMap[dId];
+
+        const refDate = new Date(ord.deliveredAt || ord.pickedUpAt || ord.acceptedAt || ord.updatedAt || ord.createdAt);
+        const isOrderInToday = refDate >= today && refDate <= endOfDay;
+
+        // Tính số phút lấy hàng (acceptedAt -> pickedUpAt hoặc now nếu đang ACCEPTED)
+        let pickupMins = typeof ord.pickupDurationMinutes === 'number' && ord.pickupDurationMinutes > 0
+          ? ord.pickupDurationMinutes
+          : 0;
+        if (!pickupMins && ord.acceptedAt) {
+          const endPickup = ord.pickedUpAt ? new Date(ord.pickedUpAt) : (ord.status === 'ACCEPTED' ? now : null);
+          if (endPickup) {
+            pickupMins = Math.max(0, Math.round((endPickup - new Date(ord.acceptedAt)) / 60000));
+          }
+        }
+
+        // Tính số phút giao hàng (pickedUpAt -> deliveredAt hoặc now nếu đang PICKED_UP/DELIVERING)
+        let deliveryMins = typeof ord.deliveryDurationMinutes === 'number' && ord.deliveryDurationMinutes > 0
+          ? ord.deliveryDurationMinutes
+          : 0;
+        if (!deliveryMins && ord.pickedUpAt) {
+          const endDelivery = ord.deliveredAt
+            ? new Date(ord.deliveredAt)
+            : (['PICKED_UP', 'DELIVERING'].includes(ord.status) ? now : null);
+          if (endDelivery) {
+            deliveryMins = Math.max(0, Math.round((endDelivery - new Date(ord.pickedUpAt)) / 60000));
+          }
+        }
+
+        const isLatePickup = Boolean(ord.isLatePickup || pickupMins >= 15);
+        const isLateDelivery = Boolean(ord.isLateDelivery || deliveryMins > 35);
+
+        if (isLatePickup) {
+          weeklyLatePickupCountMap[dId] = (weeklyLatePickupCountMap[dId] || 0) + 1;
+          if (isOrderInToday) {
+            dailyLatePickupCountMap[dId] = (dailyLatePickupCountMap[dId] || 0) + 1;
+          }
+        }
+
+        if (isLateDelivery) {
+          weeklyLateDeliveryCountMap[dId] = (weeklyLateDeliveryCountMap[dId] || 0) + 1;
+          if (isOrderInToday) {
+            dailyLateDeliveryCountMap[dId] = (dailyLateDeliveryCountMap[dId] || 0) + 1;
+          }
+
+          const lateItem = {
+            _id: ord._id,
+            orderCode: ord.orderCode || ord._id.toString().slice(-8).toUpperCase(),
+            status: ord.status,
+            driverId: dId,
+            driverName: dInfo ? dInfo.name : 'Tài xế đã xóa',
+            driverPhone: dInfo ? dInfo.phone : '',
+            driverCode: dInfo?.driverCode || `TX${dId.slice(-6).toUpperCase()}`,
+            customerName: ord.customerName || 'Khách hàng',
+            customerPhone: ord.customerPhone || '',
+            pickupAddress: ord.pickupAddress || '',
+            deliveryAddress: ord.deliveryAddress || '',
+            deliveryFee: ord.deliveryFee || 0,
+            acceptedAt: ord.acceptedAt,
+            pickedUpAt: ord.pickedUpAt,
+            deliveredAt: ord.deliveredAt,
+            pickupDurationMinutes: pickupMins,
+            deliveryDurationMinutes: deliveryMins,
+            overtimeMinutes: Math.max(0, deliveryMins - 35),
+            isLatePickup,
+            isLateDelivery: true,
+            lateReason: ord.lateReason || '',
+            isToday: isOrderInToday
+          };
+
+          weekLateOrdersList.push(lateItem);
+          if (isOrderInToday) {
+            todayLateOrdersList.push(lateItem);
+          }
+        }
+      }
+
       const driversResult = statsAgg.filter(s => s._id != null).map(stat => {
         const dId = stat._id.toString();
         const info = driverMap[dId];
@@ -201,6 +309,8 @@ const revenueController = {
           todayTotalPoints,
           todayOrdersPerHour,
           todayEfficiencyPercent,
+          todayLateOrders: dailyLateDeliveryCountMap[dId] || 0,
+          todayLatePickupOrders: dailyLatePickupCountMap[dId] || 0,
           weekOrders: stat.weekOrders,
           weekFee: stat.weekFee,
           weekBonus: stat.weekBonus,
@@ -213,6 +323,8 @@ const revenueController = {
           weekTotalPoints,
           weekOrdersPerHour,
           weekEfficiencyPercent,
+          weekLateOrders: weeklyLateDeliveryCountMap[dId] || 0,
+          weekLatePickupOrders: weeklyLatePickupCountMap[dId] || 0,
           monthOrders: stat.monthOrders,
           monthFee: stat.monthFee,
           monthBonus: stat.monthBonus,
@@ -231,6 +343,12 @@ const revenueController = {
             dailyRevenue,
             weeklyRevenue,
             monthlyRevenue
+          },
+          lateOrders: {
+            todayCount: todayLateOrdersList.length,
+            weekCount: weekLateOrdersList.length,
+            todayList: todayLateOrdersList,
+            weekList: weekLateOrdersList
           },
           drivers: driversResult.sort((a, b) => {
             if (b.todayOrders !== a.todayOrders) return b.todayOrders - a.todayOrders;

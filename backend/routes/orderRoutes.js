@@ -27,6 +27,9 @@ router.post('/:id/deliver', verifyToken, onlyDriver, orderController.deliveringO
 // POST /api/orders/:id/complete - Hoàn thành
 router.post('/:id/complete', verifyToken, onlyDriver, orderController.completeOrder);
 
+// PUT /api/orders/:id/late-reason - Tài xế báo lý do giao đơn trễ (>35p)
+router.put('/:id/late-reason', verifyToken, onlyDriver, orderController.updateOrderLateReason);
+
 // ==================== ADMIN ====================
 
 // GET /api/orders - Danh sách đơn hàng (Admin)

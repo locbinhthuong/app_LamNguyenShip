@@ -1,0 +1,1 @@
+const mongoose = require('mongoose'); mongoose.connect('mongodb://127.0.0.1:27017/lamnguyenship').then(async () => { const Config = mongoose.model('Config', new mongoose.Schema({}, { strict: false })); await Config.updateOne({ key: 'APP_VERSION_CONFIG' }, { "$set": { 'value.driverApp.minVersion': '1.8.27' } }); console.log('Updated DB to 1.8.27'); process.exit(0); });

@@ -19,10 +19,18 @@ const toDisplayDate = (dateStr) => {
   return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
 };
 
+const formatClockTime = (dateStr) => {
+  if (!dateStr) return '---';
+  const d = new Date(dateStr);
+  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' ' + d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+};
+
 export default function Revenue() {
   const [selectedDate, setSelectedDate] = useState(() => toDateString(new Date()));
-  const [viewTab, setViewTab] = useState('revenue'); // 'revenue' | 'online'
+  const [viewTab, setViewTab] = useState('revenue'); // 'revenue' | 'online' | 'late'
   const [onlineSortBy, setOnlineSortBy] = useState('pointsDay'); // 'pointsDay' | 'pointsWeek' | 'onlineDay' | 'ordersDay' | 'onlineWeek'
+  const [lateScope, setLateScope] = useState('week'); // 'day' | 'week'
+  const [lateDriverFilter, setLateDriverFilter] = useState('ALL');
   const [stats, setStats] = useState({
     totalRevenue: 0,
     dailyRevenue: 0,
@@ -42,6 +50,12 @@ export default function Revenue() {
     yearlyDiscount: 0
   });
   const [drivers, setDrivers] = useState([]);
+  const [lateOrders, setLateOrders] = useState({
+    todayCount: 0,
+    weekCount: 0,
+    todayList: [],
+    weekList: []
+  });
   const [loading, setLoading] = useState(true);
   const [expandedRow, setExpandedRow] = useState(null);
 
@@ -83,6 +97,26 @@ export default function Revenue() {
     });
   }, [drivers, onlineSortBy]);
 
+  // Danh sách tài xế có đơn trễ (sắp xếp giảm dần theo số đơn giao trễ tuần)
+  const lateDriversSummary = useMemo(() => {
+    if (!drivers || drivers.length === 0) return [];
+    return [...drivers]
+      .filter(d => (d.weekLateOrders || 0) > 0 || (d.todayLateOrders || 0) > 0 || (d.weekLatePickupOrders || 0) > 0)
+      .sort((a, b) => {
+        if ((b.weekLateOrders || 0) !== (a.weekLateOrders || 0)) {
+          return (b.weekLateOrders || 0) - (a.weekLateOrders || 0);
+        }
+        return (b.todayLateOrders || 0) - (a.todayLateOrders || 0);
+      });
+  }, [drivers]);
+
+  // Danh sách chi tiết đơn giao trễ theo bộ lọc Ngày/Tuần và Tài xế
+  const filteredLateOrdersList = useMemo(() => {
+    const rawList = lateScope === 'day' ? (lateOrders.todayList || []) : (lateOrders.weekList || []);
+    if (lateDriverFilter === 'ALL') return rawList;
+    return rawList.filter(item => item.driverId === lateDriverFilter);
+  }, [lateOrders, lateScope, lateDriverFilter]);
+
   const fetchRevenueData = useCallback(async () => {
     try {
       setLoading(true);
@@ -91,6 +125,7 @@ export default function Revenue() {
       if (res.success && res.data) {
         setStats(res.data.stats);
         setDrivers(res.data.drivers);
+        setLateOrders(res.data.lateOrders || { todayCount: 0, weekCount: 0, todayList: [], weekList: [] });
       }
       if (financeRes.success && financeRes.data) {
         setStats15(financeRes.data.stats15 || { dailyDiscount: 0, weeklyDiscount: 0, monthlyDiscount: 0, yearlyDiscount: 0 });
@@ -232,9 +267,9 @@ export default function Revenue() {
 
       {/* BẢNG CÔNG NỢ TÀI XẾ & THỐNG KÊ ONLINE */}
       <div className="flex-1 rounded-2xl bg-white border-slate-200 shadow flex flex-col overflow-hidden">
-        {/* TAB CHUYỂN ĐỔI: DOANH THU & THỐNG KÊ ONLINE */}
+        {/* TAB CHUYỂN ĐỔI: DOANH THU, THỐNG KÊ ONLINE & ĐƠN TRỄ */}
         <div className="border-b border-blue-100 p-3 sm:p-4 bg-gradient-to-r from-blue-50/70 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               type="button"
               onClick={() => setViewTab('revenue')}
@@ -257,9 +292,35 @@ export default function Revenue() {
             >
               <span>⏱️</span> Thống Kê Online & Hiệu Suất
             </button>
+            <button
+              type="button"
+              onClick={() => setViewTab('late')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                viewTab === 'late'
+                  ? 'bg-red-600 text-white shadow-red-200'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200'
+              }`}
+            >
+              <span>🚨</span> Thống Kê Đơn Trễ (&gt;35p)
+              {(lateOrders.weekCount > 0 || lateOrders.todayCount > 0) && (
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-black ${
+                    viewTab === 'late'
+                      ? 'bg-white text-red-600'
+                      : 'bg-red-100 text-red-700 border border-red-200'
+                  }`}
+                >
+                  {lateOrders.weekCount} tuần / {lateOrders.todayCount} ngày
+                </span>
+              )}
+            </button>
           </div>
           <span className="text-xs font-semibold text-slate-500">
-            {viewTab === 'revenue' ? '📊 Báo cáo doanh thu & công nợ' : '⚡ Thời gian hoạt động & hiệu suất tài xế'}
+            {viewTab === 'revenue'
+              ? '📊 Báo cáo doanh thu & công nợ'
+              : viewTab === 'online'
+              ? '⚡ Thời gian hoạt động & điểm thưởng tài xế'
+              : '🚨 Quản lý đơn giao trễ (>35 phút từ lúc Đã lấy hàng -> Hoàn thành)'}
           </span>
         </div>
 
@@ -385,6 +446,49 @@ export default function Revenue() {
                   </button>
                 </div>
               )}
+
+              {/* Bộ lọc dành riêng cho Tab Đơn Trễ */}
+              {viewTab === 'late' && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center bg-slate-100 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setLateScope('day')}
+                      className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                        lateScope === 'day'
+                          ? 'bg-red-600 text-white shadow-sm'
+                          : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                    >
+                      ☀️ Trong Ngày ({lateOrders.todayCount || 0})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLateScope('week')}
+                      className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                        lateScope === 'week'
+                          ? 'bg-red-600 text-white shadow-sm'
+                          : 'text-slate-600 hover:text-slate-800'
+                      }`}
+                    >
+                      📊 Trong Tuần ({lateOrders.weekCount || 0})
+                    </button>
+                  </div>
+
+                  <select
+                    value={lateDriverFilter}
+                    onChange={(e) => setLateDriverFilter(e.target.value)}
+                    className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 bg-white focus:outline-none focus:border-red-500"
+                  >
+                    <option value="ALL">👤 Tất cả tài xế</option>
+                    {drivers.map(d => (
+                      <option key={d.driverId} value={d.driverId}>
+                        {d.name} ({d.weekLateOrders || 0} trễ tuần)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
           </div>
 
           {/* TAB 1: BẢNG DOANH THU CHI TIẾT */}
@@ -441,7 +545,7 @@ export default function Revenue() {
                 )}
               </tbody>
             </table>
-          ) : (
+          ) : viewTab === 'online' ? (
             /* TAB 2: BẢNG THỐNG KÊ ONLINE & HIỆU SUẤT THEO NGÀY */
             <table className="w-full text-left text-sm text-slate-700 font-medium whitespace-nowrap">
               <thead className="bg-slate-50 border-b border-slate-200 text-slate-800 text-xs uppercase tracking-wider font-bold">
@@ -457,19 +561,18 @@ export default function Revenue() {
                   <th className="px-4 py-3.5 text-center bg-indigo-50/50 text-indigo-800">📊 Đơn Tuần</th>
                   <th className="px-4 py-3.5 text-center bg-indigo-50/50 text-amber-800">🏆 Điểm Tuần</th>
                   <th className="px-4 py-3.5 text-right bg-indigo-50/50 text-indigo-800">Ship Tuần</th>
+                  <th className="px-4 py-3.5 text-center bg-red-50/60 text-red-700">🚨 Đơn Trễ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
                 {sortedOnlineDrivers.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="px-6 py-12 text-center text-slate-500 italic text-base">
+                    <td colSpan="12" className="px-6 py-12 text-center text-slate-500 italic text-base">
                       Không có dữ liệu cho ngày {displayDate}.
                     </td>
                   </tr>
                 ) : (
                   sortedOnlineDrivers.map((d, idx) => {
-                    const todayEff = d.todayEfficiencyPercent || 0;
-                    const weekEff = d.weekEfficiencyPercent || 0;
                     return (
                       <tr key={d.driverId} className="hover:bg-slate-50/80 transition-colors">
                         <td className="px-4 py-3.5 text-center font-bold text-slate-600">
@@ -543,12 +646,256 @@ export default function Revenue() {
                         <td className="px-4 py-3.5 text-right font-bold text-indigo-600 bg-indigo-50/20">
                           {formatCurrency(d.weekFee || 0)}
                         </td>
+                        <td className="px-4 py-3.5 text-center bg-red-50/10">
+                          {(d.weekLateOrders || 0) > 0 || (d.todayLateOrders || 0) > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLateDriverFilter(d.driverId);
+                                setViewTab('late');
+                              }}
+                              className="inline-flex flex-col items-center px-2.5 py-1 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+                              title="Bấm để xem chi tiết các đơn trễ của tài xế này"
+                            >
+                              <span className="text-xs font-black">🚨 {d.todayLateOrders || 0} ngày / {d.weekLateOrders || 0} tuần</span>
+                            </button>
+                          ) : (
+                            <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              ✓ Đúng giờ
+                            </span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
                 )}
               </tbody>
             </table>
+          ) : (
+            /* TAB 3: BẢNG THỐNG KÊ ĐƠN TRỄ (>35 PHÚT) */
+            <div className="p-4 space-y-6 bg-slate-50/40">
+              {/* PHẦN A: BẢNG TỔNG HỢP TÀI XẾ CÓ ĐƠN TRỄ */}
+              <div className="bg-white rounded-xl border border-red-100 overflow-hidden shadow-sm">
+                <div className="bg-red-50/80 border-b border-red-100 px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📊</span>
+                    <h3 className="text-sm font-black text-red-800 uppercase tracking-wide">
+                      Tổng Hợp Tài Xế Có Đơn Đi Trễ (Tuần Của Ngày {displayDate})
+                    </h3>
+                  </div>
+                  <span className="text-xs font-semibold text-red-600">
+                    Quy chuẩn: Lấy hàng &lt; 15 phút | Giao hàng ≤ 35 phút (từ lúc bấm Đã lấy hàng)
+                  </span>
+                </div>
+
+                {lateDriversSummary.length === 0 ? (
+                  <div className="p-6 text-center text-emerald-700 font-semibold text-sm bg-emerald-50/30">
+                    🎉 Tuyệt vời! Không có tài xế nào bị trễ đơn trong tuần này.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-slate-700">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase font-bold text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 text-center w-12">#</th>
+                          <th className="px-4 py-3">Tài xế</th>
+                          <th className="px-4 py-3 text-center">Trễ Lấy Hàng (≥15p)</th>
+                          <th className="px-4 py-3 text-center bg-red-50/50 text-red-700">🚨 Giao Trễ Ngày (&gt;35p)</th>
+                          <th className="px-4 py-3 text-center bg-red-50/50 text-red-700">🚨 Giao Trễ Tuần (&gt;35p)</th>
+                          <th className="px-4 py-3 text-center">Tổng Đơn Tuần</th>
+                          <th className="px-4 py-3 text-center">Tỷ Lệ Giao Trễ Tuần</th>
+                          <th className="px-4 py-3 text-right">Thao tác</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {lateDriversSummary.map((d, index) => {
+                          const lateRate = d.weekOrders > 0
+                            ? Math.round(((d.weekLateOrders || 0) / d.weekOrders) * 100)
+                            : 0;
+                          return (
+                            <tr key={d.driverId} className="hover:bg-red-50/20 transition-colors">
+                              <td className="px-4 py-3 text-center font-bold text-slate-600">{index + 1}</td>
+                              <td className="px-4 py-3">
+                                <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                                  {d.name}
+                                  {d.driverCode && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                                      {d.driverCode}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-xs text-slate-400">{d.phone}</div>
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                  ⏳ {d.todayLatePickupOrders || 0} ngày / {d.weekLatePickupOrders || 0} tuần
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center bg-red-50/20">
+                                <span className={`inline-flex h-6 min-w-[28px] items-center justify-center rounded-full px-2.5 text-xs font-black ${
+                                  (d.todayLateOrders || 0) > 0
+                                    ? 'bg-red-600 text-white shadow-sm'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {d.todayLateOrders || 0} đơn
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center bg-red-50/20">
+                                <span className={`inline-flex h-6 min-w-[28px] items-center justify-center rounded-full px-2.5 text-xs font-black ${
+                                  (d.weekLateOrders || 0) > 0
+                                    ? 'bg-red-100 text-red-700 border border-red-300'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {d.weekLateOrders || 0} đơn
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-center font-bold text-slate-700">
+                                {d.weekOrders || 0} đơn
+                              </td>
+                              <td className="px-4 py-3 text-center">
+                                <span className={`text-xs font-black px-2 py-0.5 rounded ${
+                                  lateRate >= 30 ? 'bg-red-100 text-red-700' : 'bg-orange-50 text-orange-700'
+                                }`}>
+                                  {lateRate}%
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 text-right">
+                                <button
+                                  type="button"
+                                  onClick={() => setLateDriverFilter(lateDriverFilter === d.driverId ? 'ALL' : d.driverId)}
+                                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                                    lateDriverFilter === d.driverId
+                                      ? 'bg-red-600 text-white'
+                                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                  }`}
+                                >
+                                  {lateDriverFilter === d.driverId ? 'Đang lọc (Bỏ lọc)' : '🔍 Xem đơn trễ'}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* PHẦN B: DANH SÁCH CHI TIẾT CÁC ĐƠN GIAO TRỄ (>35 PHÚT) */}
+              <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="bg-slate-800 text-white px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span>🚨</span>
+                    <h3 className="text-sm font-bold uppercase tracking-wide">
+                      Chi Tiết Đơn Giao Trễ (&gt;35 Phút) — {lateScope === 'day' ? `Ngày ${displayDate}` : `Tuần Của Ngày ${displayDate}`}
+                    </h3>
+                  </div>
+                  <span className="text-xs font-bold bg-red-500/20 text-red-200 border border-red-400/30 px-2.5 py-0.5 rounded-full">
+                    Hiển thị: {filteredLateOrdersList.length} đơn trễ
+                  </span>
+                </div>
+
+                {filteredLateOrdersList.length === 0 ? (
+                  <div className="p-10 text-center text-slate-500 italic">
+                    Không có đơn hàng nào giao trễ (&gt;35 phút) trong khoảng thời gian đang chọn.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm text-slate-700">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-xs uppercase font-bold text-slate-600">
+                        <tr>
+                          <th className="px-4 py-3 text-center w-12">#</th>
+                          <th className="px-4 py-3">Mã Đơn</th>
+                          <th className="px-4 py-3">Tài Xế</th>
+                          <th className="px-4 py-3">Khách Hàng & Lộ Trình</th>
+                          <th className="px-4 py-3">Mốc Thời Gian</th>
+                          <th className="px-4 py-3 text-center">Thời Gian Giao</th>
+                          <th className="px-4 py-3">Lý Do Giao Trễ (Tài xế báo)</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredLateOrdersList.map((ord, idx) => (
+                          <tr key={ord._id} className="hover:bg-red-50/10 transition-colors">
+                            <td className="px-4 py-3.5 text-center font-bold text-slate-500">{idx + 1}</td>
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              <div className="font-mono font-black text-blue-600 text-sm">
+                                #{ord.orderCode}
+                              </div>
+                              <div className="mt-1">
+                                {ord.status === 'COMPLETED' ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                    Đã hoàn tất
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 animate-pulse">
+                                    Đang đi giao
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap">
+                              <div className="font-bold text-slate-800">{ord.driverName}</div>
+                              <div className="text-xs text-slate-400">{ord.driverPhone || ord.driverCode}</div>
+                            </td>
+                            <td className="px-4 py-3.5 max-w-xs">
+                              <div className="font-bold text-slate-800 text-xs">
+                                KH: {ord.customerName} {ord.customerPhone ? `(${ord.customerPhone})` : ''}
+                              </div>
+                              <div className="text-xs text-slate-500 truncate mt-0.5" title={ord.pickupAddress}>
+                                <span className="font-semibold text-orange-600">Lấy:</span> {ord.pickupAddress}
+                              </div>
+                              {ord.deliveryAddress && (
+                                <div className="text-xs text-slate-500 truncate" title={ord.deliveryAddress}>
+                                  <span className="font-semibold text-blue-600">Giao:</span> {ord.deliveryAddress}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3.5 whitespace-nowrap text-xs text-slate-600">
+                              <div><span className="font-semibold text-slate-700">Nhận:</span> {formatClockTime(ord.acceptedAt)}</div>
+                              <div className="mt-0.5">
+                                <span className="font-semibold text-orange-600">Lấy hàng:</span> {formatClockTime(ord.pickedUpAt)}
+                                {ord.pickupDurationMinutes > 0 && (
+                                  <span className={`ml-1.5 px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                                    ord.isLatePickup ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-600'
+                                  }`}>
+                                    ({ord.pickupDurationMinutes}p)
+                                  </span>
+                                )}
+                              </div>
+                              <div className="mt-0.5">
+                                <span className="font-semibold text-emerald-600">Giao xong:</span> {ord.deliveredAt ? formatClockTime(ord.deliveredAt) : 'Đang giao...'}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                              <div className="inline-flex flex-col items-center">
+                                <span className="px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-700 border border-red-300 shadow-sm">
+                                  🚨 {ord.deliveryDurationMinutes} phút
+                                </span>
+                                <span className="text-[11px] font-bold text-red-600 mt-1">
+                                  Trễ +{ord.overtimeMinutes} phút (vượt mốc 35p)
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3.5">
+                              {ord.lateReason ? (
+                                <div className="inline-flex items-start gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-bold max-w-xs">
+                                  <span>💬</span>
+                                  <span>{ord.lateReason}</span>
+                                </div>
+                              ) : (
+                                <span className="text-xs italic text-slate-400">
+                                  Chưa ghi lý do
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>

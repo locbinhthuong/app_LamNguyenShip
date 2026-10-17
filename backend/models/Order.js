@@ -198,6 +198,37 @@ const orderSchema = new mongoose.Schema({
     default: null
   },
 
+  // Theo dõi thời gian đi đơn & Cảnh báo đơn trễ (15p lấy hàng, 35p giao hàng)
+  pickupWarningSentAt: {
+    type: Date,
+    default: null
+  },
+  deliveryWarningSentAt: {
+    type: Date,
+    default: null
+  },
+  isLatePickup: {
+    type: Boolean,
+    default: false
+  },
+  isLateDelivery: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  pickupDurationMinutes: {
+    type: Number,
+    default: 0
+  },
+  deliveryDurationMinutes: {
+    type: Number,
+    default: 0
+  },
+  lateReason: {
+    type: String,
+    default: null
+  },
+
   // Thông tin tạo đơn (admin)
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,

@@ -1217,12 +1217,13 @@ const orderController = {
   pickedUpOrder: async (req, res) => {
     try {
       const { id } = req.params;
+      const nowPickup = new Date();
 
       const order = await Order.findOneAndUpdate(
         { _id: id, status: 'ACCEPTED', assignedTo: req.driver._id },
         {
           status: 'PICKED_UP',
-          pickedUpAt: new Date()
+          pickedUpAt: nowPickup
         },
         { new: true }
       ).populate('assignedTo', 'name phone');
@@ -1232,6 +1233,16 @@ const orderController = {
           success: false,
           message: 'Đơn hàng không còn hợp lệ (có thể đã bị huỷ hoặc trạng thái đã thay đổi).'
         });
+      }
+
+      // Tính thời gian từ lúc Nhận đơn -> Đã lấy hàng (Mốc 15 phút)
+      if (order.acceptedAt) {
+        const pickupMins = Math.max(0, Math.floor((nowPickup.getTime() - new Date(order.acceptedAt).getTime()) / 60000));
+        order.pickupDurationMinutes = pickupMins;
+        if (pickupMins >= 15) {
+          order.isLatePickup = true;
+        }
+        await order.save();
       }
 
       if (req.io) {
@@ -1290,17 +1301,57 @@ const orderController = {
     }
   },
 
+  // PUT /api/orders/:id/late-reason - Tài xế cập nhật lý do giao đơn trễ
+  updateOrderLateReason: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { lateReason } = req.body;
+
+      if (!lateReason || !String(lateReason).trim()) {
+        return res.status(400).json({ success: false, message: 'Vui lòng chọn hoặc nhập lý do giao trễ' });
+      }
+
+      const order = await Order.findOneAndUpdate(
+        { _id: id, assignedTo: req.driver._id },
+        {
+          lateReason: String(lateReason).trim(),
+          isLateDelivery: true
+        },
+        { new: true }
+      ).populate('assignedTo', 'name phone');
+
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy đơn hàng' });
+      }
+
+      if (req.io) {
+        const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+        req.io.to('admins').emit('order_updated', payload);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Đã lưu lý do giao đơn trễ',
+        data: order
+      });
+    } catch (error) {
+      console.error('Error updateOrderLateReason:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
   // POST /api/orders/:id/complete - Hoàn thành đơn hàng
   completeOrder: async (req, res) => {
     try {
       const { id } = req.params;
-      const { rating, ratingComment } = req.body;
+      const { rating, ratingComment, lateReason } = req.body;
+      const nowCompleted = new Date();
 
       const order = await Order.findOneAndUpdate(
         { _id: id, status: { $in: ['ACCEPTED', 'PICKED_UP', 'DELIVERING'] }, assignedTo: req.driver._id },
         {
           status: 'COMPLETED',
-          deliveredAt: new Date()
+          deliveredAt: nowCompleted
         },
         { new: true }
       ).populate('assignedTo', 'name phone stats');
@@ -1311,6 +1362,22 @@ const orderController = {
           message: 'Không thể hoàn thành đơn hàng này'
         });
       }
+
+      // Tính thời gian giao hàng từ lúc bấm Đã lấy hàng (pickedUpAt) đến lúc Hoàn thành (deliveredAt) - Mốc 35 phút
+      const refPickupTime = order.pickedUpAt || order.acceptedAt;
+      if (refPickupTime) {
+        const deliveryMins = Math.max(0, Math.floor((nowCompleted.getTime() - new Date(refPickupTime).getTime()) / 60000));
+        order.deliveryDurationMinutes = deliveryMins;
+        if (deliveryMins > 35) {
+          order.isLateDelivery = true;
+        }
+      }
+      if (lateReason && String(lateReason).trim()) {
+        order.lateReason = String(lateReason).trim();
+      } else if (order.isLateDelivery && !order.lateReason) {
+        order.lateReason = 'Giao quá 35 phút (Chưa chọn lý do)';
+      }
+      await order.save();
 
       // Update driver stats
       const driver = await Driver.findById(req.driver._id);
@@ -1406,7 +1473,6 @@ const orderController = {
         await order.save();
       }
 
-      const nowCompleted = new Date();
       const oldTier = driver?.driverTier || 1;
       const tierConfig = await syncDriverWeeklyStats(driver);
       const newTier = tierConfig ? tierConfig.tier : (driver?.driverTier || 1);

@@ -433,6 +433,7 @@ export default function Orders() {
                       <div className="flex flex-col gap-1">
                         <div><span className="font-bold text-slate-700">Tạo:</span> {formatTime(order.createdAt)}</div>
                         {order.acceptedAt && <div><span className="font-bold text-primary-600 inline-block text-blue-600">Nhận:</span> {formatTime(order.acceptedAt)}</div>}
+                        {order.pickedUpAt && <div><span className="font-bold inline-block text-orange-600">Lấy:</span> {formatTime(order.pickedUpAt)}</div>}
                         {order.deliveredAt && <div><span className="font-bold inline-block text-emerald-600">Hoàn thành:</span> {formatTime(order.deliveredAt)}</div>}
                       </div>
                     </td>
@@ -441,6 +442,23 @@ export default function Orders() {
                         <span className={`rounded-full px-2 py-1 text-xs font-bold ${order.status === 'DRAFT' && order.scheduledPublishAt ? 'bg-indigo-100 text-indigo-700 border border-indigo-200' : `text-slate-800 ${STATUS_COLORS[order.status]}`}`}>
                           {order.status === 'DRAFT' && order.scheduledPublishAt ? `⏳ Hẹn: ${formatTime(order.scheduledPublishAt)}` : (STATUS_LABELS[order.status] || order.status)}
                         </span>
+                        {(() => {
+                          const calcDeliveryMins = order.deliveryDurationMinutes || (order.pickedUpAt && order.deliveredAt ? Math.round((new Date(order.deliveredAt) - new Date(order.pickedUpAt)) / 60000) : 0);
+                          const isOrderLate = order.isLateDelivery || calcDeliveryMins > 35;
+                          if (!isOrderLate) return null;
+                          return (
+                            <div className="flex flex-col items-start gap-0.5 mt-0.5">
+                              <span className="text-[10px] font-black bg-red-100 text-red-700 border border-red-300 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                🚨 Giao trễ: {calcDeliveryMins}p (+{Math.max(0, calcDeliveryMins - 35)}p)
+                              </span>
+                              {order.lateReason && (
+                                <span className="text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 rounded px-1.5 py-0.5 max-w-[160px] truncate" title={order.lateReason}>
+                                  💬 {order.lateReason}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
                         {order.status === 'PENDING' && order.cancelReason && (
                           <div className="text-[10px] bg-red-500/20 text-red-400 rounded py-0.5 px-1.5 font-medium border border-red-500/30 max-w-[120px] truncate" title={order.cancelReason}>
                             ⚠️ Bị từ chối: {order.cancelReason}

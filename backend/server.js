@@ -315,6 +315,12 @@ connectDB()
         checkAndResetAllDriversWeekly(io);
       }, 5 * 60 * 1000); // 5 phút kiểm tra 1 lần
 
+      // ==================== CRON: GIÁM SÁT THỜI GIAN ĐI ĐƠN (15P LẤY HÀNG / 35P GIAO HÀNG) ====================
+      const { checkOrderTimeouts } = require('./utils/orderTimeMonitor');
+      setInterval(() => {
+        checkOrderTimeouts(io);
+      }, 20 * 1000); // 20 giây quét 1 lần
+
     });
   })
   .catch((error) => {

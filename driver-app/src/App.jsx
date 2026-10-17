@@ -718,6 +718,14 @@ function AppContent() {
         window.dispatchEvent(new CustomEvent('driver_weekly_reset_event', { detail: data }));
       });
 
+      socketRef.current.on('order_time_warning', (data) => {
+        setPushMessage({
+          title: data?.title || '⏰ Cảnh báo thời gian đi đơn',
+          message: data?.message || 'Bạn hãy nhanh chóng xử lý đơn hàng!'
+        });
+        window.dispatchEvent(new CustomEvent('driver_order_time_warning', { detail: data }));
+      });
+
       socketRef.current.on('driver_updated', () => {
         loadProfile();
       });
