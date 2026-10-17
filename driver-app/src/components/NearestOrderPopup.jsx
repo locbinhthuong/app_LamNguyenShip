@@ -111,7 +111,7 @@ export default function NearestOrderPopup() {
               </span>
             ) : (
               <span className="bg-sky-100 text-sky-700 px-2.5 py-1 rounded-lg text-xs font-extrabold border border-sky-200 inline-flex items-center gap-1">
-                📱 ĐƠN KHÁCH ĐẶT QUA APP
+                📱 ĐƠN KHÁCH ĐẶT QUA APP • Liên hệ xác nhận đơn
               </span>
             )}
           </div>

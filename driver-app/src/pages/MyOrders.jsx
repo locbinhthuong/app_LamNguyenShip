@@ -221,7 +221,7 @@ export default function MyOrders() {
                       </span>
                     ) : (
                       <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-extrabold border border-sky-200 inline-flex items-center gap-1">
-                        📱 KHÁCH ĐẶT APP
+                        📱 KHÁCH ĐẶT APP • Liên hệ xác nhận đơn
                       </span>
                     )}
                     {getServiceBadge(order.serviceType)}

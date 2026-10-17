@@ -403,7 +403,7 @@ export default function OrderDetail() {
                 </span>
               ) : (
                 <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[11px] font-extrabold border border-sky-200 inline-flex items-center gap-1">
-                  📱 ĐƠN KHÁCH ĐẶT QUA APP
+                  📱 ĐƠN KHÁCH ĐẶT QUA APP • Liên hệ xác nhận đơn
                 </span>
               )}
               {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
