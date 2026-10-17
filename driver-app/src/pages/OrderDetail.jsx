@@ -868,6 +868,11 @@ export default function OrderDetail() {
                   ) : (
                     <p className="text-green-600 font-black text-lg sm:text-xl ">Thỏa Thuận</p>
                  )}
+                 {order.serviceType === 'MUA_HO' && (
+                   <p className="text-[10px] text-emerald-700 font-bold mt-1 bg-emerald-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-emerald-200">
+                     ( đã cộng phí mua hộ: 5.000đ )
+                   </p>
+                 )}
                  {order.packageDetails?.bulkyFee > 0 && (
                    <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-50 px-1.5 py-0.5 rounded inline-block max-w-max border border-orange-100">
                      ( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )

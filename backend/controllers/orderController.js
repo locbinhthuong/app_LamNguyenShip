@@ -612,12 +612,17 @@ const orderController = {
 
       const surchargeReminder = await getLateNightSurchargeDriverReminder();
       
-      let finalDeliveryFee = req.body.deliveryFee || 0;
-      let finalExtraSurcharge = extraSurcharge || 0;
-      // Do not re-subtract surcharge here because frontend now separates extraSurcharge and deliveryFee
+      let finalDeliveryFee = Number(req.body.deliveryFee) || 0;
+      let finalExtraSurcharge = Number(extraSurcharge) || 0;
+      const resolvedServiceType = serviceType || 'GIAO_HANG';
+
+      // Đơn MUA_HO của Khách hàng và Cửa hàng luôn cộng thêm 5.000đ phí mua hộ mỗi đơn
+      if (resolvedServiceType === 'MUA_HO' && !req.body.purchaseFeeIncluded) {
+        finalDeliveryFee += 5000;
+      }
 
       const order = new Order({
-        serviceType: serviceType || 'GIAO_HANG',
+        serviceType: resolvedServiceType,
         subServiceType: subServiceType || null,
         customerId,
         customerName: customerName || req.customer.name,
@@ -2392,11 +2397,18 @@ const orderController = {
         console.error('Lỗi tính phụ phí giờ khuya:', err);
       }
 
+      // Đơn MUA_HO luôn cộng thêm 5.000đ phí mua hộ mỗi đơn
+      const purchaseFee = serviceType === 'MUA_HO' ? 5000 : 0;
+      if (purchaseFee > 0) {
+        deliveryFee += purchaseFee;
+      }
+
       res.status(200).json({
         success: true,
         data: {
           distanceKm,
           deliveryFee,
+          purchaseFee,
           extraSurcharge,
           surchargeNote,
           routeLine

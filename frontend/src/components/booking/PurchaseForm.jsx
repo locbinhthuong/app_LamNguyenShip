@@ -97,7 +97,8 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       senderPhone: form.senderPhone.trim() || defaultPhone,
       receiverPhone: form.receiverPhone.trim() || '',
       receiverPhone2: '',
-      deliveryFee: estimatedFee || 0,
+      deliveryFee: estimatedFee !== null ? estimatedFee : 5000,
+      purchaseFeeIncluded: true,
       extraSurcharge: extraSurcharge || 0,
       packageDetails: {
         description: 'MUA HỘ',
@@ -192,10 +193,15 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       {/* KHUYẾN CÁO */}
       <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl flex items-start gap-2">
         <div className="text-blue-500 mt-0.5"><Navigation size={18} /></div>
-        <p className="text-xs text-blue-800 leading-relaxed font-medium flex-1">
+        <div className="text-xs text-blue-800 leading-relaxed font-medium flex-1">
           {estimatedFee !== null ? (
             <>
-              Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}.
+              <div>
+                Cước tạm tính: <strong className="text-lg text-blue-600">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? `(~${distanceKm.toFixed(1)}km)` : ''}.
+              </div>
+              <div className="text-emerald-700 font-bold text-xs mt-1">
+                🛒 Đã cộng thêm 5.000đ phí mua hộ vào cước đơn hàng.
+              </div>
               {extraSurcharge > 0 && (
                 <div className="text-red-500 text-xs mt-1">
                   <strong>+ {extraSurcharge.toLocaleString('vi-VN')}đ</strong> {surchargeNote}
@@ -204,9 +210,16 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
               <div className="mt-1">Giá món đồ sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.</div>
             </>
           ) : (
-            'Bạn chỉ trả tiền sau khi nhận được hàng. Giá món đồ và Phí đi lấy sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.'
+            <>
+              <div className="text-emerald-700 font-bold mb-1">
+                🛒 Phí mua hộ: +5.000đ / đơn (tự động cộng vào phí giao hàng).
+              </div>
+              <div>
+                Bạn chỉ trả tiền sau khi nhận được hàng. Giá món đồ và Phí đi lấy sẽ được Tổng đài báo qua số điện thoại để bạn xác nhận.
+              </div>
+            </>
           )}
-        </p>
+        </div>
       </div>
 
       {/* SUBMIT BUTTON */}

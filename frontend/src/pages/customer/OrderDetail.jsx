@@ -267,6 +267,11 @@ export default function OrderDetail() {
                    {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && order.deliveryFee > 0 && (
                       <span className="text-[10px] text-slate-500 font-bold mt-0.5">{order.feePaidBy === 'SENDER' ? '(Shop trả ship)' : '(Khách trả ship)'}</span>
                    )}
+                   {order.serviceType === 'MUA_HO' && order.deliveryFee > 0 && (
+                     <span className="text-[10px] text-emerald-700 font-bold mt-0.5">
+                       ( đã cộng phí mua hộ: 5.000đ )
+                     </span>
+                   )}
                    {order.packageDetails?.bulkyFee > 0 && (
                      <span className="text-[10px] text-orange-600 font-medium mt-0.5">
                        ( đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )

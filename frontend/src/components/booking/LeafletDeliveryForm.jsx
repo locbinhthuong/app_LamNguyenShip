@@ -121,7 +121,7 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           const res = await estimateFee({
             pickupCoordinates: form.pickupCoordinates,
             deliveryCoordinates: form.deliveryCoordinates,
-            serviceType: 'GIAO_HANG'
+            serviceType: mode === 'pickup' ? 'MUA_HO' : 'GIAO_HANG'
           });
           if (res && res.data && res.data.deliveryFee !== null) {
             setEstimatedFee(res.data.deliveryFee);
@@ -161,13 +161,14 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       const timer = setTimeout(() => fetchEstimateAndRoute(), 800);
       return () => clearTimeout(timer);
     }
-  }, [form.pickupCoordinates, form.deliveryCoordinates, mapSelectMode]);
+  }, [form.pickupCoordinates, form.deliveryCoordinates, mapSelectMode, mode]);
 
   const handleBookingClick = (e) => {
     e.preventDefault();
 
+    const isPurchaseOrder = mode === 'pickup';
     onBooking({
-      serviceType: 'GIAO_HANG',
+      serviceType: isPurchaseOrder ? 'MUA_HO' : 'GIAO_HANG',
       senderName: form.senderName.trim(),
       customerPhone: defaultPhone || 'Khách Vãng Lai',
       senderPhone: form.senderPhone.trim(),
@@ -181,9 +182,10 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
       note: form.note.trim(),
       codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
       extraSurcharge: (form.extraSurcharge ? parseInt(form.extraSurcharge) : 0) + (extraSurchargeAPI || 0),
-      deliveryFee: estimatedFee || 0,
+      deliveryFee: estimatedFee !== null ? estimatedFee : (isPurchaseOrder ? 5000 : 0),
+      purchaseFeeIncluded: isPurchaseOrder ? true : false,
       packageDetails: {
-        description: 'Giao hàng hóa/tài liệu',
+        description: isPurchaseOrder ? 'MUA HỘ' : 'Giao hàng hóa/tài liệu',
         weight: '',
         isFragile: false,
         bulkyFee: 0
@@ -412,9 +414,14 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                 <Navigation size={20} />
               </div>
               <div className="flex-1">
-                <p className={`text-[13px] leading-relaxed font-bold ${estimatedFee !== null ? 'text-blue-800' : 'text-gray-500'}`}>
+                <div className={`text-[13px] leading-relaxed font-bold ${estimatedFee !== null ? 'text-blue-800' : 'text-gray-500'}`}>
                   {estimatedFee !== null ? (
                     <>Cước tạm tính: <strong className="text-lg text-blue-600 block sm:inline sm:ml-1 mt-1 sm:mt-0">{estimatedFee.toLocaleString('vi-VN')}đ</strong> {distanceKm ? <span className="text-blue-500 font-bold opacity-80 ml-1">({distanceKm.toFixed(1)}km)</span> : ''}
+                      {mode === 'pickup' && (
+                        <div className="text-emerald-700 text-xs mt-1 font-extrabold">
+                          🛒 Đã cộng thêm 5.000đ phí mua hộ vào cước đơn hàng
+                        </div>
+                      )}
                       {extraSurchargeAPI > 0 && (
                         <div className="text-red-500 text-xs mt-1">
                           <strong>+ {extraSurchargeAPI.toLocaleString('vi-VN')}đ</strong> {surchargeNote}
@@ -422,9 +429,16 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                       )}
                     </>
                   ) : (
-                    'Vui lòng chọn đầy đủ cả điểm lấy và điểm giao để xem giá.'
+                    <>
+                      <div>Vui lòng chọn đầy đủ cả điểm lấy và điểm giao để xem giá.</div>
+                      {mode === 'pickup' && (
+                        <div className="text-emerald-700 text-xs mt-1 font-extrabold">
+                          🛒 Phí mua hộ: +5.000đ / đơn (tự động cộng vào phí giao hàng)
+                        </div>
+                      )}
+                    </>
                   )}
-                </p>
+                </div>
                 {estimatedFee !== null && (
                   <p className="text-[10px] font-semibold text-blue-500/80 mt-1">Tổng đài có thể phụ thu phí cồng kềnh (nếu có).</p>
                 )}
