@@ -272,14 +272,16 @@ export default function Drivers() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-3">
-                {((driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()) || driver.idleWarningLevel > 0) && (
-                  <button
-                    onClick={() => handleUnlockIdle(driver._id, driver.name)}
-                    className="col-span-2 rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-700 shadow-sm"
-                  >
-                    🔓 Mở khóa Treo App (Gỡ cảnh báo)
-                  </button>
-                )}
+                <button
+                  onClick={() => handleUnlockIdle(driver._id, driver.name)}
+                  className={`col-span-2 rounded-xl px-3 py-2 text-xs font-bold transition-all shadow-sm ${
+                    ((driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()) || driver.idleWarningLevel > 0)
+                      ? 'bg-emerald-600 text-white hover:bg-emerald-700 animate-pulse'
+                      : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                  }`}
+                >
+                  🔓 Mở khóa Treo App (Gỡ cảnh báo)
+                </button>
 
                 <Link
                   to={`/drivers/${driver._id}`}
@@ -401,14 +403,16 @@ export default function Drivers() {
                     </td>
                     <td className="table-td">
                         <div className="flex gap-2 flex-wrap">
-                          {((driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()) || driver.idleWarningLevel > 0) && (
-                            <button
-                              onClick={() => handleUnlockIdle(driver._id, driver.name)}
-                              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm"
-                            >
-                              🔓 Mở khóa Treo App
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleUnlockIdle(driver._id, driver.name)}
+                            className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors shadow-sm ${
+                              ((driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()) || driver.idleWarningLevel > 0)
+                                ? 'bg-emerald-600 text-white hover:bg-emerald-700 animate-pulse'
+                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'
+                            }`}
+                          >
+                            🔓 Mở khóa Treo App
+                          </button>
 
                           {driver.isOnline && (
                             <button

@@ -268,17 +268,35 @@ export default function DriverDetail() {
                 <span className="text-slate-500">Số GPLX:</span>
                 <span className="text-slate-800 font-medium">{driver.gplx || '—'}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Trạng thái treo app:</span>
+                {isIdleLocked ? (
+                  <span className="rounded-full bg-red-100 text-red-700 border border-red-300 px-2 py-0.5 text-xs font-bold">
+                    🔒 Khóa nhận đơn (Lần {driver.idleWarningLevel || 2})
+                  </span>
+                ) : driver.idleWarningLevel > 0 ? (
+                  <span className="rounded-full bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 text-xs font-bold">
+                    ⚠️ Cảnh báo (Lần {driver.idleWarningLevel})
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-xs font-bold">
+                    ✅ Bình thường
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="mt-6 space-y-3">
-              {hasIdleWarning && (
-                <button
-                  onClick={handleUnlockIdle}
-                  className="w-full rounded-xl py-2.5 text-sm font-bold transition shadow-lg bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-emerald-500/20"
-                >
-                  🔓 MỞ KHÓA TREO APP (GỠ CẢNH BÁO)
-                </button>
-              )}
+              <button
+                onClick={handleUnlockIdle}
+                className={`w-full rounded-xl py-2.5 text-sm font-bold transition shadow-lg ${
+                  hasIdleWarning
+                    ? 'bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-emerald-500/20 animate-pulse'
+                    : 'bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100'
+                }`}
+              >
+                🔓 MỞ KHÓA / RESET TREO APP
+              </button>
 
               <button onClick={() => setShowEdit(true)} className="w-full rounded-xl bg-blue-50 hover:bg-blue-100 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-blue-200">
                 ✏️ Sửa Thông Tin
