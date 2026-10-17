@@ -87,6 +87,7 @@ export default function CreateOrder() {
     driverReminder: '',
     codAmount: '',
     deliveryFee: '',
+    feePaidBy: 'RECEIVER',
     extraSurcharge: '',
     bulkyFee: '',
     adminBonus: '',
@@ -362,6 +363,12 @@ export default function CreateOrder() {
         newForm.customerName = 'Khách đặt qua Chat';
     }
 
+    if (/(?:shop\s*trả\s*(?:ship|cước)|người\s*gửi\s*trả|trừ\s*ship)/i.test(text)) {
+        newForm.feePaidBy = 'SENDER';
+    } else if (/(?:khách\s*trả\s*(?:ship|cước)|người\s*nhận\s*trả)/i.test(text)) {
+        newForm.feePaidBy = 'RECEIVER';
+    }
+
     if (rawNote.length > 0) {
         newForm.note = rawNote.join('\n');
     } else {
@@ -438,6 +445,7 @@ export default function CreateOrder() {
         driverReminder: form.driverReminder,
         codAmount: form.codAmount ? parseInt(form.codAmount) : 0,
         deliveryFee: form.deliveryFee ? parseInt(form.deliveryFee) : 0,
+        feePaidBy: form.feePaidBy || 'RECEIVER',
         extraSurcharge: form.extraSurcharge ? parseInt(form.extraSurcharge) : 0,
         adminBonus: form.adminBonus ? parseInt(form.adminBonus) : 0,
         scheduledPublishAt: form.scheduledPublishAt || undefined,
@@ -469,7 +477,7 @@ export default function CreateOrder() {
           <span>🤖 Dán Nhanh Đơn Zalo / Facebook</span>
           <button 
             type="button" 
-            onClick={() => { setSmartText(''); setForm(prev => ({ ...prev, customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', driverReminder: '', codAmount: '', deliveryFee: '', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null })); }}
+            onClick={() => { setSmartText(''); setForm(prev => ({ ...prev, customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', driverReminder: '', codAmount: '', deliveryFee: '', feePaidBy: 'RECEIVER', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null })); }}
             className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
           >
             🔄 Tạo Mới Lại
@@ -776,6 +784,57 @@ export default function CreateOrder() {
               />
             </div>
           </div>
+
+          {form.serviceType !== 'DAT_XE' && form.serviceType !== 'DIEU_PHOI' && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-2.5">
+              <label className="block text-xs font-extrabold uppercase tracking-wider text-slate-700">
+                💳 Hình thức thanh toán phí ship (Người trả ship):
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, feePaidBy: 'RECEIVER' }))}
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-bold border-2 transition-all ${
+                    (form.feePaidBy || 'RECEIVER') === 'RECEIVER'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <span>👤</span> Khách trả ship
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, feePaidBy: 'SENDER' }))}
+                  className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-sm font-bold border-2 transition-all ${
+                    form.feePaidBy === 'SENDER'
+                      ? 'bg-amber-500 text-white border-amber-500 shadow-md shadow-amber-500/20'
+                      : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  <span>🏪</span> Shop trả ship
+                </button>
+              </div>
+              {(() => {
+                const codVal = parseInt(form.codAmount || 0) || 0;
+                const shipVal = (parseInt(form.deliveryFee || 0) || 0) + (parseInt(form.bulkyFee || 0) || 0) + (parseInt(form.extraSurcharge || 0) || 0);
+                const isSenderPay = form.feePaidBy === 'SENDER';
+                const shopAdvance = isSenderPay ? (codVal - shipVal) : codVal;
+                const customerCollect = isSenderPay ? codVal : (codVal + shipVal);
+                return (
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs font-semibold text-slate-600 border-t border-slate-200/80">
+                    <span>
+                      {shopAdvance >= 0
+                        ? `💼 Tài xế ứng cho Shop: ${shopAdvance.toLocaleString('vi-VN')}đ`
+                        : `💼 Tài xế thu tiền ship tại Shop: ${Math.abs(shopAdvance).toLocaleString('vi-VN')}đ`}
+                    </span>
+                    <span className="font-bold text-red-600">
+                      💵 Tổng thu của Khách: {customerCollect.toLocaleString('vi-VN')}đ {isSenderPay ? '(Chỉ thu COD)' : '(COD + Ship)'}
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+          )}
           
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mb-4">
             <div>

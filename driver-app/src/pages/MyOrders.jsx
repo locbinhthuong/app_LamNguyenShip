@@ -213,8 +213,19 @@ export default function MyOrders() {
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex flex-col gap-1">
-                  <span className="text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded text-xs inline-block">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-                  <div className="mt-0.5">{getServiceBadge(order.serviceType)}</div>
+                  <span className="text-slate-800 font-bold bg-slate-100 px-2 py-0.5 rounded text-xs inline-block max-w-max">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                    {order.createdBy && !order.customerId ? (
+                      <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-extrabold border border-purple-200 inline-flex items-center gap-1">
+                        🎧 ĐƠN ĐIỀU PHỐI
+                      </span>
+                    ) : (
+                      <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-extrabold border border-sky-200 inline-flex items-center gap-1">
+                        📱 KHÁCH ĐẶT APP
+                      </span>
+                    )}
+                    {getServiceBadge(order.serviceType)}
+                  </div>
                 </div>
                 <span className={`status-badge ${STATUS_COLORS[order.status]} text-slate-800 shrink-0 mt-1`}>
                   {STATUS_LABELS[order.status]}
@@ -225,7 +236,9 @@ export default function MyOrders() {
                 <div className="flex flex-col">
                   <span className="text-green-500 font-bold">+{((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0)).toLocaleString()}đ</span>
                   {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
-                     <span className="text-[10px] text-slate-500 font-bold mt-0.5">{order.feePaidBy === 'SENDER' ? '(Shop trả ship)' : '(Khách trả ship)'}</span>
+                     <span className={`text-[10px] font-extrabold mt-0.5 px-1.5 py-0.5 rounded max-w-max ${order.feePaidBy === 'SENDER' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`}>
+                       {order.feePaidBy === 'SENDER' ? '🏪 Shop trả ship' : '👤 Khách trả ship'}
+                     </span>
                   )}
                   {order.packageDetails?.bulkyFee > 0 && <span className="text-[9px] text-orange-600 font-bold mt-0.5">( Đã cộng phí cồng kềnh: {order.packageDetails.bulkyFee.toLocaleString()}đ )</span>}
                 </div>

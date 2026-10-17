@@ -715,7 +715,8 @@ const orderController = {
         commissionRate, // Tỉ lệ chiết khấu riêng
         scheduledPublishAt, // Hẹn giờ lên đơn
         batchedDeliveries, // Cập nhật mảng Đơn ghép
-        autoAssignNearest // Cờ tự động gán đơn gần nhất
+        autoAssignNearest, // Cờ tự động gán đơn gần nhất
+        feePaidBy // Người trả phí ship (RECEIVER: Khách trả, SENDER: Shop trả)
       } = req.body;
       const orderToUpdate = await Order.findById(id);
       if (!orderToUpdate) {
@@ -776,6 +777,7 @@ const orderController = {
       if (driverReminder !== undefined) orderToUpdate.driverReminder = driverReminder;
       if (codAmount !== undefined) orderToUpdate.codAmount = codAmount;
       if (extraSurcharge !== undefined) orderToUpdate.extraSurcharge = extraSurcharge;
+      if (feePaidBy !== undefined) orderToUpdate.feePaidBy = feePaidBy;
       
       let isDeliveryFeeChanged = false;
       if (deliveryFee !== undefined) {

@@ -382,7 +382,7 @@ export default function Orders() {
                     </td>
                     <td className="table-td text-left">
                       <p className="font-mono text-sm font-bold text-blue-600">{order.orderCode || order._id?.slice(-8).toUpperCase()}</p>
-                      <div className="mt-1">
+                      <div className="mt-1 flex flex-col items-start gap-1">
                         {order.serviceType === 'DAT_XE' ? (
                           <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded border border-emerald-200 whitespace-nowrap">
                             {order.subServiceType === 'XE_OM' ? '🛵 XE ÔM' : order.subServiceType === 'LAI_HO_XE_MAY' ? '🔑 LÁI HỘ (MÁY)' : order.subServiceType === 'LAI_HO_OTO' ? '🚗 LÁI HỘ (ÔTÔ)' : '🛵 ĐẶT XE'}
@@ -397,6 +397,15 @@ export default function Orders() {
                           <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 whitespace-nowrap">📦 ĐƠN GHÉP</span>
                         ) : (
                           <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded border border-orange-200 whitespace-nowrap">📦 GIAO HÀNG</span>
+                        )}
+                        {order.createdBy && !order.customerId ? (
+                          <span className="text-[10px] font-extrabold bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded border border-indigo-200 whitespace-nowrap">
+                            🎧 ĐƠN ĐIỀU PHỐI
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-extrabold bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded border border-teal-200 whitespace-nowrap">
+                            📱 KHÁCH ĐẶT APP
+                          </span>
                         )}
                       </div>
                     </td>
@@ -470,7 +479,13 @@ export default function Orders() {
                         <p className="font-bold text-blue-600 text-sm whitespace-nowrap">
                           {((order.deliveryFee || 0) + (order.extraSurcharge || 0)).toLocaleString()}đ
                           {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
-                            <span className="text-[10px] text-slate-500 ml-1 block">{order.feePaidBy === 'SENDER' ? '(Shop trả)' : '(Khách trả)'}</span>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded mt-1 inline-block border ${
+                              order.feePaidBy === 'SENDER'
+                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                : 'bg-blue-50 text-blue-700 border-blue-200'
+                            }`}>
+                              {order.feePaidBy === 'SENDER' ? '🏪 Shop trả ship' : '👤 Khách trả ship'}
+                            </span>
                           )}
                         </p>
                        {(order.kpiBonus > 0 || order.adminBonus > 0) && (

@@ -393,7 +393,31 @@ export default function OrderDetail() {
                order.serviceType === 'ALOFOOD' ? 'Đơn AloFood' :
                order.serviceType === 'DIEU_PHOI' ? 'Dịch Vụ Điều Phối' : 'Chi tiết đơn hàng'}
             </h1>
-            <p className="truncate text-[11px] font-bold text-blue-600 bg-blue-50 max-w-max px-2 py-0.5 rounded uppercase mt-0.5 border border-blue-100">{order.orderCode || id?.slice(-8).toUpperCase()}</p>
+            <div className="flex flex-wrap items-center gap-1.5 mt-1">
+              <span className="truncate text-[11px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded uppercase border border-blue-100">
+                {order.orderCode || id?.slice(-8).toUpperCase()}
+              </span>
+              {order.createdBy && !order.customerId ? (
+                <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[11px] font-extrabold border border-purple-200 inline-flex items-center gap-1">
+                  🎧 ĐƠN ĐIỀU PHỐI LÊN ĐƠN
+                </span>
+              ) : (
+                <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[11px] font-extrabold border border-sky-200 inline-flex items-center gap-1">
+                  📱 ĐƠN KHÁCH ĐẶT QUA APP
+                </span>
+              )}
+              {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && (
+                order.feePaidBy === 'SENDER' ? (
+                  <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[11px] font-extrabold border border-amber-300 inline-flex items-center gap-1">
+                    🏪 Shop trả ship
+                  </span>
+                ) : (
+                  <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[11px] font-extrabold border border-emerald-200 inline-flex items-center gap-1">
+                    👤 Khách trả ship
+                  </span>
+                )
+              )}
+            </div>
           </div>
           <div className="flex flex-col items-end gap-2 shrink-0">
             <span className="rounded-full bg-blue-500 px-2 py-1 text-xs font-bold text-white sm:px-3 sm:text-sm">

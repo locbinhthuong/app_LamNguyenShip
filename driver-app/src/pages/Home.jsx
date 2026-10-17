@@ -40,6 +40,38 @@ const getServiceBadge = (order) => {
   return <span className={baseClass}><Package size={12}/> GIAO HÀNG</span>;
 };
 
+const getOrderSourceBadge = (order) => {
+  const isDispatcherOrder = Boolean(order?.createdBy && !order?.customerId);
+  if (isDispatcherOrder) {
+    return (
+      <span className="bg-purple-100 text-purple-700 px-2 py-0.5 rounded text-[10px] font-extrabold border border-purple-200 inline-flex items-center gap-1">
+        🎧 ĐƠN ĐIỀU PHỐI
+      </span>
+    );
+  }
+  return (
+    <span className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded text-[10px] font-extrabold border border-sky-200 inline-flex items-center gap-1">
+      📱 KHÁCH ĐẶT APP
+    </span>
+  );
+};
+
+const getFeePaidByBadge = (order) => {
+  if (!order || ['DON_GHEP', 'DAT_XE', 'DIEU_PHOI'].includes(order.serviceType)) return null;
+  if (order.feePaidBy === 'SENDER') {
+    return (
+      <span className="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-extrabold border border-amber-300 inline-flex items-center gap-1">
+        🏪 Shop trả ship
+      </span>
+    );
+  }
+  return (
+    <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-extrabold border border-emerald-200 inline-flex items-center gap-1">
+      👤 Khách trả ship
+    </span>
+  );
+};
+
 function OrderCard({ order, onAccept, loading }) {
   const navigate = useNavigate();
 
@@ -66,12 +98,18 @@ function OrderCard({ order, onAccept, loading }) {
     <div className="card mb-3" onClick={() => navigate(`/order/${order._id}`)}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-slate-500 line-clamp-1">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-          <div>{getServiceBadge(order)}</div>
+          <span className="text-xs text-slate-500 font-bold line-clamp-1">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {getOrderSourceBadge(order)}
+            {getServiceBadge(order)}
+          </div>
         </div>
-        <span className="text-sm font-bold text-blue-600">
-          {order.codAmount?.toLocaleString()}đ COD
-        </span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="text-sm font-bold text-blue-600">
+            {order.codAmount?.toLocaleString()}đ COD
+          </span>
+          {getFeePaidByBadge(order)}
+        </div>
       </div>
 
       {order.scheduledTime && (
@@ -204,12 +242,18 @@ function ActiveOrderCard({ order, onAction, loading }) {
       </div>
       <div className="flex justify-between items-start mb-3">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-slate-500 line-clamp-1">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
-          <div>{getServiceBadge(order)}</div>
+          <span className="text-xs text-slate-500 font-bold line-clamp-1">{order.orderCode || order._id?.slice(-8).toUpperCase()}</span>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {getOrderSourceBadge(order)}
+            {getServiceBadge(order)}
+          </div>
         </div>
-        <span className="text-sm font-bold text-blue-600 mr-20">
-          {order.codAmount?.toLocaleString()}đ COD
-        </span>
+        <div className="flex flex-col items-end gap-1 mr-20">
+          <span className="text-sm font-bold text-blue-600">
+            {order.codAmount?.toLocaleString()}đ COD
+          </span>
+          {getFeePaidByBadge(order)}
+        </div>
       </div>
 
       {order.scheduledTime && (
@@ -821,8 +865,14 @@ export default function Home() {
                 <p className="text-slate-500 text-sm mb-3 font-medium">Lịch sử đơn (Gần đây nhất)</p>
                 {historyOrders.map(order => (
                   <div key={order._id} className="bg-slate-200/50 rounded-2xl p-4 mb-3 border border-slate-200" onClick={() => navigate(`/order/${order._id}`)}>
-                     <div className="flex justify-between items-center mb-2">
-                       <span className="font-bold text-slate-600 text-xs">{order.orderCode || order._id.slice(-8).toUpperCase()}</span>
+                     <div className="flex justify-between items-start mb-2">
+                       <div className="flex flex-col gap-1">
+                         <span className="font-bold text-slate-600 text-xs">{order.orderCode || order._id.slice(-8).toUpperCase()}</span>
+                         <div className="flex flex-wrap items-center gap-1">
+                           {getOrderSourceBadge(order)}
+                           {getFeePaidByBadge(order)}
+                         </div>
+                       </div>
                        <span className="text-[10px] font-bold text-green-600 bg-green-100 px-2 py-0.5 rounded-full">{order.status === 'COMPLETED' ? 'Hoàn thành' : 'Đã hủy'}</span>
                      </div>
                      <p className="text-xs text-slate-500 truncate mb-1 flex items-center gap-1"><MapPin size={12}/> {order.pickupAddress}</p>

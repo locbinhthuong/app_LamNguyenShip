@@ -104,6 +104,18 @@ export default function NearestOrderPopup() {
         </div>
         
         <div className="p-5 space-y-4">
+          <div className="flex items-center justify-center gap-2 pb-1">
+            {order.createdBy && !order.customerId ? (
+              <span className="bg-purple-100 text-purple-700 px-2.5 py-1 rounded-lg text-xs font-extrabold border border-purple-200 inline-flex items-center gap-1">
+                🎧 ĐƠN ĐIỀU PHỐI LÊN ĐƠN
+              </span>
+            ) : (
+              <span className="bg-sky-100 text-sky-700 px-2.5 py-1 rounded-lg text-xs font-extrabold border border-sky-200 inline-flex items-center gap-1">
+                📱 ĐƠN KHÁCH ĐẶT QUA APP
+              </span>
+            )}
+          </div>
+
           <div className="flex items-center justify-between border-b pb-3">
              <div className="text-xs text-slate-500 font-medium uppercase">Thu hộ (COD)</div>
              <div className="font-bold text-lg text-slate-800">
@@ -113,11 +125,11 @@ export default function NearestOrderPopup() {
           
           <div className="flex items-center justify-between border-b pb-3">
              <div className="text-xs text-slate-500 font-medium uppercase">Phí ship</div>
-               <div className="font-bold text-xl text-green-600 flex flex-col items-center">
+               <div className="font-bold text-xl text-green-600 flex flex-col items-end">
                  {order.deliveryFee > 0 ? `${((order.deliveryFee || 0) + (order.packageDetails?.bulkyFee || 0) + (order.rideDetails?.surcharge || 0) + (order.extraSurcharge || 0)).toLocaleString('vi-VN')}đ` : 'Thỏa thuận'}
                  {order.serviceType !== 'DON_GHEP' && order.serviceType !== 'DAT_XE' && order.serviceType !== 'DIEU_PHOI' && order.deliveryFee > 0 && (
-                   <span className="text-[10px] mt-0.5 font-bold px-1.5 py-0.5 rounded-md bg-green-100 text-green-700 leading-tight">
-                     {order.feePaidBy === 'SENDER' ? 'Shop trả ship' : 'Khách trả ship'}
+                   <span className={`text-[10px] mt-0.5 font-extrabold px-2 py-0.5 rounded-md leading-tight ${order.feePaidBy === 'SENDER' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'}`}>
+                     {order.feePaidBy === 'SENDER' ? '🏪 Shop trả ship' : '👤 Khách trả ship'}
                    </span>
                  )}
                </div>
