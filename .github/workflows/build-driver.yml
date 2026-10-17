@@ -157,6 +157,7 @@ jobs:
           cat <<EOF > generate_api_key.rb
           require 'json'
           require 'base64'
+          require 'fileutils'
           raw_secret = ENV['APP_STORE_CONNECT_API_KEY_P8_BASE64']
           key_content = raw_secret.include?('BEGIN PRIVATE KEY') ? raw_secret : Base64.decode64(raw_secret)
           
@@ -166,7 +167,11 @@ jobs:
             key: key_content,
             in_house: false
           }.to_json)
+
+          FileUtils.mkdir_p(File.expand_path('~/.appstoreconnect/private_keys'))
+          File.write(File.expand_path("~/.appstoreconnect/private_keys/AuthKey_#{ENV['APP_STORE_CONNECT_API_KEY_KEY_ID']}.p8"), key_content)
           EOF
           ruby generate_api_key.rb
           
-          fastlane pilot upload --api_key_path api_key.json --ipa "$IPA_PATH" --skip_waiting_for_build_processing true
+          fastlane pilot upload --api_key_path api_key.json --ipa "$IPA_PATH" --skip_waiting_for_build_processing true || \
+          xcrun altool --upload-app --type ios --file "$IPA_PATH" --apiKey "$APP_STORE_CONNECT_API_KEY_KEY_ID" --apiIssuer "$APP_STORE_CONNECT_API_KEY_ISSUER_ID"
