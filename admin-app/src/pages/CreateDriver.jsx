@@ -113,9 +113,9 @@ export default function CreateDriver() {
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-600">Mức chiết khấu (% Lợi nhuận Công ty thu)</label>
             <select name="commissionRate" value={form.commissionRate} onChange={handleChange} className="input-field font-bold text-slate-700 bg-sky-50 border-sky-200">
-              <option value={15}>15% (Tiêu chuẩn)</option>
-              <option value={20}>20% (Cao cấp)</option>
-              <option value={12}>12% (Ưu đãi đặc biệt)</option>
+              <option value={15}>15% (Tiêu chuẩn - Cấp 2)</option>
+              <option value={20}>20% (Cấp 1)</option>
+              <option value={10}>10% (Cấp 3 - Ưu đãi)</option>
             </select>
           </div>
 

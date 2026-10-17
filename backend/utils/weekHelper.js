@@ -9,19 +9,19 @@ const ENABLE_TIER_SYSTEM = process.env.TIER_SYSTEM_ENABLED === 'true';
 
 // BẬT / TẮT CHẾ ĐỘ TEST
 // Khi đang test: Cấp 1: <= 2 đơn | Cấp 2: 3-5 đơn | Cấp 3: >= 6 đơn
-// Khi lên chính thức (Production): Cấp 1: <= 15 đơn | Cấp 2: 16-75 đơn | Cấp 3: > 75 đơn
-const IS_TEST_TIER = true;
+// Khi lên chính thức (Production): Cấp 1: 0-10 đơn (20%) | Cấp 2: 11-55 đơn (15%) | Cấp 3: > 55 đơn (10%)
+const IS_TEST_TIER = false;
 
 const TIER_THRESHOLDS = IS_TEST_TIER
   ? {
       TIER_1_MAX: 2, // 0 - 2 đơn: Cấp 1 (20%)
       TIER_2_MAX: 5, // 3 - 5 đơn: Cấp 2 (15%)
-      TIER_3_MIN: 6  // >= 6 đơn: Cấp 3 (12%)
+      TIER_3_MIN: 6  // >= 6 đơn: Cấp 3 (10%)
     }
   : {
-      TIER_1_MAX: 15, // 0 - 15 đơn: Cấp 1 (20%)
-      TIER_2_MAX: 75, // 16 - 75 đơn: Cấp 2 (15%)
-      TIER_3_MIN: 76  // >= 76 đơn: Cấp 3 (12%)
+      TIER_1_MAX: 10, // 0 - 10 đơn: Cấp 1 (20%)
+      TIER_2_MAX: 55, // 11 - 55 đơn: Cấp 2 (15%)
+      TIER_3_MIN: 56  // Trên 55 đơn (>= 56 đơn): Cấp 3 (10%)
     };
 
 /**
@@ -96,7 +96,7 @@ const getTierConfig = (weeklyPoints = 0) => {
   return {
     tier: 3,
     tierName: 'Cấp 3 - Vàng',
-    commissionRate: 12,
+    commissionRate: 10,
     nextTierPoints: null,
     pointsToNextTier: 0,
     thresholds: TIER_THRESHOLDS

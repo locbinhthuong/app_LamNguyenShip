@@ -503,9 +503,9 @@ export default function DriverDetail() {
                   onChange={e => setEditForm({...editForm, commissionRate: Number(e.target.value)})}
                   className="mt-1 w-full rounded-xl border border-sky-300 bg-sky-50 hover:bg-sky-100 p-3 text-sky-800 font-bold focus:border-sky-600 focus:outline-none focus:ring-1 focus:ring-sky-600"
                 >
-                  <option value={15}>15% (Tiêu chuẩn)</option>
-                  <option value={20}>20% (Cao cấp)</option>
-                  <option value={12}>12% (Ưu đãi đặc biệt)</option>
+                  <option value={15}>15% (Tiêu chuẩn - Cấp 2)</option>
+                  <option value={20}>20% (Cấp 1)</option>
+                  <option value={10}>10% (Cấp 3 - Ưu đãi)</option>
                 </select>
               </div>
 

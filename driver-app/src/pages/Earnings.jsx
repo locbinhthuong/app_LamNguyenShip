@@ -533,7 +533,7 @@ export default function Earnings() {
               const points = driver?.weeklyPoints || 0;
               const isCustom = driver?.isCustomCommission;
               const commission = driver?.commissionRate || 15;
-              const thresholds = driver?.tierInfo?.thresholds || { TIER_1_MAX: 2, TIER_2_MAX: 5, TIER_3_MIN: 6 };
+              const thresholds = driver?.tierInfo?.thresholds || { TIER_1_MAX: 10, TIER_2_MAX: 55, TIER_3_MIN: 56 };
 
               // Cấu hình theme theo cấp bậc
               const tierThemes = {
@@ -557,7 +557,7 @@ export default function Earnings() {
                   glowColor: 'shadow-cyan-500/20',
                   nextTierName: 'Cấp 3 - Vàng',
                   nextTierPoints: thresholds.TIER_3_MIN,
-                  nextTierCommission: 12,
+                  nextTierCommission: 10,
                   needed: Math.max(0, thresholds.TIER_3_MIN - points),
                   progressMax: thresholds.TIER_3_MIN
                 },
@@ -569,7 +569,7 @@ export default function Earnings() {
                   glowColor: 'shadow-yellow-500/30',
                   nextTierName: null,
                   nextTierPoints: null,
-                  nextTierCommission: 12,
+                  nextTierCommission: 10,
                   needed: 0,
                   progressMax: thresholds.TIER_3_MIN
                 }
@@ -647,7 +647,7 @@ export default function Earnings() {
                           </>
                         ) : (
                           <span className="w-full text-center font-bold text-yellow-200 flex items-center justify-center gap-1">
-                            <Sparkles size={14} /> Bạn đã đạt cấp bậc cao nhất với chiết khấu 12%!
+                            <Sparkles size={14} /> Bạn đã đạt cấp bậc cao nhất với chiết khấu 10%!
                           </span>
                         )}
                       </div>
@@ -747,12 +747,12 @@ export default function Earnings() {
                                   </span>
                                 )}
                               </div>
-                              <p className="text-xs text-slate-500">Mốc: Từ {thresholds.TIER_3_MIN} đơn trở lên</p>
+                              <p className="text-xs text-slate-500">Mốc: Trên {thresholds.TIER_2_MAX} đơn/tuần</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <span className="text-lg font-black text-amber-600">12%</span>
-                            <p className="text-[10px] text-emerald-600 font-semibold">Ưu đãi nhất (-8%)</p>
+                            <span className="text-lg font-black text-amber-600">10%</span>
+                            <p className="text-[10px] text-emerald-600 font-semibold">Ưu đãi nhất (-10%)</p>
                           </div>
                         </div>
                       </div>
