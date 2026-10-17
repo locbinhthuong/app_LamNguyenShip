@@ -117,6 +117,18 @@ export default function DriverDetail() {
     }
   };
 
+  const handleUnlockIdle = async () => {
+    if (!driver) return;
+    if (!window.confirm(`Mở khóa / gỡ cảnh báo treo app cho tài xế "${driver.name}" để tài xế có thể nhận đơn bình thường?`)) return;
+    try {
+      await updateDriver(id, { unlockIdle: true });
+      alert('Đã mở khóa cảnh báo treo app thành công!');
+      loadData();
+    } catch (err) {
+      alert('Lỗi mở khóa cảnh báo treo app');
+    }
+  };
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -160,6 +172,9 @@ export default function DriverDetail() {
 
   if (!driver || !stats) return null;
 
+  const isIdleLocked = driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now();
+  const hasIdleWarning = isIdleLocked || (driver.idleWarningLevel > 0);
+
   return (
     <div className="mx-auto max-w-5xl p-4 sm:p-6 pb-20">
       {/* Nút Quay Lại */}
@@ -183,11 +198,33 @@ export default function DriverDetail() {
             <h2 className="text-xl font-bold text-slate-800 mb-1">{driver.name}</h2>
             <p className="text-blue-600 font-mono text-sm mb-3">{driver.phone}</p>
             
-            <div className="flex gap-2 justify-center items-center mt-2">
+            <div className="flex flex-wrap gap-2 justify-center items-center mt-2">
               <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLORS[driver.status]}`}>
                 {STATUS_LABELS[driver.status]}
               </span>
+              {isIdleLocked ? (
+                <span className="inline-block rounded-full bg-red-100 border border-red-300 px-3 py-1 text-xs font-bold text-red-700">
+                  🔒 Khóa treo app (Lần {driver.idleWarningLevel || 2})
+                </span>
+              ) : driver.idleWarningLevel > 0 ? (
+                <span className="inline-block rounded-full bg-amber-100 border border-amber-300 px-3 py-1 text-xs font-bold text-amber-800">
+                  ⚠️ Cảnh báo treo app (Lần {driver.idleWarningLevel})
+                </span>
+              ) : null}
             </div>
+
+            {hasIdleWarning && (
+              <div className="mt-4 rounded-xl bg-amber-50 border border-amber-200 p-3 text-left text-xs text-amber-900 space-y-1">
+                <p className="font-bold text-amber-800">
+                  {isIdleLocked
+                    ? `🔒 Đang bị tạm khóa nhận đơn do treo app (đến ${new Date(driver.idleLockedUntil).toLocaleString('vi-VN')})`
+                    : `⚠️ Đang ở mức Cảnh báo treo app Lần ${driver.idleWarningLevel}`}
+                </p>
+                <p className="text-[11px] text-amber-700">
+                  Bấm nút "Mở khóa Treo App" bên dưới để xóa cảnh báo và cho phép tài xế nhận đơn lại ngay.
+                </p>
+              </div>
+            )}
 
             <div className="mt-6 border-t border-slate-200 pt-4 text-left text-sm space-y-3">
               <div className="flex justify-between">
@@ -234,6 +271,15 @@ export default function DriverDetail() {
             </div>
 
             <div className="mt-6 space-y-3">
+              {hasIdleWarning && (
+                <button
+                  onClick={handleUnlockIdle}
+                  className="w-full rounded-xl py-2.5 text-sm font-bold transition shadow-lg bg-emerald-600 text-white hover:bg-emerald-500 hover:shadow-emerald-500/20"
+                >
+                  🔓 MỞ KHÓA TREO APP (GỠ CẢNH BÁO)
+                </button>
+              )}
+
               <button onClick={() => setShowEdit(true)} className="w-full rounded-xl bg-blue-50 hover:bg-blue-100 py-2.5 text-sm font-bold text-slate-800 transition hover:bg-blue-200">
                 ✏️ Sửa Thông Tin
               </button>

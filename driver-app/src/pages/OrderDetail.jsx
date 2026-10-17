@@ -224,6 +224,7 @@ export default function OrderDetail() {
   };
 
   const handleSelectLateReason = async (reasonOption) => {
+    window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
     setSelectedLateReason(reasonOption);
     if (reasonOption === 'Khác') return;
     try {
@@ -239,6 +240,7 @@ export default function OrderDetail() {
   };
 
   const handleSaveCustomLateReason = async () => {
+    window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
     const finalReason = customLateReason.trim();
     if (!finalReason) {
       showNotification('Vui lòng nhập lý do cụ thể', 'error');
@@ -259,6 +261,8 @@ export default function OrderDetail() {
   const handleAction = async (action) => {
     if (actionLoading) return; // Chặn bấm đúp Spam mạng
     setActionLoading(true);
+    window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+    window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
     try {
       let res;
       if (action === 'accept') {
@@ -443,16 +447,25 @@ export default function OrderDetail() {
         {/* CẢNH BÁO GIAI ĐOẠN 1: QUÁ 15 PHÚT CHƯA BẤM ĐÃ LẤY HÀNG */}
         {showPickupWarning && (
           <div className="bg-amber-50 rounded-2xl p-4 border-2 border-amber-400 shadow-md">
-            <div className="flex items-start gap-2.5">
-              <span className="text-2xl shrink-0">⏰</span>
-              <div>
-                <p className="text-amber-800 text-xs font-black uppercase tracking-wider">
-                  NHẮC NHỞ LẤY ĐƠN ({elapsedPickupMins} PHÚT)
-                </p>
-                <p className="text-amber-900 text-sm font-bold mt-1 leading-snug">
-                  Bạn hãy nhanh chóng tới shop lấy đơn để đảm bảo thời gian giao hàng và chất lượng đơn hàng!
-                </p>
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex items-start gap-2.5">
+                <span className="text-2xl shrink-0">⏰</span>
+                <div>
+                  <p className="text-amber-800 text-xs font-black uppercase tracking-wider">
+                    NHẮC NHỞ LẤY ĐƠN ({elapsedPickupMins} PHÚT)
+                  </p>
+                  <p className="text-amber-900 text-sm font-bold mt-1 leading-snug">
+                    Bạn hãy nhanh chóng tới shop lấy đơn để đảm bảo thời gian giao hàng và chất lượng đơn hàng!
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'))}
+                className="shrink-0 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow uppercase"
+              >
+                🔕 Tắt chuông
+              </button>
             </div>
           </div>
         )}
@@ -460,16 +473,25 @@ export default function OrderDetail() {
         {/* CẢNH BÁO GIAI ĐOẠN 2: QUÁ 35 PHÚT CHƯA GIAO XONG + CHỌN LÝ DO GIAO TRỄ */}
         {showDeliveryWarning && (
           <div className="bg-red-50 rounded-2xl p-4 border-2 border-red-400 shadow-md space-y-3">
-            <div className="flex items-start gap-2.5">
-              <span className="text-2xl shrink-0">🚨</span>
-              <div>
-                <p className="text-red-700 text-xs font-black uppercase tracking-wider">
-                  CẢNH BÁO GIAO ĐƠN TRỄ ({elapsedDeliveryMins} PHÚT &gt; 35 PHÚT)
-                </p>
-                <p className="text-red-900 text-sm font-bold mt-1 leading-snug">
-                  Bạn hãy nhanh chóng giao hàng! Đơn hàng đã quá 35 phút kể từ lúc lấy hàng, vui lòng chọn lý do giao đơn trễ bên dưới:
-                </p>
+            <div className="flex items-start justify-between gap-2.5">
+              <div className="flex items-start gap-2.5">
+                <span className="text-2xl shrink-0">🚨</span>
+                <div>
+                  <p className="text-red-700 text-xs font-black uppercase tracking-wider">
+                    CẢNH BÁO GIAO ĐƠN TRỄ ({elapsedDeliveryMins} PHÚT &gt; 35 PHÚT)
+                  </p>
+                  <p className="text-red-900 text-sm font-bold mt-1 leading-snug">
+                    Bạn hãy nhanh chóng giao hàng! Đơn hàng đã quá 35 phút kể từ lúc lấy hàng, vui lòng chọn lý do giao đơn trễ bên dưới:
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'))}
+                className="shrink-0 bg-red-600 hover:bg-red-700 text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg shadow uppercase"
+              >
+                🔕 Tắt chuông
+              </button>
             </div>
 
             <div className="bg-white rounded-xl p-3 border border-red-200 space-y-2">

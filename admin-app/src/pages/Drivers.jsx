@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import { getDrivers, deleteDriver, resetDriverPassword, forceOfflineDriver, resetDriverBalances } from '../services/api';
+import { getDrivers, deleteDriver, resetDriverPassword, forceOfflineDriver, resetDriverBalances, updateDriver } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
 import PromptModal from '../components/PromptModal';
 
@@ -104,6 +104,17 @@ export default function Drivers() {
       await forceOfflineDriver(id);
       // Socket sẽ tự cập nhật lại danh sách nhưng load luôn cho chắc
       await load();
+    } catch (err) {
+      alert('Lỗi: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleUnlockIdle = async (id, name) => {
+    if (!window.confirm(`Mở khóa / gỡ cảnh báo treo app cho tài xế "${name}" để tài xế có thể nhận đơn bình thường?`)) return;
+    try {
+      await updateDriver(id, { unlockIdle: true });
+      await load();
+      alert(`Đã mở khóa cảnh báo treo app cho tài xế "${name}"!`);
     } catch (err) {
       alert('Lỗi: ' + (err.response?.data?.message || err.message));
     }
@@ -230,6 +241,15 @@ export default function Drivers() {
                       ⚫ Offline
                     </span>
                   )}
+                  {driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now() ? (
+                    <span className="shrink-0 rounded-full bg-red-100 border border-red-300 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                      🔒 Khóa treo app (Lần {driver.idleWarningLevel || 2})
+                    </span>
+                  ) : driver.idleWarningLevel > 0 ? (
+                    <span className="shrink-0 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                      ⚠️ Cảnh báo treo (Lần {driver.idleWarningLevel})
+                    </span>
+                  ) : null}
                 </div>
               </div>
               <div className="mb-3 grid grid-cols-3 gap-2">
@@ -252,6 +272,15 @@ export default function Drivers() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2 mt-3">
+                {((driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()) || driver.idleWarningLevel > 0) && (
+                  <button
+                    onClick={() => handleUnlockIdle(driver._id, driver.name)}
+                    className="col-span-2 rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white transition-all hover:bg-emerald-700 shadow-sm"
+                  >
+                    🔓 Mở khóa Treo App (Gỡ cảnh báo)
+                  </button>
+                )}
+
                 <Link
                   to={`/drivers/${driver._id}`}
                   className="rounded-xl bg-blue-600/10 px-3 py-2 text-xs font-bold text-blue-600 text-center transition-all hover:bg-blue-600/20"
@@ -340,6 +369,15 @@ export default function Drivers() {
                             ⚫ Offline
                           </span>
                         )}
+                        {driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now() ? (
+                          <span className="rounded-full bg-red-100 border border-red-300 px-2 py-0.5 text-[10px] font-bold text-red-700">
+                            🔒 Khóa treo app (Lần {driver.idleWarningLevel || 2})
+                          </span>
+                        ) : driver.idleWarningLevel > 0 ? (
+                          <span className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-bold text-amber-800">
+                            ⚠️ Cảnh báo treo (Lần {driver.idleWarningLevel})
+                          </span>
+                        ) : null}
                       </div>
                     </td>
                     <td className="table-td">
@@ -363,7 +401,15 @@ export default function Drivers() {
                     </td>
                     <td className="table-td">
                         <div className="flex gap-2 flex-wrap">
-                          
+                          {((driver.idleLockedUntil && new Date(driver.idleLockedUntil).getTime() > Date.now()) || driver.idleWarningLevel > 0) && (
+                            <button
+                              onClick={() => handleUnlockIdle(driver._id, driver.name)}
+                              className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm"
+                            >
+                              🔓 Mở khóa Treo App
+                            </button>
+                          )}
+
                           {driver.isOnline && (
                             <button
                               onClick={() => handleForceOffline(driver._id, driver.name)}

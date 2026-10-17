@@ -77,11 +77,33 @@ const revenueController = {
           { _id: { $in: driverIds } },
           { status: 'active' }
         ]
-      }).select('name phone walletDebt driverCode isOnline avatar');
+      }).select('name phone walletDebt driverCode isOnline avatar idleWarningLevel idleLockedUntil');
 
       const driverMap = {};
+      const existingStatDriverIds = new Set(driverIds.map(id => id.toString()));
       allActiveDrivers.forEach(d => {
-        driverMap[d._id.toString()] = d;
+        const dIdStr = d._id.toString();
+        driverMap[dIdStr] = d;
+        if (!existingStatDriverIds.has(dIdStr)) {
+          statsAgg.push({
+            _id: d._id,
+            totalOrders: 0,
+            totalFee: 0,
+            totalBonus: 0,
+            todayOrders: 0,
+            todayFee: 0,
+            todayBonus: 0,
+            weekOrders: 0,
+            weekFee: 0,
+            weekBonus: 0,
+            monthOrders: 0,
+            monthFee: 0,
+            monthBonus: 0,
+            yearOrders: 0,
+            yearFee: 0,
+            yearBonus: 0
+          });
+        }
       });
 
       const DriverOnlineSession = require('../models/DriverOnlineSession');
@@ -294,6 +316,8 @@ const revenueController = {
           phone: info ? info.phone : '',
           driverCode: info?.driverCode || `TX${dId.slice(-6).toUpperCase()}`,
           isOnline: !!info?.isOnline,
+          idleWarningLevel: info?.idleWarningLevel || 0,
+          idleLockedUntil: info?.idleLockedUntil || null,
           totalOrders: stat.totalOrders,
           totalFee: stat.totalFee,
           totalBonus: stat.totalBonus,

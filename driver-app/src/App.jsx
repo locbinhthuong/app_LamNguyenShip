@@ -443,10 +443,12 @@ function AppContent() {
        // Luôn kích hoạt báo động không cần quan tâm đang ẩn hay mở
        startAlarm();
     };
-    window.addEventListener('driver_new_order', handleNewOrderEvent);
-    window.addEventListener('driver_order_accepted', handleStopEvent);
-    window.addEventListener('driver_order_cancelled', handleStopEvent);
-    window.addEventListener('driver_order_deleted_event', handleStopEvent);
+      window.addEventListener('driver_new_order', handleNewOrderEvent);
+      window.addEventListener('driver_order_accepted', handleStopEvent);
+      window.addEventListener('driver_order_picked_up', handleStopEvent);
+      window.addEventListener('driver_order_completed', handleStopEvent);
+      window.addEventListener('driver_order_cancelled', handleStopEvent);
+      window.addEventListener('driver_order_deleted_event', handleStopEvent);
 
     const handleForceAssign = (e) => {
         const order = e.detail;
@@ -492,6 +494,8 @@ function AppContent() {
       window.removeEventListener('driver_idle_warning_event', startWarningAlarm);
       window.removeEventListener('driver_new_order', handleNewOrderEvent);
       window.removeEventListener('driver_order_accepted', handleStopEvent);
+      window.removeEventListener('driver_order_picked_up', handleStopEvent);
+      window.removeEventListener('driver_order_completed', handleStopEvent);
       window.removeEventListener('driver_order_cancelled', handleStopEvent);
       window.removeEventListener('driver_order_deleted_event', handleStopEvent);
       window.removeEventListener('driver_force_assigned', handleForceAssign);
@@ -514,7 +518,7 @@ function AppContent() {
     window.addEventListener('api_upgrade_required', handleUpgradeRequired);
 
     const handlePush = (e) => {
-      // Nếu là cảnh báo treo app từ FCM Foreground
+      // 1) Nếu là cảnh báo treo app từ FCM Foreground
       if (e.detail?.type === 'IDLE_WARNING') {
         const pushData = e.detail.data || {};
         window.dispatchEvent(new CustomEvent('driver_idle_warning_event', {
@@ -525,6 +529,36 @@ function AppContent() {
           }
         }));
         loadProfile();
+        return;
+      }
+
+      // 2) Nếu là cảnh báo thời gian lấy/giao đơn (15p lấy hàng / 35p giao hàng) từ FCM Foreground
+      if (e.detail?.type === 'ORDER_LATE_PICKUP' || e.detail?.type === 'ORDER_LATE_DELIVERY') {
+        const pushData = e.detail.data || {};
+        const orderId = e.detail.orderId || pushData.orderId || null;
+        const warnKey = `${orderId}_${e.detail.type}`;
+        if (window.__lastOrderTimeWarningKey === warnKey && Date.now() - (window.__lastOrderTimeWarningAt || 0) < 3000) {
+          return;
+        }
+        window.__lastOrderTimeWarningKey = warnKey;
+        window.__lastOrderTimeWarningAt = Date.now();
+
+        setPushMessage({
+          title: e.detail.title || '⏰ Cảnh báo thời gian đi đơn',
+          message: e.detail.body || 'Bạn hãy nhanh chóng xử lý đơn hàng!',
+          orderId,
+          isWarning: true
+        });
+        window.dispatchEvent(new CustomEvent('play_warning_alarm_event'));
+        window.dispatchEvent(new CustomEvent('driver_order_time_warning', {
+          detail: {
+            type: e.detail.type === 'ORDER_LATE_PICKUP' ? 'LATE_PICKUP' : 'LATE_DELIVERY',
+            orderId,
+            orderCode: pushData.orderCode || '',
+            title: e.detail.title,
+            message: e.detail.body
+          }
+        }));
         return;
       }
 
@@ -577,16 +611,19 @@ function AppContent() {
           });
           LocalNotifications.createChannel({
             id: 'aloshipp_warning_channel_v1',
-            name: 'Kênh Cảnh Báo Treo App',
-            description: 'Kênh âm báo cảnh báo tài xế treo app không nhận đơn',
+            name: 'Kênh Cảnh Báo Hệ Thống & Thời Gian Đơn',
+            description: 'Kênh âm báo cảnh báo treo app và thời gian lấy/giao đơn (15p/35p)',
             importance: 5,
             visibility: 1,
             sound: Capacitor.getPlatform() === 'ios' ? 'chuong_canhbao.mp3' : 'chuong_canhbao',
             vibration: true
           });
-        LocalNotifications.addListener('localNotificationActionPerformed', () => {
+        LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
           lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+          window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
+          const targetUrl = action?.notification?.extra?.url;
+          if (targetUrl) navigate(targetUrl);
         });
       }).catch(console.error);
 
@@ -602,21 +639,24 @@ function AppContent() {
         }).catch(e => console.log('FCM createChannel error:', e));
         FirebaseMessaging.createChannel({
             id: 'aloshipp_warning_channel_v1',
-            name: 'Kênh Cảnh Báo Treo App',
-            description: 'Kênh âm báo cảnh báo tài xế treo app không nhận đơn',
+            name: 'Kênh Cảnh Báo Hệ Thống & Thời Gian Đơn',
+            description: 'Kênh âm báo cảnh báo treo app và thời gian lấy/giao đơn (15p/35p)',
             importance: 5,
             visibility: 1,
             sound: Capacitor.getPlatform() === 'ios' ? 'chuong_canhbao.mp3' : 'chuong_canhbao',
             vibration: true
         }).catch(e => console.log('FCM warning createChannel error:', e));
-        FirebaseMessaging.addListener('notificationActionPerformed', () => {
+        FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
           lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+          window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
+          const targetUrl = event?.notification?.data?.url || (event?.notification?.data?.orderId ? `/order/${event.notification.data.orderId}` : null);
+          if (targetUrl) navigate(targetUrl);
           loadProfile();
         });
       }).catch(console.error);
     }
-  }, [loadProfile]);
+  }, [loadProfile, navigate]);
 
   const currentDriverId = driver?._id || driver?.id;
 
@@ -673,6 +713,16 @@ function AppContent() {
       });
 
       socketRef.current.on('driver_status_updated', (data) => {
+        if (data.unlockIdle) {
+          window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
+          window.dispatchEvent(new CustomEvent('driver_idle_unlocked_event', { detail: data }));
+          setPushMessage({
+            title: '🔓 ĐÃ MỞ KHÓA TREO APP',
+            message: 'Admin đã mở khóa cảnh báo treo app cho bạn. Bạn có thể bật Online nhận đơn bình thường!'
+          });
+          loadProfile();
+          return;
+        }
         if (data.status === 'active') {
           setPushMessage({
             title: '🎉 CHÚC MỪNG',
@@ -690,41 +740,71 @@ function AppContent() {
       });
 
       socketRef.current.on('driver_idle_unlocked', (data) => {
+        window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
         window.dispatchEvent(new CustomEvent('driver_idle_unlocked_event', { detail: data }));
+        if (data?.message) {
+          setPushMessage({
+            title: '🔓 ĐÃ MỞ KHÓA TREO APP',
+            message: data.message
+          });
+        }
         loadProfile();
       });
 
       socketRef.current.on('driver_tier_upgraded', (data) => {
-        // Tạm ẩn thông báo popup khi chưa cập nhật App Store
-        /*
-        setPushMessage({
-          title: '🎉 CHÚC MỪNG LÊN HẠNG!',
-          message: data?.message || 'Bạn vừa thăng hạng và được giảm phí chiết khấu!'
-        });
-        */
         loadProfile();
         window.dispatchEvent(new CustomEvent('driver_tier_upgraded_event', { detail: data }));
       });
 
       socketRef.current.on('driver_weekly_reset', (data) => {
-        // Tạm ẩn thông báo popup khi chưa cập nhật App Store
-        /*
-        setPushMessage({
-          title: '🔄 BẮT ĐẦU TUẦN MỚI',
-          message: data?.message || 'Điểm xếp hạng tuần đã được làm mới!'
-        });
-        */
         loadProfile();
         window.dispatchEvent(new CustomEvent('driver_weekly_reset_event', { detail: data }));
       });
 
-      socketRef.current.on('order_time_warning', (data) => {
+      const handleSocketOrderTimeWarning = (data) => {
+        const orderId = data?.orderId || null;
+        const warnType = data?.type === 'LATE_PICKUP' ? 'ORDER_LATE_PICKUP' : 'ORDER_LATE_DELIVERY';
+        const warnKey = `${orderId}_${warnType}`;
+        if (window.__lastOrderTimeWarningKey === warnKey && Date.now() - (window.__lastOrderTimeWarningAt || 0) < 3000) {
+          return;
+        }
+        window.__lastOrderTimeWarningKey = warnKey;
+        window.__lastOrderTimeWarningAt = Date.now();
+
+        const title = data?.title || '⏰ Cảnh báo thời gian đi đơn';
+        const message = data?.message || 'Bạn hãy nhanh chóng xử lý đơn hàng!';
+
         setPushMessage({
-          title: data?.title || '⏰ Cảnh báo thời gian đi đơn',
-          message: data?.message || 'Bạn hãy nhanh chóng xử lý đơn hàng!'
+          title,
+          message,
+          orderId,
+          isWarning: true
         });
+
+        // Phát chuông cảnh báo trong app (chuong_canhbao.mp3 + rung)
+        window.dispatchEvent(new CustomEvent('play_warning_alarm_event'));
         window.dispatchEvent(new CustomEvent('driver_order_time_warning', { detail: data }));
-      });
+
+        // Nếu màn hình đang ẩn / chạy ngầm trên Web mà không qua FCM, bắn thêm thông báo trình duyệt ngoài màn hình
+        if (!Capacitor.isNativePlatform() && document.visibilityState !== 'visible' && 'Notification' in window && Notification.permission === 'granted') {
+          try {
+            const notif = new Notification(title, {
+              body: message,
+              icon: '/logoALOSHIPP.png',
+              requireInteraction: true
+            });
+            notif.onclick = () => {
+              window.focus();
+              window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
+              if (orderId) navigate(`/order/${orderId}`);
+              notif.close();
+            };
+          } catch (e) {}
+        }
+      };
+
+      socketRef.current.on('driver_order_time_warning', handleSocketOrderTimeWarning);
+      socketRef.current.on('order_time_warning', handleSocketOrderTimeWarning);
 
       socketRef.current.on('driver_updated', () => {
         loadProfile();
@@ -773,7 +853,7 @@ function AppContent() {
           window.driverSocket = null;
         };
     }
-  }, [currentDriverId, loadProfile]);
+  }, [currentDriverId, loadProfile, navigate]);
 
   const handleForceLogoutClose = () => {
     setLogoutAlert(null);
@@ -811,15 +891,27 @@ function AppContent() {
           <div 
             onClick={() => {
               window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+              window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
+              const targetOrderId = pushMessage.orderId;
               setPushMessage(null);
-              navigate('/');
+              if (targetOrderId) {
+                navigate(`/order/${targetOrderId}`);
+              } else {
+                navigate('/');
+              }
             }}
-            className="cursor-pointer bg-slate-900 border border-slate-700 shadow-2xl rounded-xl p-2.5 flex items-center gap-3 ring-2 ring-blue-500/50 w-full max-w-md pointer-events-auto active:scale-[0.98] transition-transform"
+            className={`cursor-pointer bg-slate-900 border shadow-2xl rounded-xl p-2.5 flex items-center gap-3 w-full max-w-md pointer-events-auto active:scale-[0.98] transition-transform ${
+              pushMessage.isWarning
+                ? 'border-red-500 ring-2 ring-red-500/70'
+                : 'border-slate-700 ring-2 ring-blue-500/50'
+            }`}
           >
-            <span className="text-xl animate-pulse shrink-0">🔔</span>
+            <span className="text-xl animate-pulse shrink-0">{pushMessage.isWarning ? '🚨' : '🔔'}</span>
             <div className="flex-1 min-w-0">
-              <h3 className="text-[13px] font-bold text-blue-400 truncate">{pushMessage.title || "Có đơn hàng mới"}</h3>
-              <p className="text-[11px] text-slate-300 truncate mt-0.5">{pushMessage.message?.replace(/\n/g, ' 🔜 ')}</p>
+              <h3 className={`text-[13px] font-bold truncate ${pushMessage.isWarning ? 'text-amber-400' : 'text-blue-400'}`}>
+                {pushMessage.title || "Có đơn hàng mới"}
+              </h3>
+              <p className="text-[11px] text-slate-200 line-clamp-2 mt-0.5">{pushMessage.message?.replace(/\n/g, ' 🔜 ')}</p>
             </div>
             <div className="shrink-0 bg-red-600 text-white text-[10px] font-black px-3 py-2 rounded-lg ml-1 shadow-md uppercase tracking-wider">
               🔕 TẮT

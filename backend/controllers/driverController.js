@@ -12,8 +12,17 @@ const driverController = {
       const { status, isOnline, search } = req.query;
 
       let query = {};
+      const andConditions = [];
 
-      if (status) {
+      if (status === 'banned') {
+        andConditions.push({
+          $or: [
+            { status: 'banned' },
+            { idleLockedUntil: { $gt: new Date() } },
+            { idleWarningLevel: { $gt: 0 } }
+          ]
+        });
+      } else if (status) {
         query.status = status;
       }
 
@@ -22,11 +31,17 @@ const driverController = {
       }
 
       if (search) {
-        query.$or = [
-          { name: { $regex: search, $options: 'i' } },
-          { phone: { $regex: search, $options: 'i' } },
-          { driverCode: { $regex: search, $options: 'i' } }
-        ];
+        andConditions.push({
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { phone: { $regex: search, $options: 'i' } },
+            { driverCode: { $regex: search, $options: 'i' } }
+          ]
+        });
+      }
+
+      if (andConditions.length > 0) {
+        query.$and = andConditions;
       }
 
       const limit = parseInt(req.query.limit) || 1000;
@@ -234,11 +249,14 @@ const driverController = {
       if (status) {
         updateData.status = status;
         if (status === 'active') {
+          const currentDriver = await Driver.findById(id);
           updateData.idleLockedUntil = null;
           updateData.idleWarningLevel = 0;
           updateData.idleWarningSentAt = null;
           updateData.idleConfirmedAt = null;
-          const currentDriver = await Driver.findById(id);
+          updateData.idleOfflineAt = null;
+          updateData.idleAccumulatedMs = 0;
+          updateData.idleSince = currentDriver?.isOnline ? new Date() : null;
           // Thay thế tất cả các chuỗi '(Đã xoá)' hoặc '(Đã xóa)' trong tên
           if (currentDriver && currentDriver.name) {
             updateData.name = currentDriver.name.replace(/\s*\(Đã (xoá|xóa)\)/gi, '');
@@ -251,10 +269,14 @@ const driverController = {
         }
       }
       if (req.body.unlockIdle) {
+        const currentDriver = await Driver.findById(id);
         updateData.idleLockedUntil = null;
         updateData.idleWarningLevel = 0;
         updateData.idleWarningSentAt = null;
         updateData.idleConfirmedAt = null;
+        updateData.idleOfflineAt = null;
+        updateData.idleAccumulatedMs = 0;
+        updateData.idleSince = currentDriver?.isOnline ? new Date() : null;
       }
       if (avatar !== undefined) updateData.avatar = avatar;
       if (commissionRate !== undefined) updateData.commissionRate = Number(commissionRate);
@@ -280,6 +302,13 @@ const driverController = {
 
       if (req.io) {
         req.io.to(`driver_${driver._id}`).emit('driver_updated', driver);
+        req.io.to('admins').emit('driver_status_change', {
+          driverId: driver._id,
+          isOnline: driver.isOnline,
+          status: driver.status,
+          idleWarningLevel: driver.idleWarningLevel || 0,
+          idleLockedUntil: driver.idleLockedUntil || null
+        });
       }
 
       res.status(200).json({
@@ -291,6 +320,13 @@ const driverController = {
       // Bắn socket cho tài xế nếu admin đổi status hoặc mở khóa
       if (req.io && (status || req.body.unlockIdle)) {
         emitToDriver(req.io, id, 'driver_status_updated', { status: driver.status, unlockIdle: !!req.body.unlockIdle });
+        if (req.body.unlockIdle || status === 'active') {
+          emitToDriver(req.io, id, 'driver_idle_unlocked', {
+            idleWarningLevel: 0,
+            idleLockedUntil: null,
+            message: 'Admin đã mở khóa cảnh báo treo app cho bạn!'
+          });
+        }
       }
     } catch (error) {
       console.error('Error updateDriver:', error);

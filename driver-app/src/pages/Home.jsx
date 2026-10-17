@@ -269,6 +269,40 @@ function ActiveOrderCard({ order, onAction, loading }) {
         </div>
       )}
 
+      {order.status === 'ACCEPTED' && order.isLatePickup && (
+        <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-2.5 mb-3 text-xs text-amber-900 font-bold flex items-center justify-between gap-2">
+          <span>⏰ NHẮC NHỞ LẤY ĐƠN (QUÁ 15 PHÚT): Hãy nhanh chóng tới shop lấy đơn!</span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
+            }}
+            className="shrink-0 bg-amber-600 text-white px-2 py-1 rounded-lg text-[10px] font-black uppercase"
+          >
+            🔕 Tắt
+          </button>
+        </div>
+      )}
+
+      {(order.status === 'PICKED_UP' || order.status === 'DELIVERING') && order.isLateDelivery && (
+        <div className="bg-red-50 border-2 border-red-400 rounded-xl p-2.5 mb-3 text-xs text-red-900 font-bold flex items-center justify-between gap-2">
+          <span>
+            🚨 GIAO TRỄ (&gt;35 PHÚT): {order.lateReason ? `Lý do: ${order.lateReason}` : 'Bấm vào đơn để chọn lý do giao trễ!'}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
+            }}
+            className="shrink-0 bg-red-600 text-white px-2 py-1 rounded-lg text-[10px] font-black uppercase"
+          >
+            🔕 Tắt
+          </button>
+        </div>
+      )}
+
       <div className="space-y-2 mb-3">
         <div className="flex items-start gap-2">
           <span className="text-slate-400 mt-1">{order.serviceType === 'DAT_XE' ? <MapPin size={16}/> : <Package size={16}/>}</span>
@@ -554,6 +588,7 @@ export default function Home() {
     window.addEventListener('driver_order_picked_up', loadBackground);
     window.addEventListener('driver_order_delivering', loadBackground);
     window.addEventListener('driver_order_completed', loadBackground);
+    window.addEventListener('driver_order_time_warning', loadBackground);
 
     return () => {
       clearInterval(interval);
@@ -568,6 +603,7 @@ export default function Home() {
       window.removeEventListener('driver_order_picked_up', loadBackground);
       window.removeEventListener('driver_order_delivering', loadBackground);
       window.removeEventListener('driver_order_completed', loadBackground);
+      window.removeEventListener('driver_order_time_warning', loadBackground);
     };
   }, [loadData, driver]);
 
@@ -597,6 +633,8 @@ export default function Home() {
   const handleAction = async (orderId, action) => {
     if (actionLoading) return; // Chặn bấm đúp nhiều lần Giao Xong
     setActionLoading(orderId);
+    window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+    window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
     try {
       const actions = {
         pickup: async () => { const { pickedUpOrder } = await import('../services/api'); return pickedUpOrder(orderId); },

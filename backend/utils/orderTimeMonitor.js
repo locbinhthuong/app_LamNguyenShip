@@ -57,8 +57,7 @@ const checkOrderTimeouts = async (io) => {
         if (ORDER_WARNING_PUSH_ENABLED) {
           const title = '⚠️ NHẮC NHỞ LẤY ĐƠN (QUÁ 15 PHÚT)';
           const message = `Đơn ${order.orderCode || ''}: Bạn hãy nhanh chóng tới shop lấy đơn để đảm bảo thời gian giao hàng và chất lượng đơn hàng!`;
-
-          emitToDriver(io, driverIdStr, 'driver_order_time_warning', {
+          const warningPayload = {
             type: 'LATE_PICKUP',
             orderId: order._id,
             orderCode: order.orderCode,
@@ -66,7 +65,10 @@ const checkOrderTimeouts = async (io) => {
             message,
             elapsedMinutes: order.pickupDurationMinutes,
             sentAt: now.toISOString()
-          });
+          };
+
+          emitToDriver(io, driverIdStr, 'driver_order_time_warning', warningPayload);
+          emitToDriver(io, driverIdStr, 'order_time_warning', warningPayload);
 
           if (driver?.fcmToken) {
             await sendNotification(
@@ -76,7 +78,10 @@ const checkOrderTimeouts = async (io) => {
               {
                 type: 'ORDER_LATE_PICKUP',
                 orderId: order._id.toString(),
-                url: `/order/${order._id}`
+                orderCode: order.orderCode || '',
+                url: `/order/${order._id}`,
+                sound: 'chuong_canhbao',
+                channelId: 'aloshipp_warning_channel_v1'
               },
               WARNING_SOUND_OPTIONS
             );
@@ -113,8 +118,7 @@ const checkOrderTimeouts = async (io) => {
         if (ORDER_WARNING_PUSH_ENABLED) {
           const title = '🚨 CẢNH BÁO GIAO ĐƠN TRỄ (QUÁ 35 PHÚT)';
           const message = `Đơn ${order.orderCode || ''}: Bạn hãy nhanh chóng giao hàng! Đã quá 35 phút kể từ lúc lấy hàng, vui lòng chọn lý do giao đơn trễ.`;
-
-          emitToDriver(io, driverIdStr, 'driver_order_time_warning', {
+          const warningPayload = {
             type: 'LATE_DELIVERY',
             orderId: order._id,
             orderCode: order.orderCode,
@@ -122,7 +126,10 @@ const checkOrderTimeouts = async (io) => {
             message,
             elapsedMinutes: order.deliveryDurationMinutes,
             sentAt: now.toISOString()
-          });
+          };
+
+          emitToDriver(io, driverIdStr, 'driver_order_time_warning', warningPayload);
+          emitToDriver(io, driverIdStr, 'order_time_warning', warningPayload);
 
           if (driver?.fcmToken) {
             await sendNotification(
@@ -132,7 +139,10 @@ const checkOrderTimeouts = async (io) => {
               {
                 type: 'ORDER_LATE_DELIVERY',
                 orderId: order._id.toString(),
-                url: `/order/${order._id}`
+                orderCode: order.orderCode || '',
+                url: `/order/${order._id}`,
+                sound: 'chuong_canhbao',
+                channelId: 'aloshipp_warning_channel_v1'
               },
               WARNING_SOUND_OPTIONS
             );
