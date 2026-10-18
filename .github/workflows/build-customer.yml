@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - 'frontend/**'
+      - '.github/workflows/build-customer.yml'
   workflow_dispatch:
 
 jobs:

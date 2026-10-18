@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - 'driver-app/**'
+      - '.github/workflows/build-driver.yml'
   workflow_dispatch:
 
 jobs:
