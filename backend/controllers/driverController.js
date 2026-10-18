@@ -77,7 +77,8 @@ const driverController = {
       }
       const Order = require('../models/Order');
 
-      const { getStartOfWeekVN, getCurrentWeekVN, getTierConfig, syncDriverWeeklyStats } = require('../utils/weekHelper');
+      const { getStartOfWeekVN, getCurrentWeekVN, getTierConfig, syncDriverWeeklyStats, reconcileUnpaid12PercentDebt } = require('../utils/weekHelper');
+      await reconcileUnpaid12PercentDebt(req.io);
       const startOfThisWeek = getStartOfWeekVN();
       const currentWeekStr = getCurrentWeekVN();
 

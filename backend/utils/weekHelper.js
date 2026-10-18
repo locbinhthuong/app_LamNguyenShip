@@ -213,14 +213,16 @@ const reconcileUnpaid12PercentDebt = async (io = null) => {
     const Order = require('../models/Order');
     const DebtTransaction = require('../models/DebtTransaction');
 
-    // Tìm các giao dịch trừ phí đơn hàng đang ghi "Thu chiết khấu 12%"
+    // Tìm các giao dịch trừ phí đơn hàng đang ghi "12%"
     const legacy12Txs = await DebtTransaction.find({
       type: 'FEE_DEDUCTION',
       status: 'SUCCESS',
-      description: { $regex: /Thu chiết khấu 12%/ }
+      description: { $regex: /12%/ }
     });
 
     if (!legacy12Txs || legacy12Txs.length === 0) return 0;
+
+    const startOfThisWeek = getStartOfWeekVN();
 
     // Nhóm theo driverId + targetDate
     const groups = {};
@@ -244,11 +246,6 @@ const reconcileUnpaid12PercentDebt = async (io = null) => {
       const driver = await Driver.findById(driverId);
       if (!driver) continue;
 
-      // Nếu tổng dư nợ hiện tại của tài xế <= 0 (đã đóng hết nợ) -> BỎ QUA
-      if ((driver.walletDebt || 0) <= 0) {
-        continue;
-      }
-
       // Kiểm tra toàn bộ giao dịch trong ngày targetDate của tài xế này
       const allDriverTxs = await DebtTransaction.find({
         driverId,
@@ -260,19 +257,27 @@ const reconcileUnpaid12PercentDebt = async (io = null) => {
         return dStr === targetDate;
       });
 
-      // Nếu trong ngày targetDate đã có giao dịch PAYMENT (đã đóng hoặc đang chờ duyệt thanh toán)
-      // HOẶC tổng nợ ròng của ngày đó <= 0 -> tài xế đã đóng rồi -> BỎ QUA
+      // Nếu trong ngày targetDate đã có giao dịch PAYMENT (đã thu nợ) HOẶC tổng nợ ròng của ngày đó <= 0 -> BỎ QUA
       const hasPaidOrPendingForDay = dayTxs.some(t => t.type === 'PAYMENT');
       const netDayDebt = dayTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
       if (hasPaidOrPendingForDay || netDayDebt <= 0) {
         continue;
       }
 
-      // Lấy đúng mức chiết khấu theo cấp hạng hiện tại của tài xế (20% / 15% / 10%)
-      const tierCfg = getTierConfig(driver.weeklyPoints || 0);
-      const correctRate = (driver.isCustomCommission && Number(driver.commissionRate) !== 12)
-        ? Number(driver.commissionRate)
-        : tierCfg.commissionRate;
+      // Đếm số đơn hoàn thành thực tế trong tuần này của tài xế để lấy đúng cấp hạng (Cấp 1: 20%, Cấp 2: 15%, Cấp 3: 10%)
+      const thisWeekOrdersCount = await Order.countDocuments({
+        assignedTo: driver._id,
+        status: 'COMPLETED',
+        $or: [
+          { deliveredAt: { $gte: startOfThisWeek } },
+          { updatedAt: { $gte: startOfThisWeek } },
+          { createdAt: { $gte: startOfThisWeek } }
+        ]
+      });
+
+      const tierCfg = getTierConfig(thisWeekOrdersCount);
+      const isCustom = Number(driver.commissionRate) === 12 ? false : Boolean(driver.isCustomCommission);
+      const correctRate = isCustom ? Number(driver.commissionRate) : tierCfg.commissionRate;
 
       if (correctRate === 12) continue;
 
@@ -295,7 +300,7 @@ const reconcileUnpaid12PercentDebt = async (io = null) => {
           const newAmount = Math.round(deliveryFee * (correctRate / 100));
           const diff = newAmount - tx.amount;
           tx.amount = newAmount;
-          tx.description = tx.description.replace(/Thu chiết khấu 12%/g, `Thu chiết khấu ${correctRate}%`);
+          tx.description = tx.description.replace(/12%/g, `${correctRate}%`);
           await tx.save();
           totalDiff += diff;
           adjustedTxCount++;
@@ -305,10 +310,18 @@ const reconcileUnpaid12PercentDebt = async (io = null) => {
       if (totalDiff !== 0) {
         const updatedDriver = await Driver.findByIdAndUpdate(
           driverId,
-          { $inc: { walletDebt: totalDiff } },
+          {
+            $inc: { walletDebt: totalDiff },
+            $set: {
+              weeklyPoints: thisWeekOrdersCount,
+              driverTier: tierCfg.tier,
+              commissionRate: correctRate,
+              isCustomCommission: isCustom
+            }
+          },
           { new: true }
         );
-        console.log(`[DebtReconcile] Đã điều chỉnh công nợ ngày ${targetDate} cho tài xế ${driver.name} (${correctRate}%): chênh lệch ${totalDiff > 0 ? '+' : ''}${totalDiff}đ -> Nợ mới: ${updatedDriver.walletDebt}đ`);
+        console.log(`[DebtReconcile] Đã điều chỉnh công nợ ngày ${targetDate} cho tài xế ${driver.name} (Cấp ${tierCfg.tier} - ${correctRate}%): ${totalDiff > 0 ? '+' : ''}${totalDiff}đ -> Nợ mới: ${updatedDriver.walletDebt}đ`);
         if (io) {
           io.to(`driver_${driverId}`).emit('debt_updated', { debt: updatedDriver.walletDebt });
           io.to(`driver_${driverId}`).emit('driver_updated', updatedDriver);
