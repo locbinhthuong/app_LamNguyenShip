@@ -3,7 +3,7 @@
  */
 
 // BẬT HỆ THỐNG CẤP BẬC VÀ TỰ ĐỘNG THAY ĐỔI CHIẾT KHẤU TÀI XẾ (20% - 15% - 10%)
-const ENABLE_TIER_SYSTEM = process.env.TIER_SYSTEM_ENABLED !== 'false';
+const ENABLE_TIER_SYSTEM = true;
 
 // BẬT / TẮT CHẾ ĐỘ TEST
 // Khi đang test: Cấp 1: <= 2 đơn | Cấp 2: 3-5 đơn | Cấp 3: >= 6 đơn
@@ -188,6 +188,11 @@ const syncDriverWeeklyStats = async (driver) => {
   // Cập nhật Cấp bậc và Chiết khấu
   const tierConfig = getTierConfig(driver.weeklyPoints);
   driver.driverTier = tierConfig.tier;
+
+  // Nếu tài xế đang bị dính mức 12% từ bản test cũ thì tự động gỡ khóa thủ công để cập nhật về đúng 20% / 15% / 10%
+  if (Number(driver.commissionRate) === 12) {
+    driver.isCustomCommission = false;
+  }
 
   // Nếu tính năng Cấp Bậc được bật và không bị Admin khóa chiết khấu thủ công thì tự động cập nhật chiết khấu theo cấp
   if (ENABLE_TIER_SYSTEM && !driver.isCustomCommission) {

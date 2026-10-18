@@ -77,23 +77,53 @@ const driverController = {
       }
       const Order = require('../models/Order');
 
-      const todayStats = await Order.aggregate([
-        {
-          $match: {
-            assignedTo: { $in: drivers.map(d => d._id) },
-            status: 'COMPLETED',
-            deliveredAt: { $gte: startOfDay, $lte: endOfDay }
+      const { getStartOfWeekVN, getCurrentWeekVN, getTierConfig, syncDriverWeeklyStats } = require('../utils/weekHelper');
+      const startOfThisWeek = getStartOfWeekVN();
+      const currentWeekStr = getCurrentWeekVN();
+
+      const [todayStats, thisWeekStats] = await Promise.all([
+        Order.aggregate([
+          {
+            $match: {
+              assignedTo: { $in: drivers.map(d => d._id) },
+              status: 'COMPLETED',
+              deliveredAt: { $gte: startOfDay, $lte: endOfDay }
+            }
+          },
+          {
+            $group: {
+              _id: '$assignedTo',
+              todayOrders: { $sum: 1 },
+              todayDeliveryFee: { $sum: '$deliveryFee' },
+              todayCodAmount: { $sum: '$codAmount' }
+            }
           }
-        },
-        {
-          $group: {
-            _id: '$assignedTo',
-            todayOrders: { $sum: 1 },
-            todayDeliveryFee: { $sum: '$deliveryFee' },
-            todayCodAmount: { $sum: '$codAmount' }
+        ]),
+        Order.aggregate([
+          {
+            $match: {
+              assignedTo: { $in: drivers.map(d => d._id) },
+              status: 'COMPLETED',
+              $or: [
+                { deliveredAt: { $gte: startOfThisWeek } },
+                { updatedAt: { $gte: startOfThisWeek } },
+                { createdAt: { $gte: startOfThisWeek } }
+              ]
+            }
+          },
+          {
+            $group: {
+              _id: '$assignedTo',
+              weekOrders: { $sum: 1 }
+            }
           }
-        }
+        ])
       ]);
+
+      const weekOrdersMap = {};
+      thisWeekStats.forEach(w => {
+        weekOrdersMap[w._id.toString()] = w.weekOrders;
+      });
 
       const DebtTransaction = require('../models/DebtTransaction');
       const targetDateStr = filterDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -133,10 +163,52 @@ const driverController = {
         statsMap[stat._id.toString()].todayDebt = stat.todayDebt;
       });
 
+      const bulkOps = [];
       const driversWithStats = drivers.map(drv => {
         const stat = statsMap[drv._id.toString()] || { todayOrders: 0, todayDeliveryFee: 0, todayCodAmount: 0, todayDebt: 0 };
-        return { ...drv, ...stat };
+        const actualWeekPoints = weekOrdersMap[drv._id.toString()] || 0;
+        const tierCfg = getTierConfig(actualWeekPoints);
+        const isLegacy12 = Number(drv.commissionRate) === 12;
+        const isCustom = isLegacy12 ? false : Boolean(drv.isCustomCommission);
+        const expectedRate = isCustom ? drv.commissionRate : tierCfg.commissionRate;
+
+        if (
+          drv.weeklyPoints !== actualWeekPoints ||
+          drv.driverTier !== tierCfg.tier ||
+          drv.commissionRate !== expectedRate ||
+          drv.currentWeek !== currentWeekStr ||
+          isLegacy12
+        ) {
+          bulkOps.push({
+            updateOne: {
+              filter: { _id: drv._id },
+              update: {
+                $set: {
+                  weeklyPoints: actualWeekPoints,
+                  driverTier: tierCfg.tier,
+                  commissionRate: expectedRate,
+                  isCustomCommission: isCustom,
+                  currentWeek: currentWeekStr
+                }
+              }
+            }
+          });
+        }
+
+        return {
+          ...drv,
+          weeklyPoints: actualWeekPoints,
+          driverTier: tierCfg.tier,
+          commissionRate: expectedRate,
+          isCustomCommission: isCustom,
+          currentWeek: currentWeekStr,
+          ...stat
+        };
       });
+
+      if (bulkOps.length > 0) {
+        Driver.bulkWrite(bulkOps).catch(err => console.error('Error bulkWrite driver tiers:', err));
+      }
 
       res.status(200).json({
         success: true,
@@ -162,14 +234,19 @@ const driverController = {
     try {
       const { id } = req.params;
 
-      const driver = await Driver.findById(id).select('-password').lean();
+      const driverDoc = await Driver.findById(id).select('-password');
 
-      if (!driver) {
+      if (!driverDoc) {
         return res.status(404).json({
           success: false,
           message: 'Không tìm thấy tài xế'
         });
       }
+
+      const { syncDriverWeeklyStats } = require('../utils/weekHelper');
+      await syncDriverWeeklyStats(driverDoc);
+      await driverDoc.save();
+      const driver = driverDoc.toObject();
 
       res.status(200).json({
         success: true,
