@@ -203,6 +203,130 @@ const syncDriverWeeklyStats = async (driver) => {
 };
 
 /**
+ * Tự động điều chỉnh lại các giao dịch công nợ bị tính nhầm 12% (từ bản test cũ)
+ * - CHỈ điều chỉnh cho những ngày/tài xế CHƯA ĐÓNG công nợ.
+ * - Những tài xế đã đóng công nợ ngày đó rồi (hoặc đang chờ duyệt thanh toán / hết nợ) sẽ được GIỮ NGUYÊN không đụng vào.
+ */
+const reconcileUnpaid12PercentDebt = async (io = null) => {
+  try {
+    const Driver = require('../models/Driver');
+    const Order = require('../models/Order');
+    const DebtTransaction = require('../models/DebtTransaction');
+
+    // Tìm các giao dịch trừ phí đơn hàng đang ghi "Thu chiết khấu 12%"
+    const legacy12Txs = await DebtTransaction.find({
+      type: 'FEE_DEDUCTION',
+      status: 'SUCCESS',
+      description: { $regex: /Thu chiết khấu 12%/ }
+    });
+
+    if (!legacy12Txs || legacy12Txs.length === 0) return 0;
+
+    // Nhóm theo driverId + targetDate
+    const groups = {};
+    for (const tx of legacy12Txs) {
+      const dateStr = tx.targetDate || new Date(tx.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const key = `${tx.driverId.toString()}__${dateStr}`;
+      if (!groups[key]) {
+        groups[key] = {
+          driverId: tx.driverId.toString(),
+          targetDate: dateStr,
+          txs: []
+        };
+      }
+      groups[key].txs.push(tx);
+    }
+
+    let adjustedTxCount = 0;
+
+    for (const group of Object.values(groups)) {
+      const { driverId, targetDate, txs } = group;
+      const driver = await Driver.findById(driverId);
+      if (!driver) continue;
+
+      // Nếu tổng dư nợ hiện tại của tài xế <= 0 (đã đóng hết nợ) -> BỎ QUA
+      if ((driver.walletDebt || 0) <= 0) {
+        continue;
+      }
+
+      // Kiểm tra toàn bộ giao dịch trong ngày targetDate của tài xế này
+      const allDriverTxs = await DebtTransaction.find({
+        driverId,
+        status: { $nin: ['REJECTED', 'DELETED'] }
+      }).lean();
+
+      const dayTxs = allDriverTxs.filter(t => {
+        const dStr = t.targetDate || new Date(t.createdAt).toLocaleDateString('en-CA', { timeZone: 'Asia/Ho_Chi_Minh' });
+        return dStr === targetDate;
+      });
+
+      // Nếu trong ngày targetDate đã có giao dịch PAYMENT (đã đóng hoặc đang chờ duyệt thanh toán)
+      // HOẶC tổng nợ ròng của ngày đó <= 0 -> tài xế đã đóng rồi -> BỎ QUA
+      const hasPaidOrPendingForDay = dayTxs.some(t => t.type === 'PAYMENT');
+      const netDayDebt = dayTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+      if (hasPaidOrPendingForDay || netDayDebt <= 0) {
+        continue;
+      }
+
+      // Lấy đúng mức chiết khấu theo cấp hạng hiện tại của tài xế (20% / 15% / 10%)
+      const tierCfg = getTierConfig(driver.weeklyPoints || 0);
+      const correctRate = (driver.isCustomCommission && Number(driver.commissionRate) !== 12)
+        ? Number(driver.commissionRate)
+        : tierCfg.commissionRate;
+
+      if (correctRate === 12) continue;
+
+      let totalDiff = 0;
+      for (const tx of txs) {
+        let deliveryFee = 0;
+        if (tx.orderId) {
+          const ord = await Order.findById(tx.orderId).select('deliveryFee').lean();
+          if (ord && ord.deliveryFee) deliveryFee = Number(ord.deliveryFee);
+        }
+        if (!deliveryFee && tx.description) {
+          const match = tx.description.match(/Phí ship:\s*([\d]+)/);
+          if (match) deliveryFee = Number(match[1]);
+        }
+        if (!deliveryFee && tx.amount > 0) {
+          deliveryFee = Math.round(tx.amount / 0.12);
+        }
+
+        if (deliveryFee > 0) {
+          const newAmount = Math.round(deliveryFee * (correctRate / 100));
+          const diff = newAmount - tx.amount;
+          tx.amount = newAmount;
+          tx.description = tx.description.replace(/Thu chiết khấu 12%/g, `Thu chiết khấu ${correctRate}%`);
+          await tx.save();
+          totalDiff += diff;
+          adjustedTxCount++;
+        }
+      }
+
+      if (totalDiff !== 0) {
+        const updatedDriver = await Driver.findByIdAndUpdate(
+          driverId,
+          { $inc: { walletDebt: totalDiff } },
+          { new: true }
+        );
+        console.log(`[DebtReconcile] Đã điều chỉnh công nợ ngày ${targetDate} cho tài xế ${driver.name} (${correctRate}%): chênh lệch ${totalDiff > 0 ? '+' : ''}${totalDiff}đ -> Nợ mới: ${updatedDriver.walletDebt}đ`);
+        if (io) {
+          io.to(`driver_${driverId}`).emit('debt_updated', { debt: updatedDriver.walletDebt });
+          io.to(`driver_${driverId}`).emit('driver_updated', updatedDriver);
+        }
+      }
+    }
+
+    if (adjustedTxCount > 0) {
+      console.log(`[DebtReconcile] Đã tự động cập nhật lại ${adjustedTxCount} giao dịch công nợ 12% chưa thanh toán về đúng cấp hạng.`);
+    }
+    return adjustedTxCount;
+  } catch (error) {
+    console.error('[DebtReconcile] Lỗi khi điều chỉnh công nợ 12%:', error);
+    return 0;
+  }
+};
+
+/**
  * Quét toàn bộ tài xế trong hệ thống và đồng bộ số đơn tuần từ dữ liệu thực tế
  */
 const checkAndResetAllDriversWeekly = async (io = null) => {
@@ -223,6 +347,9 @@ const checkAndResetAllDriversWeekly = async (io = null) => {
         io.to(`driver_${driver._id}`).emit('driver_updated', driver);
       }
     }
+
+    // Tự động điều chỉnh lại công nợ 12% cho những tài xế chưa đóng tiền
+    await reconcileUnpaid12PercentDebt(io);
 
     console.log(`[WeeklySync] Đã đồng bộ điểm tuần từ đơn hàng thực tế cho ${updatedCount} tài xế`);
     return updatedCount;
@@ -245,6 +372,7 @@ module.exports = {
   getTierConfig,
   syncDriverWeeklyStats,
   checkAndResetDriverWeek,
-  checkAndResetAllDriversWeekly
+  checkAndResetAllDriversWeekly,
+  reconcileUnpaid12PercentDebt
 };
 
