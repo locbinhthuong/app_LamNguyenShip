@@ -72,6 +72,15 @@ const getFeePaidByBadge = (order) => {
   );
 };
 
+const getCardDriverReminder = (reminder) => {
+  if (!reminder) return '';
+  return reminder
+    .split('\n')
+    .filter(line => !line.toLowerCase().includes('đang mưa'))
+    .join('\n')
+    .trim();
+};
+
 function OrderCard({ order, onAccept, loading }) {
   const navigate = useNavigate();
 
@@ -118,9 +127,9 @@ function OrderCard({ order, onAccept, loading }) {
         </div>
       )}
 
-      {order.driverReminder && (
+      {getCardDriverReminder(order.driverReminder) && (
         <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap">
-          ⚠️ {order.driverReminder}
+          ⚠️ {getCardDriverReminder(order.driverReminder)}
         </div>
       )}
 
@@ -263,9 +272,9 @@ function ActiveOrderCard({ order, onAction, loading }) {
         </div>
       )}
 
-      {order.driverReminder && (
+      {getCardDriverReminder(order.driverReminder) && (
         <div className="bg-red-100 border border-red-200 rounded-lg p-2.5 mb-3 text-base text-red-700 font-bold whitespace-pre-wrap">
-          ⚠️ {order.driverReminder}
+          ⚠️ {getCardDriverReminder(order.driverReminder)}
         </div>
       )}
 
@@ -575,6 +584,10 @@ export default function Home() {
                 return [updatedOrder, ...prev];
              });
          }
+      } else if (['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(updatedOrder.status)) {
+        setMyActiveOrders(prev => {
+          return prev.map(o => o._id === updatedOrder._id ? { ...o, ...updatedOrder } : o);
+        });
       }
     };
 
@@ -602,10 +615,11 @@ export default function Home() {
     const handleRainChanged = (e) => {
       if (e.detail) {
         setRainConfig(e.detail);
+        loadData(true);
         if (e.detail.isEnabled) {
           showNotification(`🌧️ Chế độ mưa đã BẬT! Phụ phí +${(Number(e.detail.amount) || 5000).toLocaleString('vi-VN')}đ đã được cộng vào giá ship.`, 'success');
         } else {
-          showNotification('☀️ Chế độ mưa đã TẮT. Giá ship trở về bình thường.', 'info');
+          showNotification('☀️ Chế độ mưa đã TẮT. Phí ship các đơn chưa lấy hàng đã trở về bình thường.', 'info');
         }
       }
     };

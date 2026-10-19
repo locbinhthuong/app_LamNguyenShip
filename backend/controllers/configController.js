@@ -96,13 +96,13 @@ exports.updateConfig = async (req, res) => {
 
       if (isEnabled && rainAmount > 0) {
         try {
-          // Tìm tất cả các đơn hàng đang chờ hoặc đang giao chưa được cộng phụ phí mưa
-          const activeOrders = await Order.find({
-            status: { $in: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'] },
+          // BẬT MƯA: Chỉ áp dụng cộng tiền cho đơn chưa nhận (PENDING) hoặc chưa lấy hàng (ACCEPTED)
+          const eligibleOrders = await Order.find({
+            status: { $in: ['PENDING', 'ACCEPTED'] },
             isRainSurchargeApplied: { $ne: true }
           });
 
-          for (const ord of activeOrders) {
+          for (const ord of eligibleOrders) {
             ord.deliveryFee = (Number(ord.deliveryFee) || 0) + rainAmount;
             ord.isRainSurchargeApplied = true;
             ord.rainSurchargeAmount = rainAmount;
@@ -123,9 +123,49 @@ exports.updateConfig = async (req, res) => {
               }
             }
           }
-          console.log(`[RainMode] Đã cộng phụ phí mưa +${rainAmount}đ cho ${activeOrders.length} đơn hàng đang hoạt động!`);
+          console.log(`[RainMode ON] Đã cộng phụ phí mưa +${rainAmount}đ cho ${eligibleOrders.length} đơn chưa lấy hàng!`);
         } catch (errActive) {
-          console.error('[RainMode] Lỗi cộng phụ phí mưa cho đơn đang chạy:', errActive);
+          console.error('[RainMode ON] Lỗi cộng phụ phí mưa:', errActive);
+        }
+      } else if (!isEnabled) {
+        try {
+          // TẮT MƯA: Chỉ trừ tiền các đơn tài xế chưa nhận (PENDING) hoặc chưa lấy hàng (ACCEPTED).
+          // Những đơn tài xế đã lấy hàng (PICKED_UP, DELIVERING) thì tiền phí ship VẪN GIỮ NGUYÊN!
+          const refundableOrders = await Order.find({
+            status: { $in: ['PENDING', 'ACCEPTED'] },
+            $or: [
+              { isRainSurchargeApplied: true },
+              { rainSurchargeAmount: { $gt: 0 } },
+              { driverReminder: { $regex: /\[ĐANG MƯA/ } }
+            ]
+          });
+
+          for (const ord of refundableOrders) {
+            const amountToSubtract = ord.rainSurchargeAmount || rainAmount;
+            ord.deliveryFee = Math.max(0, (Number(ord.deliveryFee) || 0) - amountToSubtract);
+            ord.isRainSurchargeApplied = false;
+            ord.rainSurchargeAmount = 0;
+            if (ord.driverReminder) {
+              ord.driverReminder = ord.driverReminder
+                .replace(/\n?\[ĐANG MƯA[^\]]*\]/g, '')
+                .trim();
+            }
+            await ord.save();
+
+            if (req.io) {
+              const payload = typeof ord.toObject === 'function' ? ord.toObject({ virtuals: true }) : ord;
+              req.io.to('admins').emit('order_updated', payload);
+              if (ord.assignedTo) {
+                req.io.to(`driver_${ord.assignedTo.toString()}`).emit('order_updated', payload);
+              }
+              if (ord.status === 'PENDING') {
+                req.io.to('drivers').emit('order_updated', payload);
+              }
+            }
+          }
+          console.log(`[RainMode OFF] Đã hoàn lại tiền ship cho ${refundableOrders.length} đơn chưa lấy hàng! Đơn đã lấy hàng vẫn giữ nguyên.`);
+        } catch (errOff) {
+          console.error('[RainMode OFF] Lỗi trừ phụ phí mưa khi tắt mưa:', errOff);
         }
       }
 
