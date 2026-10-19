@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { getMyOrders } from '../services/api';
+import { getMyOrders, getDriverRevenue } from '../services/api';
 import { Package, Bike, Wrench, ShoppingCart, Zap, Calendar, Trophy, MapPin, ClipboardList, Home as HomeIcon, Wallet } from 'lucide-react';
 
 const STATUS_LABELS = {
@@ -35,6 +35,8 @@ const getServiceBadge = (type) => {
 export default function MyOrders() {
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [serverStats, setServerStats] = useState(null);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
@@ -57,7 +59,7 @@ export default function MyOrders() {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       let label = d.toLocaleDateString('vi-VN', { weekday: 'short' });
-      label = label === 'CN' ? 'CN' : label.replace(/^T/, 'T');
+      label = label === 'CN' ? 'CN' : label.replace(/^T/, 'Thứ ');
       chartMap[d.toDateString()] = { label, orders: 0 };
     }
 
@@ -65,7 +67,7 @@ export default function MyOrders() {
 
     orders.forEach(o => {
       if (o.status !== 'COMPLETED') return;
-      const oDate = new Date(o.updatedAt || o.createdAt);
+      const oDate = new Date(o.deliveredAt || o.updatedAt || o.createdAt);
       const oDateStr = oDate.toDateString();
       
       if (chartMap[oDateStr]) chartMap[oDateStr].orders += 1;
@@ -76,18 +78,28 @@ export default function MyOrders() {
     });
 
     return { 
-      day: dCount, 
-      week: wCount, 
-      month: mCount, 
-      year: yCount,
-      chartData: Object.values(chartMap)
+      day: serverStats?.dailyOrders != null ? serverStats.dailyOrders : (serverStats?.todayOrders != null ? serverStats.todayOrders : dCount), 
+      week: serverStats?.weeklyOrders != null ? serverStats.weeklyOrders : wCount, 
+      month: serverStats?.monthlyOrders != null ? serverStats.monthlyOrders : mCount, 
+      year: serverStats?.yearlyOrders != null ? serverStats.yearlyOrders : yCount,
+      chartData: serverStats?.chartData?.length ? serverStats.chartData.map(c => ({
+        label: c.label === 'CN' ? 'CN' : (c.label.startsWith('Thứ') ? c.label : c.label.replace(/^T/, 'Thứ ')),
+        orders: c.orders || 0
+      })) : Object.values(chartMap)
     };
-  }, [orders]);
+  }, [orders, serverStats]);
 
   const loadOrders = useCallback(async () => {
     try {
-      const response = await getMyOrders();
-      setOrders(response.data || []);
+      const [ordersRes, revRes] = await Promise.all([
+        getMyOrders({ limit: 1000 }),
+        getDriverRevenue().catch(() => null)
+      ]);
+      setOrders(ordersRes?.data || []);
+      setTotalCount(ordersRes?.total || ordersRes?.data?.length || 0);
+      if (revRes?.success && revRes?.data) {
+        setServerStats(revRes.data);
+      }
     } catch (err) {
       console.error('Load orders error:', err);
     } finally {
@@ -108,10 +120,10 @@ export default function MyOrders() {
       : orders.filter(o => o.status === filter);
 
   const counts = {
-    all: orders.length,
+    all: totalCount || orders.length,
     ACCEPTED: orders.filter(o => o.status === 'ACCEPTED').length,
     DELIVERING: orders.filter(o => ['PICKED_UP', 'DELIVERING'].includes(o.status)).length,
-    COMPLETED: orders.filter(o => o.status === 'COMPLETED').length,
+    COMPLETED: serverStats?.totalOrders != null ? serverStats.totalOrders : orders.filter(o => o.status === 'COMPLETED').length,
     CANCELLED: orders.filter(o => o.status === 'CANCELLED').length
   };
 

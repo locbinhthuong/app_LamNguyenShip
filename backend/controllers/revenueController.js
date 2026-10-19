@@ -395,15 +395,17 @@ const revenueController = {
     try {
       const driverId = req.user.id;
       
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const todayVNStr = new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
+      const startOfToday = new Date(`${todayVNStr}T00:00:00.000+07:00`);
       
-      const startOfWeek = new Date(today);
-      const dayOfWeek = startOfWeek.getDay();
+      const vnNow = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+      const dayOfWeek = vnNow.getDay();
       const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      startOfWeek.setDate(today.getDate() + diffToMonday);
+      const startOfWeek = new Date(startOfToday);
+      startOfWeek.setDate(startOfWeek.getDate() + diffToMonday);
 
-      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startOfMonth = new Date(vnNow.getFullYear(), vnNow.getMonth(), 1);
+      const startOfYear = new Date(vnNow.getFullYear(), 0, 1);
 
       // Lấy các đơn hàng của driver này đã hoàn thành
       const completedOrders = await Order.find({ 
@@ -415,6 +417,12 @@ const revenueController = {
       let dailyFee = 0;
       let weeklyFee = 0;
       let monthlyFee = 0;
+      let yearlyFee = 0;
+
+      let dailyOrders = 0;
+      let weeklyOrders = 0;
+      let monthlyOrders = 0;
+      let yearlyOrders = 0;
       let totalWalletBonus = 0;
 
       // Danh sách lịch sử hiển thị
@@ -423,13 +431,14 @@ const revenueController = {
       // Khởi tạo mảng dữ liệu biểu đồ 7 ngày
       const chartDataArray = [];
       for (let i = 6; i >= 0; i--) {
-        const d = new Date(today);
+        const d = new Date(startOfToday);
         d.setDate(d.getDate() - i);
         const dayMap = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
         chartDataArray.push({
           dateObj: d,
           dateStr: `${d.getDate()}/${d.getMonth() + 1}`,
           label: dayMap[d.getDay()],
+          dayOfWeek: d.getDay(),
           fee: 0,
           orders: 0
         });
@@ -438,14 +447,27 @@ const revenueController = {
       completedOrders.forEach(order => {
         const fee = order.deliveryFee || 0;
         const bonus = order.adminBonus || 0;
-        const dateStrFromDB = order.deliveredAt || order.updatedAt;
+        const dateStrFromDB = order.deliveredAt || order.updatedAt || order.createdAt;
         const date = new Date(dateStrFromDB);
         
         totalFee += fee;
         totalWalletBonus += bonus;
-        if (date >= today) dailyFee += fee;
-        if (date >= startOfWeek) weeklyFee += fee;
-        if (date >= startOfMonth) monthlyFee += fee;
+        if (date >= startOfToday) {
+          dailyFee += fee;
+          dailyOrders += 1;
+        }
+        if (date >= startOfWeek) {
+          weeklyFee += fee;
+          weeklyOrders += 1;
+        }
+        if (date >= startOfMonth) {
+          monthlyFee += fee;
+          monthlyOrders += 1;
+        }
+        if (date >= startOfYear) {
+          yearlyFee += fee;
+          yearlyOrders += 1;
+        }
 
         // Điền vào biểu đồ
         for (let i = 0; i < 7; i++) {
@@ -479,9 +501,15 @@ const revenueController = {
         data: {
           totalOrders: completedOrders.length,
           totalFee,
-          dailyFee, // Trả lại key cũ dailyFee
-          weeklyFee, // Trả lại...
-          monthlyFee, 
+          dailyFee,
+          dailyOrders,
+          todayOrders: dailyOrders,
+          todayRevenue: dailyFee,
+          weeklyFee,
+          weeklyOrders,
+          monthlyFee,
+          monthlyOrders,
+          yearlyOrders,
           totalDebt,
           totalWalletBonus,
           chartData: chartDataArray,

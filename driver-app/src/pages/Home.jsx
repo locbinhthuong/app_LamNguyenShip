@@ -457,13 +457,11 @@ export default function Home() {
       // Nạp Doanh thu nóng trong ngày
       const revenueRes = await getDriverRevenue();
       if (revenueRes.success && revenueRes.data) {
-        // Tìm biểu đồ của đúng hôm nay
-        const todayLabel = new Date().toLocaleDateString('vi-VN', { weekday: 'short' }).replace(/^T/, 'T');
-        const todayStats = revenueRes.data.chartData?.find(c => c.label === todayLabel) || { fee: 0, orders: 0 };
-        // Hoặc tính từ recentOrders nếu an toàn hơn, nhưng DailyFee đã có sẵn từ backend
         setDailyStats({
           fee: revenueRes.data.dailyFee || 0,
-          orders: todayStats.orders || 0
+          orders: revenueRes.data.dailyOrders != null 
+            ? revenueRes.data.dailyOrders 
+            : (revenueRes.data.todayOrders != null ? revenueRes.data.todayOrders : 0)
         });
       }
 
@@ -822,77 +820,65 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Cặp Thống kê Doanh Số Ngày Thay Vì Đơn Cũ */}
-      <div className="shrink-0 w-full bg-white px-3 pb-2 relative z-10 flex justify-center border-b border-slate-200">
-        <div className="grid grid-cols-2 gap-2 w-full max-w-sm mt-0.5">
-          <div className="rounded-xl bg-blue-50/50 p-1 text-center border border-blue-200 shadow-sm flex flex-col justify-center">
-            <p className="text-[8px] font-bold tracking-wider mb-0.5 text-slate-500">ĐÃ HOÀN THÀNH</p>
-            <div className="flex items-baseline justify-center gap-1">
-              <p className="text-base font-black text-blue-600 leading-none">{dailyStats.orders}</p>
-              <p className="text-[8px] text-slate-400 font-medium">hôm nay</p>
+      {/* Thống kê đơn ngày & Nút Báo Mưa / Trạng thái Mưa (Gọn 1 hàng) */}
+      <div className="shrink-0 w-full bg-white px-3 py-2 border-b border-slate-200 flex items-center justify-between gap-2 z-10">
+        {/* Bên trái: 2 ô Đã hoàn thành & Điểm thưởng tạm */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+          <div className="flex-1 rounded-xl bg-blue-50/70 py-1 px-1.5 text-center border border-blue-200/80 shadow-xs flex flex-col justify-center min-w-0">
+            <p className="text-[7.5px] font-bold tracking-wider mb-0.5 text-slate-500 truncate">ĐÃ HOÀN THÀNH</p>
+            <div className="flex items-baseline justify-center gap-0.5">
+              <p className="text-sm sm:text-base font-black text-blue-600 leading-none">{dailyStats.orders}</p>
+              <p className="text-[7.5px] text-slate-400 font-medium">hôm nay</p>
             </div>
           </div>
-          <div className="rounded-xl bg-green-50/50 p-1 text-center border border-green-200 shadow-sm flex flex-col justify-center">
-            <p className="text-[8px] font-bold tracking-wider mb-0.5 text-slate-500">ĐIỂM THƯỞNG (TẠM)</p>
+          <div className="flex-1 rounded-xl bg-emerald-50/70 py-1 px-1.5 text-center border border-emerald-200/80 shadow-xs flex flex-col justify-center min-w-0">
+            <p className="text-[7.5px] font-bold tracking-wider mb-0.5 text-slate-500 truncate">ĐIỂM THƯỞNG (TẠM)</p>
             <div className="flex items-baseline justify-center gap-0.5">
-              <p className="text-base font-black text-green-600 leading-none">
-                 {dailyStats.fee.toLocaleString()}
+              <p className="text-sm sm:text-base font-black text-emerald-600 leading-none truncate">
+                {dailyStats.fee.toLocaleString()}
               </p>
-              <p className="text-[8px] text-green-600/80 font-bold">đ</p>
+              <p className="text-[7.5px] text-emerald-600/80 font-bold">đ</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Rain Status Bar & Report Button */}
-      <div className="shrink-0 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 flex items-center justify-between gap-2">
-        {rainConfig.isEnabled ? (
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <span className="flex h-3 w-3 relative shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
-            </span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-xs font-black text-blue-700 uppercase tracking-tight flex items-center gap-1">
-                  <CloudRain size={14} className="text-blue-600 animate-bounce" />
-                  Chế độ mưa ĐANG BẬT
+        {/* Bên phải: Nút Báo Mưa hoặc Trạng Thái Đang Mưa */}
+        <div className="shrink-0">
+          {rainConfig.isEnabled ? (
+            <button
+              type="button"
+              onClick={() => showNotification(`🌧️ Chế độ mưa đang BẬT! Phụ phí +${(Number(rainConfig?.amount) || 5000).toLocaleString('vi-VN')}đ đã được cộng trực tiếp vào tiền ship mỗi đơn.`, 'info')}
+              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-500/25 flex flex-col items-end justify-center active:scale-95 transition-all text-right border border-blue-400/30"
+            >
+              <div className="flex items-center gap-1">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-300 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                 </span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-600 text-white shadow-xs">
-                  +{(Number(rainConfig?.amount) || 5000).toLocaleString('vi-VN')}đ / đơn
+                <span className="text-[10px] font-black uppercase tracking-tight flex items-center gap-0.5 text-white">
+                  <CloudRain size={12} className="animate-bounce" /> ĐANG MƯA
                 </span>
               </div>
-              <p className="text-[10px] text-blue-600/90 font-medium truncate">
-                Phí mưa đã được cộng trực tiếp vào tiền ship của mỗi đơn
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
-                <CloudRain size={16} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-800 leading-tight">Chỗ bạn đang mưa?</p>
-                <p className="text-[10px] text-slate-500 font-medium">Báo Admin kích hoạt phụ phí mưa (+5k/đơn)</p>
-              </div>
-            </div>
+              <span className="text-[8.5px] font-extrabold text-sky-100 leading-tight">
+                +{(Number(rainConfig?.amount) || 5000).toLocaleString('vi-VN')}đ/đơn
+              </span>
+            </button>
+          ) : (
             <button
               type="button"
               onClick={handleReportRain}
               disabled={reportingRain || rainReportedRecently}
-              className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-sm ${
+              className={`px-3 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-xs ${
                 rainReportedRecently
-                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 active:scale-95 shadow-blue-500/25'
+                  ? 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white shadow-blue-500/20 active:scale-95'
               }`}
             >
               <CloudRain size={14} />
-              {reportingRain ? 'Đang gửi...' : rainReportedRecently ? 'Đã báo mưa' : 'Báo mưa'}
+              <span>{reportingRain ? 'Đang gửi...' : rainReportedRecently ? 'Đã báo mưa' : 'Báo mưa'}</span>
             </button>
-          </>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Tabs */}

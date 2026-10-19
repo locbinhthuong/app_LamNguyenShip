@@ -264,6 +264,14 @@ const orderSchema = new mongoose.Schema({
     default: 0,
     min: 0
   },
+  isRainSurchargeApplied: {
+    type: Boolean,
+    default: false
+  },
+  rainSurchargeAmount: {
+    type: Number,
+    default: 0
+  },
   feePaidBy: {
     type: String,
     enum: ['SENDER', 'RECEIVER'],

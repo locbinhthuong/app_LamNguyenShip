@@ -115,9 +115,9 @@ export const getAvailableOrders = async () => {
   return response.data;
 };
 
-export const getMyOrders = async (status) => {
-  const params = status ? { status } : {};
-  const response = await api.get('/api/orders/my', { params });
+export const getMyOrders = async (params) => {
+  const queryParams = typeof params === 'string' ? { status: params } : (params || {});
+  const response = await api.get('/api/orders/my', { params: queryParams });
   return response.data;
 };
 

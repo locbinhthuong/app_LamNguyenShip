@@ -133,11 +133,20 @@ exports.createFoodOrder = async (req, res) => {
     const surchargeReminder = await orderController.getLateNightSurchargeDriverReminder();
     const rainReminder = await orderController.getRainSurchargeDriverReminder();
     const combinedReminders = [surchargeReminder, rainReminder].filter(Boolean).join('\n');
+    const rainConfig = await orderController.getRainSurchargeConfig();
     
-    let finalDeliveryFee = deliveryFee || 0;
+    let finalDeliveryFee = Number(deliveryFee) || 0;
     let calculatedSurcharge = await orderController.getLateNightSurchargeAmount();
     let finalExtraSurcharge = extraSurcharge || calculatedSurcharge;
-    // Frontend already separated deliveryFee and extraSurcharge
+    
+    let isRainSurchargeApplied = false;
+    let rainSurchargeAmount = 0;
+    if (rainConfig && rainConfig.isEnabled && rainConfig.amount > 0) {
+      const rainFee = Number(rainConfig.amount) || 5000;
+      finalDeliveryFee += rainFee;
+      isRainSurchargeApplied = true;
+      rainSurchargeAmount = rainFee;
+    }
 
     // Prepare order data
     const newOrder = new Order({
@@ -168,6 +177,8 @@ exports.createFoodOrder = async (req, res) => {
       codAmount: foodTotal, 
       deliveryFee: finalDeliveryFee,
       extraSurcharge: finalExtraSurcharge,
+      isRainSurchargeApplied,
+      rainSurchargeAmount,
       distanceKm: distance || 0,
       feePaidBy: 'RECEIVER',
       status: 'WAITING_SHOP'

@@ -342,22 +342,34 @@ const orderController = {
   // GET /api/orders/my - Lấy đơn của tài xế hiện tại
   getMyOrders: async (req, res) => {
     try {
-      const { status } = req.query;
+      const { status, limit, page } = req.query;
       let query = { assignedTo: req.driver._id };
 
       if (status) {
         query.status = status.toUpperCase();
       }
 
-      const orders = await Order.find(query)
+      let queryExec = Order.find(query)
         .populate('createdBy', 'name')
-        .sort({ createdAt: -1 })
-        .limit(200)
-        .lean();
+        .sort({ createdAt: -1 });
+
+      const parsedLimit = limit === 'all' ? 0 : (parseInt(limit, 10) || 1000);
+      if (parsedLimit > 0) {
+        if (page && parseInt(page, 10) > 1) {
+          queryExec = queryExec.skip((parseInt(page, 10) - 1) * parsedLimit);
+        }
+        queryExec = queryExec.limit(parsedLimit);
+      }
+
+      const [orders, total] = await Promise.all([
+        queryExec.lean(),
+        Order.countDocuments(query)
+      ]);
 
       res.status(200).json({
         success: true,
         count: orders.length,
+        total,
         data: orders
       });
     } catch (error) {
@@ -477,14 +489,22 @@ const orderController = {
 
       const surchargeReminder = await getLateNightSurchargeDriverReminder();
       const rainReminder = await getRainSurchargeDriverReminder();
+      const rainConfig = await getRainSurchargeConfig();
       const reminders = [driverReminder, surchargeReminder, rainReminder].filter(Boolean);
       const finalDriverReminder = reminders.join('\n');
 
-      let finalDeliveryFee = deliveryFee || 0;
+      let finalDeliveryFee = Number(deliveryFee) || 0;
       let calculatedSurcharge = await getLateNightSurchargeAmount();
       let finalExtraSurcharge = extraSurcharge || calculatedSurcharge;
-      // Do not re-subtract surcharge here because frontend now separates extraSurcharge and deliveryFee
-
+      
+      let isRainSurchargeApplied = false;
+      let rainSurchargeAmount = 0;
+      if (rainConfig && rainConfig.isEnabled && rainConfig.amount > 0) {
+        const rainFee = Number(rainConfig.amount) || 5000;
+        finalDeliveryFee += rainFee;
+        isRainSurchargeApplied = true;
+        rainSurchargeAmount = rainFee;
+      }
 
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
@@ -500,6 +520,8 @@ const orderController = {
         codAmount: codAmount || 0,
         deliveryFee: finalDeliveryFee,
         extraSurcharge: finalExtraSurcharge,
+        isRainSurchargeApplied,
+        rainSurchargeAmount,
         adminBonus: adminBonus || 0,
         commissionRate: commissionRate !== undefined ? commissionRate : null,
         senderPhone: senderPhone || '',
@@ -645,11 +667,19 @@ const orderController = {
 
       const surchargeReminder = await getLateNightSurchargeDriverReminder();
       const rainReminder = await getRainSurchargeDriverReminder();
+      const rainConfig = await getRainSurchargeConfig();
       const combinedReminders = [surchargeReminder, rainReminder].filter(Boolean).join('\n');
       
       let finalDeliveryFee = Number(req.body.deliveryFee) || 0;
       let finalExtraSurcharge = Number(extraSurcharge) || 0;
       const resolvedServiceType = serviceType || 'GIAO_HANG';
+
+      let isRainSurchargeApplied = false;
+      let rainSurchargeAmount = 0;
+      if (rainConfig && rainConfig.isEnabled && rainConfig.amount > 0) {
+        isRainSurchargeApplied = true;
+        rainSurchargeAmount = Number(rainConfig.amount) || 5000;
+      }
 
       // Đơn MUA_HO của Khách hàng và Cửa hàng luôn cộng thêm 5.000đ phí mua hộ mỗi đơn
       if (resolvedServiceType === 'MUA_HO' && !req.body.purchaseFeeIncluded) {
@@ -682,6 +712,8 @@ const orderController = {
         codAmount: codAmount || 0,
         extraSurcharge: finalExtraSurcharge,
         deliveryFee: finalDeliveryFee,
+        isRainSurchargeApplied,
+        rainSurchargeAmount,
         feePaidBy: feePaidBy || 'RECEIVER',
         status: 'PENDING', // Đã đổi thành PENDING để treo thẳng lên cho tài xế nhận luôn (theo yêu cầu)
         autoAssignNearest: String(autoAssignNearest) === "true",

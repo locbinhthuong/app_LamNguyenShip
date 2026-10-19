@@ -89,9 +89,50 @@ exports.updateConfig = async (req, res) => {
       console.log('Phát sóng ép cập nhật Socket tới toàn bộ tài xế:', config.value.driverApp);
       req.io.emit('force_app_update', config.value.driverApp);
       req.io.to('drivers').emit('force_app_update', config.value.driverApp);
-    } else if (key === 'RAIN_SURCHARGE_CONFIG' && req.io) {
-      console.log('Phát sóng thay đổi Chế độ mưa Socket:', config.value);
-      req.io.emit('rain_mode_changed', config.value);
+    } else if (key === 'RAIN_SURCHARGE_CONFIG') {
+      const Order = require('../models/Order');
+      const isEnabled = Boolean(config.value?.isEnabled);
+      const rainAmount = Number(config.value?.amount) || 5000;
+
+      if (isEnabled && rainAmount > 0) {
+        try {
+          // Tìm tất cả các đơn hàng đang chờ hoặc đang giao chưa được cộng phụ phí mưa
+          const activeOrders = await Order.find({
+            status: { $in: ['PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'] },
+            isRainSurchargeApplied: { $ne: true }
+          });
+
+          for (const ord of activeOrders) {
+            ord.deliveryFee = (Number(ord.deliveryFee) || 0) + rainAmount;
+            ord.isRainSurchargeApplied = true;
+            ord.rainSurchargeAmount = rainAmount;
+            const rainNote = `[ĐANG MƯA - Đã cộng phụ phí mưa ${rainAmount.toLocaleString('vi-VN')}đ vào tiền ship]`;
+            if (!ord.driverReminder || !ord.driverReminder.includes('[ĐANG MƯA')) {
+              ord.driverReminder = ord.driverReminder ? `${ord.driverReminder}\n${rainNote}` : rainNote;
+            }
+            await ord.save();
+
+            if (req.io) {
+              const payload = typeof ord.toObject === 'function' ? ord.toObject({ virtuals: true }) : ord;
+              req.io.to('admins').emit('order_updated', payload);
+              if (ord.assignedTo) {
+                req.io.to(`driver_${ord.assignedTo.toString()}`).emit('order_updated', payload);
+              }
+              if (ord.status === 'PENDING') {
+                req.io.to('drivers').emit('order_updated', payload);
+              }
+            }
+          }
+          console.log(`[RainMode] Đã cộng phụ phí mưa +${rainAmount}đ cho ${activeOrders.length} đơn hàng đang hoạt động!`);
+        } catch (errActive) {
+          console.error('[RainMode] Lỗi cộng phụ phí mưa cho đơn đang chạy:', errActive);
+        }
+      }
+
+      if (req.io) {
+        console.log('Phát sóng thay đổi Chế độ mưa Socket:', config.value);
+        req.io.emit('rain_mode_changed', config.value);
+      }
     }
 
     res.status(200).json({ success: true, data: config, message: 'Đã cập nhật cấu hình thành công' });
