@@ -48,6 +48,15 @@ exports.getConfig = async (req, res) => {
         };
         config = new Config({ key, value: defaultSurcharge });
         await config.save();
+      } else if (key === 'RAIN_SURCHARGE_CONFIG') {
+        const defaultRainSurcharge = {
+          isEnabled: false,
+          amount: 5000,
+          updatedAt: new Date(),
+          reportedBy: null
+        };
+        config = new Config({ key, value: defaultRainSurcharge });
+        await config.save();
       } else {
         return res.status(404).json({ success: false, message: 'Không tìm thấy cấu hình' });
       }
@@ -80,6 +89,9 @@ exports.updateConfig = async (req, res) => {
       console.log('Phát sóng ép cập nhật Socket tới toàn bộ tài xế:', config.value.driverApp);
       req.io.emit('force_app_update', config.value.driverApp);
       req.io.to('drivers').emit('force_app_update', config.value.driverApp);
+    } else if (key === 'RAIN_SURCHARGE_CONFIG' && req.io) {
+      console.log('Phát sóng thay đổi Chế độ mưa Socket:', config.value);
+      req.io.emit('rain_mode_changed', config.value);
     }
 
     res.status(200).json({ success: true, data: config, message: 'Đã cập nhật cấu hình thành công' });

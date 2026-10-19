@@ -201,3 +201,5 @@ export const getActiveAnnouncements = async () => {
 
 export default api;
 export const getAppVersionConfig = async () => { const response = await api.get(`/api/config/APP_VERSION_CONFIG?t=${new Date().getTime()}`); return response.data; };
+export const reportRain = async () => { const response = await api.post('/api/drivers/report-rain'); return response.data; };
+export const getRainConfig = async () => { const response = await api.get(`/api/config/RAIN_SURCHARGE_CONFIG?t=${new Date().getTime()}`); return response.data; };

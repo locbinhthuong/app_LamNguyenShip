@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig, getLateNightConfig, updateLateNightConfig } from '../services/configService';
+import { getPricingConfig, updatePricingConfig, getRegionConfig, updateRegionConfig, getAppVersionConfig, updateAppVersionConfig, getLateNightConfig, updateLateNightConfig, getRainConfig, updateRainConfig } from '../services/configService';
 import { getAdminProfile, updateAdminProfile, resetAdminSessions } from '../services/api';
-import { Trash2, Plus, Eye, EyeOff } from 'lucide-react';
+import { Trash2, Plus, Eye, EyeOff, CloudRain } from 'lucide-react';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -41,6 +41,11 @@ export default function Settings() {
     endTime: "06:00"
   });
 
+  const [rainConfig, setRainConfig] = useState({
+    isEnabled: false,
+    amount: 5000
+  });
+
   const [adminProfile, setAdminProfile] = useState({ name: '', phone: '', oldPassword: '', password: '' });
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -68,12 +73,13 @@ export default function Settings() {
   const fetchConfig = async () => {
     try {
       setLoading(true);
-      const [pricingRes, regionRes, appVersionRes, adminProfileRes, lateNightRes] = await Promise.all([
+      const [pricingRes, regionRes, appVersionRes, adminProfileRes, lateNightRes, rainRes] = await Promise.all([
         getPricingConfig(),
         getRegionConfig().catch(() => null),
         getAppVersionConfig().catch(() => null),
         getAdminProfile().catch(() => null),
-        getLateNightConfig().catch(() => null)
+        getLateNightConfig().catch(() => null),
+        getRainConfig().catch(() => null)
       ]);
 
       if (pricingRes.success && pricingRes.data && pricingRes.data.value && Array.isArray(pricingRes.data.value.tiers)) {
@@ -100,6 +106,10 @@ export default function Settings() {
 
       if (lateNightRes && lateNightRes.success && lateNightRes.data && lateNightRes.data.value) {
         setLateNightConfig(lateNightRes.data.value);
+      }
+
+      if (rainRes && rainRes.success && rainRes.data && rainRes.data.value) {
+        setRainConfig(rainRes.data.value);
       }
 
       if (adminProfileRes && adminProfileRes.success && adminProfileRes.data) {
@@ -161,6 +171,7 @@ export default function Settings() {
       await updateRegionConfig(regions);
       await updateAppVersionConfig(appVersion);
       await updateLateNightConfig(lateNightConfig);
+      await updateRainConfig(rainConfig);
       
       const updateData = {};
       if (adminProfile.name) updateData.name = adminProfile.name;
@@ -588,6 +599,49 @@ export default function Settings() {
                     />
                     <p className="text-xs text-slate-500 mt-2">Sau thời gian này, phí giao hàng trở về bình thường.</p>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t border-slate-100 mt-8">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <span className="text-2xl">🌧️</span> Phụ Phí Trời Mưa
+                </h3>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rainConfig.isEnabled}
+                    onChange={(e) => setRainConfig({ ...rainConfig, isEnabled: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  <span className="ml-3 text-sm font-bold text-slate-700">
+                    {rainConfig.isEnabled ? 'ĐANG BẬT' : 'ĐANG TẮT'}
+                  </span>
+                </label>
+              </div>
+              <p className="text-sm text-slate-500 mb-6">
+                Khi chế độ mưa được BẬT, hệ thống sẽ tự động cộng thẳng mức phụ phí này trực tiếp vào tiền ship của tất cả đơn hàng mới.
+              </p>
+
+              <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1">Mức phụ phí mưa cộng vào tiền ship (VNĐ)</label>
+                  <input
+                    type="number"
+                    step="1000"
+                    min="0"
+                    value={rainConfig.amount || 0}
+                    onChange={(e) => setRainConfig({ ...rainConfig, amount: Number(e.target.value) || 0 })}
+                    className="w-full p-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-bold text-lg"
+                  />
+                </div>
+                <div className="text-xs text-slate-600 space-y-1">
+                  <p className="font-bold text-slate-800">📌 Gợi ý cài đặt:</p>
+                  <p>• Mưa vừa / mưa nhỏ: <strong>3.000đ - 5.000đ / đơn</strong></p>
+                  <p>• Mưa to / giông bão: <strong>7.000đ - 10.000đ / đơn</strong></p>
+                  <p className="text-slate-500 italic">Tài xế cũng có thể bấm nút "Báo mưa" trên app tài xế để gửi cảnh báo trực tiếp về màn hình Admin.</p>
                 </div>
               </div>
             </div>

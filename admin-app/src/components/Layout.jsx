@@ -3,16 +3,34 @@ import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useAdminSocket } from '../hooks/useAdminSocket';
 import DebtApprovalModal from './DebtApprovalModal';
+import RainConfirmModal from './RainConfirmModal';
+import { getRainConfig } from '../services/configService';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
 import { updateFcmToken } from '../services/api';
-import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset, Settings, CloudRain } from 'lucide-react';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [rainConfig, setRainConfig] = useState({ isEnabled: false, amount: 5000 });
   useAdminSocket();
+
+  useEffect(() => {
+    getRainConfig()
+      .then(res => {
+        if (res.success && res.data?.value) setRainConfig(res.data.value);
+      })
+      .catch(() => {});
+
+    const handleRainChange = (e) => {
+      if (e.detail) setRainConfig(e.detail);
+    };
+
+    window.addEventListener('rain_mode_changed_event', handleRainChange);
+    return () => window.removeEventListener('rain_mode_changed_event', handleRainChange);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? 'hidden' : '';
@@ -101,6 +119,9 @@ export default function Layout() {
       {/* GLOBAL MODAL PHÊ DUYỆT CÔNG NỢ TỰ ĐỘNG */}
       <DebtApprovalModal />
 
+      {/* GLOBAL MODAL XÁC NHẬN BÁO MƯA VÀ BẬT PHỤ PHÍ */}
+      <RainConfirmModal />
+
       {/* GLOBAL TOAST POPUP - Xoá do đã chuyển sang Context chung */}
 
       {sidebarOpen && (
@@ -178,6 +199,26 @@ export default function Layout() {
           </button>
           <div className="flex items-center gap-2">
             <img src="/logoALOSHIPP.png" alt="AloShipp" className="h-12 w-auto object-contain  scale-125 ml-2" />
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('open_manual_rain_modal'))}
+              title="Quản lý chế độ mưa và phụ phí"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                rainConfig.isEnabled
+                  ? 'bg-blue-600 text-white hover:bg-blue-700 animate-pulse'
+                  : 'bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200'
+              }`}
+            >
+              <CloudRain size={16} className={rainConfig.isEnabled ? 'text-white' : 'text-blue-500'} />
+              <span>
+                {rainConfig.isEnabled 
+                  ? `Mưa: BẬT (+${(Number(rainConfig.amount) || 5000).toLocaleString('vi-VN')}đ)` 
+                  : 'Mưa: TẮT'}
+              </span>
+            </button>
           </div>
         </header>
 

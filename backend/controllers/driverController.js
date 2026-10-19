@@ -604,6 +604,66 @@ const driverController = {
         message: 'Lỗi server khi xóa tài xế'
       });
     }
+  },
+
+  // POST /api/drivers/report-rain - Tài xế bấm nút báo mưa
+  reportRain: async (req, res) => {
+    try {
+      const driver = await Driver.findById(req.driver._id);
+      if (!driver) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy thông tin tài xế' });
+      }
+
+      const Config = require('../models/Config');
+      const rainCfg = await Config.findOne({ key: 'RAIN_SURCHARGE_CONFIG' });
+      const isAlreadyEnabled = Boolean(rainCfg?.value?.isEnabled);
+      const currentAmount = Number(rainCfg?.value?.amount) || 5000;
+
+      const payload = {
+        driverId: driver._id,
+        driverName: driver.name,
+        driverPhone: driver.phone,
+        driverCode: driver.driverCode || 'TX',
+        avatar: driver.avatar || null,
+        reportedAt: new Date(),
+        isAlreadyEnabled,
+        suggestedAmount: currentAmount
+      };
+
+      // 1. Phát sóng realtime tới Admins
+      if (req.io) {
+        req.io.to('admins').emit('driver_reported_rain', payload);
+      }
+
+      // 2. Gửi Push Notification tới toàn bộ Admin
+      try {
+        const Admin = require('../models/Admin');
+        const { sendMultipleNotifications } = require('../utils/notification');
+        const admins = await Admin.find({ fcmToken: { $exists: true, $ne: null } });
+        const tokens = admins.map(a => a.fcmToken).filter(Boolean);
+        if (tokens.length > 0) {
+          await sendMultipleNotifications(
+            tokens,
+            '🌧️ TÀI XẾ BÁO TRỜI MƯA!',
+            `Tài xế ${driver.name} (${driver.driverCode} - ${driver.phone}) vừa báo trời đang mưa. Bấm để xác nhận!`,
+            { type: 'RAIN_REPORT', driverId: String(driver._id) }
+          );
+        }
+      } catch (pushErr) {
+        console.error('Lỗi gửi push báo mưa tới admin:', pushErr.message);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: isAlreadyEnabled
+          ? 'Chế độ mưa hiện đang BẬT trên toàn hệ thống!'
+          : 'Đã gửi báo mưa tới Quản trị viên thành công. Đang chờ xác nhận!',
+        data: payload
+      });
+    } catch (error) {
+      console.error('Error reportRain:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi gửi báo mưa' });
+    }
   }
 };
 

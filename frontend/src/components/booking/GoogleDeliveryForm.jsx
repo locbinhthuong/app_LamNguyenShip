@@ -35,6 +35,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const [distanceKm, setDistanceKm] = useState(null);
   const [extraSurchargeAPI, setExtraSurchargeAPI] = useState(0);
   const [surchargeNote, setSurchargeNote] = useState('');
+  const [isRaining, setIsRaining] = useState(false);
+  const [rainFee, setRainFee] = useState(0);
   const [estimating, setEstimating] = useState(false);
   const [routeLine, setRouteLine] = useState([]);
 
@@ -81,6 +83,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             setDistanceKm(res.data.distanceKm);
             setExtraSurchargeAPI(res.data.extraSurcharge || 0);
             setSurchargeNote(res.data.surchargeNote || '');
+            setIsRaining(Boolean(res.data.isRaining));
+            setRainFee(res.data.rainFee || 0);
             if (res.data.routeLine) {
               setRouteLine(res.data.routeLine);
             } else {
@@ -91,6 +95,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             setDistanceKm(null);
             setExtraSurchargeAPI(0);
             setSurchargeNote('');
+            setIsRaining(false);
+            setRainFee(0);
             setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
           }
         } catch (error) {
@@ -98,6 +104,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           setDistanceKm(null);
           setExtraSurchargeAPI(0);
           setSurchargeNote('');
+          setIsRaining(false);
+          setRainFee(0);
         } finally {
           setEstimating(false);
         }
@@ -106,6 +114,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         setDistanceKm(null);
         setExtraSurchargeAPI(0);
         setSurchargeNote('');
+        setIsRaining(false);
+        setRainFee(0);
         setRouteLine([]);
       }
     };
@@ -447,6 +457,11 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                       {extraSurchargeAPI > 0 && (
                         <div className="text-red-500 text-xs mt-1">
                           <strong>+ {extraSurchargeAPI.toLocaleString('vi-VN')}đ</strong> {surchargeNote}
+                        </div>
+                      )}
+                      {isRaining && (
+                        <div className="text-blue-600 text-xs mt-1 font-bold flex items-center gap-1">
+                          <span>🌧️ Đang áp dụng phụ phí thời tiết mưa +{(rainFee || 5000).toLocaleString('vi-VN')}đ (đã cộng vào cước)</span>
                         </div>
                       )}
                     </>

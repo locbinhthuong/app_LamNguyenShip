@@ -761,6 +761,10 @@ function AppContent() {
         window.dispatchEvent(new CustomEvent('driver_weekly_reset_event', { detail: data }));
       });
 
+      socketRef.current.on('rain_mode_changed', (data) => {
+        window.dispatchEvent(new CustomEvent('rain_mode_changed_event', { detail: data }));
+      });
+
       const handleSocketOrderTimeWarning = (data) => {
         const orderId = data?.orderId || null;
         const warnType = data?.type === 'LATE_PICKUP' ? 'ORDER_LATE_PICKUP' : 'ORDER_LATE_DELIVERY';

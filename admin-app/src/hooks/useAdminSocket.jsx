@@ -209,6 +209,26 @@ export const useAdminSocket = () => {
       window.dispatchEvent(new CustomEvent('driver_status_change', { detail: data }));
     });
 
+    socket.on('driver_reported_rain', (payload) => {
+      playAdminAlarm('NORMAL');
+
+      showToast(`🌧️ TÀI XẾ BÁO MƯA: ${payload.driverName?.toUpperCase()} (Mã: ${payload.driverCode} - SĐT: ${payload.driverPhone}) vừa báo trời đang mưa!`, 'warning', 60000);
+
+      // Thông báo ngoài (Desktop Notification)
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('🌧️ Tài xế báo trời mưa!', { 
+          body: `Tài xế ${payload.driverName?.toUpperCase()} (${payload.driverCode}) vừa báo trời mưa. Bấm để xác nhận!`, 
+          icon: '/logoALOSHIPP.png' 
+        });
+      }
+
+      window.dispatchEvent(new CustomEvent('show_rain_confirm_modal', { detail: payload }));
+    });
+
+    socket.on('rain_mode_changed', (data) => {
+      window.dispatchEvent(new CustomEvent('rain_mode_changed_event', { detail: data }));
+    });
+
     return () => {
       clearInterval(pollInterval);
       socket.disconnect();

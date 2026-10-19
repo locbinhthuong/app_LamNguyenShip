@@ -161,9 +161,40 @@ const getLateNightSurchargeAmount = async () => {
   return 0;
 };
 
+const getRainSurchargeConfig = async () => {
+  try {
+    const surchargeDoc = await Config.findOne({ key: 'RAIN_SURCHARGE_CONFIG' });
+    if (surchargeDoc && surchargeDoc.value) {
+      return {
+        isEnabled: Boolean(surchargeDoc.value.isEnabled),
+        amount: Number(surchargeDoc.value.amount) || 5000,
+        updatedAt: surchargeDoc.value.updatedAt || surchargeDoc.updatedAt,
+        reportedBy: surchargeDoc.value.reportedBy || null
+      };
+    }
+  } catch (err) {
+    console.error('Lỗi lấy cấu hình phụ phí mưa:', err);
+  }
+  return { isEnabled: false, amount: 5000, updatedAt: null, reportedBy: null };
+};
+
+const getRainSurchargeDriverReminder = async () => {
+  try {
+    const rainCfg = await getRainSurchargeConfig();
+    if (rainCfg.isEnabled && rainCfg.amount > 0) {
+      return `[ĐANG MƯA - Đã cộng phụ phí mưa ${rainCfg.amount.toLocaleString('vi-VN')}đ vào tiền ship]`;
+    }
+  } catch (err) {
+    console.error('Lỗi tạo lời nhắc phụ phí mưa:', err);
+  }
+  return '';
+};
+
 const orderController = {
   getLateNightSurchargeDriverReminder,
   getLateNightSurchargeAmount,
+  getRainSurchargeConfig,
+  getRainSurchargeDriverReminder,
 
   // GET /api/orders - Lấy danh sách đơn hàng
   getAllOrders: async (req, res) => {
@@ -445,7 +476,9 @@ const orderController = {
       }
 
       const surchargeReminder = await getLateNightSurchargeDriverReminder();
-      const finalDriverReminder = surchargeReminder ? (driverReminder ? `${driverReminder}\n${surchargeReminder}` : surchargeReminder) : driverReminder;
+      const rainReminder = await getRainSurchargeDriverReminder();
+      const reminders = [driverReminder, surchargeReminder, rainReminder].filter(Boolean);
+      const finalDriverReminder = reminders.join('\n');
 
       let finalDeliveryFee = deliveryFee || 0;
       let calculatedSurcharge = await getLateNightSurchargeAmount();
@@ -611,6 +644,8 @@ const orderController = {
       } = req.body;
 
       const surchargeReminder = await getLateNightSurchargeDriverReminder();
+      const rainReminder = await getRainSurchargeDriverReminder();
+      const combinedReminders = [surchargeReminder, rainReminder].filter(Boolean).join('\n');
       
       let finalDeliveryFee = Number(req.body.deliveryFee) || 0;
       let finalExtraSurcharge = Number(extraSurcharge) || 0;
@@ -639,7 +674,7 @@ const orderController = {
         deliveryCoordinates: deliveryCoordinates || null,
         items: items || [],
         note: note || '',
-        driverReminder: surchargeReminder || '',
+        driverReminder: combinedReminders || '',
         packageDetails: packageDetails || {},
         rideDetails: rideDetails || {},
         financialDetails: financialDetails || {},
@@ -2403,6 +2438,20 @@ const orderController = {
         deliveryFee += purchaseFee;
       }
 
+      // Phụ phí thời tiết mưa (RAIN_SURCHARGE_CONFIG) - Cộng trực tiếp vào tiền ship
+      let isRaining = false;
+      let rainFee = 0;
+      try {
+        const rainCfg = await getRainSurchargeConfig();
+        if (rainCfg?.isEnabled && Number(rainCfg?.amount) > 0) {
+          isRaining = true;
+          rainFee = Number(rainCfg.amount);
+          deliveryFee += rainFee; // CỘNG TRỰC TIẾP VÀO TIỀN SHIP LUÔN
+        }
+      } catch (err) {
+        console.error('Lỗi tính phụ phí thời tiết mưa:', err);
+      }
+
       res.status(200).json({
         success: true,
         data: {
@@ -2411,6 +2460,8 @@ const orderController = {
           purchaseFee,
           extraSurcharge,
           surchargeNote,
+          isRaining,
+          rainFee,
           routeLine
         }
       });

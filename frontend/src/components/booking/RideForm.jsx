@@ -26,6 +26,8 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
   const [distanceKm, setDistanceKm] = useState(null);
   const [extraSurcharge, setExtraSurcharge] = useState(0);
   const [surchargeNote, setSurchargeNote] = useState('');
+  const [isRaining, setIsRaining] = useState(false);
+  const [rainFee, setRainFee] = useState(0);
   const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
@@ -64,11 +66,15 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
             setDistanceKm(res.data.distanceKm);
             setExtraSurcharge(res.data.extraSurcharge || 0);
             setSurchargeNote(res.data.surchargeNote || '');
+            setIsRaining(Boolean(res.data.isRaining));
+            setRainFee(res.data.rainFee || 0);
           } else {
             setEstimatedFee(null);
             setDistanceKm(null);
             setExtraSurcharge(0);
             setSurchargeNote('');
+            setIsRaining(false);
+            setRainFee(0);
           }
         } catch (error) {
           console.error('Lỗi tính phí:', error);
@@ -76,12 +82,18 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
           setDistanceKm(null);
           setExtraSurcharge(0);
           setSurchargeNote('');
+          setIsRaining(false);
+          setRainFee(0);
         } finally {
           setEstimating(false);
         }
       } else {
         setEstimatedFee(null);
         setDistanceKm(null);
+        setExtraSurcharge(0);
+        setSurchargeNote('');
+        setIsRaining(false);
+        setRainFee(0);
       }
     };
     
@@ -273,6 +285,11 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
               {extraSurcharge > 0 && (
                 <div className="text-red-500 text-xs mt-1">
                   <strong>+ {extraSurcharge.toLocaleString('vi-VN')}đ</strong> {surchargeNote}
+                </div>
+              )}
+              {isRaining && (
+                <div className="text-blue-600 text-xs mt-1 font-bold flex items-center gap-1">
+                  <span>🌧️ Phụ phí trời mưa +{(rainFee || 5000).toLocaleString('vi-VN')}đ (đã cộng vào cước)</span>
                 </div>
               )}
             </>

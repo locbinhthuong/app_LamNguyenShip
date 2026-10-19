@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
-import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi } from '../services/api';
-import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass } from 'lucide-react';
+import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi, reportRain, getRainConfig } from '../services/api';
+import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass, CloudRain } from 'lucide-react';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor } from '@capacitor/core';
@@ -413,6 +413,10 @@ export default function Home() {
   const [isOnlineToggling, setIsOnlineToggling] = useState(false);
   const scrollRef = useRef(null);
   const [dailyStats, setDailyStats] = useState({ fee: 0, orders: 0 });
+  const [rainConfig, setRainConfig] = useState({ isEnabled: false, amount: 5000 });
+  const [reportingRain, setReportingRain] = useState(false);
+  const [showRainConfirm, setShowRainConfirm] = useState(false);
+  const [rainReportedRecently, setRainReportedRecently] = useState(false);
 
   // GPS Tracking via Context
   const { 
@@ -462,6 +466,13 @@ export default function Home() {
           orders: todayStats.orders || 0
         });
       }
+
+      // Nạp cấu hình phụ phí mưa
+      getRainConfig().then(res => {
+        if (res?.success && res.data?.value) {
+          setRainConfig(res.data.value);
+        }
+      }).catch(() => {});
 
     } catch (error) {
       console.error('Lỗi lấy dữ liệu trang chủ:', error);
@@ -590,6 +601,18 @@ export default function Home() {
     window.addEventListener('driver_order_completed', loadBackground);
     window.addEventListener('driver_order_time_warning', loadBackground);
 
+    const handleRainChanged = (e) => {
+      if (e.detail) {
+        setRainConfig(e.detail);
+        if (e.detail.isEnabled) {
+          showNotification(`🌧️ Chế độ mưa đã BẬT! Phụ phí +${(Number(e.detail.amount) || 5000).toLocaleString('vi-VN')}đ đã được cộng vào giá ship.`, 'success');
+        } else {
+          showNotification('☀️ Chế độ mưa đã TẮT. Giá ship trở về bình thường.', 'info');
+        }
+      }
+    };
+    window.addEventListener('rain_mode_changed_event', handleRainChanged);
+
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
@@ -604,8 +627,37 @@ export default function Home() {
       window.removeEventListener('driver_order_delivering', loadBackground);
       window.removeEventListener('driver_order_completed', loadBackground);
       window.removeEventListener('driver_order_time_warning', loadBackground);
+      window.removeEventListener('rain_mode_changed_event', handleRainChanged);
     };
   }, [loadData, driver]);
+
+  const handleReportRain = () => {
+    if (reportingRain) return;
+    if (rainConfig.isEnabled) {
+      showNotification(`🌧️ Chế độ mưa hiện đang BẬT (+${(Number(rainConfig.amount) || 5000).toLocaleString('vi-VN')}đ/đơn)!`, 'info');
+      return;
+    }
+    if (rainReportedRecently) {
+      showNotification('Bạn vừa gửi báo mưa rồi! Vui lòng chờ Admin xác nhận.', 'info');
+      return;
+    }
+    setShowRainConfirm(true);
+  };
+
+  const confirmReportRain = async () => {
+    setShowRainConfirm(false);
+    setReportingRain(true);
+    try {
+      const res = await reportRain();
+      showNotification(res.message || 'Đã gửi báo mưa tới Admin thành công!');
+      setRainReportedRecently(true);
+      setTimeout(() => setRainReportedRecently(false), 3 * 60 * 1000);
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Không thể gửi báo mưa', 'error');
+    } finally {
+      setReportingRain(false);
+    }
+  };
 
   const handleAccept = async (directOrderId = null) => {
     const orderId = directOrderId || confirmAcceptOrder;
@@ -790,6 +842,57 @@ export default function Home() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Rain Status Bar & Report Button */}
+      <div className="shrink-0 px-3 py-2 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100 flex items-center justify-between gap-2">
+        {rainConfig.isEnabled ? (
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <span className="flex h-3 w-3 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-black text-blue-700 uppercase tracking-tight flex items-center gap-1">
+                  <CloudRain size={14} className="text-blue-600 animate-bounce" />
+                  Chế độ mưa ĐANG BẬT
+                </span>
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-600 text-white shadow-xs">
+                  +{(Number(rainConfig?.amount) || 5000).toLocaleString('vi-VN')}đ / đơn
+                </span>
+              </div>
+              <p className="text-[10px] text-blue-600/90 font-medium truncate">
+                Phí mưa đã được cộng trực tiếp vào tiền ship của mỗi đơn
+              </p>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                <CloudRain size={16} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-bold text-slate-800 leading-tight">Chỗ bạn đang mưa?</p>
+                <p className="text-[10px] text-slate-500 font-medium">Báo Admin kích hoạt phụ phí mưa (+5k/đơn)</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleReportRain}
+              disabled={reportingRain || rainReportedRecently}
+              className={`shrink-0 px-3 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 transition-all shadow-sm ${
+                rainReportedRecently
+                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 active:scale-95 shadow-blue-500/25'
+              }`}
+            >
+              <CloudRain size={14} />
+              {reportingRain ? 'Đang gửi...' : rainReportedRecently ? 'Đã báo mưa' : 'Báo mưa'}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Tabs */}
@@ -997,6 +1100,18 @@ export default function Home() {
         onCancel={() => setShowPendingModal(false)}
         confirmText="Liên hệ ngay"
         cancelText="Đóng"
+        isDestructive={false}
+      />
+
+      {/* Rain Report Confirm Modal */}
+      <ConfirmModal
+        isOpen={showRainConfirm}
+        title="Báo trời mưa tới Admin?"
+        message="Hệ thống sẽ gửi thông báo và chuông báo động tới Admin để xác nhận và kích hoạt phụ phí mưa (+5.000đ hoặc mức cấu hình) cộng trực tiếp vào tiền ship cho tất cả các đơn hàng."
+        confirmText="Báo mưa ngay"
+        cancelText="Đóng"
+        onConfirm={confirmReportRain}
+        onCancel={() => setShowRainConfirm(false)}
         isDestructive={false}
       />
 

@@ -131,6 +131,8 @@ exports.createFoodOrder = async (req, res) => {
 
     const orderController = require('./orderController');
     const surchargeReminder = await orderController.getLateNightSurchargeDriverReminder();
+    const rainReminder = await orderController.getRainSurchargeDriverReminder();
+    const combinedReminders = [surchargeReminder, rainReminder].filter(Boolean).join('\n');
     
     let finalDeliveryFee = deliveryFee || 0;
     let calculatedSurcharge = await orderController.getLateNightSurchargeAmount();
@@ -148,7 +150,7 @@ exports.createFoodOrder = async (req, res) => {
       deliveryAddress,
       deliveryCoordinates,
       note,
-      driverReminder: surchargeReminder || '',
+      driverReminder: combinedReminders || '',
       scheduledTime: scheduledTime ? new Date(scheduledTime) : null,
       alofoodDetails: {
         shopId,

@@ -300,6 +300,14 @@ const emitWalletWithdrawalRequest = (io, payload) => {
   io.to('admins').emit('wallet_withdrawal_request', payload);
 };
 
+const emitDriverReportedRain = (io, payload) => {
+  io.to('admins').emit('driver_reported_rain', payload);
+};
+
+const emitRainModeChanged = (io, payload) => {
+  io.emit('rain_mode_changed', payload);
+};
+
 module.exports = {
   setupSocket,
   emitNewOrder,
@@ -311,5 +319,7 @@ module.exports = {
   emitDriverStatusChange,
   emitToDriver,
   emitDebtPaymentRequest,
-  emitWalletWithdrawalRequest
+  emitWalletWithdrawalRequest,
+  emitDriverReportedRain,
+  emitRainModeChanged
 };

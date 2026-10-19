@@ -2,9 +2,12 @@ const express = require('express');
 const { body } = require('express-validator');
 const router = express.Router();
 const driverController = require('../controllers/driverController');
-const { verifyToken, onlyAdmin } = require('../middleware/auth');
+const { verifyToken, onlyAdmin, onlyDriver } = require('../middleware/auth');
 
-// Tất cả routes đều cần admin
+// POST /api/drivers/report-rain - Tài xế bấm nút báo mưa
+router.post('/report-rain', verifyToken, onlyDriver, driverController.reportRain);
+
+// Tất cả routes bên dưới đều cần admin
 router.use(verifyToken, onlyAdmin);
 
 // GET /api/drivers - Danh sách tài xế
