@@ -36,9 +36,9 @@ public class MainActivity extends BridgeActivity {
 
                 Intent serviceIntent = new Intent(MainActivity.this, PersistentLocationService.class);
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(serviceIntent);
+                    MainActivity.this.startForegroundService(serviceIntent);
                 } else {
-                    startService(serviceIntent);
+                    MainActivity.this.startService(serviceIntent);
                 }
             } catch (Exception ignored) {}
         }
