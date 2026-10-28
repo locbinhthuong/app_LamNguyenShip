@@ -39,7 +39,7 @@ public class PersistentLocationService extends Service {
 
     private static final String CHANNEL_ID = "aloshipp_persistent_gps_channel";
     private static final int NOTIFICATION_ID = 39102;
-    private static final long HEARTBEAT_INTERVAL_MS = 12000L;
+    private static final long HEARTBEAT_INTERVAL_MS = 6000L;
 
     private LocationManager locationManager;
     private Location lastLocation;
@@ -142,13 +142,13 @@ public class PersistentLocationService extends Service {
             if (locationManager == null) return;
 
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000L, 0f, locationListener, Looper.getMainLooper());
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000L, 0f, locationListener, Looper.getMainLooper());
                 Location gpsLast = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
                 if (gpsLast != null) lastLocation = gpsLast;
             } catch (Exception ignored) {}
 
             try {
-                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 5000L, 0f, locationListener, Looper.getMainLooper());
+                locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 3000L, 0f, locationListener, Looper.getMainLooper());
                 if (lastLocation == null) {
                     Location netLast = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
                     if (netLast != null) lastLocation = netLast;

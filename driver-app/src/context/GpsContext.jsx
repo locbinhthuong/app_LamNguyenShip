@@ -272,12 +272,14 @@ export const GpsProvider = ({ children }) => {
     }
   }, [driver?.isOnline]);
 
-  // Heartbeat định vị (Mỗi 20s) - Hoạt động cả khi app chạy ngầm / tắt màn hình
+  // Heartbeat định vị (Mỗi 6s) - Hoạt động cả khi app chạy ngầm / tắt màn hình / xe đứng yên
   useEffect(() => {
     if (gpsStatus === 'TRACKING' && driver?.isOnline) {
       const sendHeartbeatCoords = (lat, lng) => {
+        const now = Date.now();
         lastCoordsRef.current = { lat, lng };
-        lastLocationEmitRef.current = Date.now();
+        if (now - lastLocationEmitRef.current < 5500) return;
+        lastLocationEmitRef.current = now;
         if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
           window.driverSocket.emit('update_location', { lat, lng });
         } else {
@@ -296,12 +298,12 @@ export const GpsProvider = ({ children }) => {
                 sendHeartbeatCoords(lastCoordsRef.current.lat, lastCoordsRef.current.lng);
               }
             },
-            { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 }
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 3000 }
           );
         } else if (lastCoordsRef.current) {
           sendHeartbeatCoords(lastCoordsRef.current.lat, lastCoordsRef.current.lng);
         }
-      }, 20000);
+      }, 6000);
       return () => clearInterval(heartbeatTimer);
     }
   }, [gpsStatus, driver?.isOnline]);

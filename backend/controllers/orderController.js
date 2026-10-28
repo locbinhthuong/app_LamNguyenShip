@@ -938,9 +938,9 @@ const orderController = {
 
       await orderToUpdate.save();
 
-      // Load gắp thông tin tài xế để socket báo chuẩn chữ
-      if (didAdminForceAssign) {
-        await orderToUpdate.populate('assignedTo', 'name phone driverCode');
+      // Load gắp thông tin tài xế để socket và giao diện Admin hiển thị chuẩn chữ ngay tức thì
+      if (orderToUpdate.assignedTo) {
+        await orderToUpdate.populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar');
       }
 
       // Gửi push notification cho khách hàng nếu có báo giá mới
@@ -1664,7 +1664,7 @@ const orderController = {
 
         if (req.io) {
           const { emitOrderCancelled } = require('../sockets/index');
-          emitOrderCancelled(req.io, order._id);
+          emitOrderCancelled(req.io, order);
         }
         return res.status(200).json({ success: true, message: 'Hủy đơn thành công', data: order });
       }
@@ -1679,7 +1679,7 @@ const orderController = {
           cancelReason: reason || 'Hủy bởi admin'
         },
         { new: true }
-      );
+      ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar');
       if (order) await refundOrderDebtIfAny(order._id);
 
       if (!order) {
