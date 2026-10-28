@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const DRIVER_TABS = ['/', '/my-orders', '/earnings'];
+const DRIVER_TABS = ['/', '/my-orders', '/earnings', '/profile'];
 
 const pageVariants = {
   enter: (direction) => ({
@@ -26,8 +26,8 @@ export default function AnimatedPage({ children, direction = 1 }) {
 
   // Trang chủ (/) tự quản lý bố cục cố định Header + khung cuộn riêng bên trong từng Tab
   const isHomePage = location.pathname === '/';
-  // Chỉ chuyển tab bằng thao tác vuốt ở các trang tab phụ (/my-orders, /earnings); trang chủ (/) đã có bộ lướt 3 tab riêng
-  const isSubTab = location.pathname === '/my-orders' || location.pathname === '/earnings';
+  // Chỉ chuyển tab bằng thao tác vuốt ở các trang tab phụ (/my-orders, /earnings, /profile); trang chủ (/) đã có bộ lướt 3 tab riêng
+  const isSubTab = location.pathname === '/my-orders' || location.pathname === '/earnings' || location.pathname === '/profile';
 
   const handleTouchStart = (e) => {
     if (!isSubTab || e.touches.length !== 1) return;

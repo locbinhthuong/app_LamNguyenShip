@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import OrderDetail from './pages/OrderDetail';
 import MyOrders from './pages/MyOrders';
 import Earnings from './pages/Earnings';
+import Profile from './pages/Profile';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import AlertModal from './components/AlertModal';
 import { AnimatePresence } from 'framer-motion';
@@ -932,6 +933,7 @@ function AppContent() {
           <Route path="/order/:id" element={<PrivateRoute><AnimatedPage direction={direction}><OrderDetail /></AnimatedPage></PrivateRoute>} />
           <Route path="/my-orders" element={<PrivateRoute><AnimatedPage direction={direction}><MyOrders /></AnimatedPage></PrivateRoute>} />
           <Route path="/earnings" element={<PrivateRoute><AnimatedPage direction={direction}><Earnings /></AnimatedPage></PrivateRoute>} />
+          <Route path="/profile" element={<PrivateRoute><AnimatedPage direction={direction}><Profile /></AnimatedPage></PrivateRoute>} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/privacy-policy.html" element={<PrivacyPolicy />} />
           <Route path="*" element={<Navigate to="/" />} />

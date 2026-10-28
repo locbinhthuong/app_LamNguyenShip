@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { getMyOrders, getDriverRevenue } from '../services/api';
-import { Package, Bike, Wrench, ShoppingCart, Zap, Calendar, Trophy, MapPin, ClipboardList, Home as HomeIcon, Wallet } from 'lucide-react';
+import { Package, Bike, Wrench, ShoppingCart, Zap, Calendar, Trophy, MapPin, ClipboardList, Home as HomeIcon, Wallet, BarChart3, User } from 'lucide-react';
 
 const STATUS_LABELS = {
   PENDING: 'Chờ nhận',
@@ -273,8 +273,12 @@ export default function MyOrders() {
             <span className="text-xs mt-1 font-bold">Đơn của tôi</span>
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
-            <Wallet size={24} strokeWidth={1.5} />
-            <span className="text-xs mt-1 font-medium">Điểm thưởng</span>
+            <BarChart3 size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-medium">Thống kê</span>
+          </Link>
+          <Link to="/profile" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
+            <User size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-medium">Thông tin cá nhân</span>
           </Link>
         </div>
       </div>

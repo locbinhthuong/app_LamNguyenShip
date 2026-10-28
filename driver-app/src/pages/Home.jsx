@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import { getAvailableOrders, acceptOrder, pickedUpOrder, completeOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi, reportRain, getRainConfig } from '../services/api';
-import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass, CloudRain } from 'lucide-react';
+import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, BarChart3, User, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass, CloudRain } from 'lucide-react';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor } from '@capacitor/core';
@@ -981,7 +981,7 @@ export default function Home() {
         
         {/* Tên Tài xế */}
         <div 
-          onClick={() => setEditModal(true)}
+          onClick={() => navigate('/profile')}
           className="flex items-center gap-2 bg-slate-50 p-1 pr-3.5 rounded-full cursor-pointer hover:bg-slate-100 transition-all border border-slate-200 shadow-sm flex-1 min-w-0 max-w-[170px] sm:max-w-[220px]"
         >
           <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-blue-100 flex items-center justify-center overflow-hidden border border-white relative shadow-sm shrink-0">
@@ -999,7 +999,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Nút Trạng Thái Online/Offline & Đăng xuất */}
+        {/* Nút Trạng Thái Online/Offline */}
         <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
@@ -1022,14 +1022,6 @@ export default function Home() {
                 {gpsStatus === 'TRACKING' ? '🟢 Online' : gpsStatus === 'FINDING' ? '⏳ Đang dò...' : '🔴 Lỗi GPS'}
               </>
             ) : '⚫ Offline'}
-          </button>
-          
-          {/* Đăng Xuất */}
-          <button
-            onClick={() => setLogoutModal(true)}
-            className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-100 text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors border border-slate-200 shrink-0"
-          >
-            <span className="text-sm">🚪</span>
           </button>
         </div>
       </div>
@@ -1273,8 +1265,12 @@ export default function Home() {
             <span className="text-xs mt-1 font-medium">Đơn của tôi</span>
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
-            <Wallet size={24} strokeWidth={1.5} />
-            <span className="text-xs mt-1 font-medium">Điểm thưởng</span>
+            <BarChart3 size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-medium">Thống kê</span>
+          </Link>
+          <Link to="/profile" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
+            <User size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-medium">Thông tin cá nhân</span>
           </Link>
         </div>
       </div>

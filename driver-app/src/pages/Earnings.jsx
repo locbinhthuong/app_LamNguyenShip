@@ -4,7 +4,7 @@ import { getDriverRevenue, requestDebtPayment, requestPayOSLink, getMyDebtDetail
 import { useAuth } from '../context/AuthContext';
 import CurrencyInput from '../components/CurrencyInput';
 import { Browser } from '@capacitor/browser';
-import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, Eye, EyeOff, Trophy, Award, Flame, Zap, ShieldCheck, Sparkles } from 'lucide-react';
+import { BarChart3, Building2, Receipt, Clock, Smartphone, RefreshCw, CheckCircle2, XCircle, TrendingDown, Rocket, Inbox, Wallet, Home as HomeIcon, ClipboardList, AlertCircle, HandCoins, User } from 'lucide-react';
 
 // CẤU HÌNH HIỂN THỊ CẤP HẠNG TUẦN TRÊN APP TÀI XẾ
 const SHOW_TIER_FEATURE = true;
@@ -224,13 +224,10 @@ export default function Earnings() {
           </svg>
         </div>
         <div className="flex items-center justify-center gap-2 relative z-10">
-          <h1 className="text-sm font-bold text-white uppercase tracking-widest ">THỐNG KÊ HIỆU SUẤT HÔM NAY</h1>
-          <button onClick={() => setShowBalance(!showBalance)} className="p-1 rounded-full hover:bg-white/20 text-white transition-colors">
-            {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
-          </button>
+          <h1 className="text-sm font-bold text-white uppercase tracking-widest ">THỐNG KÊ DOANH THU</h1>
         </div>
         <p className="mt-1 text-4xl font-black text-white relative z-10 ">
-          {showBalance ? formatCurrency(stats.dailyFee) : '******'}
+          {formatCurrency(stats.dailyFee)}
         </p>
 
         {/* TABS SWITCHER */}
@@ -239,22 +236,14 @@ export default function Earnings() {
              onClick={() => setActiveTab('revenue')}
              className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'revenue' ? 'bg-white text-blue-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
-             <BarChart3 size={16} /> Báo Cáo Điểm
+             <BarChart3 size={16} /> Doanh Thu
            </button>
            <button 
              onClick={() => setActiveTab('wallet')}
              className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'wallet' ? 'bg-white text-emerald-600 shadow-md' : 'text-white/80 hover:text-white'}`}
            >
-             <Building2 size={16} /> Tài Khoản Điểm
+             <Building2 size={16} /> Tài Khoản
            </button>
-           {SHOW_TIER_FEATURE && (
-             <button 
-               onClick={() => { setActiveTab('rank'); loadProfile(); }}
-               className={`flex-1 py-2 px-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'rank' ? 'bg-white text-amber-600 shadow-md' : 'text-white/80 hover:text-white'}`}
-             >
-               <Trophy size={16} /> Cấp Hạng Tuần
-             </button>
-           )}
         </div>
       </div>
 
@@ -313,18 +302,18 @@ export default function Earnings() {
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4">
             <p className="text-xs text-blue-600 mb-1 font-semibold">Tuần này</p>
-            <p className="text-lg font-bold text-blue-800">{showBalance ? formatCurrency(stats.weeklyFee) : '******'}</p>
+            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.weeklyFee)}</p>
           </div>
           <div className="rounded-2xl bg-blue-50/80 border border-blue-100 p-4">
             <p className="text-xs text-blue-600 mb-1 font-semibold">Tháng này</p>
-            <p className="text-lg font-bold text-blue-800">{showBalance ? formatCurrency(stats.monthlyFee) : '******'}</p>
+            <p className="text-lg font-bold text-blue-800">{formatCurrency(stats.monthlyFee)}</p>
           </div>
         </div>
         
         {/* Thu Nhập Cả Tháng */}
         <div className="rounded-2xl bg-blue-100 border border-blue-200 p-4 mb-8 text-center shadow-md">
           <p className="text-xs text-blue-600 font-semibold mb-1">Tổng Điểm Tích Lũy Từ Trước Đến Nay</p>
-          <p className="text-2xl font-black text-blue-700  shadow-blue-500/20">{showBalance ? formatCurrency(stats.totalFee) : '******'}</p>
+          <p className="text-2xl font-black text-blue-700  shadow-blue-500/20">{formatCurrency(stats.totalFee)}</p>
         </div>
 
 
@@ -344,7 +333,7 @@ export default function Earnings() {
                        <p className="text-xs text-slate-500 mb-1 font-semibold flex items-center gap-1">
                          <span>Điểm Trừ Ngày: {new Date(debt.date).toLocaleDateString('vi-VN')}</span>
                        </p>
-                       <p className="text-xl font-black text-red-600 ">{showBalance ? formatCurrency(debt.amount) : '******'}</p>
+                       <p className="text-xl font-black text-red-600 ">{formatCurrency(debt.amount)}</p>
                      </div>
                      <div className="h-10 w-10 bg-gradient-to-br from-red-400 to-rose-500 rounded-xl flex items-center justify-center text-white shadow-lg text-lg transform rotate-[-5deg]">
                        <Receipt size={20} />
@@ -447,12 +436,9 @@ export default function Earnings() {
               </div>
               <div className="flex items-center justify-between relative z-10 mb-1">
                 <p className="text-emerald-100 font-medium text-sm uppercase tracking-wider">ĐIỂM KHẢ DỤNG</p>
-                <button onClick={() => setShowBalance(!showBalance)} className="p-1 rounded-full hover:bg-emerald-600/30 text-emerald-100 transition-colors">
-                  {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
-                </button>
               </div>
               <h2 className="text-4xl font-black mb-4 relative z-10 ">
-                 {showBalance ? formatCurrency(walletDetail.availableBalance || 0) : '******'}
+                 {formatCurrency(walletDetail.availableBalance || 0)}
               </h2>
               
               {walletDetail.pendingAmount > 0 && (
@@ -522,258 +508,6 @@ export default function Earnings() {
             )}
         </div>
       )}
-
-        {/* ===================== TAB 3: CẤP HẠNG TUẦN ===================== */}
-        {SHOW_TIER_FEATURE && activeTab === 'rank' && (
-          <div className="animate-in fade-in slide-in-from-right-4 duration-300 space-y-4">
-            {(() => {
-              const currentTier = driver?.driverTier || 1;
-              const points = driver?.weeklyPoints || 0;
-              const isCustom = driver?.isCustomCommission;
-              const commission = driver?.commissionRate || 15;
-              const thresholds = driver?.tierInfo?.thresholds || { TIER_1_MAX: 10, TIER_2_MAX: 55, TIER_3_MIN: 56 };
-
-              // Cấu hình theme theo cấp bậc
-              const tierThemes = {
-                1: {
-                  name: 'Cấp 1 - Đồng',
-                  bgGradient: 'from-amber-700 via-orange-600 to-amber-800',
-                  badgeBg: 'bg-amber-900/40 border-amber-400/30 text-amber-100',
-                  icon: '🥉',
-                  glowColor: 'shadow-amber-500/20',
-                  nextTierName: 'Cấp 2 - Bạc',
-                  nextTierPoints: thresholds.TIER_1_MAX + 1,
-                  nextTierCommission: 15,
-                  needed: Math.max(0, (thresholds.TIER_1_MAX + 1) - points),
-                  progressMax: thresholds.TIER_1_MAX + 1
-                },
-                2: {
-                  name: 'Cấp 2 - Bạc',
-                  bgGradient: 'from-slate-600 via-cyan-700 to-blue-700',
-                  badgeBg: 'bg-cyan-900/40 border-cyan-300/30 text-cyan-100',
-                  icon: '🥈',
-                  glowColor: 'shadow-cyan-500/20',
-                  nextTierName: 'Cấp 3 - Vàng',
-                  nextTierPoints: thresholds.TIER_3_MIN,
-                  nextTierCommission: 10,
-                  needed: Math.max(0, thresholds.TIER_3_MIN - points),
-                  progressMax: thresholds.TIER_3_MIN
-                },
-                3: {
-                  name: 'Cấp 3 - Vàng',
-                  bgGradient: 'from-amber-500 via-yellow-500 to-amber-600',
-                  badgeBg: 'bg-amber-900/40 border-yellow-200/40 text-yellow-100',
-                  icon: '🥇',
-                  glowColor: 'shadow-yellow-500/30',
-                  nextTierName: null,
-                  nextTierPoints: null,
-                  nextTierCommission: 10,
-                  needed: 0,
-                  progressMax: thresholds.TIER_3_MIN
-                }
-              };
-
-              const theme = tierThemes[currentTier] || tierThemes[1];
-              const progressPercent = theme.nextTierPoints 
-                ? Math.min(100, Math.round((points / theme.progressMax) * 100))
-                : 100;
-
-              return (
-                <>
-                  {/* Card cấp hạng chính */}
-                  <div className={`rounded-3xl bg-gradient-to-br ${theme.bgGradient} p-6 shadow-xl ${theme.glowColor} relative overflow-hidden text-white`}>
-                    <div className="absolute right-0 top-0 opacity-10">
-                      <Trophy size={160} />
-                    </div>
-
-                    {/* Top bar: Tuần & Đồng hồ đếm ngược */}
-                    <div className="flex items-center justify-between relative z-10 mb-4">
-                      <div className="flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-semibold">
-                        <Flame size={14} className="text-amber-300 animate-pulse" />
-                        <span>Xếp Hạng Tuần Này</span>
-                      </div>
-                      <div className="flex items-center gap-1 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full text-[11px] font-bold text-amber-200">
-                        <Clock size={12} />
-                        <span>Còn {timeLeft.days}n {timeLeft.hours}g {timeLeft.minutes}p</span>
-                      </div>
-                    </div>
-
-                    {/* Huy hiệu & Cấp bậc */}
-                    <div className="flex items-center gap-4 relative z-10 mb-4">
-                      <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-3xl shadow-inner">
-                        {theme.icon}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-2xl font-black">{theme.name}</h2>
-                          {currentTier === 3 && (
-                            <span className="bg-yellow-300 text-yellow-900 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
-                              VIP
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs opacity-90 mt-0.5">
-                          Chiết khấu: <span className="text-lg font-black text-yellow-200">{commission}%</span>
-                          {isCustom && <span className="ml-1 text-[11px] opacity-75">(Cố định bởi Admin)</span>}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Điểm tích lũy */}
-                    <div className="bg-black/20 backdrop-blur-sm rounded-2xl p-4 relative z-10 border border-white/10">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-medium text-white/90">Số đơn hoàn thành tuần này:</span>
-                        <span className="text-xl font-black text-yellow-300">{points} <span className="text-xs font-bold text-white/80">đơn (điểm)</span></span>
-                      </div>
-
-                      {/* Thanh tiến trình */}
-                      <div className="w-full bg-black/30 rounded-full h-3 overflow-hidden p-0.5">
-                        <div 
-                          className="bg-gradient-to-r from-yellow-300 to-amber-200 h-full rounded-full transition-all duration-500 shadow"
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-
-                      {/* Thông báo tiến độ */}
-                      <div className="mt-2 text-xs flex items-center justify-between">
-                        {theme.nextTierName ? (
-                          <>
-                            <span className="opacity-80">Mục tiêu {theme.nextTierName}: {theme.nextTierPoints} đơn</span>
-                            <span className="font-bold text-yellow-200">
-                              Cần thêm {theme.needed} đơn ({theme.nextTierCommission}%)
-                            </span>
-                          </>
-                        ) : (
-                          <span className="w-full text-center font-bold text-yellow-200 flex items-center justify-center gap-1">
-                            <Sparkles size={14} /> Bạn đã đạt cấp bậc cao nhất với chiết khấu 10%!
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* THÀNH TÍCH TUẦN TRƯỚC (NẾU CÓ) */}
-                  <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
-                        {driver?.lastWeekTier === 3 ? '🥇' : (driver?.lastWeekTier === 2 ? '🥈' : '🥉')}
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-medium">Thành tích tuần trước</p>
-                        <p className="text-sm font-bold text-slate-800">
-                          {driver?.lastWeekTier === 3 ? 'Cấp 3 - Vàng' : (driver?.lastWeekTier === 2 ? 'Cấp 2 - Bạc' : 'Cấp 1 - Đồng')}
-                          <span className="text-xs text-slate-500 font-normal ml-1">({driver?.lastWeekPoints || 0} đơn)</span>
-                        </p>
-                      </div>
-                    </div>
-                    <button 
-                      onClick={() => { loadProfile(); fetchEarnings(); }}
-                      className="p-2 rounded-xl text-slate-500 hover:text-blue-600 hover:bg-white transition-colors"
-                      title="Làm mới dữ liệu"
-                    >
-                      <RefreshCw size={18} />
-                    </button>
-                  </div>
-
-                  {/* BẢNG MỐC CẤP BẬC VÀ QUYỀN LỢI CHIẾT KHẤU */}
-                  <div className="rounded-2xl bg-white border border-slate-200 p-4 shadow-sm">
-                    <div className="flex items-center gap-2 mb-3">
-                      <ShieldCheck className="text-blue-600" size={20} />
-                      <h3 className="font-bold text-slate-800 text-sm">Bảng Mốc Cấp Bậc & Chiết Khấu</h3>
-                    </div>
-
-                    <div className="space-y-2.5">
-                      {/* Cấp 1 */}
-                      <div className={`p-3 rounded-xl border transition-all ${currentTier === 1 ? 'border-amber-400 bg-amber-50/70 shadow-sm' : 'border-slate-100 bg-slate-50/60'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-2xl">🥉</span>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800 text-sm">Cấp 1 - Đồng</span>
-                                {currentTier === 1 && (
-                                  <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    Cấp hiện tại
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-500">Mốc: 0 - {thresholds.TIER_1_MAX} đơn/tuần</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-lg font-black text-amber-700">20%</span>
-                            <p className="text-[10px] text-slate-400">Chiết khấu</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Cấp 2 */}
-                      <div className={`p-3 rounded-xl border transition-all ${currentTier === 2 ? 'border-cyan-400 bg-cyan-50/70 shadow-sm' : 'border-slate-100 bg-slate-50/60'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-2xl">🥈</span>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800 text-sm">Cấp 2 - Bạc</span>
-                                {currentTier === 2 && (
-                                  <span className="bg-cyan-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    Cấp hiện tại
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-500">Mốc: {thresholds.TIER_1_MAX + 1} - {thresholds.TIER_2_MAX} đơn/tuần</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-lg font-black text-blue-600">15%</span>
-                            <p className="text-[10px] text-emerald-600 font-semibold">Giảm 5% phí</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Cấp 3 */}
-                      <div className={`p-3 rounded-xl border transition-all ${currentTier === 3 ? 'border-amber-400 bg-amber-50/90 shadow-sm ring-1 ring-amber-400/50' : 'border-slate-100 bg-slate-50/60'}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-2xl">🥇</span>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="font-bold text-slate-800 text-sm">Cấp 3 - Vàng</span>
-                                {currentTier === 3 && (
-                                  <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
-                                    Cấp hiện tại
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-500">Mốc: Trên {thresholds.TIER_2_MAX} đơn/tuần</p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <span className="text-lg font-black text-amber-600">10%</span>
-                            <p className="text-[10px] text-emerald-600 font-semibold">Ưu đãi nhất (-10%)</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* THỂ LỆ & QUY TẮC RESET */}
-                  <div className="rounded-2xl bg-blue-50/60 border border-blue-100 p-4 text-xs text-slate-600 space-y-2">
-                    <p className="font-bold text-blue-900 flex items-center gap-1.5 text-sm">
-                      <Zap size={16} className="text-blue-600" />
-                      Quy Tắc Xếp Hạng & Chiết Khấu
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-slate-600 pl-1">
-                      <li><strong>1 đơn hoàn thành = 1 điểm:</strong> Càng giao nhiều đơn, cấp bậc càng cao.</li>
-                      <li><strong>Tự động giảm chiết khấu ngay lập tức:</strong> Khi đạt đủ số đơn, hệ thống sẽ tự động hạ mức phí cho các đơn tiếp theo.</li>
-                      <li><strong>Reset chu kỳ tuần:</strong> Đúng 00:00 sáng Thứ Hai hàng tuần, điểm tuần sẽ được đặt lại từ đầu để bắt đầu cuộc đua mới.</li>
-                    </ul>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-        )}
       </div>
 
       <div className="bottom-nav-safe">
@@ -787,8 +521,12 @@ export default function Earnings() {
             <span className="text-xs mt-1 font-medium">Đơn của tôi</span>
           </Link>
           <Link to="/earnings" className="flex flex-col items-center text-slate-800">
-            <Wallet size={24} strokeWidth={1.5} />
-            <span className="text-xs mt-1 font-bold">Điểm thưởng</span>
+            <BarChart3 size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-bold">Thống kê</span>
+          </Link>
+          <Link to="/profile" className="flex flex-col items-center text-slate-400 hover:text-slate-600 transition-colors">
+            <User size={24} strokeWidth={1.5} />
+            <span className="text-xs mt-1 font-medium">Thông tin cá nhân</span>
           </Link>
         </div>
       </div>
