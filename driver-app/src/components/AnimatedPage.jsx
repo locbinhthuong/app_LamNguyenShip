@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion, useDragControls, useIsPresent } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const DRIVER_TABS = ['/', '/my-orders', '/earnings'];
@@ -7,103 +7,115 @@ const DRIVER_TABS = ['/', '/my-orders', '/earnings'];
 const pageVariants = {
   enter: (direction) => ({
     x: direction > 0 ? '100%' : '-100%',
+    opacity: 1,
   }),
   center: {
     x: 0,
+    opacity: 1,
   },
   exit: (direction) => ({
     x: direction > 0 ? '-100%' : '100%',
+    opacity: 1,
   })
 };
 
 export default function AnimatedPage({ children, direction = 1 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const dragControls = useDragControls();
-  const isPresent = useIsPresent();
-  
-  // Chỉ cho phép kéo (drag) nếu đang ở các trang Tab chính
-  const isTab = DRIVER_TABS.includes(location.pathname);
+  const touchRef = useRef({ startX: null, startY: null, lockedAxis: null, ignore: false });
 
-  const handlePointerDown = (e) => {
-    if (!isTab) return;
+  // Trang chủ (/) tự quản lý bố cục cố định Header + khung cuộn riêng bên trong từng Tab
+  const isHomePage = location.pathname === '/';
+  // Chỉ chuyển tab bằng thao tác vuốt ở các trang tab phụ (/my-orders, /earnings); trang chủ (/) đã có bộ lướt 3 tab riêng
+  const isSubTab = location.pathname === '/my-orders' || location.pathname === '/earnings';
+
+  const handleTouchStart = (e) => {
+    if (!isSubTab || e.touches.length !== 1) return;
     const target = e.target;
-    // BỘ LỌC XUNG ĐỘT: Bỏ qua vùng bản đồ, các thanh trượt ngang, và các input/button
     if (
-      target.closest('.overflow-x-auto') || 
-      target.closest('.no-swipe') || 
+      target.closest('.overflow-x-auto') ||
+      target.closest('.no-swipe') ||
       target.closest('#map') ||
       target.closest('.leaflet-container') ||
       target.closest('input') ||
       target.closest('textarea') ||
       target.closest('select') ||
+      target.closest('button') ||
       target.closest('a')
     ) {
+      touchRef.current.ignore = true;
       return;
     }
-    dragControls.start(e);
+    touchRef.current = {
+      startX: e.touches[0].clientX,
+      startY: e.touches[0].clientY,
+      lockedAxis: null,
+      ignore: false
+    };
   };
 
-  const handleDragEnd = (event, info) => {
-    const distanceX = info.offset.x;
-    const velocityX = info.velocity.x;
-    
-    // Vuốt trái (Kéo qua trái) -> Sang trang kế tiếp
-    if (distanceX < -80 || velocityX < -500) {
-      navigateNext();
-    } 
-    // Vuốt phải (Kéo qua phải) -> Về trang trước
-    else if (distanceX > 80 || velocityX > 500) {
-      navigatePrev();
-    }
-  };
+  const handleTouchMove = (e) => {
+    if (!isSubTab || touchRef.current.ignore || touchRef.current.startX === null) return;
+    const dx = e.touches[0].clientX - touchRef.current.startX;
+    const dy = e.touches[0].clientY - touchRef.current.startY;
 
-  const navigateNext = () => {
-    let currentTabs = [];
-    if (DRIVER_TABS.includes(location.pathname)) currentTabs = DRIVER_TABS;
-
-    if (currentTabs.length > 0) {
-      const currentIndex = currentTabs.indexOf(location.pathname);
-      if (currentIndex < currentTabs.length - 1) {
-        navigate(currentTabs[currentIndex + 1], { state: { direction: 1 } });
+    if (!touchRef.current.lockedAxis) {
+      if (Math.abs(dy) > 8 && Math.abs(dy) >= Math.abs(dx)) {
+        touchRef.current.lockedAxis = 'y';
+      } else if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+        touchRef.current.lockedAxis = 'x';
       }
     }
   };
 
-  const navigatePrev = () => {
-    let currentTabs = [];
-    if (DRIVER_TABS.includes(location.pathname)) currentTabs = DRIVER_TABS;
+  const handleTouchEnd = (e) => {
+    if (!isSubTab || touchRef.current.ignore || touchRef.current.startX === null) return;
+    const endX = e.changedTouches?.[0]?.clientX ?? touchRef.current.startX;
+    const endY = e.changedTouches?.[0]?.clientY ?? touchRef.current.startY;
+    const dx = endX - touchRef.current.startX;
+    const dy = endY - touchRef.current.startY;
+    const axis = touchRef.current.lockedAxis;
 
-    if (currentTabs.length > 0) {
-      const currentIndex = currentTabs.indexOf(location.pathname);
-      if (currentIndex > 0) {
-        navigate(currentTabs[currentIndex - 1], { state: { direction: -1 } });
+    touchRef.current = { startX: null, startY: null, lockedAxis: null, ignore: false };
+
+    if (axis === 'x' && Math.abs(dx) > 75 && Math.abs(dx) > Math.abs(dy) * 1.6) {
+      const currentIndex = DRIVER_TABS.indexOf(location.pathname);
+      if (dx < -75 && currentIndex >= 0 && currentIndex < DRIVER_TABS.length - 1) {
+        navigate(DRIVER_TABS[currentIndex + 1], { state: { direction: 1 } });
+      } else if (dx > 75 && currentIndex > 0) {
+        navigate(DRIVER_TABS[currentIndex - 1], { state: { direction: -1 } });
       }
     }
   };
 
   return (
     <motion.div
-      className="absolute top-0 left-0 w-full h-full bg-gray-50 overflow-hidden"
-      drag={isTab ? "x" : false}
-      dragControls={dragControls}
-      dragListener={false} 
-      dragDirectionLock 
-      dragElastic={1}
-      dragConstraints={{ left: 0, right: 0 }}
-      onDragEnd={handleDragEnd}
+      className="absolute inset-0 w-full h-full bg-slate-50 overflow-hidden"
       custom={direction}
       variants={pageVariants}
       initial="enter"
       animate="center"
       exit="exit"
-      transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
-      onPointerDown={handlePointerDown}
-      style={{ touchAction: 'pan-y', pointerEvents: 'auto' }}
+      transition={{ type: 'tween', ease: [0.22, 1, 0.36, 1], duration: 0.22 }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      style={{ pointerEvents: 'auto', willChange: 'transform' }}
     >
-      <div className="w-full h-full overflow-y-auto no-scrollbar pb-24 bg-gray-50">
-        {children}
-      </div>
+      {isHomePage ? (
+        <div className="w-full h-full overflow-hidden bg-slate-50">
+          {children}
+        </div>
+      ) : (
+        <div
+          id="animated-page-scroll-container"
+          className="w-full h-full overflow-y-auto overflow-x-hidden no-scrollbar pb-24 bg-slate-50"
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', touchAction: 'pan-y' }}
+        >
+          {children}
+        </div>
+      )}
     </motion.div>
   );
 }

@@ -96,59 +96,110 @@ export default function OrderDetail() {
     return () => clearInterval(timer);
   }, [order?._id, order?.status, order?.assignedTo, order?.updatedAt, order?.createdAt, order?.serverTime, order?._receivedPerfNow]);
 
-  // Logic vuốt màn hình có hiệu ứng
-  const [touchStart, setTouchStart] = useState({ x: null, y: null });
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
+  // Logic vuốt ngang thoát trang khóa chặt trục X (không trôi dọc theo ngón tay và không bao giờ bị kẹt)
+  const detailContainerRef = useRef(null);
+  const swipeStateRef = useRef({
+    startX: null,
+    startY: null,
+    startTime: 0,
+    lastX: 0,
+    axis: null
+  });
+
+  const resetSwipeTransform = () => {
+    const scrollParent = document.getElementById('animated-page-scroll-container');
+    if (scrollParent) scrollParent.style.overflowY = 'auto';
+    if (detailContainerRef.current) {
+      detailContainerRef.current.style.transition = 'transform 0.2s cubic-bezier(0.22, 1, 0.36, 1)';
+      detailContainerRef.current.style.transform = 'translate3d(0px, 0, 0)';
+    }
+    swipeStateRef.current = { startX: null, startY: null, startTime: 0, lastX: 0, axis: null };
+  };
 
   const handleTouchStart = (e) => {
-    setTouchStart({
-      x: e.targetTouches[0].clientX,
-      y: e.targetTouches[0].clientY
-    });
-    setSwipeOffset(0);
-    setIsSwiping(false);
+    if (e.touches.length !== 1) return;
+    const target = e.target;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('select') ||
+      target.closest('.no-swipe')
+    ) {
+      swipeStateRef.current = { startX: null, startY: null, startTime: 0, lastX: 0, axis: 'ignore' };
+      return;
+    }
+    const clientX = e.touches[0].clientX;
+    const clientY = e.touches[0].clientY;
+    swipeStateRef.current = {
+      startX: clientX,
+      startY: clientY,
+      startTime: performance.now(),
+      lastX: clientX,
+      axis: null
+    };
   };
 
   const handleTouchMove = (e) => {
-    if (touchStart.x === null) return;
-    
-    const currentX = e.targetTouches[0].clientX;
-    const currentY = e.targetTouches[0].clientY;
-    
-    const deltaX = currentX - touchStart.x;
-    const deltaY = currentY - touchStart.y;
-    
-    // Xác định chủ đích người dùng (vuốt ngang hay cuộn dọc)
-    if (!isSwiping) {
-      // Nếu có xu hướng cuộn dọc rõ rệt hơn vuốt ngang -> Hủy theo dõi vuốt
-      if (Math.abs(deltaY) > Math.abs(deltaX)) {
-        setTouchStart({ x: null, y: null });
+    const st = swipeStateRef.current;
+    if (st.startX === null || st.axis === 'ignore' || st.axis === 'y') return;
+
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const deltaX = currentX - st.startX;
+    const deltaY = currentY - st.startY;
+    st.lastX = currentX;
+
+    if (st.axis === null) {
+      if (Math.abs(deltaX) < 8 && Math.abs(deltaY) < 8) return;
+      // Chỉ nhận vuốt ngang sang phải khi phương ngang lớn hơn rõ rệt phương dọc
+      if (deltaX > 10 && deltaX > Math.abs(deltaY) * 1.4) {
+        st.axis = 'x';
+        const scrollParent = document.getElementById('animated-page-scroll-container');
+        if (scrollParent) scrollParent.style.overflowY = 'hidden';
+        if (detailContainerRef.current) {
+          detailContainerRef.current.style.transition = 'none';
+        }
+      } else {
+        st.axis = 'y';
         return;
       }
-      // Nếu vuốt ngang rõ rệt -> Khóa là đang vuốt ngang
-      if (Math.abs(deltaX) > 10) {
-        setIsSwiping(true);
-      }
     }
-    
-    // Chỉ kích hoạt khi đã xác nhận vuốt ngang và hướng sang phải
-    if (isSwiping && deltaX > 0) {
-      setSwipeOffset(deltaX);
+
+    if (st.axis === 'x') {
+      const clampedX = Math.max(0, deltaX);
+      if (detailContainerRef.current) {
+        detailContainerRef.current.style.transform = `translate3d(${clampedX}px, 0, 0)`;
+      }
     }
   };
 
   const handleTouchEnd = () => {
-    if (touchStart.x === null) return;
-    
-    // Kéo > 80px thì chuyển trang, không thì hồi lại
-    if (swipeOffset > 80) {
+    const st = swipeStateRef.current;
+    const scrollParent = document.getElementById('animated-page-scroll-container');
+    if (scrollParent) scrollParent.style.overflowY = 'auto';
+
+    if (st.startX === null || st.axis !== 'x') {
+      resetSwipeTransform();
+      return;
+    }
+
+    const deltaX = Math.max(0, st.lastX - st.startX);
+    const elapsed = Math.max(1, performance.now() - st.startTime);
+    const velocity = deltaX / elapsed;
+
+    swipeStateRef.current = { startX: null, startY: null, startTime: 0, lastX: 0, axis: null };
+
+    if (deltaX > 80 || (deltaX > 35 && velocity > 0.45)) {
+      if (detailContainerRef.current) {
+        detailContainerRef.current.style.transition = 'transform 0.16s ease-out';
+        detailContainerRef.current.style.transform = 'translate3d(100%, 0, 0)';
+      }
       handleBack();
     } else {
-      setSwipeOffset(0);
+      resetSwipeTransform();
     }
-    setTouchStart({ x: null, y: null });
-    setIsSwiping(false);
   };
 
   const showNotification = (message, type = 'success') => {
@@ -415,14 +466,13 @@ export default function OrderDetail() {
 
   return (
     <div 
+      ref={detailContainerRef}
       className="min-h-screen bg-slate-50 pb-36 sm:pb-40"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
-      style={{
-        transform: `translateX(${swipeOffset}px)`,
-        transition: touchStart.x !== null ? 'none' : 'transform 0.2s ease-out'
-      }}
+      onTouchCancel={handleTouchEnd}
+      style={{ willChange: 'transform' }}
     >
       {showToast && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${

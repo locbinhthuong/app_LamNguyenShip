@@ -441,6 +441,118 @@ export default function Home() {
   const [historyOrders, setHistoryOrders] = useState([]);
   const [isOnlineToggling, setIsOnlineToggling] = useState(false);
   const scrollRef = useRef(null);
+  const trackRef = useRef(null);
+  const tabTouchRef = useRef({
+    startX: null,
+    startY: null,
+    startTime: 0,
+    lastX: 0,
+    axis: null,
+    activeScrollEl: null
+  });
+  const TAB_KEYS = ['available', 'active', 'history'];
+  const activeTabIndex = Math.max(0, TAB_KEYS.indexOf(filter));
+
+  const switchToTab = useCallback((tabKey) => {
+    const idx = Math.max(0, ['available', 'active', 'history'].indexOf(tabKey));
+    setFilter(tabKey);
+    if (trackRef.current) {
+      trackRef.current.style.transition = 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)';
+      trackRef.current.style.transform = `translate3d(-${idx * (100 / 3)}%, 0, 0)`;
+    }
+  }, []);
+
+  const handleTabTouchStart = (e) => {
+    if (e.touches.length !== 1) return;
+    const target = e.target;
+    if (
+      target.closest('button') ||
+      target.closest('a') ||
+      target.closest('input') ||
+      target.closest('textarea') ||
+      target.closest('select') ||
+      target.closest('.no-swipe')
+    ) {
+      tabTouchRef.current = { startX: null, startY: null, startTime: 0, lastX: 0, axis: 'ignore', activeScrollEl: null };
+      return;
+    }
+    const clientX = e.touches[0].clientX;
+    const clientY = e.touches[0].clientY;
+    const panelEl = target.closest('.driver-tab-panel');
+    tabTouchRef.current = {
+      startX: clientX,
+      startY: clientY,
+      startTime: performance.now(),
+      lastX: clientX,
+      axis: null,
+      activeScrollEl: panelEl
+    };
+  };
+
+  const handleTabTouchMove = (e) => {
+    const st = tabTouchRef.current;
+    if (st.startX === null || st.axis === 'ignore' || st.axis === 'y') return;
+
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const dx = currentX - st.startX;
+    const dy = currentY - st.startY;
+    st.lastX = currentX;
+
+    if (st.axis === null) {
+      if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+      if (Math.abs(dx) > 9 && Math.abs(dx) > Math.abs(dy) * 1.25) {
+        st.axis = 'x';
+        if (st.activeScrollEl) {
+          st.activeScrollEl.style.overflowY = 'hidden';
+        }
+        if (trackRef.current) {
+          trackRef.current.style.transition = 'none';
+        }
+      } else {
+        st.axis = 'y';
+        return;
+      }
+    }
+
+    if (st.axis === 'x' && trackRef.current) {
+      let effectiveDx = dx;
+      if ((activeTabIndex === 0 && dx > 0) || (activeTabIndex === 2 && dx < 0)) {
+        effectiveDx = dx * 0.25;
+      }
+      trackRef.current.style.transform = `translate3d(calc(-${activeTabIndex * (100 / 3)}% + ${effectiveDx}px), 0, 0)`;
+    }
+  };
+
+  const handleTabTouchEnd = () => {
+    const st = tabTouchRef.current;
+    if (st.activeScrollEl) {
+      st.activeScrollEl.style.overflowY = 'auto';
+    }
+    if (st.startX === null || st.axis !== 'x') {
+      tabTouchRef.current = { startX: null, startY: null, startTime: 0, lastX: 0, axis: null, activeScrollEl: null };
+      if (trackRef.current) {
+        trackRef.current.style.transition = 'transform 0.24s cubic-bezier(0.22, 1, 0.36, 1)';
+        trackRef.current.style.transform = `translate3d(-${activeTabIndex * (100 / 3)}%, 0, 0)`;
+      }
+      return;
+    }
+
+    const dx = st.lastX - st.startX;
+    const elapsed = Math.max(1, performance.now() - st.startTime);
+    const velocity = dx / elapsed;
+    const viewportW = scrollRef.current?.offsetWidth || window.innerWidth || 360;
+
+    let nextIdx = activeTabIndex;
+    if ((dx < -viewportW * 0.18 || (dx < -25 && velocity < -0.35)) && activeTabIndex < 2) {
+      nextIdx = activeTabIndex + 1;
+    } else if ((dx > viewportW * 0.18 || (dx > 25 && velocity > 0.35)) && activeTabIndex > 0) {
+      nextIdx = activeTabIndex - 1;
+    }
+
+    tabTouchRef.current = { startX: null, startY: null, startTime: 0, lastX: 0, axis: null, activeScrollEl: null };
+    switchToTab(TAB_KEYS[nextIdx]);
+  };
   const [dailyStats, setDailyStats] = useState({ fee: 0, orders: 0 });
   const [rainConfig, setRainConfig] = useState({ isEnabled: false, amount: 5000 });
   const [reportingRain, setReportingRain] = useState(false);
@@ -528,8 +640,7 @@ export default function Home() {
     const loadBackground = () => loadData(true);
     const loadForeground = () => loadData(false);
     const handleFocusAvailable = () => {
-      setFilter('available');
-      scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+      switchToTab('available');
       loadData(true);
     };
 
@@ -852,7 +963,7 @@ export default function Home() {
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col bg-slate-50 overflow-hidden relative">
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden relative">
       {/* Toast */}
       {showToast && (
         <div className={`fixed safe-top left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-full shadow-lg text-white font-medium ${
@@ -988,7 +1099,7 @@ export default function Home() {
       <div className="shrink-0 sticky top-0 z-20 flex bg-white border-b border-slate-200">
         <button
           type="button"
-          onClick={() => { setFilter('available'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
+          onClick={() => switchToTab('available')}
           className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'available' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
@@ -997,7 +1108,7 @@ export default function Home() {
         </button>
         <button
           type="button"
-          onClick={() => { setFilter('active'); scrollRef.current?.scrollTo({ left: window.innerWidth, behavior: 'smooth' }); }}
+          onClick={() => switchToTab('active')}
           className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'active' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
@@ -1006,7 +1117,7 @@ export default function Home() {
         </button>
         <button
           type="button"
-          onClick={() => { setFilter('history'); scrollRef.current?.scrollTo({ left: window.innerWidth * 2, behavior: 'smooth' }); }}
+          onClick={() => switchToTab('history')}
           className={`flex flex-1 items-center justify-center gap-1.5 py-3 text-xs font-bold transition-all sm:text-sm ${
             filter === 'history' ? 'border-b-2 border-blue-600 bg-blue-50/50 text-blue-600' : 'text-slate-500'
           }`}
@@ -1015,22 +1126,32 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Swipeable Content Container */}
+      {/* Swipeable Content Container - Khóa trục dọc/ngang độc lập, không xung đột 2 thanh cuộn */}
       <div 
         ref={scrollRef}
-        className="flex-1 w-full overflow-x-auto snap-x snap-mandatory hide-scrollbar flex items-start mb-[72px]"
-        onScroll={(e) => {
-          const w = e.target.offsetWidth;
-          const idx = Math.round(e.target.scrollLeft / w);
-          if (idx === 0 && filter !== 'available') setFilter('available');
-          if (idx === 1 && filter !== 'active') setFilter('active');
-          if (idx === 2 && filter !== 'history') setFilter('history');
-        }}
+        className="flex-1 w-full overflow-hidden relative mb-[72px]"
+        onTouchStart={handleTabTouchStart}
+        onTouchMove={handleTabTouchMove}
+        onTouchEnd={handleTabTouchEnd}
+        onTouchCancel={handleTabTouchEnd}
       >
+        <div
+          ref={trackRef}
+          className="flex h-full items-start"
+          style={{
+            width: '300%',
+            transform: `translate3d(-${activeTabIndex * (100 / 3)}%, 0, 0)`,
+            transition: 'transform 0.25s cubic-bezier(0.22, 1, 0.36, 1)',
+            willChange: 'transform'
+          }}
+        >
         
         {/* TAB 1: CHỜ NHẬN */}
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
-          <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
+        <div
+          className="driver-tab-panel w-1/3 h-full shrink-0 overflow-y-auto overflow-x-hidden px-4 py-3"
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', touchAction: 'pan-y' }}
+        >
+          <div className="mx-auto max-w-lg sm:max-w-xl pb-6">
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -1062,8 +1183,11 @@ export default function Home() {
         </div>
 
         {/* TAB 2: ĐANG GIAO */}
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
-          <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
+        <div
+          className="driver-tab-panel w-1/3 h-full shrink-0 overflow-y-auto overflow-x-hidden px-4 py-3"
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', touchAction: 'pan-y' }}
+        >
+          <div className="mx-auto max-w-lg sm:max-w-xl pb-6">
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -1086,8 +1210,11 @@ export default function Home() {
         </div>
 
         {/* TAB 3: LỊCH SỬ KHU TRÚ */}
-        <div className="w-full h-full shrink-0 snap-center overflow-y-auto p-4" style={{ minWidth: '100%' }}>
-          <div className="mx-auto max-w-lg p-4 sm:max-w-xl">
+        <div
+          className="driver-tab-panel w-1/3 h-full shrink-0 overflow-y-auto overflow-x-hidden px-4 py-3"
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', touchAction: 'pan-y' }}
+        >
+          <div className="mx-auto max-w-lg sm:max-w-xl pb-6">
             {loading ? (
               <div className="flex justify-center py-12">
                 <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -1131,6 +1258,7 @@ export default function Home() {
           </div>
         </div>
 
+        </div>
       </div>
 
       {/* Bottom Nav */}
