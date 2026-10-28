@@ -16,6 +16,8 @@ export const getFullImageUrl = (path) => {
   return `${API_URL}${path}`;
 };
 
+let cachedNativeHeaders = null;
+
 // Request interceptor - Add token
 api.interceptors.request.use(
   async (config) => {
@@ -25,10 +27,18 @@ api.interceptors.request.use(
     }
     try {
       if (Capacitor.isNativePlatform()) {
-        const info = await CapacitorApp.getInfo();
-        const device = await Device.getInfo();
-        config.headers['X-App-Version'] = info.version;
-        config.headers['X-Device-Platform'] = device.operatingSystem;
+        if (!cachedNativeHeaders) {
+          const [info, device] = await Promise.all([
+            CapacitorApp.getInfo(),
+            Device.getInfo()
+          ]);
+          cachedNativeHeaders = {
+            version: info.version,
+            os: device.operatingSystem
+          };
+        }
+        config.headers['X-App-Version'] = cachedNativeHeaders.version;
+        config.headers['X-Device-Platform'] = cachedNativeHeaders.os;
       }
     } catch (e) {
       console.warn("Lỗi lấy thông tin version:", e);
@@ -38,9 +48,37 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor - Handle 401 & 426
+// Response interceptor - Sync Server Time & Handle 401 & 426
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const perfNow = performance.now();
+    const serverTime = response?.data?.serverTime;
+    if (typeof serverTime === 'number') {
+      window.serverTimeOffset = serverTime - Date.now();
+    } else if (response?.headers?.date) {
+      const headerTime = new Date(response.headers.date).getTime();
+      if (!Number.isNaN(headerTime)) {
+        window.serverTimeOffset = headerTime - Date.now();
+      }
+    }
+
+    if (response?.data?.data) {
+      if (Array.isArray(response.data.data)) {
+        response.data.data.forEach(item => {
+          if (item && typeof item === 'object') {
+            item._receivedPerfNow = perfNow;
+            if (typeof serverTime === 'number' && !item.serverTime) item.serverTime = serverTime;
+          }
+        });
+      } else if (typeof response.data.data === 'object') {
+        response.data.data._receivedPerfNow = perfNow;
+        if (typeof serverTime === 'number' && !response.data.data.serverTime) {
+          response.data.data.serverTime = serverTime;
+        }
+      }
+    }
+    return response;
+  },
   (error) => {
     const originalRequest = error.config;
     // Bỏ qua lỗi 401 khi đang thực hiện api đăng nhập

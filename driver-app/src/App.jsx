@@ -130,6 +130,13 @@ function AppContent() {
     driverRef.current = driver;
   }, [driver]);
 
+  const navigateRef = useRef(navigate);
+  const locationRef = useRef(location);
+  useEffect(() => {
+    navigateRef.current = navigate;
+    locationRef.current = location;
+  }, [navigate, location]);
+
   // Ép Trình duyệt nhả quyền phát Âm thanh (Vượt qua chính sách cấm AutoPlay) và Tắt Splash Screen
   useEffect(() => {
     // Ẩn Splash Screen
@@ -589,7 +596,18 @@ function AppContent() {
 
   useEffect(() => {
     // Tắt chuông khi bấm vào Local Notification hoặc FCM Notification (App đang chạy ngầm)
+    let localNotifSub = null;
+    let fcmActionSub = null;
+    let backBtnSub = null;
+
     if (Capacitor.isNativePlatform()) {
+      backBtnSub = CapacitorApp.addListener('backButton', () => {
+        const currentPath = locationRef.current?.pathname || '/';
+        if (currentPath !== '/' && currentPath !== '/login') {
+          navigateRef.current('/', { replace: true });
+        }
+      });
+
       import('@capacitor/local-notifications').then(({ LocalNotifications }) => {
           LocalNotifications.createChannel({
             id: 'aloshipp_push_channel_v8',
@@ -618,12 +636,20 @@ function AppContent() {
             sound: Capacitor.getPlatform() === 'ios' ? 'chuong_canhbao.mp3' : 'chuong_canhbao',
             vibration: true
           });
-        LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
+        localNotifSub = LocalNotifications.addListener('localNotificationActionPerformed', (action) => {
           lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
           window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
-          const targetUrl = action?.notification?.extra?.url;
-          if (targetUrl) navigate(targetUrl);
+          const extra = action?.notification?.extra || {};
+          if ((extra.type === 'ORDER_LATE_DELIVERY' || extra.type === 'ORDER_LATE_PICKUP') && extra.orderId) {
+            navigateRef.current(`/order/${extra.orderId}`, { replace: true });
+          } else {
+            navigateRef.current('/', { replace: true });
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('focus_available_orders'));
+              window.dispatchEvent(new CustomEvent('refresh_data'));
+            }, 100);
+          }
         });
       }).catch(console.error);
 
@@ -646,17 +672,32 @@ function AppContent() {
             sound: Capacitor.getPlatform() === 'ios' ? 'chuong_canhbao.mp3' : 'chuong_canhbao',
             vibration: true
         }).catch(e => console.log('FCM warning createChannel error:', e));
-        FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
+        fcmActionSub = FirebaseMessaging.addListener('notificationActionPerformed', (event) => {
           lastPushTapTimeRef.current = Date.now();
           window.dispatchEvent(new CustomEvent('stop_alarm_event'));
           window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
-          const targetUrl = event?.notification?.data?.url || (event?.notification?.data?.orderId ? `/order/${event.notification.data.orderId}` : null);
-          if (targetUrl) navigate(targetUrl);
+          const notifData = event?.notification?.data || {};
+          const notifType = notifData.type;
+          if ((notifType === 'ORDER_LATE_DELIVERY' || notifType === 'ORDER_LATE_PICKUP') && notifData.orderId) {
+            navigateRef.current(`/order/${notifData.orderId}`, { replace: true });
+          } else {
+            navigateRef.current('/', { replace: true });
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('focus_available_orders'));
+              window.dispatchEvent(new CustomEvent('refresh_data'));
+            }, 100);
+          }
           loadProfile();
         });
       }).catch(console.error);
     }
-  }, [loadProfile, navigate]);
+
+    return () => {
+      if (localNotifSub) Promise.resolve(localNotifSub).then(s => s?.remove && s.remove()).catch(() => {});
+      if (fcmActionSub) Promise.resolve(fcmActionSub).then(s => s?.remove && s.remove()).catch(() => {});
+      if (backBtnSub) Promise.resolve(backBtnSub).then(s => s?.remove && s.remove()).catch(() => {});
+    };
+  }, [loadProfile]);
 
   const currentDriverId = driver?._id || driver?.id;
 
@@ -697,16 +738,24 @@ function AppContent() {
       
       socketRef.current.emit('driver_join', currentDriverId);
 
-      // ĐỒNG BỘ THỜI GIAN VỚI SERVER
-      window.serverTimeOffset = 0;
+      // ĐỒNG BỘ THỜI GIAN VỚI SERVER (Bù trừ độ trễ RTT/2 & giữ giá trị đã đồng bộ từ HTTP)
+      if (typeof window.serverTimeOffset !== 'number') {
+        window.serverTimeOffset = 0;
+      }
       socketRef.current.on('pong', (data) => {
-        window.serverTimeOffset = data.timestamp - Date.now();
+        if (data && typeof data.timestamp === 'number') {
+          const now = Date.now();
+          const rtt = typeof data.clientSentAt === 'number' ? Math.max(0, now - data.clientSentAt) : 0;
+          window.serverTimeOffset = (data.timestamp + Math.round(rtt / 2)) - now;
+        }
       });
       
-      const pingInterval = setInterval(() => {
-        socketRef.current?.emit('ping');
-      }, 30000);
-      socketRef.current.emit('ping'); // Gọi ngay lần đầu
+      const sendPing = () => {
+        socketRef.current?.emit('ping', { clientSentAt: Date.now() });
+      };
+      const pingInterval = setInterval(sendPing, 30000);
+      sendPing(); // Gọi ngay lần đầu
+      socketRef.current.on('connect', sendPing);
 
       socketRef.current.on('force_logout', (data) => {
         setLogoutAlert(data.message || 'Tài khoản của bạn đã được đăng nhập ở thiết bị khác!');
@@ -800,7 +849,7 @@ function AppContent() {
             notif.onclick = () => {
               window.focus();
               window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
-              if (orderId) navigate(`/order/${orderId}`);
+              if (orderId) navigateRef.current(`/order/${orderId}`, { replace: true });
               notif.close();
             };
           } catch (e) {}
@@ -840,6 +889,12 @@ function AppContent() {
       const forwardEvents = ['new_order', 'order_accepted', 'order_cancelled', 'order_picked_up', 'order_delivering', 'order_completed', 'wallet_updated', 'debt_updated', 'order_deleted_event', 'refresh_orders_data', 'order_updated', 'force_assigned', 'nearest_order_assignment'];
       forwardEvents.forEach(event => {
         socketRef.current.on(event, (data) => {
+          if (data && typeof data === 'object') {
+            data._receivedPerfNow = performance.now();
+            if (typeof data.serverTime === 'number') {
+              window.serverTimeOffset = data.serverTime - Date.now();
+            }
+          }
           if (event === 'new_order') {
             const driverRate = driverRef.current?.commissionRate || 15;
             if (data && data.commissionRate != null && Number(data.commissionRate) !== Number(driverRate)) {
@@ -857,7 +912,7 @@ function AppContent() {
           window.driverSocket = null;
         };
     }
-  }, [currentDriverId, loadProfile, navigate]);
+  }, [currentDriverId, loadProfile]);
 
   const handleForceLogoutClose = () => {
     setLogoutAlert(null);
@@ -869,7 +924,7 @@ function AppContent() {
     <>
       {forceUpdateConfig && <ForceUpdateModal config={forceUpdateConfig} />}
       <div className="h-[100dvh] w-full relative overflow-hidden bg-gray-50">
-      <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+      <AnimatePresence initial={false} custom={direction}>
         <Routes location={location} key={location.pathname}>
           <Route path="/login" element={driver ? <Navigate to="/" /> : <AnimatedPage direction={direction}><Login /></AnimatedPage>} />
           <Route path="/register" element={driver ? <Navigate to="/" /> : <AnimatedPage direction={direction}><Register /></AnimatedPage>} />

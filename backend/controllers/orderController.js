@@ -325,10 +325,14 @@ const orderController = {
         .sort({ createdAt: -1 })
         .lean();
 
+      const nowServer = Date.now();
+      const ordersWithServerTime = orders.map(o => ({ ...o, serverTime: nowServer }));
+
       res.status(200).json({
         success: true,
-        count: orders.length,
-        data: orders
+        serverTime: nowServer,
+        count: ordersWithServerTime.length,
+        data: ordersWithServerTime
       });
     } catch (error) {
       console.error('Error getAvailableOrders:', error);
@@ -422,8 +426,12 @@ const orderController = {
         } catch (e) { console.error('Error calculating prospective KPI:', e); }
       }
 
+      const nowServer = Date.now();
+      order.serverTime = nowServer;
+
       res.status(200).json({
         success: true,
+        serverTime: nowServer,
         data: order
       });
     } catch (error) {
@@ -597,7 +605,7 @@ const orderController = {
             req.io.to('admins').emit('new_order', payload);
             
             if (fcmTokens.length > 0) {
-              await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
+              await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: '/', orderId: payload._id.toString(), type: 'NEAREST_ORDER' }).catch(e => console.log('Push lỗi', e));
             }
 
             // Fallback timeout: Sau 32s nếu đơn vẫn PENDING và mảng chưa rỗng thì ép xóa và nổ cho tất cả
@@ -999,7 +1007,7 @@ const orderController = {
               }
               
               if (fcmTokens.length > 0) {
-                await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
+                await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: '/', orderId: payload._id.toString(), type: 'NEAREST_ORDER' }).catch(e => console.log('Push lỗi', e));
               }
 
               setTimeout(async () => {
@@ -1071,7 +1079,19 @@ const orderController = {
     try {
       const { id } = req.params;
 
-      const driver = await Driver.findById(req.driver._id).select('walletDebt status appVersion idleLockedUntil idleWarningLevel');
+      const origin = req.headers['origin'] || req.headers['referer'] || '';
+      const isWeb = origin.includes('aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
+
+      const [driver, appVersionConfig, debtCheck, activeOrdersCount, existingOrder] = await Promise.all([
+        Driver.findById(req.driver._id).select('walletDebt status appVersion idleLockedUntil idleWarningLevel').lean(),
+        !isWeb ? Config.findOne({ key: 'APP_VERSION_CONFIG' }).lean() : Promise.resolve(null),
+        checkDriverDebtBlock(req.driver._id),
+        Order.countDocuments({
+          assignedTo: req.driver._id,
+          status: { $in: ['ACCEPTED', 'PICKED_UP', 'DELIVERING'] }
+        }),
+        Order.findOne({ _id: id, status: 'PENDING' }).lean()
+      ]);
 
       if (!driver || driver.status !== 'active') {
         return res.status(200).json({ success: false, message: 'Tài khoản đã bị khóa hoặc không tồn tại' });
@@ -1087,23 +1107,16 @@ const orderController = {
         });
       }
 
-      const origin = req.headers['origin'] || req.headers['referer'] || '';
-      const isWeb = origin.includes('aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
-
-      if (!isWeb) {
-        const appVersionConfig = await Config.findOne({ key: 'APP_VERSION_CONFIG' });
-        if (appVersionConfig?.value?.driverApp?.minVersion) {
-          if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
-            return res.status(200).json({ 
-              success: false, 
-              message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để tiếp tục nhận đơn!' 
-            });
-          }
+      if (!isWeb && appVersionConfig?.value?.driverApp?.minVersion) {
+        if (isAppVersionLower(driver.appVersion, appVersionConfig.value.driverApp.minVersion)) {
+          return res.status(200).json({ 
+            success: false, 
+            message: 'Vui lòng cập nhật ứng dụng lên phiên bản mới nhất trên CH Play / App Store để tiếp tục nhận đơn!' 
+          });
         }
       }
 
       // Kiểm tra công nợ (dùng hàm chung — chỉ chặn nợ CŨ, bỏ qua nợ hôm nay)
-      const debtCheck = await checkDriverDebtBlock(req.driver._id);
       if (debtCheck.blocked) {
         return res.status(200).json({
           success: false,
@@ -1112,11 +1125,6 @@ const orderController = {
       }
 
       // KIỂM TRA SỐ LƯỢNG ĐƠN HÀNG ĐANG THỰC HIỆN
-      const activeOrdersCount = await Order.countDocuments({
-        assignedTo: req.driver._id,
-        status: { $in: ['ACCEPTED', 'PICKED_UP', 'DELIVERING'] }
-      });
-
       if (activeOrdersCount >= 3) {
         return res.status(200).json({
           success: false,
@@ -1125,7 +1133,6 @@ const orderController = {
       }
 
       // Lấy Order kiểm tra pendingAssignTo trước khi update
-      const existingOrder = await Order.findOne({ _id: id, status: 'PENDING' });
       if (!existingOrder) {
         return res.status(400).json({ success: false, message: 'Đơn hàng đã được nhận bởi tài xế khác hoặc không tồn tại' });
       }
@@ -1252,7 +1259,7 @@ const orderController = {
                 }
                 req.io.to('admins').emit('new_order', payload);
                 if (fcmTokens.length > 0) {
-                  await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
+                  await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: '/', orderId: payload._id.toString(), type: 'NEAREST_ORDER' }).catch(e => console.log('Push lỗi', e));
                 }
                 setTimeout(async () => {
                   try {
@@ -1456,9 +1463,6 @@ const orderController = {
       // Update driver stats
       const driver = await Driver.findById(req.driver._id);
       const { syncDriverWeeklyStats, getTierConfig } = require('../utils/weekHelper');
-      if (driver) {
-        await syncDriverWeeklyStats(driver);
-      }
 
       // LOGIC CỘNG CÔNG NỢ TỰ ĐỘNG KHI HOÀN THÀNH ĐƠN
       // Tiền nợ = Tổng Phí Giao Hàng * Phần Trăm Chiết Khấu Hiện Tại Của Tài Xế

@@ -26,8 +26,11 @@ self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   
   let urlToOpen = '/';
-  if (event.notification.data && event.notification.data.url) {
-    urlToOpen = event.notification.data.url;
+  if (event.notification.data) {
+    const notifType = event.notification.data.type;
+    if ((notifType === 'ORDER_LATE_DELIVERY' || notifType === 'ORDER_LATE_PICKUP') && event.notification.data.url) {
+      urlToOpen = event.notification.data.url;
+    }
   }
   
   event.waitUntil(

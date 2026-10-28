@@ -59,11 +59,19 @@ export default function NearestOrderPopup() {
     if (loading) return;
     setLoading(true);
     try {
-      await acceptOrder(order._id || order.id);
-      loadProfile();
+      const res = await acceptOrder(order._id || order.id);
+      if (res && res.success === false) {
+        alert(res.message || 'Không thể nhận đơn!');
+        setOrder(null);
+        window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+        return;
+      }
       window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+      if (res?.data) {
+        window.dispatchEvent(new CustomEvent('driver_order_accepted', { detail: res.data }));
+      }
       setOrder(null);
-      navigate(`/order/${order._id || order.id}`);
+      navigate(`/order/${order._id || order.id}`, { state: { from: '/' } });
     } catch (err) {
       alert(err.response?.data?.message || 'Lỗi khi nhận đơn!');
       // Vẫn tắt popup nếu lỗi (ví dụ đơn đã bị hủy hoặc người khác nhận mất)

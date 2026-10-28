@@ -99,7 +99,7 @@ export default function AnimatedPage({ children, direction = 1 }) {
       exit="exit"
       transition={{ type: "spring", stiffness: 300, damping: 30, mass: 0.8 }}
       onPointerDown={handlePointerDown}
-      style={{ touchAction: 'pan-y', pointerEvents: isPresent ? 'auto' : 'none' }}
+      style={{ touchAction: 'pan-y', pointerEvents: 'auto' }}
     >
       <div className="w-full h-full overflow-y-auto no-scrollbar pb-24 bg-gray-50">
         {children}

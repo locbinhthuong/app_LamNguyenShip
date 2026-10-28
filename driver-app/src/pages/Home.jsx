@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
-import { getAvailableOrders, acceptOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi, reportRain, getRainConfig } from '../services/api';
+import { getAvailableOrders, acceptOrder, pickedUpOrder, completeOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi, reportRain, getRainConfig } from '../services/api';
 import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass, CloudRain } from 'lucide-react';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
@@ -81,23 +81,43 @@ const getCardDriverReminder = (reminder) => {
     .trim();
 };
 
+const calcOrderCooldown = (ord) => {
+  if (!ord) return 0;
+  const orderTime = new Date(ord.updatedAt || ord.createdAt).getTime();
+  let elapsedMs;
+  if (typeof ord.serverTime === 'number' && typeof ord._receivedPerfNow === 'number') {
+    const serverElapsedAtReceive = Math.max(0, ord.serverTime - orderTime);
+    const localElapsedSinceReceive = Math.max(0, performance.now() - ord._receivedPerfNow);
+    elapsedMs = serverElapsedAtReceive + localElapsedSinceReceive;
+  } else {
+    const currentServerTime = Date.now() + (window.serverTimeOffset || 0);
+    elapsedMs = Math.max(0, currentServerTime - orderTime);
+  }
+  const remainingMs = 5000 - elapsedMs;
+  if (remainingMs <= 0) return 0;
+  const secs = Math.ceil(remainingMs / 1000);
+  return secs > 5 ? 5 : secs;
+};
+
 function OrderCard({ order, onAccept, loading }) {
   const navigate = useNavigate();
 
-  const [cooldown, setCooldown] = useState(() => {
-    const currentTime = Date.now() + (window.serverTimeOffset || 0);
-    const timeDiff = currentTime - new Date(order.updatedAt || order.createdAt).getTime();
-    const remaining = 5 - Math.floor(Math.max(0, timeDiff) / 1000);
-    return remaining > 0 ? (remaining > 5 ? 5 : remaining) : 0;
-  });
+  const [cooldown, setCooldown] = useState(() => calcOrderCooldown(order));
 
   useEffect(() => {
-    if (cooldown <= 0) return;
+    const initial = calcOrderCooldown(order);
+    setCooldown(initial);
+    if (initial <= 0) return;
+
     const timer = setInterval(() => {
-      setCooldown(c => c - 1);
-    }, 1000);
+      const next = calcOrderCooldown(order);
+      setCooldown(prev => (prev !== next ? next : prev));
+      if (next <= 0) {
+        clearInterval(timer);
+      }
+    }, 100);
     return () => clearInterval(timer);
-  }, [cooldown]);
+  }, [order._id, order.updatedAt, order.createdAt, order.serverTime, order._receivedPerfNow]);
 
   const handleAccept = async () => {
     await onAccept(order._id);
@@ -443,7 +463,7 @@ export default function Home() {
       if (!isBackground) setLoading(true);
       const [available, myAllRes] = await Promise.all([
         getAvailableOrders(),
-        getMyOrders() // Lấy toàn bộ, filter trên Client vì backend không hỗ trợ list param
+        getMyOrders({ limit: 40 })
       ]);
       setAvailableOrders(Array.isArray(available.data) ? available.data : []);
       
@@ -463,18 +483,18 @@ export default function Home() {
       const historyArr = allMyOrders.filter(o => ['COMPLETED', 'CANCELLED'].includes(o.status)).sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 15);
       setHistoryOrders(historyArr);
 
-      // Nạp Doanh thu nóng trong ngày
-      const revenueRes = await getDriverRevenue();
-      if (revenueRes.success && revenueRes.data) {
-        setDailyStats({
-          fee: revenueRes.data.dailyFee || 0,
-          orders: revenueRes.data.dailyOrders != null 
-            ? revenueRes.data.dailyOrders 
-            : (revenueRes.data.todayOrders != null ? revenueRes.data.todayOrders : 0)
-        });
-      }
+      // Nạp Doanh thu nóng trong ngày & cấu hình phụ phí mưa chạy ngầm (không chặn hiển thị đơn)
+      getDriverRevenue().then(revenueRes => {
+        if (revenueRes?.success && revenueRes.data) {
+          setDailyStats({
+            fee: revenueRes.data.dailyFee || 0,
+            orders: revenueRes.data.dailyOrders != null 
+              ? revenueRes.data.dailyOrders 
+              : (revenueRes.data.todayOrders != null ? revenueRes.data.todayOrders : 0)
+          });
+        }
+      }).catch(() => {});
 
-      // Nạp cấu hình phụ phí mưa
       getRainConfig().then(res => {
         if (res?.success && res.data?.value) {
           setRainConfig(res.data.value);
@@ -505,8 +525,17 @@ export default function Home() {
 
 
   useEffect(() => {
+    const loadBackground = () => loadData(true);
+    const loadForeground = () => loadData(false);
+    const handleFocusAvailable = () => {
+      setFilter('available');
+      scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' });
+      loadData(true);
+    };
+
     loadData(false);
-    window.addEventListener('refresh_data', () => loadData(false));
+    window.addEventListener('refresh_data', loadForeground);
+    window.addEventListener('focus_available_orders', handleFocusAvailable);
     // Giảm tần suất Polling xuống 30s vì đã có Socket Realtime
     const interval = setInterval(() => loadData(true), 30000);
 
@@ -548,15 +577,42 @@ export default function Home() {
         setAvailableOrders(prev => prev.filter(o => o._id !== orderId));
         setMyActiveOrders(prev => prev.filter(o => o._id !== orderId));
       }
-      loadData(true);
     };
 
     const handleOrderAccepted = (e) => {
-      const orderId = typeof e?.detail === 'string' ? e.detail : e?.detail?._id;
+      const detail = e?.detail;
+      const orderId = typeof detail === 'string' ? detail : detail?._id;
       if (orderId) {
         setAvailableOrders(prev => prev.filter(o => o._id !== orderId));
       }
-      loadData(true);
+      if (detail && typeof detail === 'object' && detail._id) {
+        const assignedId = String(detail.assignedTo?._id || detail.assignedTo || '');
+        const myId = String(driver?._id || driver?.id || '');
+        if (assignedId && assignedId === myId) {
+          setMyActiveOrders(prev => {
+            const exists = prev.some(o => o._id === detail._id);
+            if (exists) return prev.map(o => o._id === detail._id ? { ...o, ...detail } : o);
+            return [detail, ...prev];
+          });
+        }
+      }
+    };
+
+    const handleOrderPickedUpOrDelivering = (e) => {
+      const updatedOrder = e?.detail;
+      if (!updatedOrder || !updatedOrder._id) return;
+      setMyActiveOrders(prev => prev.map(o => o._id === updatedOrder._id ? { ...o, ...updatedOrder } : o));
+    };
+
+    const handleOrderCompletedSocket = (e) => {
+      const completedOrder = e?.detail;
+      if (!completedOrder || !completedOrder._id) return;
+      const assignedId = String(completedOrder.assignedTo?._id || completedOrder.assignedTo || '');
+      const myId = String(driver?._id || driver?.id || '');
+      if (assignedId && assignedId === myId) {
+        setMyActiveOrders(prev => prev.filter(o => o._id !== completedOrder._id));
+        setHistoryOrders(prev => [completedOrder, ...prev.filter(o => o._id !== completedOrder._id)].slice(0, 15));
+      }
     };
 
     const handleOrderUpdated = (e) => {
@@ -591,9 +647,6 @@ export default function Home() {
       }
     };
 
-    const loadBackground = () => loadData(true);
-    const loadForeground = () => loadData(false);
-
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
         loadData(true); // Tải lại ngầm để cập nhật đơn khi vừa bật lại app
@@ -607,9 +660,9 @@ export default function Home() {
     window.addEventListener('driver_order_cancelled', handleOrderLost);
     window.addEventListener('driver_order_deleted_event', handleOrderLost);
     window.addEventListener('driver_order_updated', handleOrderUpdated);
-    window.addEventListener('driver_order_picked_up', loadBackground);
-    window.addEventListener('driver_order_delivering', loadBackground);
-    window.addEventListener('driver_order_completed', loadBackground);
+    window.addEventListener('driver_order_picked_up', handleOrderPickedUpOrDelivering);
+    window.addEventListener('driver_order_delivering', handleOrderPickedUpOrDelivering);
+    window.addEventListener('driver_order_completed', handleOrderCompletedSocket);
     window.addEventListener('driver_order_time_warning', loadBackground);
 
     const handleRainChanged = (e) => {
@@ -629,19 +682,20 @@ export default function Home() {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('refresh_data', loadForeground);
+      window.removeEventListener('focus_available_orders', handleFocusAvailable);
       window.removeEventListener('driver_new_order', handleNewOrder);
       window.removeEventListener('driver_force_assigned', loadBackground);
       window.removeEventListener('driver_order_accepted', handleOrderAccepted);
       window.removeEventListener('driver_order_cancelled', handleOrderLost);
       window.removeEventListener('driver_order_deleted_event', handleOrderLost);
       window.removeEventListener('driver_order_updated', handleOrderUpdated);
-      window.removeEventListener('driver_order_picked_up', loadBackground);
-      window.removeEventListener('driver_order_delivering', loadBackground);
-      window.removeEventListener('driver_order_completed', loadBackground);
+      window.removeEventListener('driver_order_picked_up', handleOrderPickedUpOrDelivering);
+      window.removeEventListener('driver_order_delivering', handleOrderPickedUpOrDelivering);
+      window.removeEventListener('driver_order_completed', handleOrderCompletedSocket);
       window.removeEventListener('driver_order_time_warning', loadBackground);
       window.removeEventListener('rain_mode_changed_event', handleRainChanged);
     };
-  }, [loadData, driver]);
+  }, [loadData, driver?._id, driver?.isOnline, driver?.commissionRate]);
 
   const handleReportRain = () => {
     if (reportingRain) return;
@@ -685,8 +739,13 @@ export default function Home() {
         showNotification(res.message || 'Không thể nhận đơn', 'error');
         return;
       }
+      const existing = availableOrders.find(o => o._id === orderId);
+      const updatedOrder = res.data || (existing ? { ...existing, status: 'ACCEPTED', acceptedAt: new Date().toISOString() } : null);
+      setAvailableOrders(prev => prev.filter(o => o._id !== orderId));
+      if (updatedOrder) {
+        setMyActiveOrders(prev => [updatedOrder, ...prev.filter(o => o._id !== orderId)]);
+      }
       showNotification('Nhận đơn thành công!');
-      await Promise.all([loadData(true), loadProfile()]);
     } catch (err) {
       showNotification(err.response?.data?.message || 'Không thể nhận đơn', 'error');
     } finally {
@@ -700,13 +759,43 @@ export default function Home() {
     window.dispatchEvent(new CustomEvent('stop_alarm_event'));
     window.dispatchEvent(new CustomEvent('stop_warning_alarm_event'));
     try {
-      const actions = {
-        pickup: async () => { const { pickedUpOrder } = await import('../services/api'); return pickedUpOrder(orderId); },
-        complete: async () => { const { completeOrder } = await import('../services/api'); return completeOrder(orderId); }
-      };
-      await actions[action]();
-      showNotification('Cập nhật thành công!');
-      await Promise.all([loadData(true), loadProfile()]);
+      const res = action === 'pickup'
+        ? await pickedUpOrder(orderId)
+        : await completeOrder(orderId);
+
+      if (res && res.success === false) {
+        showNotification(res.message || 'Thao tác thất bại', 'error');
+        return;
+      }
+
+      if (action === 'pickup') {
+        setMyActiveOrders(prev => prev.map(o =>
+          o._id === orderId
+            ? { ...o, ...(res?.data || {}), status: 'PICKED_UP', pickedUpAt: res?.data?.pickedUpAt || new Date().toISOString() }
+            : o
+        ));
+        showNotification('Đã xác nhận lấy hàng!');
+      } else if (action === 'complete') {
+        const currentOrder = myActiveOrders.find(o => o._id === orderId);
+        const completedOrder = res?.data || (currentOrder ? { ...currentOrder, status: 'COMPLETED', deliveredAt: new Date().toISOString() } : null);
+        setMyActiveOrders(prev => prev.filter(o => o._id !== orderId));
+        if (completedOrder) {
+          setHistoryOrders(prev => [completedOrder, ...prev.filter(o => o._id !== orderId)].slice(0, 15));
+        }
+        showNotification('Hoàn thành đơn hàng!');
+        // Đồng bộ doanh thu và hồ sơ ngầm không chặn UI
+        getDriverRevenue().then(revRes => {
+          if (revRes?.success && revRes.data) {
+            setDailyStats({
+              fee: revRes.data.dailyFee || 0,
+              orders: revRes.data.dailyOrders != null
+                ? revRes.data.dailyOrders
+                : (revRes.data.todayOrders != null ? revRes.data.todayOrders : 0)
+            });
+          }
+        }).catch(() => {});
+        loadProfile();
+      }
     } catch (err) {
       showNotification(err.response?.data?.message || 'Thao tác thất bại', 'error');
     } finally {

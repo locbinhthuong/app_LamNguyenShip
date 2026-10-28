@@ -67,8 +67,8 @@ const setupSocket = (io) => {
     }
 
     // Ping/pong
-    socket.on('ping', () => {
-      socket.emit('pong', { timestamp: Date.now() });
+    socket.on('ping', (data) => {
+      socket.emit('pong', { timestamp: Date.now(), clientSentAt: data?.clientSentAt || null });
     });
 
     // Cập nhật vị trí GPS từ tài xế
@@ -174,8 +174,14 @@ const broadcastToCreator = (io, order, eventName) => {
 };
 
 const emitNewOrder = async (io, order, isSilentAdmin = false) => {
+  const plainOrder = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+  const orderWithTime = { ...plainOrder, serverTime: Date.now() };
+
   if (order.status !== 'DRAFT') {
-    // 1. Kích hoạt Push Notification (Firebase) TRƯỚC để thông báo bay đi
+    // 1. Bắn Socket event NGAY LẬP TỨC kèm serverTime để app tài xế nhận đơn tức thì không bị trễ bởi query FCM
+    io.to('drivers').emit('new_order', orderWithTime);
+
+    // 2. Kích hoạt Push Notification (Firebase) song song
     try {
       const Driver = require('../models/Driver');
       
@@ -221,23 +227,20 @@ const emitNewOrder = async (io, order, isSilentAdmin = false) => {
         msgBody += `📍 Từ: ${order.pickupAddress}\n🎯 Đến: ${order.deliveryAddress || 'Chưa cập nhật'}\n💵 Phí: ${feeResponse}`;
         
         // Bỏ độ trễ để FCM nổ ngay lập tức cùng lúc với Socket
-        sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: `/order/${order._id}`, orderId: order._id.toString() }).catch(err => console.error(err));
+        sendMultipleNotifications(tokens, '📱 CÓ ĐƠN HÀNG MỚI!', msgBody, { url: '/', orderId: order._id.toString(), type: 'NEW_ORDER' }).catch(err => console.error(err));
       }
     } catch (e) {
       console.log('[FCM-DEBUG] Lời nổ Push emitNewOrder bị lỗi thảm hại:', e.message);
     }
-
-    // 2. Bắn Socket event ngay lập tức để app nhận dữ liệu thật
-    io.to('drivers').emit('new_order', order);
   }
   
   if (!isSilentAdmin) {
-    io.to('admins').emit('new_order', order);
+    io.to('admins').emit('new_order', orderWithTime);
   } else {
-    io.to('admins').emit('order_updated', order);
+    io.to('admins').emit('order_updated', orderWithTime);
   }
   
-  broadcastToCreator(io, order, 'new_order');
+  broadcastToCreator(io, orderWithTime, 'new_order');
 };
 
 const emitOrderAccepted = (io, order) => {

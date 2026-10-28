@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getOrderById, acceptOrder, pickedUpOrder, completeOrder, cancelOrder, updateOrderLateReason } from '../services/api';
 import ConfirmModal from '../components/ConfirmModal';
@@ -31,7 +31,17 @@ const STATUS_LABELS = {
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { driver, loadProfile } = useAuth();
+
+  const handleBack = useCallback(() => {
+    const from = location.state?.from;
+    if (from && from !== location.pathname) {
+      navigate(from, { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
+  }, [location.pathname, location.state, navigate]);
   const [driverLocation, setDriverLocation] = useState(null);
   const [confirmAccept, setConfirmAccept] = useState(false);
   const mapRef = useRef(null);
@@ -51,12 +61,40 @@ export default function OrderDetail() {
   }, []);
 
   useEffect(() => {
-    if (cooldown <= 0) return;
+    if (!order || order.status !== 'PENDING' || order.assignedTo) {
+      setCooldown(0);
+      return;
+    }
+    const calcCooldown = () => {
+      const orderTime = new Date(order.updatedAt || order.createdAt).getTime();
+      let elapsedMs;
+      if (typeof order.serverTime === 'number' && typeof order._receivedPerfNow === 'number') {
+        const serverElapsedAtReceive = Math.max(0, order.serverTime - orderTime);
+        const localElapsedSinceReceive = Math.max(0, performance.now() - order._receivedPerfNow);
+        elapsedMs = serverElapsedAtReceive + localElapsedSinceReceive;
+      } else {
+        const currentServerTime = Date.now() + (window.serverTimeOffset || 0);
+        elapsedMs = Math.max(0, currentServerTime - orderTime);
+      }
+      const remainingMs = 5000 - elapsedMs;
+      if (remainingMs <= 0) return 0;
+      const secs = Math.ceil(remainingMs / 1000);
+      return secs > 5 ? 5 : secs;
+    };
+
+    const initial = calcCooldown();
+    setCooldown(initial);
+    if (initial <= 0) return;
+
     const timer = setInterval(() => {
-      setCooldown(c => c - 1);
-    }, 1000);
+      const next = calcCooldown();
+      setCooldown(prev => (prev !== next ? next : prev));
+      if (next <= 0) {
+        clearInterval(timer);
+      }
+    }, 100);
     return () => clearInterval(timer);
-  }, [cooldown]);
+  }, [order?._id, order?.status, order?.assignedTo, order?.updatedAt, order?.createdAt, order?.serverTime, order?._receivedPerfNow]);
 
   // Logic vuốt màn hình có hiệu ứng
   const [touchStart, setTouchStart] = useState({ x: null, y: null });
@@ -105,7 +143,7 @@ export default function OrderDetail() {
     
     // Kéo > 80px thì chuyển trang, không thì hồi lại
     if (swipeOffset > 80) {
-      navigate(-1);
+      handleBack();
     } else {
       setSwipeOffset(0);
     }
@@ -128,7 +166,7 @@ export default function OrderDetail() {
          const myId = String(driver?._id || driver?.id);
          if (assignedId !== myId && assignedId !== 'undefined') {
             showNotification('Đơn hàng này đã được tài xế khác nhận!', 'error');
-            navigate('/');
+            navigate('/', { replace: true });
             return;
          }
       }
@@ -142,18 +180,10 @@ export default function OrderDetail() {
         }
       }
 
-      setOrder(prev => {
-        if (!prev && orderData?.status === 'PENDING' && !orderData?.assignedTo) {
-          const currentTime = Date.now() + (window.serverTimeOffset || 0);
-          const timeDiff = currentTime - new Date(orderData.updatedAt || orderData.createdAt).getTime();
-          const remaining = 5 - Math.floor(Math.max(0, timeDiff) / 1000);
-          setCooldown(remaining > 0 ? (remaining > 5 ? 5 : remaining) : 0);
-        }
-        return orderData;
-      });
+      setOrder(orderData);
     } catch (err) {
       showNotification('Không tìm thấy đơn hàng', 'error');
-      navigate('/');
+      navigate('/', { replace: true });
     } finally {
       setLoading(false);
     }
@@ -170,13 +200,15 @@ export default function OrderDetail() {
         (eventData && eventData._id === id)
       ) {
         showNotification('Đơn hàng đã được quản trị viên xử lý hoặc không còn tồn tại.', 'error');
-        navigate('/');
+        navigate('/', { replace: true });
       }
     };
 
     const handleOrderUpdate = (e) => {
       const eventData = e.detail;
-      if ((typeof eventData === 'string' && eventData === id) || (eventData && (eventData._id === id || eventData.orderId === id))) {
+      if (eventData && typeof eventData === 'object' && eventData._id === id) {
+        setOrder(prev => prev ? { ...prev, ...eventData } : eventData);
+      } else if ((typeof eventData === 'string' && eventData === id) || (eventData && eventData.orderId === id)) {
         loadOrder();
       }
     };
@@ -188,9 +220,9 @@ export default function OrderDetail() {
         const myId = String(driver?._id || driver?.id);
         if (assignedId !== myId && assignedId !== 'undefined') {
           showNotification('Đơn hàng đã được tài xế khác nhận.', 'error');
-          navigate('/');
+          navigate('/', { replace: true });
         } else {
-          loadOrder();
+          setOrder(prev => prev ? { ...prev, ...eventData } : eventData);
         }
       }
     };
@@ -214,7 +246,7 @@ export default function OrderDetail() {
       window.removeEventListener('driver_order_completed', handleOrderUpdate);
       window.removeEventListener('driver_order_time_warning', handleOrderUpdate);
     };
-  }, [id, navigate, driver]);
+  }, [id, driver?._id, driver?.id]);
 
   const getFinalLateReason = () => {
     if (selectedLateReason === 'Khác') {
@@ -277,17 +309,24 @@ export default function OrderDetail() {
         const msg = res.message || 'Thao tác thất bại';
         showNotification(msg, 'error');
         if (msg.includes('khác nhận') || msg.includes('không tồn tại')) {
-          navigate('/');
+          navigate('/', { replace: true });
         }
         return;
       }
+      if (res?.data) {
+        setOrder(prev => ({ ...(prev || {}), ...res.data }));
+      } else {
+        loadOrder();
+      }
       showNotification('Cập nhật thành công!');
-      await Promise.all([loadOrder(), loadProfile()]);
+      if (action === 'complete') {
+        loadProfile();
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Thao tác thất bại';
       showNotification(msg, 'error');
       if (msg.includes('khác nhận') || msg.includes('không tồn tại')) {
-        navigate('/');
+        navigate('/', { replace: true });
       }
     } finally {
       setActionLoading(false);
@@ -352,7 +391,18 @@ export default function OrderDetail() {
     </div>
   );
 
-  if (!order) return null;
+  if (!order) return (
+    <div className="flex flex-col justify-center items-center min-h-screen bg-slate-50 p-6 text-center gap-4">
+      <p className="text-slate-600 font-bold">Đơn hàng không còn khả dụng hoặc đã được nhận.</p>
+      <button
+        type="button"
+        onClick={handleBack}
+        className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-md active:scale-95 transition-transform"
+      >
+        Quay về trang chủ
+      </button>
+    </div>
+  );
 
   const elapsedPickupMins = order.acceptedAt
     ? Math.max(0, Math.floor((nowTick - new Date(order.acceptedAt).getTime()) / 60000))
@@ -385,7 +435,7 @@ export default function OrderDetail() {
       {/* Header */}
       <div className="bg-white p-4 safe-pt">
         <div className="mb-4 flex flex-wrap items-start gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="shrink-0 text-slate-800 p-1 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
+          <button type="button" onClick={handleBack} className="shrink-0 text-slate-800 p-1 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
             <ArrowLeft size={20} />
           </button>
           <div className="min-w-0 flex-1">

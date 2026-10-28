@@ -221,7 +221,7 @@ export default function MyOrders() {
             <div
               key={order._id}
               className="card mb-3"
-              onClick={() => navigate(`/order/${order._id}`)}
+              onClick={() => navigate(`/order/${order._id}`, { state: { from: '/my-orders' } })}
             >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex flex-col gap-1">
