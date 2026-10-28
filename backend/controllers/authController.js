@@ -315,25 +315,33 @@ const authController = {
       const { lat, lng } = req.body;
       const driverId = req.driver._id;
 
+      // Chỉ cập nhật định vị khi tài xế đang Online (nếu đã bấm Offline hoặc bị Admin tắt thì ngưng)
+      if (!req.driver.isOnline) {
+        return res.status(200).json({ success: false, isOnline: false, message: 'Tài xế đang Offline' });
+      }
+
+      const now = new Date();
       const updateData = {
-        currentLocation: { lat, lng, updatedAt: new Date() }
+        currentLocation: { lat, lng, updatedAt: now },
+        lastActive: now
       };
       if (req.headers['x-app-version']) updateData.appVersion = req.headers['x-app-version'];
       if (req.headers['x-device-platform']) updateData.devicePlatform = req.headers['x-device-platform'];
 
       const driver = await Driver.findByIdAndUpdate(driverId, updateData, { new: true });
       
-      if (req.io && driver) {
+      if (req.io && driver && driver.isOnline) {
         req.io.to('admins').emit('driver_location_update', {
           driverId: driverId,
           name: driver.name,
+          avatar: driver.avatar,
           lat,
           lng,
           timestamp: Date.now()
         });
       }
 
-      res.status(200).json({ success: true });
+      res.status(200).json({ success: true, isOnline: true });
     } catch (error) {
       console.error('Error updateDriverLocation API:', error);
       res.status(500).json({ success: false });

@@ -151,30 +151,39 @@ export const useAdminSocket = () => {
             new Notification('Khách Hàng Đặt Đơn Mới', { body: `Mã đơn: ${order.orderCode || ''}. Vào check ngay!`, icon: '/logoALOSHIPP.png' });
         }
       }
-      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'new_order', order } }));
     });
 
     socket.on('order_accepted', (order) => {
       showToast(`Tài xế đã nhận đơn ${order.orderCode || ''}`, 'info', 4000);
-      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'order_accepted', order } }));
+    });
+
+    socket.on('order_picked_up', (order) => {
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'order_picked_up', order } }));
+    });
+
+    socket.on('order_delivering', (order) => {
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'order_delivering', order } }));
     });
 
     socket.on('order_updated', (order) => {
       // Đã Tắt Báo Động khi Tài xế từ chối Đơn hoặc Admin Treo Đơn. Giữ im lặng tuyệt đối.
-      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'order_updated', order } }));
     });
 
     socket.on('order_completed', (order) => {
       showToast(`Đơn ${order.orderCode || ''} giao thành công!`, 'success', 4000);
-      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'order_completed', order } }));
     });
 
     socket.on('order_cancelled', (order) => {
-      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'order_cancelled', order } }));
     });
 
-    socket.on('order_deleted_event', (orderId) => {
-      window.dispatchEvent(new CustomEvent('refresh_admin_orders'));
+    socket.on('order_deleted_event', (payload) => {
+      const orderId = typeof payload === 'object' && payload !== null ? payload.orderId : payload;
+      window.dispatchEvent(new CustomEvent('refresh_admin_orders', { detail: { type: 'order_deleted', orderId } }));
     });
 
     socket.on('debt_payment_request', (payload) => {

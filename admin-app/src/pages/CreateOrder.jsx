@@ -14,17 +14,44 @@ function PureMapPreview({ lat, lng, onLocationChange }) {
     if (!mapRef.current) return;
     
     if (!mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([lat, lng], 16);
-      const tileLayer = L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+      mapInstance.current = L.map(mapRef.current, { preferCanvas: true }).setView([lat, lng], 16);
+      const googleSubdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
+      const tileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+          subdomains: googleSubdomains,
           attribution: '&copy; Google Maps',
           maxZoom: 22,
-          maxNativeZoom: 20
+          maxNativeZoom: 20,
+          keepBuffer: 4,
+          updateWhenIdle: false
       }).addTo(mapInstance.current);
 
-      // Hệ thống chống cháy an toàn: Chuyển qua bản đồ sạch CartoDB Voyager nếu Google bị lỗi tải gạch
-      tileLayer.once('tileerror', function() {
-          console.warn('Google Maps tile load error, falling back to clean CartoDB map...');
-          tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+      let consecutiveTileErrors = 0;
+      tileLayer.on('tileload', () => {
+          consecutiveTileErrors = 0;
+      });
+
+      tileLayer.on('tileerror', function(evt) {
+          const tile = evt?.tile;
+          if (tile && (!tile.dataset.retryCount || Number(tile.dataset.retryCount) < 3)) {
+              const retry = Number(tile.dataset.retryCount || 0) + 1;
+              tile.dataset.retryCount = String(retry);
+              const nextSub = googleSubdomains[retry % googleSubdomains.length];
+              const currentSrc = tile.src || '';
+              if (currentSrc.includes('.google.com')) {
+                  setTimeout(() => {
+                      tile.src = currentSrc.replace(/mt[0-3]\.google\.com/, `${nextSub}.google.com`) + `&retry=${retry}`;
+                  }, 300 * retry);
+                  return;
+              }
+          }
+          consecutiveTileErrors++;
+          if (consecutiveTileErrors >= 12 && !tileLayer._hasSwitchedFallback) {
+              tileLayer._hasSwitchedFallback = true;
+              console.warn('Google Maps tile load error persisted, falling back to OpenStreetMap...');
+              tileLayer.options.maxNativeZoom = 19;
+              tileLayer.options.subdomains = ['a', 'b', 'c'];
+              tileLayer.setUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+          }
       });
       
       const customIcon = L.divIcon({
@@ -46,11 +73,16 @@ function PureMapPreview({ lat, lng, onLocationChange }) {
           onLocationChange({ lat: position.lat, lng: position.lng });
         }
       });
+
+      setTimeout(() => {
+        if (mapInstance.current) mapInstance.current.invalidateSize();
+      }, 150);
     } else {
       mapInstance.current.setView([lat, lng], 16);
       if (markerInstance.current) {
         markerInstance.current.setLatLng([lat, lng]);
       }
+      mapInstance.current.invalidateSize();
     }
 
     return () => {
@@ -59,7 +91,17 @@ function PureMapPreview({ lat, lng, onLocationChange }) {
   }, [lat, lng, onLocationChange]);
 
   useEffect(() => {
+    let resizeObserver = null;
+    if (mapRef.current && typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => {
+        if (mapInstance.current) {
+          mapInstance.current.invalidateSize();
+        }
+      });
+      resizeObserver.observe(mapRef.current);
+    }
     return () => {
+      if (resizeObserver) resizeObserver.disconnect();
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;

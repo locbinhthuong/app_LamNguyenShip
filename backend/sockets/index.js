@@ -75,22 +75,28 @@ const setupSocket = (io) => {
     socket.on('update_location', async (data) => {
       if (socket.user.role === 'driver') {
         const { lat, lng } = data;
-        
-        // Phát realtime tới Admin
-        io.to('admins').emit('driver_location_update', {
-          driverId: socket.user.id,
-          name: socket.user.name,
-          lat,
-          lng,
-          timestamp: Date.now()
-        });
-
-        // Tối ưu: Chỉ ghi thẳng DB (không đợi) để Admin F5 vẫn thấy
         try {
           const Driver = require('../models/Driver');
-          await Driver.findByIdAndUpdate(socket.user.id, {
-            currentLocation: { lat, lng, updatedAt: new Date() }
-          });
+          const now = new Date();
+          const driver = await Driver.findOneAndUpdate(
+            { _id: socket.user.id, isOnline: true },
+            {
+              currentLocation: { lat, lng, updatedAt: now },
+              lastActive: now
+            },
+            { new: true }
+          ).select('name avatar isOnline').lean();
+
+          if (driver && driver.isOnline) {
+            io.to('admins').emit('driver_location_update', {
+              driverId: socket.user.id,
+              name: driver.name || socket.user.name,
+              avatar: driver.avatar,
+              lat,
+              lng,
+              timestamp: Date.now()
+            });
+          }
         } catch (e) {
           console.error('[Socket] Lỗi lưu GPS:', e.message);
         }

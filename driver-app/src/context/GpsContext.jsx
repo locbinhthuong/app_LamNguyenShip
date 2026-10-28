@@ -43,6 +43,37 @@ export const GpsProvider = ({ children }) => {
   
   const watchIdRef = useRef(null);
   const lastLocationEmitRef = useRef(0);
+  const lastCoordsRef = useRef(null);
+  const driverRef = useRef(driver);
+
+  useEffect(() => {
+    driverRef.current = driver;
+  }, [driver]);
+
+  const startNativePersistentService = () => {
+    try {
+      if (typeof window !== 'undefined' && window.AndroidNativeGps) {
+        const token = localStorage.getItem('driver_token') || '';
+        const rawUrl = import.meta.env.VITE_API_URL;
+        const apiUrl = (typeof rawUrl === 'string' && rawUrl.trim() !== '') ? rawUrl.trim() : 'https://api.aloshipp.com';
+        if (token) {
+          window.AndroidNativeGps.startService(apiUrl, token);
+        }
+      }
+    } catch (err) {
+      console.warn('Không thể bật AndroidNativeGps:', err);
+    }
+  };
+
+  const stopNativePersistentService = () => {
+    try {
+      if (typeof window !== 'undefined' && window.AndroidNativeGps) {
+        window.AndroidNativeGps.stopService();
+      }
+    } catch (err) {
+      console.warn('Không thể tắt AndroidNativeGps:', err);
+    }
+  };
 
   // XỬ LÝ CHÍNH SÁCH GOOGLE: PROMINENT DISCLOSURE
   const requestGpsWithDisclosure = (actionCallback) => {
@@ -71,14 +102,16 @@ export const GpsProvider = ({ children }) => {
 
   // VŨ KHÍ HẠNG NẶNG: Định vị Background Ngầm
   const startGpsTracking = (onSuccess, onError) => {
+    startNativePersistentService();
+
     if (Capacitor.isNativePlatform() && BackgroundGeolocation) {
       BackgroundGeolocation.addWatcher(
         {
-          backgroundMessage: "Ứng dụng đang lấy vị trí ngầm...",
-          backgroundTitle: "AloShipp Định Vị Xe",
+          backgroundMessage: "Vị trí vẫn hoạt động kể cả khi ẩn/đóng app. Bấm Offline để tắt.",
+          backgroundTitle: "AloShipp Định Vị Xe (Đang Online)",
           requestPermissions: true,
-          stale: false,
-          distanceFilter: 3 // Chỉ quét khi xe di chuyển xấp xỉ 3 mét
+          stale: true,
+          distanceFilter: 0 // Quét liên tục kể cả khi xe đứng yên chờ đơn dưới nền
         },
         (location, error) => {
           if (error) {
@@ -105,7 +138,10 @@ export const GpsProvider = ({ children }) => {
     }
   };
 
-  const stopGpsTracking = () => {
+  const stopGpsTracking = (shouldStopPersistent = false) => {
+    if (shouldStopPersistent) {
+      stopNativePersistentService();
+    }
     if (watchIdRef.current !== null) {
       if (Capacitor.isNativePlatform() && BackgroundGeolocation) {
         BackgroundGeolocation.removeWatcher({ id: watchIdRef.current });
@@ -122,10 +158,10 @@ export const GpsProvider = ({ children }) => {
     setTimeout(() => setIsToggling(false), 800);
 
     if (gpsStatus !== 'OFF' || !driver?.isOnline) {
-      // Tắt GPS
+      // Chỉ tắt hẳn dịch vụ chạy ngầm nếu tài xế đã Offline
       releaseWakeLock();
-      stopGpsTracking();
-      if (gpsStatus !== 'OFF') {
+      stopGpsTracking(!driver?.isOnline);
+      if (!driver?.isOnline && gpsStatus !== 'OFF') {
         if (window.driverSocket && window.driverSocket.connected) {
           window.driverSocket.emit('stop_location');
         }
@@ -146,11 +182,12 @@ export const GpsProvider = ({ children }) => {
         setGpsStatus('TRACKING');
         requestWakeLock();
         
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        lastCoordsRef.current = { lat, lng };
+
         const now = Date.now();
         if (now - lastLocationEmitRef.current >= 6000) {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          
           if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
             window.driverSocket.emit('update_location', { lat, lng });
           } else {
@@ -193,6 +230,7 @@ export const GpsProvider = ({ children }) => {
           
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
+          lastCoordsRef.current = { lat, lng };
           
           const now = Date.now();
           // Rate limit: Chỉ cập nhật lên máy chủ mỗi 6 giây
@@ -222,43 +260,58 @@ export const GpsProvider = ({ children }) => {
 
       requestGpsWithDisclosure(executeAutoGps);
     } 
-    else if (!driver?.isOnline && gpsStatus !== 'OFF') {
+    else if (!driver?.isOnline) {
       releaseWakeLock();
-      stopGpsTracking();
-      setGpsStatus('OFF');
-      if (window.driverSocket && window.driverSocket.connected) {
-        window.driverSocket.emit('stop_location');
+      stopGpsTracking(true);
+      if (gpsStatus !== 'OFF') {
+        setGpsStatus('OFF');
+        if (window.driverSocket && window.driverSocket.connected) {
+          window.driverSocket.emit('stop_location');
+        }
       }
     }
   }, [driver?.isOnline]);
 
-  // Heartbeat định vị (Mỗi 30s)
+  // Heartbeat định vị (Mỗi 20s) - Hoạt động cả khi app chạy ngầm / tắt màn hình
   useEffect(() => {
     if (gpsStatus === 'TRACKING' && driver?.isOnline) {
+      const sendHeartbeatCoords = (lat, lng) => {
+        lastCoordsRef.current = { lat, lng };
+        lastLocationEmitRef.current = Date.now();
+        if (window.driverSocket && window.driverSocket.connected && !document.hidden) {
+          window.driverSocket.emit('update_location', { lat, lng });
+        } else {
+          updateDriverLocationApi(lat, lng).catch(() => {});
+        }
+      };
+
       const heartbeatTimer = setInterval(() => {
         if (!document.hidden && navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              const lat = pos.coords.latitude;
-              const lng = pos.coords.longitude;
-              if (window.driverSocket && window.driverSocket.connected) {
-                window.driverSocket.emit('update_location', { lat, lng });
+              sendHeartbeatCoords(pos.coords.latitude, pos.coords.longitude);
+            },
+            () => {
+              if (lastCoordsRef.current) {
+                sendHeartbeatCoords(lastCoordsRef.current.lat, lastCoordsRef.current.lng);
               }
             },
-            (err) => console.warn("⚠️ [Heartbeat] Lỗi lấy vị trí ngầm:", err.message),
-            { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 5000 }
           );
+        } else if (lastCoordsRef.current) {
+          sendHeartbeatCoords(lastCoordsRef.current.lat, lastCoordsRef.current.lng);
         }
-      }, 30000);
+      }, 20000);
       return () => clearInterval(heartbeatTimer);
     }
   }, [gpsStatus, driver?.isOnline]);
 
-  // Dọn dẹp khi unmount (Lúc Logout)
+  // Dọn dẹp khi unmount: Nếu tài xế vẫn đang Online và còn token thì giữ nguyên Native Service chạy ngầm
   useEffect(() => {
     return () => {
       releaseWakeLock();
-      stopGpsTracking();
+      const stillOnline = Boolean(driverRef.current?.isOnline && localStorage.getItem('driver_token'));
+      stopGpsTracking(!stillOnline);
     };
   }, []);
 

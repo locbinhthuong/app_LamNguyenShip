@@ -33,6 +33,14 @@
         
         <!-- Default Notification Channel -->
         <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="aloshipp_push_channel_v9" />
+
+        <!-- Dịch vụ định vị chạy ngầm bền bỉ kể cả khi tài xế vuốt tắt ứng dụng (chỉ tắt khi bấm Offline) -->
+        <service
+            android:name=".PersistentLocationService"
+            android:enabled="true"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="location" />
     </application>
 
     <!-- Permissions -->

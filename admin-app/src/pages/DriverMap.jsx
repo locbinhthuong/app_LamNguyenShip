@@ -171,9 +171,11 @@ export default function DriverMap() {
     }
   }, []);
 
-  const loadInitialData = useCallback(async () => {
+  const loadInitialData = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent && Object.keys(dataRef.current.drivers).length === 0) {
+        setLoading(true);
+      }
       const [resDrivers, resOrders] = await Promise.all([
           getDrivers(),
           getOrders({ status: 'ACCEPTED,PICKED_UP,DELIVERING' })
@@ -207,7 +209,9 @@ export default function DriverMap() {
       // Ghi vào Ref để render
       dataRef.current = { drivers: driversObj, orders: ordersObj };
       updateMapMarkers();
-
+      if (mapInstance.current) {
+        setTimeout(() => mapInstance.current?.invalidateSize(), 100);
+      }
     } catch (err) {
       console.error('Lỗi lấy dữ liệu bản đồ:', err);
     } finally {
@@ -227,23 +231,67 @@ export default function DriverMap() {
         }
     };
 
-    // 1. Khởi tạo bản đồ thuần Túy
+    // 1. Khởi tạo bản đồ thuần Túy với cơ chế đa luồng Subdomain + tự động phục hồi ô gạch lỗi
+    let resizeObserver = null;
     if (mapRef.current && !mapInstance.current) {
-        mapInstance.current = L.map(mapRef.current).setView([10.762622, 106.660172], 13); // TPHCM Mặc định
-        const tileLayer = L.tileLayer('https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+        mapInstance.current = L.map(mapRef.current, {
+            preferCanvas: true
+        }).setView([10.762622, 106.660172], 13); // TPHCM Mặc định
+        
+        const googleSubdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
+        const tileLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}', {
+            subdomains: googleSubdomains,
             attribution: '&copy; Google Maps',
             maxZoom: 22,
-            maxNativeZoom: 20
+            maxNativeZoom: 20,
+            keepBuffer: 4,
+            updateWhenIdle: false
         }).addTo(mapInstance.current);
 
-        // Hệ thống chống cháy an toàn: Chuyển qua bản đồ sạch CartoDB Voyager nếu Google bị lỗi tải gạch
-        tileLayer.once('tileerror', function() {
-            console.warn('Google Maps tile load error, falling back to clean CartoDB map...');
-            tileLayer.setUrl('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+        let consecutiveTileErrors = 0;
+        tileLayer.on('tileload', () => {
+            consecutiveTileErrors = 0;
         });
+
+        tileLayer.on('tileerror', function(evt) {
+            const tile = evt?.tile;
+            if (tile && (!tile.dataset.retryCount || Number(tile.dataset.retryCount) < 3)) {
+                const retry = Number(tile.dataset.retryCount || 0) + 1;
+                tile.dataset.retryCount = String(retry);
+                const nextSub = googleSubdomains[retry % googleSubdomains.length];
+                const currentSrc = tile.src || '';
+                if (currentSrc.includes('.google.com')) {
+                    setTimeout(() => {
+                        tile.src = currentSrc.replace(/mt[0-3]\.google\.com/, `${nextSub}.google.com`) + `&retry=${retry}`;
+                    }, 300 * retry);
+                    return;
+                }
+            }
+            consecutiveTileErrors++;
+            if (consecutiveTileErrors >= 12 && !tileLayer._hasSwitchedFallback) {
+                tileLayer._hasSwitchedFallback = true;
+                console.warn('Google Maps tile load error persisted, falling back to OpenStreetMap...');
+                tileLayer.options.maxNativeZoom = 19;
+                tileLayer.options.subdomains = ['a', 'b', 'c'];
+                tileLayer.setUrl('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+            }
+        });
+
+        setTimeout(() => {
+            if (mapInstance.current) mapInstance.current.invalidateSize();
+        }, 200);
+
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(() => {
+                if (mapInstance.current) {
+                    mapInstance.current.invalidateSize();
+                }
+            });
+            resizeObserver.observe(mapRef.current);
+        }
     }
 
-    loadInitialData();
+    loadInitialData(false);
 
     // 2. Lắng nghe Socket Realtime qua biến toàn cục window
     // Lắng nghe Tọa độ Realme
@@ -320,11 +368,44 @@ export default function DriverMap() {
     };
     window.addEventListener('driver_status_change', handleStatusChange);
 
-    // Lắng nghe thay đổi trạng thái đơn
-    const reloadOrders = () => loadInitialData();
+    // Lắng nghe thay đổi trạng thái đơn theo cơ chế cập nhật trực tiếp tại chỗ (không reload map)
+    const reloadOrders = (e) => {
+      const detail = e?.detail;
+      const activeStatuses = ['ACCEPTED', 'PICKED_UP', 'DELIVERING'];
+
+      if (detail?.type === 'order_deleted' && detail?.orderId) {
+        const orderId = String(detail.orderId);
+        Object.keys(dataRef.current.orders).forEach(dId => {
+          dataRef.current.orders[dId] = (dataRef.current.orders[dId] || []).filter(o => String(o._id) !== orderId);
+        });
+        updateMapMarkers();
+        return;
+      }
+
+      if (detail?.order && detail.order._id) {
+        const ord = detail.order;
+        const ordId = String(ord._id);
+        // Xóa bản ghi cũ của đơn này ở tất cả tài xế trước
+        Object.keys(dataRef.current.orders).forEach(dId => {
+          dataRef.current.orders[dId] = (dataRef.current.orders[dId] || []).filter(o => String(o._id) !== ordId);
+        });
+
+        // Nếu đơn đang được tài xế thực hiện thì gắn lại vào tài xế đó
+        if (activeStatuses.includes(ord.status) && ord.assignedTo) {
+          const driverId = String(ord.assignedTo._id || ord.assignedTo);
+          if (!dataRef.current.orders[driverId]) dataRef.current.orders[driverId] = [];
+          dataRef.current.orders[driverId].push(ord);
+        }
+        updateMapMarkers();
+        return;
+      }
+
+      loadInitialData(true);
+    };
     window.addEventListener('refresh_admin_orders', reloadOrders);
 
     return () => {
+      if (resizeObserver) resizeObserver.disconnect();
       window.removeEventListener('driver_location_update', handleLocationUpdate);
       window.removeEventListener('driver_status_change', handleStatusChange);
       window.removeEventListener('refresh_admin_orders', reloadOrders);
@@ -342,7 +423,7 @@ export default function DriverMap() {
         <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">🗺️ Bản Đồ Theo Dõi Tài Xế</h1>
         <div className="flex gap-2">
             <button 
-              onClick={loadInitialData}
+              onClick={() => loadInitialData(false)}
               className="rounded-lg bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700 shadow-sm hover:bg-blue-200 transition-colors flex items-center gap-2"
               title="Tải lại dữ liệu bản đồ khi mạng chập chờn"
             >

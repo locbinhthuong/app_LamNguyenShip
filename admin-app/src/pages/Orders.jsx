@@ -60,7 +60,38 @@ export default function Orders() {
     { key: 'CANCELLED', label: 'Đã hủy', color: 'red' },
   ];
 
-  const load = useCallback(async (pageToLoad = 1) => {
+  const doesOrderMatchFilter = useCallback((order, currentFilter) => {
+    if (!order) return false;
+    if (!currentFilter) return true;
+    if (currentFilter === 'SCHEDULED') return order.status === 'DRAFT' && Boolean(order.scheduledPublishAt);
+    if (currentFilter === 'DRAFT') return order.status === 'DRAFT' && !order.scheduledPublishAt;
+    const statuses = currentFilter.split(',').map(s => s.trim().toUpperCase());
+    return statuses.includes(order.status);
+  }, []);
+
+  const applyOrderInPlace = useCallback((updatedOrder) => {
+    if (!updatedOrder || !updatedOrder._id) return;
+    setOrders(prev => {
+      const matches = doesOrderMatchFilter(updatedOrder, filter);
+      const exists = prev.some(o => o._id === updatedOrder._id);
+      if (matches) {
+        if (exists) {
+          return prev.map(o => o._id === updatedOrder._id ? { ...o, ...updatedOrder } : o);
+        }
+        return [updatedOrder, ...prev].slice(0, 50);
+      } else {
+        return exists ? prev.filter(o => o._id !== updatedOrder._id) : prev;
+      }
+    });
+  }, [filter, doesOrderMatchFilter]);
+
+  const removeOrdersInPlace = useCallback((idsToRemove) => {
+    const idSet = new Set(Array.isArray(idsToRemove) ? idsToRemove : [idsToRemove]);
+    setOrders(prev => prev.filter(o => !idSet.has(o._id)));
+    setSelectedOrders(prev => prev.filter(id => !idSet.has(id)));
+  }, []);
+
+  const load = useCallback(async (pageToLoad = 1, silent = false) => {
     try {
       const params = { page: pageToLoad, limit: 50 };
       if (filter) params.status = filter;
@@ -68,36 +99,45 @@ export default function Orders() {
       
       const { orders: list, pagination: pageData } = await getOrders(params);
       setOrders(list);
-      setSelectedOrders([]); // Reset selection when loading new page
+      if (!silent) {
+        setSelectedOrders([]); // Chỉ reset selection khi chuyển trang/tab chủ động
+      }
       if (pageData) setPagination(pageData);
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [filter, globalSearch]);
 
   useEffect(() => {
-    setLoading(true);
     const delayDebounceFn = setTimeout(() => {
       load(1);
-    }, 600);
+    }, 300);
 
     return () => clearTimeout(delayDebounceFn);
   }, [load]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      // Dùng currentPage hiện tại thay vì reset về 1
       setPagination(prev => {
-        load(prev.currentPage);
+        load(prev.currentPage, true);
         return prev;
       });
-    }, 30000);
+    }, 60000);
 
-    const handleRefresh = () => {
+    const handleRefresh = (e) => {
+      const detail = e?.detail;
+      if (detail?.type === 'order_deleted' && detail?.orderId) {
+        removeOrdersInPlace(detail.orderId);
+        return;
+      }
+      if (detail?.order && detail.order._id) {
+        applyOrderInPlace(detail.order);
+        return;
+      }
       setPagination(prev => {
-        load(prev.currentPage);
+        load(prev.currentPage, true);
         return prev;
       });
     };
@@ -108,7 +148,7 @@ export default function Orders() {
       clearInterval(interval);
       window.removeEventListener('refresh_admin_orders', handleRefresh);
     };
-  }, [load]);
+  }, [load, applyOrderInPlace, removeOrdersInPlace]);
 
   const openDeleteConfirm = (id) => {
     setConfirmModal({
@@ -133,42 +173,29 @@ export default function Orders() {
     });
   };
 
-  const handleConfirmAction = async () => {
-    const { type, data } = confirmModal;
-    setConfirmModal({ isOpen: false });
-    
-    if (type === 'delete') {
-      try {
-        await deleteOrder(data);
-        await load();
-      } catch (err) {
-        alert('Không thể xóa đơn hàng');
-      }
-    } else if (type === 'publish') {
-      try {
-        await updateOrder(data, { status: 'PENDING' });
-        await load();
-      } catch (err) {
-        alert('Lỗi đẩy đơn lên chợ');
-      }
-    }
-  };
-
   const handleCancelAction = async (actionType, reason) => {
     const id = cancelModal.order._id;
     setCancelModal({ isOpen: false, order: null });
 
     if (actionType === 'CANCELLED') {
       try {
-        await cancelOrder(id, reason);
-        await load();
+        const res = await cancelOrder(id, reason);
+        if (res?.data) {
+          applyOrderInPlace(res.data);
+        } else {
+          await load(pagination.currentPage, true);
+        }
       } catch (err) {
         alert('Lỗi hủy đơn');
       }
     } else if (actionType === 'DRAFT') {
       try {
-        await updateOrder(id, { status: 'DRAFT' });
-        await load();
+        const res = await updateOrder(id, { status: 'DRAFT' });
+        if (res?.data) {
+          applyOrderInPlace(res.data);
+        } else {
+          await load(pagination.currentPage, true);
+        }
       } catch (err) {
         alert('Lỗi thu hồi đơn');
       }
@@ -177,9 +204,13 @@ export default function Orders() {
 
   const saveEdit = async (id, updatedData) => {
     try {
-      await updateOrder(id, updatedData);
+      const res = await updateOrder(id, updatedData);
       setEditingOrder(null);
-      await load(pagination.currentPage);
+      if (res?.data) {
+        applyOrderInPlace(res.data);
+      } else {
+        await load(pagination.currentPage, true);
+      }
     } catch (err) {
       const msg = err.response?.data?.message || err.message;
       alert(`Lỗi sửa đơn: ${msg}`);
@@ -194,15 +225,12 @@ export default function Orders() {
     }
     
     try {
-      setLoading(true);
       const res = await cleanupOldOrders(cleanupStartDate, cleanupEndDate);
       alert(res.message);
       setCleanupModal(false);
-      await load(1);
+      await load(1, true);
     } catch (err) {
       alert(err.response?.data?.message || 'Lỗi dọn dẹp dữ liệu');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -233,8 +261,6 @@ export default function Orders() {
     });
   };
 
-  // Add bulk_delete case to handleConfirmAction
-  // Cần ghi đè lại handleConfirmAction
   const enhancedHandleConfirmAction = async () => {
     const { type, data } = confirmModal;
     setConfirmModal({ isOpen: false });
@@ -242,28 +268,28 @@ export default function Orders() {
     if (type === 'delete') {
       try {
         await deleteOrder(data);
-        await load(pagination.currentPage);
+        removeOrdersInPlace(data);
       } catch (err) {
         alert('Không thể xóa đơn hàng');
       }
     } else if (type === 'publish') {
       try {
-        await updateOrder(data, { status: 'PENDING' });
-        await load(pagination.currentPage);
+        const res = await updateOrder(data, { status: 'PENDING' });
+        if (res?.data) {
+          applyOrderInPlace(res.data);
+        } else {
+          await load(pagination.currentPage, true);
+        }
       } catch (err) {
         alert('Lỗi đẩy đơn lên chợ');
       }
     } else if (type === 'bulk_delete') {
       try {
-        setLoading(true);
         const res = await bulkDeleteOrders(data);
         alert(res.message);
-        setSelectedOrders([]);
-        await load(pagination.currentPage);
+        removeOrdersInPlace(data);
       } catch (err) {
         alert('Không thể xóa hàng loạt đơn hàng');
-      } finally {
-        setLoading(false);
       }
     }
   };
