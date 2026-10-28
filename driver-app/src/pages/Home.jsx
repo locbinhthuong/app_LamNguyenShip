@@ -93,10 +93,10 @@ const calcOrderCooldown = (ord) => {
     const currentServerTime = Date.now() + (window.serverTimeOffset || 0);
     elapsedMs = Math.max(0, currentServerTime - orderTime);
   }
-  const remainingMs = 5000 - elapsedMs;
+  const remainingMs = 10000 - elapsedMs;
   if (remainingMs <= 0) return 0;
   const secs = Math.ceil(remainingMs / 1000);
-  return secs > 5 ? 5 : secs;
+  return secs > 10 ? 10 : secs;
 };
 
 function OrderCard({ order, onAccept, loading }) {
