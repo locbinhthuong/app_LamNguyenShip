@@ -117,7 +117,8 @@ exports.createFoodOrder = async (req, res) => {
       customerPhone,
       note,
       scheduledTime,
-      extraSurcharge
+      extraSurcharge,
+      rainFeeIncluded
     } = req.body;
 
     const shop = await User.findOne({ _id: shopId, role: 'SHOP' });
@@ -137,13 +138,15 @@ exports.createFoodOrder = async (req, res) => {
     
     let finalDeliveryFee = Number(deliveryFee) || 0;
     let calculatedSurcharge = await orderController.getLateNightSurchargeAmount();
-    let finalExtraSurcharge = extraSurcharge || calculatedSurcharge;
+    let finalExtraSurcharge = extraSurcharge !== undefined ? Number(extraSurcharge) : calculatedSurcharge;
     
     let isRainSurchargeApplied = false;
     let rainSurchargeAmount = 0;
     if (rainConfig && rainConfig.isEnabled && rainConfig.amount > 0) {
       const rainFee = Number(rainConfig.amount) || 5000;
-      finalDeliveryFee += rainFee;
+      if (!rainFeeIncluded) {
+        finalDeliveryFee += rainFee;
+      }
       isRainSurchargeApplied = true;
       rainSurchargeAmount = rainFee;
     }
@@ -191,12 +194,12 @@ exports.createFoodOrder = async (req, res) => {
       if (shop && shop.fcmToken) {
         const { sendNotification } = require('../utils/notification');
         const titleShop = "🔔 Có đơn đặt đồ ăn mới!";
-        const itemsStrShop = cartItems.map(item => `${item.quantity}x ${item.name}`).join(', ');
+        const itemsStrShop = cartItems.map(item => `${item.quantity}x ${item.name}${item.note ? ` (${item.note})` : ''}`).join(', ');
         const bodyShop = `Khách: ${customerName} - ${customerPhone}\nGiao đến: ${deliveryAddress}\nMón: ${itemsStrShop}\nGhi chú: ${note || 'Không có'}`;
         
         const finalBodyShop = bodyShop.length > 250 ? bodyShop.substring(0, 247) + '...' : bodyShop;
         
-        await sendNotification(shop.fcmToken, titleShop, finalBodyShop, { url: `/shop/orders` });
+        await sendNotification(shop.fcmToken, titleShop, finalBodyShop, { url: `/shop/activity` });
       }
     } catch (pushErr) {
       console.error('Error sending push to shop for AloFood:', pushErr);
@@ -213,15 +216,17 @@ exports.createFoodOrder = async (req, res) => {
         
         const finalBody = body.length > 250 ? body.substring(0, 247) + '...' : body;
         
-        await sendNotification(customer.fcmToken, title, finalBody, { url: `/order/${newOrder._id}` });
+        await sendNotification(customer.fcmToken, title, finalBody, { url: `/customer/order/${newOrder._id}` });
       }
     } catch (pushErr) {
       console.error('Error sending push to customer for AloFood:', pushErr);
     }
 
-    // Gửi sự kiện qua socket (nếu cần thiết)
-    // const io = require('../sockets').getIo();
-    // io.emit('new_order', newOrder);
+    // Gửi sự kiện qua socket cho Cửa hàng và Admin
+    if (req.io) {
+      req.io.to(`shop_${shopId.toString()}`).emit('order_status_updated', newOrder);
+      req.io.to('admins').emit('new_order', newOrder);
+    }
 
     res.json({ success: true, data: newOrder });
   } catch (error) {

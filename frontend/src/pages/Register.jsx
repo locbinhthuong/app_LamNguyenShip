@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { MapPin, Home } from 'lucide-react';
+import { MapPin, Home, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { registerCustomer, getRegionConfig } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import LocationPicker from '../components/LocationPicker';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const PHONE_REGEX = /^(0[35789])[0-9]{8}$/;
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -18,9 +21,11 @@ const Register = () => {
   });
   const [regions, setRegions] = useState([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   useEffect(() => {
     fetchRegions();
@@ -50,18 +55,33 @@ const Register = () => {
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    // Validate
-    if (formData.role === 'SHOP' && !formData.shopName) {
-      setError('Vui lòng nhập tên cửa hàng');
-      setLoading(false);
+    const cleanPhone = formData.phone.trim();
+    if (!PHONE_REGEX.test(cleanPhone)) {
+      setError('Số điện thoại không hợp lệ (gồm 10 chữ số, đầu 03, 05, 07, 08, 09).');
       return;
     }
 
+    if (formData.role === 'SHOP' && !formData.shopName.trim()) {
+      setError('Vui lòng nhập tên cửa hàng');
+      return;
+    }
+
+    if (formData.role === 'SHOP' && !formData.shopAddress.trim()) {
+      setError('Vui lòng nhập hoặc chọn trên bản đồ địa chỉ cửa hàng');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
     try {
-      const response = await registerCustomer(formData);
+      const response = await registerCustomer({
+        ...formData,
+        phone: cleanPhone,
+        name: formData.name.trim(),
+        shopName: formData.shopName.trim(),
+        shopAddress: formData.shopAddress.trim()
+      });
       
       if (response.success) {
         const { token, user } = response.data;
@@ -70,15 +90,28 @@ const Register = () => {
         localStorage.setItem('customerData', JSON.stringify(user));
         localStorage.setItem('activeMode', user.role);
 
+        if (user.shopName) localStorage.setItem('shopName', user.shopName);
+        if (user.phone) localStorage.setItem('shopPhone', user.phone);
+        if (user.shopAddress) localStorage.setItem('shopAddress', user.shopAddress);
+
+        // Kích hoạt kết nối Socket.IO ngay lập tức
+        window.dispatchEvent(new Event('auth_change'));
+        showToast('Đăng ký tài khoản thành công!', 'success', 3000);
+
         if (user.role === 'SHOP') {
+          localStorage.removeItem('intendedService');
           navigate('/shop', { replace: true });
         } else {
           const intended = localStorage.getItem('intendedService');
           if (intended) {
             localStorage.removeItem('intendedService');
-            navigate('/');
+            if (intended === 'ALOFOOD') {
+              navigate('/alofood', { replace: true });
+            } else {
+              navigate(`/customer/book/${intended}`, { replace: true });
+            }
           } else {
-            navigate('/');
+            navigate('/', { replace: true });
           }
         }
       }
@@ -238,6 +271,12 @@ const Register = () => {
                     <MapPin size={14} /> Bản đồ
                   </button>
                 </div>
+                {formData.defaultLocation?.lat && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-emerald-600 font-semibold px-1">
+                    <CheckCircle2 size={13} />
+                    <span>Đã ghim tọa độ cửa hàng trên bản đồ</span>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -257,16 +296,26 @@ const Register = () => {
 
           <motion.div variants={fadeUpVariant} initial="hidden" animate="visible" transition={{ delay: 0.6 }}>
             <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Mật khẩu (ít nhất 6 ký tự)</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
-              placeholder="Nhập mật khẩu"
-              required
-              minLength={6}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                className="w-full pl-4 pr-12 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+                placeholder="Nhập mật khẩu"
+                required
+                minLength={6}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </motion.div>
 
           <motion.button
@@ -316,12 +365,14 @@ const Register = () => {
       <AnimatePresence>
         {showLocationPicker && (
           <LocationPicker
-            onLocationSelect={(loc) => {
-              setFormData({
-                ...formData,
+            isOpen={showLocationPicker}
+            initialLocation={formData.defaultLocation}
+            onSelect={(loc) => {
+              setFormData((prev) => ({
+                ...prev,
                 shopAddress: loc.address,
                 defaultLocation: loc
-              });
+              }));
               setShowLocationPicker(false);
             }}
             onClose={() => setShowLocationPicker(false)}

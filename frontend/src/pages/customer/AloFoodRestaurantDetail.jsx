@@ -3,11 +3,13 @@ import { createPortal } from 'react-dom';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { ArrowLeft, Star, MapPin, ShoppingCart, Info, Clock, Plus, Minus, BadgeCheck, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { api, getFullImageUrl } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 const AloFoodRestaurantDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const location = useLocation();
+  const { showToast } = useToast();
   const targetCategory = location.state?.category;
   const [restaurant, setRestaurant] = useState(null);
   const [menuItems, setMenuItems] = useState([]);
@@ -113,16 +115,16 @@ const AloFoodRestaurantDetail = () => {
 
   const handleSubmitReview = async () => {
     if (!newReviewRating || newReviewRating < 1 || newReviewRating > 5) {
-      alert('Vui lòng chọn từ 1 đến 5 sao!');
+      showToast('Vui lòng chọn từ 1 đến 5 sao!', 'warning');
       return;
     }
     setSubmittingReview(true);
     try {
-      const userProfileRaw = localStorage.getItem('user_profile');
+      const customerDataRaw = localStorage.getItem('customerData') || localStorage.getItem('user_profile');
       let customerName = 'Khách hàng';
-      if (userProfileRaw) {
-        const userProfile = JSON.parse(userProfileRaw);
-        customerName = userProfile.name || 'Khách hàng';
+      if (customerDataRaw) {
+        const parsed = JSON.parse(customerDataRaw);
+        customerName = parsed.name || parsed.shopName || 'Khách hàng';
       }
 
       const res = await api.post(`/alofood/restaurants/${id}/reviews`, {
@@ -134,10 +136,10 @@ const AloFoodRestaurantDetail = () => {
         setReviews([res.data.data, ...reviews].slice(0, 5));
         setNewReviewComment('');
         setNewReviewRating(5);
-        alert('Gửi đánh giá thành công!');
+        showToast('Gửi đánh giá thành công!', 'success');
       }
     } catch (error) {
-      alert('Lỗi: ' + (error.response?.data?.message || 'Không thể gửi đánh giá lúc này'));
+      showToast('Lỗi: ' + (error.response?.data?.message || 'Không thể gửi đánh giá lúc này'), 'error');
     } finally {
       setSubmittingReview(false);
     }

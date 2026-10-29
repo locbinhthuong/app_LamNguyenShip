@@ -4,10 +4,12 @@ import { ArrowLeft } from 'lucide-react';
 import { api } from '../../services/api';
 import DeliveryForm from '../../components/booking/DeliveryForm';
 import BatchedDeliveryForm from '../../components/booking/BatchedDeliveryForm';
+import { useToast } from '../../context/ToastContext';
 
 export default function ShopBookingFlow() {
   const navigate = useNavigate();
   const { serviceType } = useParams();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const isSubmittingRef = React.useRef(false);
   const [defaultLocation, setDefaultLocation] = useState(null);
@@ -50,11 +52,11 @@ export default function ShopBookingFlow() {
           const res = await api.post('/orders/customer', order);
           if (res.data.success) successCount++;
         }
-        alert(`Đã tạo thành công ${successCount} đơn hàng độc lập!`);
-        navigate('/shop');
+        showToast(`Đã tạo thành công ${successCount} đơn hàng độc lập!`, 'success');
+        navigate('/shop/activity');
       } catch (error) {
         console.error(error);
-        alert('Có lỗi xảy ra khi tạo một số đơn. Vui lòng kiểm tra lại!');
+        showToast('Có lỗi xảy ra khi tạo một số đơn. Vui lòng kiểm tra lại!', 'error');
       } finally {
         isSubmittingRef.current = false;
         setLoading(false);
@@ -86,7 +88,8 @@ export default function ShopBookingFlow() {
       }
 
       if (!payload.pickupAddress || !payload.senderPhone) {
-        return alert('Vui lòng cung cấp Địa chỉ và SĐT lấy hàng hoặc Cài đặt định vị gốc trong trang Thông tin.');
+        showToast('Vui lòng cung cấp Địa chỉ và SĐT lấy hàng hoặc Cài đặt định vị gốc trong trang Thông tin.', 'warning');
+        return;
       }
     } else if (serviceType === 'pickup') {
       // Logic cho Lấy hàng (Mang về shop)
@@ -108,7 +111,8 @@ export default function ShopBookingFlow() {
       }
 
       if (!payload.deliveryAddress || !payload.receiverPhone) {
-        return alert('Vui lòng cung cấp Địa chỉ và SĐT cửa hàng (Nơi nhận) hoặc cài đặt định vị mặc định.');
+        showToast('Vui lòng cung cấp Địa chỉ và SĐT cửa hàng (Nơi nhận) hoặc cài đặt định vị mặc định.', 'warning');
+        return;
       }
     }
 
@@ -124,8 +128,10 @@ export default function ShopBookingFlow() {
 
       // Xử lý nộp đơn
       const res = await api.post('/orders/customer', payload);
+      let createdOrderId = null;
       if (res.data.success) {
         isSuccess = true;
+        createdOrderId = res.data.data?._id;
         // Lưu lại làm mặc định nếu đây là lần đầu tiên tạo đơn
         if (serviceType === 'delivery') {
           if (!localStorage.getItem('shopAddress')) localStorage.setItem('shopAddress', payload.pickupAddress);
@@ -134,12 +140,12 @@ export default function ShopBookingFlow() {
       }
       
       if (isSuccess) {
-        alert('Tạo đơn hàng thành công! Đơn hàng đang được Tổng Đài báo giá phí giao và điều phối xe.');
-        navigate('/shop');
+        showToast('Tạo đơn hàng thành công! Đang điều phối tài xế cho cửa hàng.', 'success');
+        navigate(createdOrderId ? `/shop/order/${createdOrderId}` : '/shop/activity');
       }
     } catch (error) {
       console.error(error);
-      alert('Lỗi tạo đơn: ' + (error.response?.data?.message || 'Vui lòng thử lại.'));
+      showToast('Lỗi tạo đơn: ' + (error.response?.data?.message || 'Vui lòng thử lại.'), 'error');
     } finally {
       if (!isSuccess) {
         isSubmittingRef.current = false;

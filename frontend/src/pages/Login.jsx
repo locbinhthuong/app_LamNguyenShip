@@ -1,23 +1,34 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Home } from 'lucide-react';
+import { Home, Eye, EyeOff } from 'lucide-react';
 import { loginCustomer } from '../services/api';
+import { useToast } from '../context/ToastContext';
 import { motion } from 'framer-motion';
+
+const PHONE_REGEX = /^(0[35789])[0-9]{8}$/;
 
 const Login = () => {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    const cleanPhone = phone.trim();
+    if (!PHONE_REGEX.test(cleanPhone)) {
+      setError('Số điện thoại không hợp lệ (gồm 10 chữ số, đầu 03, 05, 07, 08, 09).');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await loginCustomer({ phone, password });
+      const response = await loginCustomer({ phone: cleanPhone, password });
 
       if (response.success) {
         const { token, user } = response.data;
@@ -27,25 +38,36 @@ const Login = () => {
         localStorage.setItem('customerData', JSON.stringify(user));
         localStorage.setItem('activeMode', user.role);
 
-        // Điều hướng dựa trên role
+        if (user.shopName) localStorage.setItem('shopName', user.shopName);
+        if (user.phone) localStorage.setItem('shopPhone', user.phone);
+        if (user.shopAddress) localStorage.setItem('shopAddress', user.shopAddress);
+        if (user.avatar) localStorage.setItem('shopAvatar', user.avatar);
+        if (user.coverImage) localStorage.setItem('shopCoverImage', user.coverImage);
+
+        // Kích hoạt kết nối Socket.IO ngay lập tức
+        window.dispatchEvent(new Event('auth_change'));
+        showToast(`Chào mừng ${user.shopName || user.name || 'bạn'} quay trở lại!`, 'success', 3000);
+
+        // Điều hướng dựa trên role & dịch vụ đang chọn dở
         if (user.role === 'SHOP') {
+          localStorage.removeItem('intendedService');
           navigate('/shop', { replace: true });
         } else {
           const intended = localStorage.getItem('intendedService');
           if (intended) {
             localStorage.removeItem('intendedService');
-            // Sau này sẽ navigate('/customer/book/' + intended)
-            navigate('/');
+            if (intended === 'ALOFOOD') {
+              navigate('/alofood', { replace: true });
+            } else {
+              navigate(`/customer/book/${intended}`, { replace: true });
+            }
           } else {
-            navigate('/');
+            navigate('/', { replace: true });
           }
         }
       }
     } catch (err) {
       let msg = err.response?.data?.message || 'Không thể đăng nhập. Vui lòng thử lại.';
-      if (msg === 'Sai tài khoản hoặc mật khẩu') {
-        msg = 'Sai tài khoản hoặc mật khẩu (Invalid credentials)';
-      }
       setError(msg);
     } finally {
       setLoading(false);
@@ -117,14 +139,24 @@ const Login = () => {
             transition={{ delay: 0.4 }}
           >
             <label className="block text-xs font-bold text-slate-700 mb-1.5 ml-1">Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
-              placeholder="Nhập mật khẩu"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-4 pr-12 py-3.5 bg-[#f0f4ff] rounded-2xl border-none focus:ring-2 focus:ring-blue-500 text-slate-700 font-medium outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+                placeholder="Nhập mật khẩu"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 transition-colors"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </motion.div>
 
           <motion.button

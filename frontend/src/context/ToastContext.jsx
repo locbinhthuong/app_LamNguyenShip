@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { Bell, CheckCircle, XCircle, Info, X } from 'lucide-react';
 
 const ToastContext = createContext();
@@ -8,20 +8,15 @@ export const useToast = () => useContext(ToastContext);
 export const ToastProvider = ({ children }) => {
   const [toast, setToast] = useState(null);
 
-  const showToast = (message, type = 'info', duration = 4000) => {
-    setToast({ message, type, id: Date.now() });
-    setTimeout(() => {
-      setToast(current => current?.id === toast?.id ? null : current);
-    }, duration);
-  };
+  const showToast = useCallback((message, type = 'info', duration = 4000) => {
+    setToast({ message, type, duration, id: Date.now() });
+  }, []);
 
   useEffect(() => {
-    let timer;
-    if (toast) {
-      timer = setTimeout(() => {
-        setToast(null);
-      }, 4000);
-    }
+    if (!toast) return;
+    const timer = setTimeout(() => {
+      setToast(null);
+    }, toast.duration || 4000);
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -46,8 +41,8 @@ export const ToastProvider = ({ children }) => {
       {/* Toast UI */}
       {toast && (
         <div className="fixed top-0 safe-pt left-0 right-0 z-[9999] px-4 flex justify-center w-full max-w-md mx-auto pointer-events-none animate-[slideDown_0.3s_ease-out]">
-          <div className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-lg border ${bgColors[toast.type]} w-full backdrop-blur-sm bg-opacity-95`}>
-            <div className="shrink-0 mt-0.5 animate-bounce">{icons[toast.type]}</div>
+          <div className={`pointer-events-auto flex items-start gap-3 p-4 rounded-2xl shadow-lg border ${bgColors[toast.type] || bgColors.info} w-full backdrop-blur-sm bg-opacity-95`}>
+            <div className="shrink-0 mt-0.5 animate-bounce">{icons[toast.type] || icons.info}</div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-gray-800 leading-snug break-words">
                 {toast.message}

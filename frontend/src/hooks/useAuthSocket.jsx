@@ -67,57 +67,75 @@ export const useAuthSocket = () => {
   const { showToast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem('customerToken') || localStorage.getItem('shopToken');
-    const role = localStorage.getItem('customerRole')?.toLowerCase() || 'customer';
-    
-    if (token) {
+    const setupSocket = () => {
+      const token = localStorage.getItem('customerToken') || localStorage.getItem('shopToken');
+      const activeMode = localStorage.getItem('activeMode') || localStorage.getItem('customerRole') || 'CUSTOMER';
+      const role = activeMode.toLowerCase();
+
+      if (!token) {
+        disconnectSocket();
+        return;
+      }
+
       const socket = connectSocket(token, role);
-      
+
       if (socket) {
+        socket.off('order_updated');
+        socket.off('order_deleted_event');
+        socket.off('driver_location_update');
+
         socket.on('order_updated', (order) => {
           let message = `Đơn hàng ${order.orderCode || ''} đã được cập nhật trạng thái.`;
           let type = 'info';
 
-          if (order.status === 'PENDING') {
-            message = `Đơn hàng ${order.orderCode} đã được Tổng đài lên phí ship. Khách hàng/Cửa hàng có thể xem lại!`;
+          if (order.status === 'WAITING_SHOP') {
+            message = `Đơn đồ ăn ${order.orderCode || ''} đang chờ quán xác nhận!`;
             type = 'info';
-            
-            // Phát âm thanh Ting Ting cho khách
+            playCustomerPing();
+          } else if (order.status === 'PENDING') {
+            message = `Đơn hàng ${order.orderCode || ''} đang được hệ thống tìm tài xế!`;
+            type = 'info';
             playCustomerPing();
           } else if (order.status === 'ACCEPTED') {
             if (order.serviceType === 'DAT_XE') {
               message = `Tài xế ${order.assignedTo?.name || ''} đã nhận chuyến và đang đến đón bạn!`;
             } else {
-              message = `Tài xế ${order.assignedTo?.name || ''} đã nhận đơn và trên đường lấy hàng!`;
+              message = `Tài xế ${order.assignedTo?.name || ''} đã nhận đơn và đang đi lấy hàng!`;
             }
             type = 'success';
             playCustomerPing();
-          } else if (order.status === 'PICKED_UP') {
+          } else if (order.status === 'PICKED_UP' || order.status === 'DELIVERING') {
             if (order.serviceType === 'DAT_XE') {
-              message = `Tài xế đã đón bạn thành công! Bắt đầu di chuyển...`;
+              message = `Tài xế đã đón bạn thành công! Đang trong hành trình di chuyển...`;
             } else {
-              message = `Tài xế đã lấy hàng và bắt đầu giao!`;
+              message = `Tài xế đã lấy hàng và đang trên đường giao!`;
             }
             type = 'warning';
             playCustomerPing();
           } else if (order.status === 'COMPLETED') {
             if (order.serviceType === 'DAT_XE') {
-              message = `Chuyến đi ${order.orderCode} đã hoàn thành. Cảm ơn quý khách đã tin dùng!`;
+              message = `Chuyến đi ${order.orderCode || ''} đã hoàn thành. Cảm ơn quý khách đã tin dùng!`;
             } else {
-              message = `Đơn hàng ${order.orderCode} đã giao thành công. Cảm ơn quý khách!`;
+              message = `Đơn hàng ${order.orderCode || ''} đã giao thành công. Cảm ơn quý khách!`;
             }
             type = 'success';
             playCustomerPing();
+          } else if (order.status === 'CANCELLED') {
+            message = `Đơn hàng ${order.orderCode || ''} đã bị hủy${order.cancelReason ? `: ${order.cancelReason}` : '.'}`;
+            type = 'error';
+            playCustomerPing();
           } else if (order.status === 'DRAFT') {
-             message = `Thông tin đơn hàng ${order.orderCode} vừa được Admin cập nhật.`;
-             type = 'info';
-             
-             // Phát âm thanh Ting Ting cho khách khi update lại giá
-             playCustomerPing();
+            if (order.adminReviewed && order.deliveryFee > 0) {
+              message = `💰 Đơn hàng ${order.orderCode || ''} đã có báo giá cước (${order.deliveryFee.toLocaleString('vi-VN')}đ). Vui lòng xác nhận!`;
+            } else {
+              message = `Thông tin đơn hàng ${order.orderCode || ''} vừa được Tổng đài cập nhật.`;
+            }
+            type = 'info';
+            playCustomerPing();
           }
 
           showToast(message, type, 6000);
-          
+
           // Phát một custom event truyền kèm cục data order mới nhất
           window.dispatchEvent(new CustomEvent('refresh_orders_data', { detail: order }));
         });
@@ -126,12 +144,25 @@ export const useAuthSocket = () => {
           showToast('Đơn hàng của bạn đã bị xoá khỏi hệ thống bởi Admin.', 'error', 5000);
           window.dispatchEvent(new CustomEvent('order_deleted_event', { detail: orderId }));
         });
+
+        socket.on('driver_location_update', (locData) => {
+          window.dispatchEvent(new CustomEvent('driver_location_update', { detail: locData }));
+        });
       }
-    }
+    };
+
+    setupSocket();
+
+    const handleAuthChange = () => {
+      setupSocket();
+    };
+
+    window.addEventListener('auth_change', handleAuthChange);
+    window.addEventListener('api_unauthorized', handleAuthChange);
 
     return () => {
-      // Chúng ta không gọi disconnectSocket() ở đây vì nếu chuyển Page nó sẽ bị ngắt
-      // Sẽ handle ngắt khi Logout
+      window.removeEventListener('auth_change', handleAuthChange);
+      window.removeEventListener('api_unauthorized', handleAuthChange);
     };
   }, [showToast]);
 };

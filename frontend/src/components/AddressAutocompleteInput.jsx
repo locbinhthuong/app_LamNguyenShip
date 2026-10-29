@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Loader2, Clock, X } from 'lucide-react';
+import { Search, Loader2, Clock, X, CheckCircle2 } from 'lucide-react';
+import { Geolocation } from '@capacitor/geolocation';
 
 const formatPhotonAddress = (properties) => {
   if (!properties) return 'Vị trí không xác định';
@@ -65,13 +66,22 @@ export default function AddressAutocompleteInput({
 
   // Lấy toạ độ GPS thực tế của thiết bị ngay khi Component được tải
   useEffect(() => {
-    import('@capacitor/geolocation').then(({ Geolocation }) => {
-      Geolocation.getCurrentPosition({ enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 })
-        .then(pos => {
-          setMapCenter([pos.coords.latitude, pos.coords.longitude]);
-        })
-        .catch(err => console.log('Không lấy được GPS tự động', err));
-    });
+    try {
+      const saved = sessionStorage.getItem('savedLocation');
+      if (saved) {
+        const loc = JSON.parse(saved);
+        if (loc?.lat && loc?.lng) {
+          setMapCenter([loc.lat, loc.lng]);
+          return;
+        }
+      }
+    } catch (e) {}
+
+    Geolocation.getCurrentPosition({ enableHighAccuracy: false, maximumAge: 60000, timeout: 5000 })
+      .then(pos => {
+        setMapCenter([pos.coords.latitude, pos.coords.longitude]);
+      })
+      .catch(err => console.log('Không lấy được GPS tự động', err));
   }, []);
 
   useEffect(() => {
@@ -103,7 +113,7 @@ export default function AddressAutocompleteInput({
   useEffect(() => {
     if (isSelecting.current || !isTyping.current) return;
     
-    if (query.trim().length < 4) {
+    if (query.trim().length < 2) {
       setSuggestions([]);
       return;
     }
@@ -186,7 +196,7 @@ export default function AddressAutocompleteInput({
       suggestionCache.current[cacheKey] = finalSuggestions;
       setSuggestions(finalSuggestions);
       setIsSearching(false);
-    }, 1200);
+    }, 450);
 
     return () => clearTimeout(delayDebounce);
   }, [query]);
@@ -329,7 +339,7 @@ export default function AddressAutocompleteInput({
           )}
 
           {/* LỊCH SỬ TÌM KIẾM (Chỉ hiện khi chưa nhập gì và có lịch sử) */}
-          {!isSearching && query.trim().length < 4 && recentSearches.length > 0 && (
+          {!isSearching && query.trim().length < 2 && recentSearches.length > 0 && (
             <div className="max-h-60 overflow-y-auto bg-white">
               <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50 border-b border-slate-100">
                 Tìm kiếm gần đây
@@ -354,7 +364,7 @@ export default function AddressAutocompleteInput({
           )}
 
           {/* DANH SÁCH GỢI Ý API */}
-          {!isSearching && query.trim().length >= 4 && suggestions.length > 0 && (
+          {!isSearching && query.trim().length >= 2 && suggestions.length > 0 && (
             <div className="max-h-60 overflow-y-auto bg-white">
               {suggestions.map((item, idx) => (
                 <div 

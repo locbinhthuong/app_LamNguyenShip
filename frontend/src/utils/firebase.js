@@ -40,41 +40,49 @@ export const requestFirebaseToken = async () => {
       }
       return new Promise((resolve) => {
         let timeoutId;
-        // Lắng nghe sự kiện đăng ký thành công từ APNs
-        PushNotifications.addListener('registration', async (apnsToken) => {
+        let regListenerPromise = null;
+        let errListenerPromise = null;
+
+        const cleanupListeners = () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          if (regListenerPromise) regListenerPromise.then(l => l.remove()).catch(() => {});
+          if (errListenerPromise) errListenerPromise.then(l => l.remove()).catch(() => {});
+        };
+
+        // Lắng nghe sự kiện đăng ký thành công từ APNs / FCM
+        regListenerPromise = PushNotifications.addListener('registration', async () => {
           try {
-            if (timeoutId) clearTimeout(timeoutId);
-            // Khi APNs đã trả về token, AppDelegate đã map nó sang Firebase.
+            cleanupListeners();
             // Đợi thêm 500ms cho chắc ăn rồi lấy FCM token
             await new Promise(r => setTimeout(r, 500));
             const { token } = await FirebaseMessaging.getToken();
             resolve(token);
           } catch (err) {
-            if (timeoutId) clearTimeout(timeoutId);
+            cleanupListeners();
             console.error("Lỗi lấy FCM token sau khi có APNs:", err);
             resolve(null);
           }
         });
 
         // Lắng nghe lỗi APNs
-        PushNotifications.addListener('registrationError', (error) => {
-          if (timeoutId) clearTimeout(timeoutId);
+        errListenerPromise = PushNotifications.addListener('registrationError', (error) => {
+          cleanupListeners();
           console.error("Lỗi APNs:", error);
           resolve(null);
         });
 
-        // Xin Apple cấp Token
+        // Xin cấp Token
         PushNotifications.register();
         
-        // Cầu chì an toàn: Nếu Apple không trả lời sau 10 giây thì bỏ qua để không treo App
+        // Cầu chì an toàn: Nếu không trả lời sau 10 giây thì bỏ qua để không treo App
         timeoutId = setTimeout(() => {
+          cleanupListeners();
           resolve(null);
         }, 10000);
       });
       
     } catch (err) {
       console.error("LỖI NATIVE PUSH: ", err);
-      alert('Lỗi Native Push: ' + JSON.stringify(err));
       return null;
     }
   } else {
@@ -124,7 +132,7 @@ export const setupForegroundListener = (callback) => {
       callback(payload);
     });
     return () => {
-      listener.then(l => l.remove());
+      listener.then(l => l.remove()).catch(() => {});
     };
   } else {
     if (!messaging) return null;

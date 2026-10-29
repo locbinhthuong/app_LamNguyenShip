@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Image as ImageIcon, Lock, Unlock } from 'lucide-react';
-import { api, getFullImageUrl } from '../../services/api';
+import { api, getFullImageUrl, uploadCustomerAvatar } from '../../services/api';
+import { compressImage } from '../../utils/imageCompressor';
+import { useToast } from '../../context/ToastContext';
 
 const ShopMenuManager = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -87,15 +90,15 @@ const ShopMenuManager = () => {
     try {
       if (editingItem) {
         await api.put(`/merchant/menu/${editingItem._id}`, formData);
-        alert('Cập nhật món thành công!');
+        showToast('Cập nhật món thành công!', 'success');
       } else {
         await api.post('/merchant/menu', formData);
-        alert('Thêm món mới thành công!');
+        showToast('Thêm món mới thành công!', 'success');
       }
       setShowModal(false);
       fetchMenu();
     } catch (error) {
-      alert('Có lỗi xảy ra: ' + (error.response?.data?.message || error.message));
+      showToast('Có lỗi xảy ra: ' + (error.response?.data?.message || error.message), 'error');
     }
   };
 
@@ -103,9 +106,10 @@ const ShopMenuManager = () => {
     if (window.confirm('Bạn có chắc chắn muốn xóa món này?')) {
       try {
         await api.delete(`/merchant/menu/${id}`);
+        showToast('Đã xóa món ăn!', 'info');
         fetchMenu();
       } catch (error) {
-        alert('Lỗi khi xóa món!');
+        showToast('Lỗi khi xóa món!', 'error');
       }
     }
   };
@@ -115,10 +119,11 @@ const ShopMenuManager = () => {
       const res = await api.put(`/merchant/menu/${item._id}`, { isAvailable: !item.isAvailable });
       if (res.data.success) {
         setMenuItems(prev => prev.map(m => m._id === item._id ? { ...m, isAvailable: !item.isAvailable } : m));
+        showToast(!item.isAvailable ? `Đã mở bán "${item.name}"` : `Đã tạm ngưng "${item.name}"`, 'info');
       }
     } catch (err) {
       console.error(err);
-      alert('Lỗi cập nhật trạng thái món ăn');
+      showToast('Lỗi cập nhật trạng thái món ăn', 'error');
     }
   };
 
@@ -127,23 +132,20 @@ const ShopMenuManager = () => {
     if (!file) return;
 
     if (formData.images.length >= 3) {
-      alert('Chỉ được tải lên tối đa 3 ảnh');
+      showToast('Chỉ được tải lên tối đa 3 ảnh cho mỗi món', 'warning');
       return;
     }
 
-    const form = new FormData();
-    form.append('image', file);
-
     try {
-      const res = await api.post('/upload/avatar', form, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const compressedFile = await compressImage(file, 1, 1200);
+      const res = await uploadCustomerAvatar(compressedFile);
       if (res.data.success) {
-        setFormData({ ...formData, images: [...formData.images, res.data.data.url] });
+        setFormData(prev => ({ ...prev, images: [...prev.images, res.data.data.url] }));
+        showToast('Tải ảnh món ăn thành công!', 'success');
       }
     } catch (err) {
       console.error('Upload error', err);
-      alert('Lỗi tải ảnh lên');
+      showToast('Lỗi tải ảnh lên, vui lòng thử lại', 'error');
     }
   };
 

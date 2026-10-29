@@ -23,19 +23,9 @@ const AloFoodHome = () => {
     return () => clearTimeout(handler);
   }, [search]);
 
-  // Fetch popular items only once on mount and clear old carts
+  // Fetch popular items only once on mount (giữ nguyên giỏ hàng của các quán đang chọn dở)
   useEffect(() => {
     fetchPopularItems();
-    
-    // Clear cart sessions so that when re-entering a restaurant, it starts fresh
-    const keysToRemove = [];
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key && key.startsWith('alofood_cart_')) {
-        keysToRemove.push(key);
-      }
-    }
-    keysToRemove.forEach(k => sessionStorage.removeItem(k));
   }, []);
 
   // Fetch restaurants when debounced search or category changes

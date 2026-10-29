@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Clock, PackageCheck, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
+import { api, getFullImageUrl } from '../../services/api';
 
 const ShopActivity = () => {
   const navigate = useNavigate();
@@ -53,7 +53,8 @@ const ShopActivity = () => {
   const getStatusConfig = (order) => {
     const { status, serviceType } = order;
     switch(status) {
-      case 'DRAFT': return { text: 'Đang Tính Phí', color: 'text-purple-500', bg: 'bg-purple-50', icon: <Clock size={16}/> };
+      case 'WAITING_SHOP': return { text: 'Chờ quán xác nhận', color: 'text-amber-600', bg: 'bg-amber-50', icon: <Clock size={16}/> };
+      case 'DRAFT': return { text: order.adminReviewed && order.deliveryFee > 0 ? 'Chờ Xác Nhận Giá' : 'Đang Tính Phí', color: 'text-purple-500', bg: 'bg-purple-50', icon: <Clock size={16}/> };
       case 'PENDING': return { text: 'Đang chờ xế', color: 'text-blue-500', bg: 'bg-blue-50', icon: <Clock size={16}/> };
       case 'ACCEPTED': return { text: 'Đã có xế nhận', color: 'text-blue-500', bg: 'bg-blue-50', icon: <Truck size={16}/> };
       case 'PICKED_UP': return { text: serviceType === 'DAT_XE' ? 'Xế đã đón khách' : serviceType === 'MUA_HO' ? 'Xế đã mua hàng' : 'Xế đã lấy hàng', color: 'text-indigo-500', bg: 'bg-indigo-50', icon: <PackageCheck size={16}/> };
@@ -67,7 +68,7 @@ const ShopActivity = () => {
   const [filter, setFilter] = useState('pending');
   const scrollRef = useRef(null);
 
-  const pendingOrders = orders.filter(o => ['DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status));
+  const pendingOrders = orders.filter(o => ['WAITING_SHOP', 'DRAFT', 'PENDING', 'ACCEPTED'].includes(o.status));
   const activeOrders = orders.filter(o => ['PICKED_UP', 'DELIVERING'].includes(o.status));
   const historyOrders = orders.filter(o => ['COMPLETED', 'CANCELLED'].includes(o.status));
 
@@ -87,6 +88,7 @@ const ShopActivity = () => {
             <span className="text-sm font-bold text-gray-800">
               {order.serviceType === 'GIAO_HANG' ? 'Giao Hàng' :
                order.serviceType === 'DON_GHEP' ? 'Đơn Ghép' :
+               order.serviceType === 'ALOFOOD' ? 'AloFood' :
                order.serviceType === 'DAT_XE' ? (order.subServiceType === 'XE_OM' ? 'Chở Khách' : order.subServiceType === 'LAI_HO_OTO' ? 'Lái Hộ Ô Tô' : 'Lái Hộ Xe Máy') :
                order.serviceType === 'DIEU_PHOI' ? (order.subServiceType === 'NAP_TIEN' ? 'Nạp Tiền' : order.subServiceType === 'RUT_TIEN' ? 'Rút Tiền' : 'Điều Phối') :
                'Mua Hộ'}
@@ -114,14 +116,27 @@ const ShopActivity = () => {
 
         {order.assignedTo && order.status !== 'CANCELLED' && (
           <div className="mt-4 bg-blue-50/50 rounded-xl p-3 border border-blue-50 flex items-center justify-between ml-2">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center text-xl text-blue-700">🧔</div>
-              <div>
-                <p className="text-[11px] font-bold text-gray-700">{order.assignedTo.name}</p>
-                <p className="text-[10px] text-gray-500">Tài xế nhận đơn</p>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 bg-blue-200 rounded-full flex items-center justify-center text-sm font-bold text-blue-700 overflow-hidden shrink-0 border border-white">
+                {order.assignedTo.avatar ? (
+                  <img
+                    src={getFullImageUrl(order.assignedTo.avatar)}
+                    alt={order.assignedTo.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  order.assignedTo.name?.charAt(0) || '🛵'
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-gray-800 truncate">{order.assignedTo.name}</p>
+                <p className="text-[10px] font-semibold text-blue-600 uppercase">
+                  {order.assignedTo.licensePlate || order.assignedTo.vehiclePlate || 'Tài xế nhận đơn'}
+                </p>
               </div>
             </div>
-            <a href={`tel:${order.assignedTo.phone}`} onClick={(e) => e.stopPropagation()} className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold z-10">
+            <a href={`tel:${order.assignedTo.phone}`} onClick={(e) => e.stopPropagation()} className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold z-10 shrink-0">
               Gọi
             </a>
           </div>
@@ -142,19 +157,27 @@ const ShopActivity = () => {
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'pending' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
           onClick={() => { setFilter('pending'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
         >
-          Đang xử lý
+          Đang xử lý ({pendingOrders.length})
         </button>
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'active' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          onClick={() => { setFilter('active'); scrollRef.current?.scrollTo({ left: window.innerWidth > 414 ? 414 : window.innerWidth, behavior: 'smooth' }); }}
+          onClick={() => {
+            setFilter('active');
+            const w = scrollRef.current?.clientWidth || window.innerWidth;
+            scrollRef.current?.scrollTo({ left: w, behavior: 'smooth' });
+          }}
         >
-          Đang giao
+          Đang giao ({activeOrders.length})
         </button>
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'history' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
-          onClick={() => { setFilter('history'); scrollRef.current?.scrollTo({ left: (window.innerWidth > 414 ? 414 : window.innerWidth) * 2, behavior: 'smooth' }); }}
+          onClick={() => {
+            setFilter('history');
+            const w = scrollRef.current?.clientWidth || window.innerWidth;
+            scrollRef.current?.scrollTo({ left: w * 2, behavior: 'smooth' });
+          }}
         >
-          Lịch sử
+          Lịch sử ({historyOrders.length})
         </button>
       </div>
 

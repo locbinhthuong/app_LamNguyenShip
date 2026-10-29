@@ -4,8 +4,10 @@ import LocationPicker from '../LocationPicker';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
 import CurrencyInput from '../CurrencyInput';
 import { estimateFee } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 export default function BatchedDeliveryForm({ onBooking, loading, defaultLocation, defaultPhone, shopName }) {
+  const { showToast } = useToast();
   const [pickup, setPickup] = useState({
     address: defaultLocation?.address || '',
     coordinates: defaultLocation && defaultLocation.lat ? { lat: defaultLocation.lat, lng: defaultLocation.lng } : null,
@@ -13,7 +15,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   });
 
   const [deliveries, setDeliveries] = useState([
-    { id: 1, address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '' }
+    { id: 1, address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '', extraSurchargeAPI: 0, surchargeNote: '', isRaining: false, rainFee: 0 }
   ]);
 
   const [mapConfig, setMapConfig] = useState(null); // { type: 'pickup' | 'delivery', id?: number, pos: any, query: string }
@@ -43,6 +45,10 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
               if (newD[index]) {
                 newD[index].fee = res.data.deliveryFee;
                 newD[index].distanceKm = res.data.distanceKm;
+                newD[index].extraSurchargeAPI = res.data.extraSurcharge || 0;
+                newD[index].surchargeNote = res.data.surchargeNote || '';
+                newD[index].isRaining = res.data.isRaining || false;
+                newD[index].rainFee = res.data.rainFee || 0;
               }
               return newD;
             });
@@ -56,6 +62,10 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
           if (newD[index]) {
             newD[index].fee = 0;
             newD[index].distanceKm = 0;
+            newD[index].extraSurchargeAPI = 0;
+            newD[index].surchargeNote = '';
+            newD[index].isRaining = false;
+            newD[index].rainFee = 0;
           }
           return newD;
         });
@@ -66,12 +76,12 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
       fetchFee(index, d);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pickup.coordinates, deliveries.map(d => d.coordinates?.lat).join(',')]);
+  }, [pickup.coordinates, deliveries.map(d => `${d.coordinates?.lat},${d.coordinates?.lng}`).join(';')]);
 
   const handleAddDelivery = () => {
     setDeliveries(prev => [
       ...prev,
-      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '', extraSurchargeAPI: 0, surchargeNote: '' }
+      { id: Date.now(), address: '', coordinates: null, receiverName: '', receiverPhone: '', codAmount: '', note: '', fee: 0, distanceKm: 0, feePaidBy: 'RECEIVER', extraSurcharge: '', extraSurchargeAPI: 0, surchargeNote: '', isRaining: false, rainFee: 0 }
     ]);
   };
 
@@ -92,14 +102,16 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
     e.preventDefault();
 
     if (!pickup.address || !pickup.phone) {
-      return alert("Vui lòng nhập đầy đủ thông tin điểm lấy hàng!");
+      showToast("Vui lòng nhập đầy đủ thông tin điểm lấy hàng!", "warning");
+      return;
     }
 
     // Validate all deliveries
     for (let i = 0; i < deliveries.length; i++) {
       const d = deliveries[i];
       if (!d.address || !d.receiverName || !d.receiverPhone) {
-        return alert(`Vui lòng nhập đầy đủ Tên, SĐT và Địa chỉ ở Điểm giao thứ ${i + 1}`);
+        showToast(`Vui lòng nhập đầy đủ Tên, SĐT và Địa chỉ ở Điểm giao thứ ${i + 1}`, "warning");
+        return;
       }
     }
 
@@ -171,6 +183,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
   };
 
   const totalFee = deliveries.reduce((sum, d) => sum + (d.fee || 0), 0);
+  const totalSurcharge = deliveries.reduce((sum, d) => sum + (d.extraSurcharge ? parseInt(d.extraSurcharge) : 0) + (d.extraSurchargeAPI || 0), 0);
   const totalCod = deliveries.reduce((sum, d) => sum + (d.codAmount ? parseInt(d.codAmount) : 0), 0);
 
   return (
@@ -269,6 +282,12 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
                     <span>Dự kiến phí ship:</span>
                     <span>{delivery.fee.toLocaleString('vi-VN')}đ {delivery.distanceKm ? `(${delivery.distanceKm.toFixed(1)}km)` : ''}</span>
                   </div>
+                  {delivery.isRaining && delivery.rainFee > 0 && (
+                    <div className="flex items-center justify-between text-amber-600 mt-1">
+                      <span>🌧️ Phụ phí mưa (đã cộng):</span>
+                      <span>+{delivery.rainFee.toLocaleString('vi-VN')}đ</span>
+                    </div>
+                  )}
                   {delivery.extraSurchargeAPI > 0 && (
                     <div className="flex items-center justify-between text-red-500 mt-1">
                       <span>{delivery.surchargeNote}</span>
@@ -368,8 +387,14 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
         </div>
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs font-bold text-blue-800">Tổng phí dự kiến:</span>
-          <span className="text-sm font-extrabold text-blue-900">{totalFee.toLocaleString('vi-VN')}đ</span>
+          <span className="text-sm font-extrabold text-blue-900">{(totalFee + totalSurcharge).toLocaleString('vi-VN')}đ</span>
         </div>
+        {totalSurcharge > 0 && (
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[11px] font-bold text-red-500">Trong đó phụ phí:</span>
+            <span className="text-xs font-extrabold text-red-600">+{totalSurcharge.toLocaleString('vi-VN')}đ</span>
+          </div>
+        )}
         <div className="flex justify-between items-center mb-4 pb-4 border-b border-blue-200/50">
           <span className="text-xs font-bold text-blue-800">Tổng tiền thu hộ (COD):</span>
           <span className="text-sm font-extrabold text-yellow-600">{totalCod.toLocaleString('vi-VN')}đ</span>
@@ -419,7 +444,7 @@ export default function BatchedDeliveryForm({ onBooking, loading, defaultLocatio
       <LocationPicker 
         isOpen={mapConfig !== null}
         onClose={() => setMapConfig(null)}
-        initialPosition={mapConfig?.pos}
+        initialLocation={mapConfig?.pos ? { lat: mapConfig.pos[0], lng: mapConfig.pos[1] } : defaultLocation}
         initialSearchQuery={mapConfig?.query}
         onSelect={(loc) => {
           if (mapConfig?.type === 'pickup') {

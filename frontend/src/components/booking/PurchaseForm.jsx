@@ -24,6 +24,8 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
   const [distanceKm, setDistanceKm] = useState(null);
   const [extraSurcharge, setExtraSurcharge] = useState(0);
   const [surchargeNote, setSurchargeNote] = useState('');
+  const [isRaining, setIsRaining] = useState(false);
+  const [rainFee, setRainFee] = useState(0);
   const [estimating, setEstimating] = useState(false);
 
   useEffect(() => {
@@ -51,11 +53,15 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
             setDistanceKm(res.data.distanceKm);
             setExtraSurcharge(res.data.extraSurcharge || 0);
             setSurchargeNote(res.data.surchargeNote || '');
+            setIsRaining(res.data.isRaining || false);
+            setRainFee(res.data.rainFee || 0);
           } else {
             setEstimatedFee(null);
             setDistanceKm(null);
             setExtraSurcharge(0);
             setSurchargeNote('');
+            setIsRaining(false);
+            setRainFee(0);
           }
         } catch (error) {
           console.error('Lỗi tính phí:', error);
@@ -63,12 +69,16 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
           setDistanceKm(null);
           setExtraSurcharge(0);
           setSurchargeNote('');
+          setIsRaining(false);
+          setRainFee(0);
         } finally {
           setEstimating(false);
         }
       } else {
         setEstimatedFee(null);
         setDistanceKm(null);
+        setIsRaining(false);
+        setRainFee(0);
       }
     };
     
@@ -202,6 +212,11 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
               <div className="text-emerald-700 font-bold text-xs mt-1">
                 🛒 Đã cộng thêm 5.000đ phí mua hộ vào cước đơn hàng.
               </div>
+              {isRaining && rainFee > 0 && (
+                <div className="text-amber-600 font-bold text-xs mt-1">
+                  🌧️ Đã bao gồm phụ phí mưa +{rainFee.toLocaleString('vi-VN')}đ
+                </div>
+              )}
               {extraSurcharge > 0 && (
                 <div className="text-red-500 text-xs mt-1">
                   <strong>+ {extraSurcharge.toLocaleString('vi-VN')}đ</strong> {surchargeNote}
@@ -246,7 +261,7 @@ export default function PurchaseForm({ onBooking, loading, defaultLocation, defa
       <LocationPicker 
         isOpen={mapConfig !== null}
         onClose={() => setMapConfig(null)}
-        initialPosition={mapConfig?.pos}
+        initialLocation={mapConfig?.pos ? { lat: mapConfig.pos[0], lng: mapConfig.pos[1] } : defaultLocation}
         initialSearchQuery={mapConfig?.query}
         onSelect={(loc) => {
           if (mapConfig?.type === 'pickup') {

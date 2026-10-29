@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { MapPin, Search, Bell, User, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, TicketPercent, Volume2, VolumeX, Bike, ShoppingCart, Newspaper, Gift, Phone, Utensils } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, Newspaper, Gift, Utensils, Truck, AlertCircle, X } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import LocationPicker from '../../components/LocationPicker';
-import AnnouncementSlider from '../../components/AnnouncementSlider';
-import { getActiveAnnouncements, api, getFullImageUrl } from '../../services/api';
+import { getActiveAnnouncements, getMyOrders, api, getFullImageUrl } from '../../services/api';
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
@@ -13,59 +14,125 @@ const CustomerDashboard = () => {
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [announcements, setAnnouncements] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [isMuted, setIsMuted] = useState(true);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [listModalType, setListModalType] = useState(null); // 'PROMO' | 'NEWS' | null
+  const [activeOrders, setActiveOrders] = useState([]);
+  const [customerName, setCustomerName] = useState(() => {
+    try {
+      const savedUser = JSON.parse(localStorage.getItem('customerData') || '{}');
+      return savedUser.name || '';
+    } catch (e) {
+      return '';
+    }
+  });
   const isAuthenticated = !!localStorage.getItem('customerToken');
 
   const promotions = announcements.filter(a => a.type === 'PROMO');
   const news = announcements.filter(a => a.type === 'NEWS');
   const banners = announcements.filter(a => a.type === 'BANNER');
 
-
   useEffect(() => {
     // Ưu tiên đọc từ sessionStorage (vị trí tạm thời trong phiên làm việc)
     const saved = sessionStorage.getItem('savedLocation');
     if (saved) {
-      const loc = JSON.parse(saved);
-      setLocationDetails(loc);
-      const shortAddress = loc.address.split(',').slice(0, 3).join(', ');
-      setAddress(shortAddress);
+      try {
+        const loc = JSON.parse(saved);
+        if (loc && loc.lat && loc.lng) {
+          setLocationDetails(loc);
+          const shortAddress = (loc.address || '').split(',').slice(0, 3).join(', ');
+          setAddress(shortAddress || 'Vị trí đã chọn');
+          return;
+        }
+      } catch (e) {}
+    }
+
+    const detectLocation = async () => {
+      try {
+        let lat, lng;
+        if (Capacitor.isNativePlatform()) {
+          const perm = await Geolocation.checkPermissions();
+          if (perm.location !== 'granted') {
+            await Geolocation.requestPermissions();
+          }
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 7000 });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        } else if ('geolocation' in navigator) {
+          const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 6000,
+              maximumAge: 30000
+            });
+          });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        } else {
+          setAddress('Trình duyệt không hỗ trợ GPS');
+          return;
+        }
+
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=vi`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            const shortAddress = data.display_name.split(',').slice(0, 3).join(', ');
+            setAddress(shortAddress);
+            const locData = { lat, lng, address: data.display_name };
+            setLocationDetails(locData);
+            sessionStorage.setItem('savedLocation', JSON.stringify(locData));
+          } else {
+            const fallbackAddr = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            setAddress('Vị trí hiện tại của bạn');
+            const locData = { lat, lng, address: fallbackAddr };
+            setLocationDetails(locData);
+            sessionStorage.setItem('savedLocation', JSON.stringify(locData));
+          }
+        } catch (error) {
+          const locData = { lat, lng, address: 'Vị trí hiện tại của bạn' };
+          setAddress('Vị trí hiện tại của bạn');
+          setLocationDetails(locData);
+          sessionStorage.setItem('savedLocation', JSON.stringify(locData));
+        }
+      } catch (err) {
+        setAddress('Chưa cấp quyền GPS. Bấm để chọn vị trí.');
+      }
+    };
+
+    detectLocation();
+  }, []);
+
+  // Lấy đơn hàng đang diễn ra để hiển thị thanh theo dõi nhanh trên Trang chủ
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setActiveOrders([]);
       return;
     }
 
-    // Nếu chưa có, xin quyền vị trí và dịch ra tên đường
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=vi`);
-            const data = await res.json();
-            if (data && data.display_name) {
-              const shortAddress = data.display_name.split(',').slice(0, 3).join(', ');
-              setAddress(shortAddress);
-              const locData = { lat, lng, address: data.display_name };
-              setLocationDetails(locData);
-              sessionStorage.setItem('savedLocation', JSON.stringify(locData));
-            } else {
-              setAddress('Không thể xác định tên đường');
-              setLocationDetails({ lat, lng, address: 'Không thể xác định tên đường' });
-            }
-          } catch (error) {
-            setAddress('Vị trí của bạn (Lỗi mạng)');
-            setLocationDetails({ lat, lng, address: 'Vị trí của bạn' });
-          }
-        },
-        (err) => {
-          setAddress('Chưa cấp quyền GPS. Bấm để chọn.');
-        },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-      );
-    } else {
-      setAddress('Trình duyệt không hỗ trợ GPS');
-    }
-  }, []);
+    const fetchOngoingOrders = async () => {
+      try {
+        const res = await getMyOrders();
+        if (res && res.success && Array.isArray(res.data)) {
+          const ongoing = res.data.filter(o =>
+            ['DRAFT', 'WAITING_SHOP', 'PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(o.status)
+          );
+          setActiveOrders(ongoing);
+        }
+      } catch (err) {
+        console.error('Lỗi lấy đơn đang chạy:', err);
+      }
+    };
+
+    fetchOngoingOrders();
+
+    const handleRefreshOrders = () => fetchOngoingOrders();
+    window.addEventListener('refresh_orders_data', handleRefreshOrders);
+    window.addEventListener('order_deleted_event', handleRefreshOrders);
+    return () => {
+      window.removeEventListener('refresh_orders_data', handleRefreshOrders);
+      window.removeEventListener('order_deleted_event', handleRefreshOrders);
+    };
+  }, [isAuthenticated]);
 
   // Lấy Bảng Tin (Tin Tức & Khuyến Mãi) độc lập
   useEffect(() => {
@@ -96,12 +163,9 @@ const CustomerDashboard = () => {
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
     sessionStorage.setItem('savedLocation', JSON.stringify(loc));
-    // Cắt ngắn để hiển thị trên top bar
-    const shortAddress = loc.address.split(',').slice(0, 3).join(', ');
-    setAddress(shortAddress);
+    const shortAddress = (loc.address || '').split(',').slice(0, 3).join(', ');
+    setAddress(shortAddress || 'Vị trí đã chọn');
   };
-
-  const [customerName, setCustomerName] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -110,6 +174,7 @@ const CustomerDashboard = () => {
           const res = await api.get('/auth/customer/me');
           if (res.data && res.data.success) {
             setCustomerName(res.data.data.name);
+            localStorage.setItem('customerData', JSON.stringify(res.data.data));
           }
         } catch (error) {
           console.error(error);
@@ -131,10 +196,60 @@ const CustomerDashboard = () => {
     if (!isAuthenticated) {
       localStorage.setItem('intendedService', serviceType);
       navigate('/login');
+    } else if (serviceType === 'ALOFOOD') {
+      navigate('/alofood');
     } else {
       navigate(`/customer/book/${serviceType}`);
     }
   };
+
+  const getActiveOrderLabel = (order) => {
+    if (order.status === 'DRAFT') {
+      if (order.adminReviewed && order.deliveryFee > 0) {
+        return {
+          title: `💰 Đã có báo giá: ${order.deliveryFee.toLocaleString('vi-VN')}đ`,
+          subtitle: 'Bấm vào đây để xác nhận đặt đơn ngay!',
+          urgent: true
+        };
+      }
+      return {
+        title: '⏳ Tổng đài đang tính phí cho đơn của bạn',
+        subtitle: `Mã đơn #${order.orderCode || order._id.slice(-6).toUpperCase()}`,
+        urgent: false
+      };
+    }
+    if (order.status === 'WAITING_SHOP') {
+      return {
+        title: '🍲 Đang chờ quán xác nhận đơn đồ ăn',
+        subtitle: order.pickupAddress || 'AloFood',
+        urgent: false
+      };
+    }
+    if (order.status === 'PENDING') {
+      return {
+        title: '🔍 Hệ thống đang tìm tài xế gần bạn...',
+        subtitle: order.deliveryAddress || order.pickupAddress,
+        urgent: false
+      };
+    }
+    if (order.status === 'ACCEPTED') {
+      const driverName = order.assignedTo?.name || 'Tài xế';
+      const plate = order.assignedTo?.licensePlate || order.assignedTo?.vehiclePlate || '';
+      return {
+        title: order.serviceType === 'DAT_XE' ? `🛵 ${driverName} đang đến đón bạn` : `🛵 ${driverName} đang đi lấy hàng`,
+        subtitle: plate ? `Biển số: ${plate} • Bấm để xem bản đồ` : 'Bấm để theo dõi vị trí tài xế',
+        urgent: false
+      };
+    }
+    return {
+      title: order.serviceType === 'DAT_XE' ? '🚀 Đang trong hành trình di chuyển' : '🚀 Tài xế đang giao hàng đến bạn',
+      subtitle: order.assignedTo?.name ? `Tài xế: ${order.assignedTo.name} • Xem bản đồ trực tiếp` : 'Bấm để xem lộ trình trực tiếp',
+      urgent: false
+    };
+  };
+
+  const primaryActiveOrder = activeOrders[0] || null;
+  const activeOrderInfo = primaryActiveOrder ? getActiveOrderLabel(primaryActiveOrder) : null;
 
   return (
     <motion.div 
@@ -142,9 +257,8 @@ const CustomerDashboard = () => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
       transition={{ duration: 0.3 }}
-      className="pb-6 pt-4 px-4 md:px-8 max-w-7xl mx-auto bg-[#fafafa] relative"
+      className="pb-10 pt-4 px-4 md:px-8 max-w-7xl mx-auto bg-[#fafafa] relative"
     >
-      
       {/* HEADER: Địa điểm của tôi */}
       <div 
         onClick={() => setShowLocationPicker(true)}
@@ -164,6 +278,42 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
+      {/* THANH NỔI ĐƠN HÀNG ĐANG DIỄN RA (LIVE ACTIVE ORDER BAR) */}
+      <AnimatePresence>
+        {primaryActiveOrder && activeOrderInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            onClick={() => navigate(`/customer/order/${primaryActiveOrder._id}`)}
+            className={`mb-5 p-4 rounded-2xl cursor-pointer shadow-md border transition-all active:scale-[0.99] flex items-center justify-between gap-3 ${
+              activeOrderInfo.urgent
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400 animate-pulse'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-500'
+            }`}
+          >
+            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+              <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+                {activeOrderInfo.urgent ? <AlertCircle size={22} className="text-white" /> : <Truck size={22} className="text-white" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                    Đơn đang chạy {activeOrders.length > 1 ? `(+${activeOrders.length - 1})` : ''}
+                  </span>
+                </div>
+                <h4 className="font-extrabold text-sm md:text-[15px] truncate mt-1">{activeOrderInfo.title}</h4>
+                <p className="text-xs text-white/85 truncate mt-0.5">{activeOrderInfo.subtitle}</p>
+              </div>
+            </div>
+            <div className="bg-white text-blue-600 px-3 py-2 rounded-xl text-xs font-extrabold shrink-0 flex items-center gap-1 shadow-sm">
+              <span>Theo dõi</span>
+              <ChevronRight size={14} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* LỜI CHÀO GREETING */}
       <div className="mb-6 mt-1 px-1">
         <h2 className="text-lg md:text-xl font-medium text-gray-600 leading-tight">
@@ -178,7 +328,7 @@ const CustomerDashboard = () => {
         </motion.div>
       </div>
 
-      {/* DỊCH VỤ NỔI BẬT (Như mẫu) */}
+      {/* DỊCH VỤ NỔI BẬT */}
       <div className="mb-10">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Dịch vụ nổi bật</h2>
         <div className="grid grid-cols-4 md:grid-cols-5 gap-3 md:gap-6 lg:gap-8 max-w-4xl mx-auto md:mx-0">
@@ -207,7 +357,7 @@ const CustomerDashboard = () => {
 
           {/* ALOFOOD */}
           <div 
-            onClick={() => navigate('/alofood')}
+            onClick={() => handleServiceClick('ALOFOOD')}
             className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 rounded-bl-lg">HOT</div>
@@ -284,34 +434,46 @@ const CustomerDashboard = () => {
         <div className="lg:col-span-1">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl md:text-2xl font-bold text-gray-800">Khuyến mãi</h2>
-            <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Xem tất cả ›</button>
+            {promotions.length > 0 && (
+              <button
+                onClick={() => setListModalType('PROMO')}
+                className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full"
+              >
+                Xem tất cả ({promotions.length}) ›
+              </button>
+            )}
           </div>
           
           <div className="grid grid-cols-1 gap-5 lg:gap-6">
             {promotions.length > 0 ? promotions.slice(0, 2).map((promo, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(promo)} className="bg-gradient-to-br from-[#1a2b4c] to-[#0a192f] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
-                <img src={promo.imageUrl ? getFullImageUrl(promo.imageUrl) : '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                {promo.imageUrl ? (
+                  <img src={getFullImageUrl(promo.imageUrl)} alt="Promo" className="w-full h-full object-cover opacity-70 group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-900 flex items-center justify-end pr-8 opacity-80">
+                    <Gift size={96} className="text-white/10" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-5 left-5 right-5">
-                  <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">GIẢM 50%</span>
-                  <h3 className="text-white font-bold text-lg leading-tight">{promo.title || 'Đồng giá 15k nội thành'}</h3>
+                  <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">ƯU ĐÃI</span>
+                  <h3 className="text-white font-bold text-lg leading-tight">{promo.title || 'Chương trình ưu đãi AloShipp'}</h3>
                 </div>
               </div>
             )) : (
-              // Mẫu mặc định nếu không có từ API
               <>
-                <div className="bg-gradient-to-br from-[#3b4b6b] to-[#1e2a45] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+                <div className="bg-gradient-to-br from-[#3b4b6b] to-[#1e2a45] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)]">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a192f] to-transparent opacity-80"></div>
                   <div className="absolute bottom-5 left-5 right-5">
-                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">GIẢM 50%</span>
+                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">ƯU ĐÃI</span>
                     <h3 className="text-white font-bold text-lg leading-tight">Đồng giá 15k nội thành</h3>
                   </div>
                 </div>
-                <div className="bg-gradient-to-br from-[#2a3b5c] to-[#0a192f] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
+                <div className="bg-gradient-to-br from-[#2a3b5c] to-[#0a192f] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)]">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a192f] to-transparent opacity-80"></div>
                   <div className="absolute bottom-5 left-5 right-5">
-                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">HOÀN TIỀN</span>
-                    <h3 className="text-white font-bold text-lg leading-tight">Thanh toán qua ví AloPay</h3>
+                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">TIỆN ÍCH</span>
+                    <h3 className="text-white font-bold text-lg leading-tight">Đặt món AloFood giao tận nơi siêu tốc</h3>
                   </div>
                 </div>
               </>
@@ -323,41 +485,53 @@ const CustomerDashboard = () => {
         <div className="lg:col-span-1">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-xl md:text-2xl font-bold text-gray-800">Tin tức</h2>
-            <button className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full">Chi tiết ›</button>
+            {news.length > 0 && (
+              <button
+                onClick={() => setListModalType('NEWS')}
+                className="text-xs md:text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors bg-blue-50 px-3 py-1.5 rounded-full"
+              >
+                Chi tiết ({news.length}) ›
+              </button>
+            )}
           </div>
           
           <div className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-5 h-full justify-center">
             {news.length > 0 ? news.slice(0, 2).map((item, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(item)} className="flex gap-4 cursor-pointer group">
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm">
-                  <img src={item.imageUrl ? getFullImageUrl(item.imageUrl) : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-blue-50 flex-shrink-0 shadow-sm flex items-center justify-center text-blue-500">
+                  {item.imageUrl ? (
+                    <img src={getFullImageUrl(item.imageUrl)} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <Newspaper size={32} />
+                  )}
                 </div>
                 <div className="flex flex-col justify-center flex-1">
                   <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">
                     {item.title}
                   </h4>
-                  <span className="text-[11px] text-gray-400 font-medium">2 giờ trước</span>
+                  <span className="text-[11px] text-gray-400 font-medium">
+                    {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : 'Mới cập nhật'}
+                  </span>
                 </div>
               </div>
             )) : (
-              // Mẫu mặc định nếu API rỗng
               <>
-                <div className="flex gap-4 cursor-pointer group">
+                <div className="flex gap-4">
                   <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-gray-100 flex-shrink-0 flex items-center justify-center text-gray-400 shadow-sm">
                     <Newspaper size={32} />
                   </div>
                   <div className="flex flex-col justify-center flex-1">
-                    <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">Cập nhật tính năng theo dõi đơn hàng thời gian thực</h4>
-                    <span className="text-[11px] text-gray-400 font-medium mt-1">2 giờ trước</span>
+                    <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight line-clamp-3">Cập nhật tính năng theo dõi đơn hàng thời gian thực</h4>
+                    <span className="text-[11px] text-gray-400 font-medium mt-1">Bản tin AloShipp</span>
                   </div>
                 </div>
-                <div className="flex gap-4 cursor-pointer group">
+                <div className="flex gap-4">
                   <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-slate-800 flex-shrink-0 flex items-center justify-center text-white shadow-sm">
                     <Package size={32} />
                   </div>
                   <div className="flex flex-col justify-center flex-1">
-                    <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">Mở rộng mạng lưới phủ sóng thêm 15 tỉnh thành mới</h4>
-                    <span className="text-[11px] text-gray-400 font-medium mt-1">Hôm qua</span>
+                    <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight line-clamp-3">Đội ngũ tài xế AloShipp luôn sẵn sàng phục vụ</h4>
+                    <span className="text-[11px] text-gray-400 font-medium mt-1">Bản tin AloShipp</span>
                   </div>
                 </div>
               </>
@@ -372,8 +546,53 @@ const CustomerDashboard = () => {
           isOpen={showLocationPicker}
           onClose={() => setShowLocationPicker(false)}
           onSelect={handleLocationSelect}
-          initialPosition={null}
+          initialLocation={locationDetails}
         />
+      )}
+
+      {/* MODAL DANH SÁCH KHUYẾN MÃI / TIN TỨC */}
+      {listModalType && (
+        <div className="fixed inset-0 z-[95] bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4 backdrop-blur-sm" onClick={() => setListModalType(null)}>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-lg max-h-[85vh] overflow-hidden flex flex-col shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
+              <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                {listModalType === 'PROMO' ? <><Gift size={20} className="text-orange-500" /> Tất cả Khuyến mãi</> : <><Newspaper size={20} className="text-blue-600" /> Tất cả Tin tức</>}
+              </h3>
+              <button onClick={() => setListModalType(null)} className="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto space-y-3 flex-1 bg-gray-50">
+              {(listModalType === 'PROMO' ? promotions : news).map((item, idx) => (
+                <div
+                  key={item._id || idx}
+                  onClick={() => {
+                    setListModalType(null);
+                    setSelectedAnnouncement(item);
+                  }}
+                  className="bg-white p-3.5 rounded-2xl border border-gray-100 shadow-sm flex gap-3.5 cursor-pointer hover:border-blue-200 active:scale-[0.99] transition-all"
+                >
+                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-blue-50 shrink-0 flex items-center justify-center text-blue-500">
+                    {item.imageUrl ? (
+                      <img src={getFullImageUrl(item.imageUrl)} alt={item.title} className="w-full h-full object-cover" />
+                    ) : listModalType === 'PROMO' ? (
+                      <Gift size={28} className="text-orange-500" />
+                    ) : (
+                      <Newspaper size={28} />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <h4 className="font-bold text-gray-800 text-sm line-clamp-2">{item.title}</h4>
+                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">{item.content}</p>
+                    <span className="text-[10px] text-gray-400 mt-1.5">
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString('vi-VN') : ''}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
 
       {/* MODAL XEM CHI TIẾT BẢNG TIN */}
@@ -422,8 +641,6 @@ const CustomerDashboard = () => {
           </div>
         </div>
       )}
-
-
     </motion.div>
   );
 };

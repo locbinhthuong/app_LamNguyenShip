@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { User, Phone, LogOut, ShieldCheck, ChevronRight, X, Loader2, Camera, Trash2, FileText, HelpCircle, QrCode, ScrollText, Inbox, Store } from 'lucide-react';
-import { api, uploadCustomerAvatar, getFullImageUrl, deleteMyAccount, getActiveAnnouncements } from '../../services/api';
+import { api, uploadCustomerAvatar, getFullImageUrl, deleteMyAccount, getActiveAnnouncements, disconnectSocket } from '../../services/api';
+import { compressImage } from '../../utils/imageCompressor';
+import { useToast } from '../../context/ToastContext';
 
 const CustomerProfile = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [profile, setProfile] = useState(null);
   const userRole = localStorage.getItem('customerRole');
 
@@ -61,14 +64,16 @@ const CustomerProfile = () => {
   }, []);
 
   const executeLogout = () => {
+    disconnectSocket();
     localStorage.clear();
-    // navigate('/login') will be handled by Router redirect or just window location
-    navigate('/login');
+    window.dispatchEvent(new Event('auth_change'));
+    navigate('/login', { replace: true });
   };
 
   const handleSwitchToSeller = () => {
     localStorage.setItem('activeMode', 'SHOP');
-    window.location.href = '/shop';
+    window.dispatchEvent(new Event('auth_change'));
+    navigate('/shop', { replace: true });
   };
 
   const openEditModal = () => {
@@ -89,21 +94,22 @@ const CustomerProfile = () => {
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     if (!editForm.name.trim() || !editForm.phone.trim()) {
-      return alert('Tên và Số điện thoại không được để trống.');
+      return showToast('Tên và Số điện thoại không được để trống.', 'error');
     }
     setLoading(true);
     try {
-       // 1. Nếu có avatar mới, upload trước
+       // 1. Nếu có avatar mới, nén và upload trước
        let finalAvatarUrl = editForm.avatar;
        if (avatarFile) {
          try {
-           const result = await uploadCustomerAvatar(avatarFile);
+           const compressedAvatar = await compressImage(avatarFile, 1, 800);
+           const result = await uploadCustomerAvatar(compressedAvatar);
            if (result.data.success) {
              finalAvatarUrl = result.data.data.url;
            }
          } catch (uploadError) {
            console.error("Lỗi upload ảnh:", uploadError);
-           alert("Lỗi upload ảnh, vui lòng thử lại sau!");
+           showToast("Lỗi tải ảnh đại diện, vui lòng thử lại sau!", "error");
            setLoading(false);
            return;
          }
@@ -113,12 +119,15 @@ const CustomerProfile = () => {
        const payload = { ...editForm, avatar: finalAvatarUrl };
        const res = await api.put('/auth/customer/me', payload);
        if (res.data.success) {
-         setProfile(res.data.data);
+         const updatedUser = res.data.data;
+         setProfile(updatedUser);
+         const currentData = JSON.parse(localStorage.getItem('customerData') || '{}');
+         localStorage.setItem('customerData', JSON.stringify({ ...currentData, ...updatedUser }));
          setShowEdit(false);
-         alert('Cập nhật thông tin thành công!');
+         showToast('Cập nhật thông tin thành công!', 'success');
        }
     } catch (err) {
-       alert(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.');
+       showToast(err.response?.data?.message || 'Có lỗi xảy ra, vui lòng thử lại.', 'error');
     } finally {
        setLoading(false);
     }
@@ -129,12 +138,12 @@ const CustomerProfile = () => {
       setIsDeleting(true);
       const res = await deleteMyAccount();
       if (res.success) {
-        alert('Tài khoản của bạn đã được xoá thành công.');
-        handleLogout();
+        showToast('Tài khoản của bạn đã được xoá thành công.', 'info');
+        executeLogout();
       }
     } catch (error) {
       console.error('Lỗi khi xoá tài khoản:', error);
-      alert('Không thể thực hiện yêu cầu xoá tài khoản. Vui lòng thử lại sau.');
+      showToast('Không thể thực hiện yêu cầu xoá tài khoản. Vui lòng thử lại sau.', 'error');
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);

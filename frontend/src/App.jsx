@@ -244,14 +244,6 @@ function App() {
               </ProtectedRoute>
             } 
           />
-          <Route 
-            path="/shop/order/:id" 
-            element={
-              <ProtectedRoute allowedRole="SHOP">
-                <OrderDetail />
-              </ProtectedRoute>
-            } 
-          />
         </Routes>
       </AnimatePresence>
       </div>

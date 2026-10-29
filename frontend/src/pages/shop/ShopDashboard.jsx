@@ -6,11 +6,15 @@ import {
   MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon, Bike, 
   ShoppingCart, Headset, Newspaper, Gift, Package, ShoppingBag, Layers, History 
 } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { Geolocation } from '@capacitor/geolocation';
 import { api, getActiveAnnouncements, getFullImageUrl } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 import LocationPicker from '../../components/LocationPicker';
 
 const ShopDashboard = () => {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState({
     pending: 0,
@@ -32,10 +36,9 @@ const ShopDashboard = () => {
   const news = announcements.filter(a => a.type === 'NEWS');
   const banners = announcements.filter(a => a.type === 'BANNER');
 
-  const shopName = localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
-  
   // Lấy định vị gốc của Shop từ customerData
   const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
+  const shopName = customerData.shopName || localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn';
   const defaultLocation = customerData.defaultLocation;
 
   const calculateStatsAndSet = (newOrders) => {
@@ -91,37 +94,62 @@ const ShopDashboard = () => {
   useEffect(() => {
     const saved = localStorage.getItem('savedShopLocation');
     if (saved) {
-      const loc = JSON.parse(saved);
-      setLocationDetails(loc);
-      const shortAddress = loc.address.split(',').slice(0, 3).join(', ');
-      setAddress(shortAddress);
-    } else if (defaultLocation && defaultLocation.lat) {
-      setLocationDetails(defaultLocation);
-      const shortAddress = defaultLocation.address.split(',').slice(0, 3).join(', ');
-      setAddress(shortAddress);
-    } else {
-      if ('geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          async (pos) => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
-            try {
-              const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-              const data = await res.json();
-              if (data && data.display_name) {
-                const locData = { lat, lng, address: data.display_name };
-                setLocationDetails(locData);
-                const shortAddress = data.display_name.split(',').slice(0, 3).join(', ');
-                setAddress(shortAddress);
-              }
-            } catch (err) {}
-          },
-          (err) => { setAddress('Chưa xác định toạ độ'); }, { enableHighAccuracy: true, timeout: 5000 }
-        );
-      } else {
-        setAddress('Chưa xác định toạ độ');
-      }
+      try {
+        const loc = JSON.parse(saved);
+        if (loc && loc.lat && loc.lng) {
+          setLocationDetails(loc);
+          const shortAddress = (loc.address || '').split(',').slice(0, 3).join(', ');
+          setAddress(shortAddress || 'Vị trí đã chọn');
+          return;
+        }
+      } catch (e) {}
     }
+    if (defaultLocation && defaultLocation.lat) {
+      setLocationDetails(defaultLocation);
+      const shortAddress = (defaultLocation.address || '').split(',').slice(0, 3).join(', ');
+      setAddress(shortAddress || 'Định vị gốc của quán');
+      return;
+    }
+
+    const detectShopGps = async () => {
+      try {
+        let lat, lng;
+        if (Capacitor.isNativePlatform()) {
+          const perm = await Geolocation.checkPermissions();
+          if (perm.location !== 'granted') {
+            await Geolocation.requestPermissions();
+          }
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 7000 });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        } else if ('geolocation' in navigator) {
+          const pos = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 6000 });
+          });
+          lat = pos.coords.latitude;
+          lng = pos.coords.longitude;
+        } else {
+          setAddress('Chưa xác định toạ độ');
+          return;
+        }
+
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=vi`);
+        const data = await res.json();
+        if (data && data.display_name) {
+          const locData = { lat, lng, address: data.display_name };
+          setLocationDetails(locData);
+          const shortAddress = data.display_name.split(',').slice(0, 3).join(', ');
+          setAddress(shortAddress);
+        } else {
+          setAddress('Vị trí hiện tại của quán');
+          setLocationDetails({ lat, lng, address: 'Vị trí hiện tại của quán' });
+        }
+      } catch (err) {
+        setAddress('Chưa xác định toạ độ (Bấm để chọn)');
+      }
+    };
+
+    detectShopGps();
   }, []);
 
   const fetchOrders = async () => {
@@ -151,7 +179,7 @@ const ShopDashboard = () => {
   const handleLocationSelect = (loc) => {
     setLocationDetails(loc);
     localStorage.setItem('savedShopLocation', JSON.stringify(loc));
-    const shortAddress = loc.address.split(',').slice(0, 3).join(', ');
+    const shortAddress = (loc.address || '').split(',').slice(0, 3).join(', ');
     setAddress(shortAddress);
   };
 
@@ -160,10 +188,11 @@ const ShopDashboard = () => {
     localStorage.removeItem('savedShopLocation');
     if (defaultLocation && defaultLocation.lat) {
       setLocationDetails(defaultLocation);
-      const shortAddress = defaultLocation.address.split(',').slice(0, 3).join(', ');
+      const shortAddress = (defaultLocation.address || '').split(',').slice(0, 3).join(', ');
       setAddress(shortAddress);
+      showToast('Đã khôi phục về định vị gốc của cửa hàng!', 'success');
     } else {
-      alert('Bạn chưa cài đặt Định vị gốc trong mục Tài khoản!');
+      showToast('Bạn chưa cài đặt Định vị gốc trong mục Tài khoản!', 'warning');
     }
   };
 
@@ -329,7 +358,13 @@ const ShopDashboard = () => {
           <div className="grid grid-cols-1 gap-5 lg:gap-6">
             {promotions.length > 0 ? promotions.slice(0, 2).map((promo, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(promo)} className="bg-gradient-to-br from-[#1a2b4c] to-[#0a192f] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
-                <img src={promo.imageUrl ? getFullImageUrl(promo.imageUrl) : '/default_promo.png'} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                {promo.imageUrl ? (
+                  <img src={getFullImageUrl(promo.imageUrl)} alt="Promo" className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-blue-700 via-indigo-800 to-slate-900 flex items-center justify-end pr-8 opacity-80">
+                    <Gift size={96} className="text-white/10" />
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-5 left-5 right-5">
                   <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">CHƯƠNG TRÌNH</span>
@@ -342,7 +377,7 @@ const ShopDashboard = () => {
                 <div className="bg-gradient-to-br from-[#3b4b6b] to-[#1e2a45] rounded-[20px] h-52 md:h-60 overflow-hidden relative shadow-[0_8px_20px_rgba(0,0,0,0.06)] group cursor-pointer">
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0a192f] to-transparent opacity-80"></div>
                   <div className="absolute bottom-5 left-5 right-5">
-                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">GIẢM 50%</span>
+                    <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-2 py-0.5 rounded mb-2 uppercase">ƯU ĐÃI SHOP</span>
                     <h3 className="text-white font-bold text-lg leading-tight">Đồng giá 15k nội thành cho Shop</h3>
                   </div>
                 </div>
@@ -360,8 +395,12 @@ const ShopDashboard = () => {
           <div className="bg-white rounded-[20px] p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.03)] border border-gray-100 flex flex-col gap-5 h-full justify-start">
             {news.length > 0 ? news.slice(0, 3).map((item, idx) => (
               <div key={idx} onClick={() => setSelectedAnnouncement(item)} className="flex gap-4 cursor-pointer group">
-                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-gray-100 flex-shrink-0 shadow-sm">
-                  <img src={item.imageUrl ? getFullImageUrl(item.imageUrl) : '/default_news.png'} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden bg-blue-50 flex-shrink-0 shadow-sm flex items-center justify-center text-blue-500">
+                  {item.imageUrl ? (
+                    <img src={getFullImageUrl(item.imageUrl)} alt="News" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <Newspaper size={32} />
+                  )}
                 </div>
                 <div className="flex flex-col justify-center flex-1">
                   <h4 className="text-sm md:text-[15px] font-bold text-gray-800 mb-2 leading-tight group-hover:text-blue-600 transition-colors line-clamp-3">
@@ -446,7 +485,7 @@ const ShopDashboard = () => {
           isOpen={showLocationPicker}
           onClose={() => setShowLocationPicker(false)}
           onSelect={handleLocationSelect}
-          initialPosition={null}
+          initialLocation={locationDetails}
         />
       )}
 

@@ -3,8 +3,10 @@ import { MapPin, Navigation, Wallet, Landmark, Handshake, CreditCard, DollarSign
 import LocationPicker from '../LocationPicker';
 import CurrencyInput from '../CurrencyInput';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
+import { useToast } from '../../context/ToastContext';
 
 export default function CoordinationForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
+  const { showToast } = useToast();
   const [subType, setSubType] = useState('GAP_TRUC_TIEP'); // NAP_TIEN, RUT_TIEN, GAP_TRUC_TIEP
 
   const [form, setForm] = useState({
@@ -33,16 +35,19 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.pickupAddress.trim()) return alert('Vui lòng chọn hoặc nhập Vị Trí Giao Dịch!');
-    // Lấy thông tin từ Account, không cần bắt nhập tay
-    // if (!form.customerName.trim() || !form.customerPhone.trim()) { ... }
+    if (!form.pickupAddress.trim()) {
+      showToast('Vui lòng chọn hoặc nhập Vị Trí Giao Dịch!', 'warning');
+      return;
+    }
 
     if (subType === 'NAP_TIEN' || subType === 'RUT_TIEN') {
       if (!form.bankName.trim() || !form.bankAccount.trim() || !form.bankAccountName.trim()) {
-        return alert('Vui lòng nhập Đầy đủ Tên Ngân Hàng, Số Tài Khoản và Tên Chủ Tài Khoản!');
+        showToast('Vui lòng nhập đầy đủ Tên Ngân Hàng, Số Tài Khoản và Tên Chủ Tài Khoản!', 'warning');
+        return;
       }
       if (!form.transactionAmount || parseInt(form.transactionAmount) <= 0) {
-        return alert('Vui lòng nhập Số Tiền hợp lệ!');
+        showToast('Vui lòng nhập Số Tiền hợp lệ!', 'warning');
+        return;
       }
     }
 
@@ -192,7 +197,6 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
         </div>
       )}
 
-      {/* THÔNG TIN KHÁCH HÀNG ĐÃ ĐƯỢC ẨN VÌ TỰ LẤY TỪ ACCOUNT DỮ LIỆU CHÍNH */}
       {subType !== 'GAP_TRUC_TIEP' && (
         <div className="bg-white p-4 rounded-2xl border border-gray-100 space-y-3">
           <div>
@@ -249,7 +253,7 @@ export default function CoordinationForm({ onBooking, loading, defaultLocation, 
       <LocationPicker 
         isOpen={mapConfig !== null}
         onClose={() => setMapConfig(null)}
-        initialPosition={mapConfig?.pos}
+        initialLocation={mapConfig?.pos ? { lat: mapConfig.pos[0], lng: mapConfig.pos[1] } : defaultLocation}
         initialSearchQuery={mapConfig?.query}
         onSelect={(loc) => {
           if (mapConfig?.type === 'pickup') {

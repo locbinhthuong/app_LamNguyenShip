@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { ArrowLeft, Package, Bike, ShoppingBag, Navigation } from 'lucide-react';
 import { getCustomerProfile, createOrder } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 import DeliveryForm from '../../components/booking/DeliveryForm';
 import RideForm from '../../components/booking/RideForm';
@@ -11,6 +12,7 @@ import CoordinationForm from '../../components/booking/CoordinationForm';
 export default function BookingFlow() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState('GIAO_HANG');
   const [loading, setLoading] = useState(false);
   const isSubmittingRef = React.useRef(false);
@@ -52,13 +54,14 @@ export default function BookingFlow() {
       const res = await createOrder(payload);
       if (res.success) {
         isSuccess = true;
-        alert('Tạo đơn thành công! Hệ thống đang tìm tài xế gần nhất để đến lấy hàng và giao ngay cho bạn.');
-        // Chuyển trang nhưng KHÔNG reset state loading để ngăn khách bấm đúp nút khi mạng lag
-        navigate('/customer/activity');
+        showToast('Tạo đơn thành công! Đang tìm tài xế gần nhất cho bạn.', 'success');
+        const createdOrderId = res.data?._id;
+        // Chuyển thẳng đến màn hình theo dõi đơn hàng vừa tạo
+        navigate(createdOrderId ? `/customer/order/${createdOrderId}` : '/customer/activity');
       }
     } catch (error) {
       console.error(error);
-      alert('Lỗi tạo đơn: ' + (error.response?.data?.message || 'Vui lòng thử lại.'));
+      showToast('Lỗi tạo đơn: ' + (error.response?.data?.message || 'Vui lòng thử lại.'), 'error');
     } finally {
       if (!isSuccess) {
         isSubmittingRef.current = false;
@@ -66,13 +69,6 @@ export default function BookingFlow() {
       }
     }
   };
-
-  const tabs = [
-    { id: 'GIAO_HANG', label: 'Giao Hàng', icon: Package },
-    { id: 'DAT_XE', label: 'Gọi Xe', icon: Bike },
-    { id: 'MUA_HO', label: 'Mua Hộ', icon: ShoppingBag },
-    { id: 'DIEU_PHOI', label: 'Điều Phối', icon: Navigation }
-  ];
 
   return (
     <div className="flex flex-col flex-1 w-full max-w-5xl mx-auto bg-gray-50 font-sans overflow-hidden md:border-x border-gray-100 md:shadow-sm">
@@ -88,8 +84,6 @@ export default function BookingFlow() {
           {activeTab === 'DIEU_PHOI' && 'Dịch Vụ Điều Phối'}
         </span>
       </div>
-
-      {/* ĐÃ XÓA TABS SWITCHER ĐỂ CHỈ TẬP TRUNG VÀO 1 DỊCH VỤ DUY NHẤT TRANH NHẦM LẪN */}
 
       {/* NỘI DUNG FORM */}
       <div className="flex-1 min-h-0 w-full overflow-y-auto p-4 animate-fadeIn">

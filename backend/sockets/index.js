@@ -88,14 +88,35 @@ const setupSocket = (io) => {
           ).select('name avatar isOnline').lean();
 
           if (driver && driver.isOnline) {
-            io.to('admins').emit('driver_location_update', {
+            const locPayload = {
               driverId: socket.user.id,
               name: driver.name || socket.user.name,
               avatar: driver.avatar,
               lat,
               lng,
               timestamp: Date.now()
-            });
+            };
+            io.to('admins').emit('driver_location_update', locPayload);
+
+            // Phát tọa độ trực tiếp tới Khách hàng / Shop đang có đơn hoạt động với tài xế này
+            const Order = require('../models/Order');
+            const activeOrders = await Order.find({
+              assignedTo: socket.user.id,
+              status: { $in: ['ACCEPTED', 'PICKED_UP', 'DELIVERING'] },
+              customerId: { $ne: null }
+            }).select('_id customerId alofoodDetails.shopId').lean();
+
+            for (const ord of activeOrders) {
+              const orderLocPayload = { ...locPayload, orderId: ord._id.toString() };
+              if (ord.customerId) {
+                const cid = ord.customerId.toString();
+                io.to(`customer_${cid}`).emit('driver_location_update', orderLocPayload);
+                io.to(`shop_${cid}`).emit('driver_location_update', orderLocPayload);
+              }
+              if (ord.alofoodDetails?.shopId) {
+                io.to(`shop_${ord.alofoodDetails.shopId.toString()}`).emit('driver_location_update', orderLocPayload);
+              }
+            }
           }
         } catch (e) {
           console.error('[Socket] Lỗi lưu GPS:', e.message);

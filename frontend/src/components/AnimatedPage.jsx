@@ -3,7 +3,7 @@ import { motion, useDragControls, useIsPresent } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const CUSTOMER_TABS = ['/', '/customer/activity', '/customer/notifications', '/customer/profile'];
-const SHOP_TABS = ['/shop', '/shop/activity', '/shop/notifications', '/shop/profile'];
+const SHOP_TABS = ['/shop', '/shop/orders', '/shop/activity', '/shop/statistics', '/shop/notifications', '/shop/profile'];
 
 const pageVariants = {
   enter: (direction) => ({
@@ -23,8 +23,9 @@ export default function AnimatedPage({ children, direction = 1 }) {
   const dragControls = useDragControls();
   const isPresent = useIsPresent(); // Kiểm tra xem trang có đang bị hủy (exit) không
   
-  // Chỉ cho phép kéo (drag) nếu đang ở các trang Tab chính
-  const isTab = CUSTOMER_TABS.includes(location.pathname) || SHOP_TABS.includes(location.pathname);
+  // Chỉ cho phép kéo (drag) nếu đã đăng nhập và đang ở các trang Tab chính
+  const isAuthenticated = !!localStorage.getItem('customerToken');
+  const isTab = isAuthenticated && (CUSTOMER_TABS.includes(location.pathname) || SHOP_TABS.includes(location.pathname));
 
   const handlePointerDown = (e) => {
     if (!isTab) return; // Khóa drag nếu không phải trang tab

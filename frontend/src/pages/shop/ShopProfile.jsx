@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, UserX, LogOut, Store, MapPin, ShieldCheck, Camera, FileText, HelpCircle, QrCode, X, Loader2, ScrollText, Inbox } from 'lucide-react';
-import { api, getFullImageUrl, uploadCustomerAvatar, getActiveAnnouncements } from '../../services/api';
+import { api, getFullImageUrl, uploadCustomerAvatar, getActiveAnnouncements, disconnectSocket } from '../../services/api';
 import { compressImage } from '../../utils/imageCompressor';
+import { useToast } from '../../context/ToastContext';
 import LocationPicker from '../../components/LocationPicker';
 
 export default function ShopProfile() {
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
 
   const [shopName, setShopName] = useState(customerData.shopName || localStorage.getItem('shopName') || 'Cửa Hàng Của Bạn');
@@ -15,10 +17,12 @@ export default function ShopProfile() {
   const [shopAddress, setShopAddress] = useState(customerData.shopAddress || localStorage.getItem('shopAddress') || 'Chưa cập nhật');
   const [shopAvatar, setShopAvatar] = useState(customerData.avatar || localStorage.getItem('shopAvatar') || '');
   const [shopCoverImage, setShopCoverImage] = useState(customerData.coverImage || localStorage.getItem('shopCoverImage') || '');
+  const [isOpenShop, setIsOpenShop] = useState(customerData.isOpen !== false);
+  const [defaultLocation, setDefaultLocation] = useState(customerData.defaultLocation || null);
 
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editForm, setEditForm] = useState({ shopName: '', phone: '', avatar: '', coverImage: '' });
+  const [editForm, setEditForm] = useState({ shopName: '', phone: '', password: '', avatar: '', coverImage: '' });
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState(null);
@@ -29,7 +33,37 @@ export default function ShopProfile() {
   const [termsData, setTermsData] = useState([]);
   const [termsTitle, setTermsTitle] = useState('');
   const [loadingTerms, setLoadingTerms] = useState(false);
-  const [showContact, setShowContact] = useState(false); // Can be removed later
+
+  useEffect(() => {
+    const fetchShopMe = async () => {
+      try {
+        const res = await api.get('/auth/customer/me');
+        if (res.data.success && res.data.data) {
+          const u = res.data.data;
+          localStorage.setItem('customerData', JSON.stringify(u));
+          if (u.shopName) {
+            localStorage.setItem('shopName', u.shopName);
+            setShopName(u.shopName);
+          }
+          if (u.phone) {
+            localStorage.setItem('shopPhone', u.phone);
+            setShopPhone(u.phone);
+          }
+          if (u.shopAddress) {
+            localStorage.setItem('shopAddress', u.shopAddress);
+            setShopAddress(u.shopAddress);
+          }
+          if (u.avatar !== undefined) setShopAvatar(u.avatar || '');
+          if (u.coverImage !== undefined) setShopCoverImage(u.coverImage || '');
+          if (u.isOpen !== undefined) setIsOpenShop(u.isOpen !== false);
+          if (u.defaultLocation) setDefaultLocation(u.defaultLocation);
+        }
+      } catch (err) {
+        console.error('Error fetching shop profile:', err);
+      }
+    };
+    fetchShopMe();
+  }, []);
 
   const fetchTerms = async (type, title) => {
     try {
@@ -51,14 +85,17 @@ export default function ShopProfile() {
 
   const handleLogout = () => {
     if (window.confirm('Bạn có chắc chắn muốn đăng xuất?')) {
+      disconnectSocket();
       localStorage.clear();
-      window.location.href = '/login';
+      window.dispatchEvent(new Event('auth_change'));
+      navigate('/login', { replace: true });
     }
   };
 
   const handleSwitchToBuyer = () => {
     localStorage.setItem('activeMode', 'CUSTOMER');
-    window.location.href = '/';
+    window.dispatchEvent(new Event('auth_change'));
+    navigate('/', { replace: true });
   };
 
   const handleDeleteAccount = async () => {
@@ -67,12 +104,14 @@ export default function ShopProfile() {
         setLoading(true);
         const res = await api.delete('/auth/customer/me');
         if (res.data.success) {
-          alert('Tài khoản đã được vô hiệu hóa. Chuyển hướng về trang chủ.');
+          showToast('Tài khoản đã được vô hiệu hóa.', 'info');
+          disconnectSocket();
           localStorage.clear();
-          navigate('/');
+          window.dispatchEvent(new Event('auth_change'));
+          navigate('/login', { replace: true });
         }
       } catch (error) {
-        alert('Có lỗi xảy ra khi xóa tài khoản.');
+        showToast('Có lỗi xảy ra khi xóa tài khoản.', 'error');
       } finally {
         setLoading(false);
       }
@@ -90,7 +129,7 @@ export default function ShopProfile() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     if (!editForm.shopName || !editForm.phone) {
-      return alert('Vui lòng nhập đầy đủ Tên cửa hàng và Số điện thoại');
+      return showToast('Vui lòng nhập đầy đủ Tên cửa hàng và Số điện thoại', 'error');
     }
     try {
       setLoading(true);
@@ -104,7 +143,7 @@ export default function ShopProfile() {
             finalAvatarUrl = result.data.data.url;
           }
         } catch (err) {
-          alert("Lỗi upload ảnh đại diện, vui lòng thử lại sau!");
+          showToast("Lỗi tải ảnh đại diện, vui lòng thử lại sau!", "error");
           setLoading(false);
           return;
         }
@@ -117,18 +156,23 @@ export default function ShopProfile() {
             finalCoverUrl = result.data.data.url;
           }
         } catch (err) {
-          alert("Lỗi upload ảnh bìa, vui lòng thử lại sau!");
+          showToast("Lỗi tải ảnh bìa, vui lòng thử lại sau!", "error");
           setLoading(false);
           return;
         }
       }
 
-      const res = await api.put('/auth/customer/me', {
-        shopName: editForm.shopName,
-        phone: editForm.phone,
+      const payload = {
+        shopName: editForm.shopName.trim(),
+        phone: editForm.phone.trim(),
         avatar: finalAvatarUrl,
         coverImage: finalCoverUrl
-      });
+      };
+      if (editForm.password && editForm.password.trim()) {
+        payload.password = editForm.password.trim();
+      }
+
+      const res = await api.put('/auth/customer/me', payload);
       if (res.data.success) {
         const updatedUser = res.data.data;
         const currentData = JSON.parse(localStorage.getItem('customerData') || '{}');
@@ -148,17 +192,17 @@ export default function ShopProfile() {
         setShopAvatar(updatedUser.avatar || '');
         setShopCoverImage(updatedUser.coverImage || '');
         setShowEditModal(false);
-        alert('Cập nhật thông tin thành công!');
+        showToast('Cập nhật thông tin thành công!', 'success');
       }
     } catch (error) {
-      alert(error.response?.data?.message || 'Có lỗi xảy ra');
+      showToast(error.response?.data?.message || 'Có lỗi xảy ra', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const openEditModal = () => {
-    setEditForm({ shopName, phone: shopPhone, avatar: shopAvatar, coverImage: shopCoverImage });
+    setEditForm({ shopName, phone: shopPhone, password: '', avatar: shopAvatar, coverImage: shopCoverImage });
     setAvatarPreview(shopAvatar || null);
     setAvatarFile(null);
     setCoverPreview(shopCoverImage || null);
@@ -177,17 +221,18 @@ export default function ShopProfile() {
         localStorage.setItem('shopAddress', loc.address);
 
         // Update customerData in localStorage
-        const customerData = JSON.parse(localStorage.getItem('customerData') || '{}');
-        customerData.defaultLocation = loc;
-        customerData.shopAddress = loc.address;
-        localStorage.setItem('customerData', JSON.stringify(customerData));
+        const currentData = JSON.parse(localStorage.getItem('customerData') || '{}');
+        currentData.defaultLocation = loc;
+        currentData.shopAddress = loc.address;
+        localStorage.setItem('customerData', JSON.stringify(currentData));
 
         setShopAddress(loc.address);
-        alert('Cập nhật định vị cửa hàng thành công!');
+        setDefaultLocation(loc);
+        showToast('Cập nhật định vị cửa hàng thành công!', 'success');
       }
     } catch (err) {
       console.error(err);
-      alert('Không thể cập nhật định vị. Vui lòng thử lại.');
+      showToast('Không thể cập nhật định vị. Vui lòng thử lại.', 'error');
     } finally {
       setLoading(false);
       setShowLocationPicker(false);
@@ -279,17 +324,19 @@ export default function ShopProfile() {
                   <input 
                     type="checkbox" 
                     className="sr-only peer"
-                    checked={customerData.isOpen !== false}
+                    checked={isOpenShop}
                     onChange={async (e) => {
                       const checked = e.target.checked;
+                      setIsOpenShop(checked);
                       try {
                         await api.put('/merchant/profile', { isOpen: checked });
-                        const newData = { ...customerData, isOpen: checked };
+                        const currentData = JSON.parse(localStorage.getItem('customerData') || '{}');
+                        const newData = { ...currentData, isOpen: checked };
                         localStorage.setItem('customerData', JSON.stringify(newData));
-                        alert(checked ? 'Đã MỞ CỬA nhận đơn' : 'Đã ĐÓNG CỬA nhận đơn');
-                        window.location.reload();
+                        showToast(checked ? 'Đã MỞ CỬA nhận đơn AloFood' : 'Đã ĐÓNG CỬA nhận đơn AloFood', checked ? 'success' : 'info');
                       } catch (error) {
-                        alert('Lỗi cập nhật trạng thái');
+                        setIsOpenShop(!checked);
+                        showToast('Lỗi cập nhật trạng thái cửa hàng', 'error');
                       }
                     }}
                   />
@@ -377,6 +424,7 @@ export default function ShopProfile() {
       {showLocationPicker && (
         <LocationPicker
           isOpen={showLocationPicker}
+          initialLocation={defaultLocation}
           onSelect={handleLocationUpdate}
           onClose={() => setShowLocationPicker(false)}
         />

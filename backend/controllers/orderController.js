@@ -251,7 +251,7 @@ const orderController = {
 
       const [orders, total] = await Promise.all([
         Order.find(query)
-          .populate('assignedTo', 'name phone driverCode vehicleType')
+          .populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation')
           .populate('createdBy', 'name')
           .sort({ createdAt: -1 })
           .skip(skip)
@@ -391,7 +391,7 @@ const orderController = {
       const { id } = req.params;
 
       const order = await Order.findById(id)
-        .populate('assignedTo', 'name phone driverCode vehicleType')
+        .populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation')
         .populate('createdBy', 'name')
         .lean();
 
@@ -766,7 +766,7 @@ const orderController = {
   getCustomerOrders: async (req, res) => {
     try {
       const orders = await Order.find({ customerId: req.customer._id })
-        .populate('assignedTo', 'name phone driverCode vehicleType')
+        .populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation')
         .sort({ createdAt: -1 })
         .lean();
 
@@ -1161,7 +1161,7 @@ const orderController = {
           acceptedAt: new Date()
         },
         { new: true }
-      ).populate('assignedTo', 'name phone driverCode');
+      ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation');
 
       if (!order) {
         return res.status(400).json({
@@ -1307,7 +1307,7 @@ const orderController = {
           pickedUpAt: nowPickup
         },
         { new: true }
-      ).populate('assignedTo', 'name phone');
+      ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation');
 
       if (!order) {
         return res.status(400).json({
@@ -1355,7 +1355,7 @@ const orderController = {
           status: 'DELIVERING'
         },
         { new: true }
-      ).populate('assignedTo', 'name phone');
+      ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation');
 
       if (!order) {
         return res.status(400).json({
@@ -1435,7 +1435,7 @@ const orderController = {
           deliveredAt: nowCompleted
         },
         { new: true }
-      ).populate('assignedTo', 'name phone stats');
+      ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation stats');
 
       if (!order) {
         return res.status(400).json({

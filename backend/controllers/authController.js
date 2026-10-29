@@ -916,10 +916,15 @@ const authController = {
             name: user.name,
             phone: user.phone,
             role: user.role,
+            region: user.region,
             shopName: user.shopName,
             shopAddress: user.shopAddress,
             defaultLocation: user.defaultLocation,
-            avatar: user.avatar
+            avatar: user.avatar,
+            coverImage: user.coverImage,
+            isOpen: user.isOpen,
+            isApprovedShop: user.isApprovedShop,
+            shopCategory: user.shopCategory
           }
         }
       });
@@ -980,10 +985,15 @@ const authController = {
             name: user.name,
             phone: user.phone,
             role: user.role,
+            region: user.region,
             shopName: user.shopName,
             shopAddress: user.shopAddress,
             defaultLocation: user.defaultLocation,
-            avatar: user.avatar
+            avatar: user.avatar,
+            coverImage: user.coverImage,
+            isOpen: user.isOpen,
+            isApprovedShop: user.isApprovedShop,
+            shopCategory: user.shopCategory
           }
         }
       });

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Clock, PackageCheck, Truck, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../services/api';
+import { api, getFullImageUrl } from '../../services/api';
 
 const ActivityList = () => {
   const navigate = useNavigate();
@@ -32,7 +32,10 @@ const ActivityList = () => {
           const newList = prev.map(o => {
             if (o._id === updatedOrder._id) {
               exists = true;
-              return updatedOrder;
+              const mergedAssignedTo = updatedOrder.assignedTo && o.assignedTo && typeof updatedOrder.assignedTo === 'object'
+                ? { ...o.assignedTo, ...updatedOrder.assignedTo }
+                : updatedOrder.assignedTo;
+              return { ...updatedOrder, assignedTo: mergedAssignedTo };
             }
             return o;
           });
@@ -132,14 +135,27 @@ const ActivityList = () => {
 
         {order.assignedTo && order.status !== 'CANCELLED' && (
           <div className="mt-4 bg-blue-50/80 rounded-[16px] p-3.5 border border-blue-100/50 flex items-center justify-between ml-2 shadow-[0_2px_10px_rgba(37,99,235,0.04)]">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-200 rounded-full flex items-center justify-center text-xl text-blue-700">🧔</div>
-              <div>
-                <p className="text-[11px] font-bold text-gray-700">{order.assignedTo.name}</p>
-                <p className="text-[10px] text-gray-500">Tài xế nhận đơn</p>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 bg-blue-200 rounded-full flex items-center justify-center text-sm font-bold text-blue-700 overflow-hidden shrink-0 border border-white">
+                {order.assignedTo.avatar ? (
+                  <img
+                    src={getFullImageUrl(order.assignedTo.avatar)}
+                    alt={order.assignedTo.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { e.target.onerror = null; e.target.style.display = 'none'; }}
+                  />
+                ) : (
+                  order.assignedTo.name?.charAt(0) || '🛵'
+                )}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold text-gray-800 truncate">{order.assignedTo.name}</p>
+                <p className="text-[10px] font-semibold text-blue-600 uppercase">
+                  {order.assignedTo.licensePlate || order.assignedTo.vehiclePlate || 'Tài xế nhận đơn'}
+                </p>
               </div>
             </div>
-            <a href={`tel:${order.assignedTo.phone}`} onClick={(e) => e.stopPropagation()} className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold z-10">
+            <a href={`tel:${order.assignedTo.phone}`} onClick={(e) => e.stopPropagation()} className="bg-white border border-blue-200 text-blue-600 px-3 py-1 rounded-full text-[10px] font-bold z-10 shrink-0">
               Gọi
             </a>
           </div>
@@ -160,13 +176,13 @@ const ActivityList = () => {
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'pending' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
           onClick={() => { setFilter('pending'); scrollRef.current?.scrollTo({ left: 0, behavior: 'smooth' }); }}
         >
-          Đang xử lý
+          Đang xử lý ({pendingOrders.length})
         </button>
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'active' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
           onClick={() => { setFilter('active'); scrollRef.current?.scrollTo({ left: scrollRef.current.offsetWidth, behavior: 'smooth' }); }}
         >
-          Đang giao
+          Đang giao ({activeOrders.length})
         </button>
         <button
           className={`flex-1 py-3 text-xs font-bold transition-all ${filter === 'history' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}

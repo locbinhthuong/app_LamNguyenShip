@@ -3,8 +3,10 @@ import { MapPin, Navigation, Bike, Car, Key, Shield } from 'lucide-react';
 import LocationPicker from '../LocationPicker';
 import AddressAutocompleteInput from '../AddressAutocompleteInput';
 import { estimateFee } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 export default function RideForm({ onBooking, loading, defaultLocation, defaultPhone, customerData }) {
+  const { showToast } = useToast();
   const [subType, setSubType] = useState('XE_OM'); // XE_OM, LAI_HO_XE_MAY, LAI_HO_OTO
   const [vehicleClass, setVehicleClass] = useState('TAY_GA'); // TAY_GA, XE_SO, CON_TAY
 
@@ -106,15 +108,17 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.customerName.trim() || !form.customerPhone.trim()) {
-      return alert('Vui lòng nhập Tên và SĐT để tài xế liên hệ!');
+    const resolvedPhone = form.customerPhone.trim() || defaultPhone || customerData?.phone || localStorage.getItem('userPhone') || '';
+    if (!resolvedPhone) {
+      showToast('Vui lòng đăng nhập hoặc nhập SĐT liên hệ!', 'warning');
+      return;
     }
 
     onBooking({
       serviceType: 'DAT_XE',
       subServiceType: subType, // XE_OM, LAI_HO_XE_MAY, LAI_HO_OTO
-      customerName: form.customerName.trim() || customerData?.name || 'Khách Vãng Lai',
-      customerPhone: defaultPhone || 'Chưa rõ',
+      customerName: form.customerName.trim() || customerData?.name || 'Khách Hàng',
+      customerPhone: resolvedPhone,
       pickupAddress: form.pickupAddress.trim(),
       pickupCoordinates: form.pickupCoordinates || null,
       deliveryAddress: form.deliveryAddress.trim(),
@@ -325,7 +329,7 @@ export default function RideForm({ onBooking, loading, defaultLocation, defaultP
       <LocationPicker 
         isOpen={mapConfig !== null}
         onClose={() => setMapConfig(null)}
-        initialPosition={mapConfig?.pos}
+        initialLocation={mapConfig?.pos ? { lat: mapConfig.pos[0], lng: mapConfig.pos[1] } : defaultLocation}
         initialSearchQuery={mapConfig?.query}
         onSelect={(loc) => {
           if (mapConfig?.type === 'pickup') {

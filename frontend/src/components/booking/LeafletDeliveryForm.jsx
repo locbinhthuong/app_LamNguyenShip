@@ -83,6 +83,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
   const [distanceKm, setDistanceKm] = useState(null);
   const [extraSurchargeAPI, setExtraSurchargeAPI] = useState(0);
   const [surchargeNote, setSurchargeNote] = useState('');
+  const [isRaining, setIsRaining] = useState(false);
+  const [rainFee, setRainFee] = useState(0);
   const [estimating, setEstimating] = useState(false);
   const [routeLine, setRouteLine] = useState([]);
 
@@ -128,6 +130,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             setDistanceKm(res.data.distanceKm);
             setExtraSurchargeAPI(res.data.extraSurcharge || 0);
             setSurchargeNote(res.data.surchargeNote || '');
+            setIsRaining(res.data.isRaining || false);
+            setRainFee(res.data.rainFee || 0);
             if (res.data.routeLine) {
               setRouteLine(res.data.routeLine);
             } else {
@@ -138,6 +142,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
             setDistanceKm(null);
             setExtraSurchargeAPI(0);
             setSurchargeNote('');
+            setIsRaining(false);
+            setRainFee(0);
             setRouteLine([[form.pickupCoordinates.lat, form.pickupCoordinates.lng], [form.deliveryCoordinates.lat, form.deliveryCoordinates.lng]]);
           }
         } catch (error) {
@@ -145,6 +151,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
           setDistanceKm(null);
           setExtraSurchargeAPI(0);
           setSurchargeNote('');
+          setIsRaining(false);
+          setRainFee(0);
         } finally {
           setEstimating(false);
         }
@@ -153,6 +161,8 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
         setDistanceKm(null);
         setExtraSurchargeAPI(0);
         setSurchargeNote('');
+        setIsRaining(false);
+        setRainFee(0);
         setRouteLine([]);
       }
     };
@@ -420,6 +430,11 @@ export default function DeliveryForm({ onBooking, loading, defaultLocation, defa
                       {mode === 'pickup' && (
                         <div className="text-emerald-700 text-xs mt-1 font-extrabold">
                           🛒 Đã cộng thêm 5.000đ phí mua hộ vào cước đơn hàng
+                        </div>
+                      )}
+                      {isRaining && rainFee > 0 && (
+                        <div className="text-amber-600 text-xs mt-1 font-bold">
+                          🌧️ Đã bao gồm phụ phí mưa +{rainFee.toLocaleString('vi-VN')}đ
                         </div>
                       )}
                       {extraSurchargeAPI > 0 && (

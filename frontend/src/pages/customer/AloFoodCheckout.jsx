@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, MapPin, CheckCircle, Loader2 } from 'lucide-react';
+import { Geolocation } from '@capacitor/geolocation';
 import { api, getCustomerProfile } from '../../services/api';
 import LocationPicker from '../../components/LocationPicker';
+import { useToast } from '../../context/ToastContext';
 
 const AloFoodCheckout = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { showToast } = useToast();
   
   const [restaurant, setRestaurant] = useState(null);
   const [cartItems, setCartItems] = useState([]);
@@ -34,21 +37,12 @@ const AloFoodCheckout = () => {
   const [deliveryFee, setDeliveryFee] = useState(15000); // Base fee
   const [extraSurcharge, setExtraSurcharge] = useState(0);
   const [surchargeNote, setSurchargeNote] = useState('');
+  const [isRaining, setIsRaining] = useState(false);
+  const [rainFee, setRainFee] = useState(0);
+  const [feeEstimated, setFeeEstimated] = useState(false);
   
   const foodTotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const totalAmount = foodTotal + deliveryFee + extraSurcharge;
-
-  const calculateHaversineDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371;
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-    return R * c;
-  };
 
   useEffect(() => {
     const fetchDistanceAndFee = async () => {
@@ -68,16 +62,25 @@ const AloFoodCheckout = () => {
           setDeliveryFee(res.data.data.deliveryFee || 15000);
           setExtraSurcharge(res.data.data.extraSurcharge || 0);
           setSurchargeNote(res.data.data.surchargeNote || '');
+          setIsRaining(Boolean(res.data.data.isRaining));
+          setRainFee(res.data.data.rainFee || 0);
+          setFeeEstimated(true);
         } else {
           setDeliveryFee(15000); // Fallback
           setExtraSurcharge(0);
           setSurchargeNote('');
+          setIsRaining(false);
+          setRainFee(0);
+          setFeeEstimated(false);
         }
       } catch (err) {
         console.error('Lỗi tính phí ship:', err);
         setDeliveryFee(15000); // Fallback
         setExtraSurcharge(0);
         setSurchargeNote('');
+        setIsRaining(false);
+        setRainFee(0);
+        setFeeEstimated(false);
       } finally {
         setLoadingFee(false);
       }
@@ -98,12 +101,26 @@ const AloFoodCheckout = () => {
         setCustomerName(userRes.data.name);
         setCustomerPhone(userRes.data.phone);
         
-        // Try getting location from saved profile or browser
-        if (userRes.data.defaultLocation?.lat) {
+        // Ưu tiên vị trí đã ghim trên Trang chủ (sessionStorage), sau đó tới defaultLocation trong hồ sơ
+        let resolvedLoc = null;
+        try {
+          const savedLocStr = sessionStorage.getItem('savedLocation');
+          if (savedLocStr) {
+            const parsed = JSON.parse(savedLocStr);
+            if (parsed.lat && parsed.lng && parsed.address && !parsed.address.includes('Chưa xác định')) {
+              resolvedLoc = parsed;
+            }
+          }
+        } catch (e) {}
+
+        if (resolvedLoc) {
+          setDeliveryCoordinates(resolvedLoc);
+          setDeliveryAddress(resolvedLoc.address);
+        } else if (userRes.data.defaultLocation?.lat) {
           setDeliveryCoordinates(userRes.data.defaultLocation);
           setDeliveryAddress(userRes.data.defaultLocation.address);
         } else {
-           getLocationFromBrowser();
+          getLocationFromDevice();
         }
       }
 
@@ -124,13 +141,14 @@ const AloFoodCheckout = () => {
               name: m.name,
               price: m.price,
               quantity: qty,
-              image: m.image
+              image: m.image,
+              note: ''
             });
           }
         }
         
         if (items.length === 0) {
-          alert('Giỏ hàng trống!');
+          showToast('Giỏ hàng trống!', 'warning');
           navigate(-1);
           return;
         }
@@ -143,27 +161,38 @@ const AloFoodCheckout = () => {
     }
   };
 
-  const getLocationFromBrowser = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
-            const data = await res.json();
-            if (data && data.display_name) {
-              setDeliveryCoordinates({ lat, lng, address: data.display_name });
-              setDeliveryAddress(data.display_name);
-            }
-          } catch (err) {}
-        },
-        () => { setDeliveryAddress('Chưa xác định toạ độ. Bấm để chọn.'); },
-        { enableHighAccuracy: true, timeout: 5000 }
-      );
-    } else {
+  const getLocationFromDevice = async () => {
+    try {
+      let coords = null;
+      try {
+        const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 7000 });
+        coords = pos.coords;
+      } catch (capErr) {
+        if ('geolocation' in navigator) {
+          coords = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(p => resolve(p.coords), reject, { enableHighAccuracy: true, timeout: 5000 });
+          });
+        }
+      }
+      if (coords) {
+        const lat = coords.latitude;
+        const lng = coords.longitude;
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`);
+        const data = await res.json();
+        if (data && data.display_name) {
+          setDeliveryCoordinates({ lat, lng, address: data.display_name });
+          setDeliveryAddress(data.display_name);
+          return;
+        }
+      }
+      setDeliveryAddress('Chưa xác định toạ độ. Bấm để chọn.');
+    } catch (err) {
       setDeliveryAddress('Chưa xác định toạ độ. Bấm để chọn.');
     }
+  };
+
+  const updateItemNote = (itemId, itemNote) => {
+    setCartItems(prev => prev.map(item => item._id === itemId ? { ...item, note: itemNote } : item));
   };
 
   const openEditInfo = () => {
@@ -175,8 +204,8 @@ const AloFoodCheckout = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!deliveryCoordinates) {
-      alert('Vui lòng chọn địa chỉ giao hàng!');
+    if (!deliveryCoordinates || !deliveryCoordinates.lat) {
+      showToast('Vui lòng chọn địa chỉ giao hàng trên bản đồ!', 'warning');
       return;
     }
     
@@ -189,24 +218,26 @@ const AloFoodCheckout = () => {
         deliveryFee,
         distance: distance ? parseFloat(distance.toFixed(1)) : 0,
         totalAmount,
-        deliveryAddress: deliveryCoordinates.address,
+        deliveryAddress: deliveryCoordinates.address || deliveryAddress,
         deliveryCoordinates,
         customerName,
         customerPhone,
         note,
         scheduledTime: scheduledTime ? new Date(scheduledTime).toISOString() : null,
-        extraSurcharge
+        extraSurcharge,
+        rainFeeIncluded: feeEstimated
       };
 
       const res = await api.post('/alofood/order', payload);
       if (res.data.success) {
         // Clear cart
         sessionStorage.removeItem(`alofood_cart_${id}`);
-        alert('Đặt món thành công! Tài xế sẽ sớm đến nhận đồ.');
-        navigate('/customer/activity');
+        showToast('Đặt món thành công! Đang chờ quán xác nhận đơn.', 'success');
+        const createdOrderId = res.data.data?._id;
+        navigate(createdOrderId ? `/customer/order/${createdOrderId}` : '/customer/activity');
       }
     } catch (error) {
-      alert('Lỗi đặt đơn: ' + (error.response?.data?.message || 'Vui lòng thử lại sau.'));
+      showToast('Lỗi đặt đơn: ' + (error.response?.data?.message || 'Vui lòng thử lại sau.'), 'error');
     } finally {
       setSubmitting(false);
     }
@@ -267,25 +298,34 @@ const AloFoodCheckout = () => {
         {/* Danh sách món */}
         <div className="bg-white p-4 mb-2 shadow-sm">
           <div className="font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">{restaurant?.shopName}</div>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {cartItems.map(item => (
-              <div key={item._id} className="flex justify-between items-start">
-                <div className="flex gap-2">
-                  <div className="font-bold text-blue-600 text-sm">{item.quantity}x</div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800">{item.name}</p>
+              <div key={item._id} className="flex flex-col gap-1.5 border-b border-gray-50 pb-3 last:border-0 last:pb-0">
+                <div className="flex justify-between items-start">
+                  <div className="flex gap-2">
+                    <div className="font-bold text-blue-600 text-sm">{item.quantity}x</div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800">{item.name}</p>
+                    </div>
+                  </div>
+                  <div className="font-medium text-sm text-gray-800">
+                    {(item.price * item.quantity).toLocaleString('vi-VN')}đ
                   </div>
                 </div>
-                <div className="font-medium text-sm text-gray-800">
-                  {(item.price * item.quantity).toLocaleString('vi-VN')}đ
-                </div>
+                <input
+                  type="text"
+                  placeholder="Ghi chú món này (VD: ít đá, không hành...)"
+                  value={item.note || ''}
+                  onChange={e => updateItemNote(item._id, e.target.value)}
+                  className="ml-6 bg-gray-50 border border-gray-100 rounded-lg px-2.5 py-1.5 text-xs text-gray-700 outline-none focus:border-blue-400"
+                />
               </div>
             ))}
           </div>
           <div className="mt-4 pt-3 border-t border-gray-100 border-dashed">
             <input 
               type="text" 
-              placeholder="Ghi chú cho quán (Vd: ít đá, nhiều cay...)"
+              placeholder="Ghi chú chung cho quán / tài xế (Vd: lấy thêm đũa muỗng...)"
               value={note}
               onChange={e => setNote(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-blue-500"
@@ -310,6 +350,12 @@ const AloFoodCheckout = () => {
                 {loadingFee ? <Loader2 size={16} className="animate-spin text-gray-400" /> : `${deliveryFee.toLocaleString('vi-VN')}đ`}
               </span>
             </div>
+            {isRaining && rainFee > 0 && (
+              <div className="flex justify-between text-amber-600 text-xs font-semibold">
+                <span>🌧️ Phụ phí trời mưa (đã cộng vào phí ship)</span>
+                <span>+{rainFee.toLocaleString('vi-VN')}đ</span>
+              </div>
+            )}
             {extraSurcharge > 0 && (
               <div className="flex justify-between text-red-500 mt-1">
                 <span className="text-xs">{surchargeNote}</span>
@@ -338,7 +384,7 @@ const AloFoodCheckout = () => {
           disabled={submitting || loadingFee}
           className={`w-full text-white font-bold py-3.5 rounded-xl shadow-lg flex items-center justify-between px-5 transition-all ${submitting || loadingFee ? 'bg-gray-400 shadow-none' : 'bg-red-500 shadow-red-500/30'}`}
         >
-          <span className="text-sm">{loadingFee ? 'Đang tính phí giao hàng...' : 'Thanh toán tiền mặt'}</span>
+          <span className="text-sm">{loadingFee ? 'Đang tính phí giao hàng...' : 'Đặt món (Tiền mặt)'}</span>
           <span className="text-lg flex items-center gap-2">
             {loadingFee ? <Loader2 className="animate-spin" size={20} /> : `${totalAmount.toLocaleString('vi-VN')}đ`}
             <ArrowLeft className="rotate-180" size={18} />
@@ -361,7 +407,7 @@ const AloFoodCheckout = () => {
             }
             setShowLocationPicker(false);
           }}
-          initialPosition={showEditInfo ? tempDeliveryCoordinates : deliveryCoordinates}
+          initialLocation={showEditInfo ? tempDeliveryCoordinates : deliveryCoordinates}
         />
       )}
 
@@ -412,7 +458,8 @@ const AloFoodCheckout = () => {
               <button 
                 onClick={() => { 
                   if (!tempName || !tempPhone) {
-                    return alert('Vui lòng nhập tên và số điện thoại!');
+                    showToast('Vui lòng nhập tên và số điện thoại!', 'warning');
+                    return;
                   }
                   setCustomerName(tempName); 
                   setCustomerPhone(tempPhone); 
