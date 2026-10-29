@@ -121,7 +121,8 @@ const userController = {
       console.error(error);
       res.status(500).json({ success: false, message: 'Lỗi server' });
     }
-  }
+  },
+
   requestVerification: async (req, res) => {
     try {
       const userId = req.customer?._id || req.user?.id;

@@ -2519,7 +2519,8 @@ const orderController = {
       console.error('Error estimateCustomerFee:', error);
       res.status(500).json({ success: false, message: 'Lỗi server khi tính phí' });
     }
-  }
+  },
+
   // POST /api/orders/:id/rate-driver - Khách hàng / Shop đánh giá tài xế
   rateDriver: async (req, res) => {
     try {
