@@ -132,7 +132,10 @@ exports.getIncomingOrders = async (req, res) => {
     const orders = await Order.find({ 
       serviceType: 'ALOFOOD', 
       'alofoodDetails.shopId': shopId 
-    }).sort({ createdAt: -1 });
+    })
+      .populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation')
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.json({ success: true, data: orders });
   } catch (error) {
@@ -151,7 +154,7 @@ exports.acceptAlofoodOrder = async (req, res) => {
       { _id: id, serviceType: 'ALOFOOD', 'alofoodDetails.shopId': shopId, status: 'WAITING_SHOP' },
       { $set: { status: 'PENDING' } },
       { new: true }
-    );
+    ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation');
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Đơn hàng không hợp lệ hoặc đã xử lý' });
@@ -175,6 +178,8 @@ exports.acceptAlofoodOrder = async (req, res) => {
       const { emitNewOrder } = require('../sockets/index');
       const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
       emitNewOrder(req.io, payload);
+      req.io.to(`customer_${order.customerId.toString()}`).emit('order_updated', payload);
+      req.io.to(`shop_${shopId.toString()}`).emit('order_updated', payload);
     }
 
     res.json({ success: true, message: 'Đã nhận đơn', data: order });
@@ -199,7 +204,7 @@ exports.rejectAlofoodOrder = async (req, res) => {
       { _id: id, serviceType: 'ALOFOOD', 'alofoodDetails.shopId': shopId, status: 'WAITING_SHOP' },
       { $set: { status: 'CANCELLED', cancelReason } },
       { new: true }
-    );
+    ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation');
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Đơn hàng không hợp lệ hoặc đã xử lý' });
@@ -220,7 +225,12 @@ exports.rejectAlofoodOrder = async (req, res) => {
     }
 
     if (req.io) {
-      req.io.to('admins').emit('order_updated', order);
+      const { emitOrderCancelled } = require('../sockets/index');
+      const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+      emitOrderCancelled(req.io, payload);
+      req.io.to(`customer_${order.customerId.toString()}`).emit('order_updated', payload);
+      req.io.to(`shop_${shopId.toString()}`).emit('order_updated', payload);
+      req.io.to('admins').emit('order_updated', payload);
     }
 
     res.json({ success: true, message: 'Đã hủy đơn', data: order });
@@ -241,7 +251,7 @@ exports.handoverAlofoodOrder = async (req, res) => {
       { _id: id, serviceType: 'ALOFOOD', 'alofoodDetails.shopId': shopId, status: { $in: ['ACCEPTED', 'PENDING'] } },
       { $set: { status: 'PICKED_UP', pickedUpAt: new Date() } },
       { new: true }
-    ).populate('assignedTo', 'name phone');
+    ).populate('assignedTo', 'name phone driverCode vehicleType licensePlate avatar currentLocation');
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Đơn hàng không hợp lệ hoặc không thể bàn giao lúc này' });
@@ -264,6 +274,9 @@ exports.handoverAlofoodOrder = async (req, res) => {
     if (req.io) {
       const { emitOrderPickedUp } = require('../sockets/index');
       emitOrderPickedUp(req.io, order);
+      const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
+      req.io.to(`customer_${order.customerId.toString()}`).emit('order_updated', payload);
+      req.io.to(`shop_${shopId.toString()}`).emit('order_updated', payload);
     }
 
     res.json({ success: true, message: 'Đã giao cho tài xế', data: order });

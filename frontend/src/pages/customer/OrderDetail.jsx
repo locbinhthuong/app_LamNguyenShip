@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Navigation, Package, DollarSign, Clock, CheckCircle2, Truck, Info, PhoneCall, RefreshCcw, LocateFixed } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { ArrowLeft, MapPin, Navigation, Package, DollarSign, Clock, CheckCircle2, Truck, Info, PhoneCall, RefreshCcw, LocateFixed, Check, X } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { getOrderDetails, api, getFullImageUrl } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import { getRoadRoute } from '../../utils/routing';
 
 // --- CUSTOM MAP ICONS ---
 const pickupMarkerIcon = L.divIcon({
@@ -49,7 +50,7 @@ const TrackingMapController = ({ points, driverCoords, followDriverTrigger }) =>
       map.setView(points[0], 15, { animate: true });
     } else {
       const bounds = L.latLngBounds(points);
-      map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16, animate: true });
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16, animate: true });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points.length]);
@@ -66,13 +67,25 @@ const TrackingMapController = ({ points, driverCoords, followDriverTrigger }) =>
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
+  
   const [driverCoords, setDriverCoords] = useState(null);
   const [followTrigger, setFollowTrigger] = useState(0);
+
+  // Tuyến đường bộ thực tế (đường bộ, không phải đường chim bay)
+  const [deliveryRoadRoute, setDeliveryRoadRoute] = useState([]);
+  const [driverRoadRoute, setDriverRoadRoute] = useState([]);
+
+  // Nhận biết người xem là Shop hay Khách hàng
+  const cData = JSON.parse(localStorage.getItem('customerData') || '{}');
+  const userRole = localStorage.getItem('customerRole') || cData.role || 'CUSTOMER';
+  const isShopViewer = location.pathname.startsWith('/shop') || userRole === 'SHOP';
 
   const fetchDetail = async () => {
     try {
@@ -104,7 +117,6 @@ export default function OrderDetail() {
       const updatedOrder = e.detail;
       if (updatedOrder && updatedOrder._id === id) {
         setOrder(prev => {
-          // Bảo toàn thông tin mở rộng của assignedTo nếu sự kiện socket thiếu trường
           const mergedAssignedTo = updatedOrder.assignedTo && prev?.assignedTo && typeof updatedOrder.assignedTo === 'object'
             ? { ...prev.assignedTo, ...updatedOrder.assignedTo }
             : updatedOrder.assignedTo;
@@ -162,11 +174,62 @@ export default function OrderDetail() {
     };
   }, [id]);
 
+  // 1. Tải lộ trình ĐƯỜNG BỘ giao hàng giữa Điểm lấy và Điểm giao (không phải đường chim bay)
+  useEffect(() => {
+    if (!order) return;
+    const pCoords = order.pickupCoordinates;
+    const dCoords = order.deliveryCoordinates;
+
+    if (pCoords?.lat && pCoords?.lng && dCoords?.lat && dCoords?.lng) {
+      let isCancelled = false;
+      getRoadRoute(pCoords, dCoords).then(coords => {
+        if (!isCancelled && coords.length > 0) {
+          setDeliveryRoadRoute(coords);
+        }
+      });
+      return () => { isCancelled = true; };
+    } else {
+      setDeliveryRoadRoute([]);
+    }
+  }, [order?.pickupCoordinates?.lat, order?.pickupCoordinates?.lng, order?.deliveryCoordinates?.lat, order?.deliveryCoordinates?.lng]);
+
+  // 2. Tải lộ trình ĐƯỜNG BỘ của Tài xế theo thời gian thực (đường bộ uốn lượn theo phố)
+  useEffect(() => {
+    if (!order || !driverCoords?.lat || !driverCoords?.lng) {
+      setDriverRoadRoute([]);
+      return;
+    }
+
+    const isTracking = ['ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(order.status);
+    if (!isTracking) {
+      setDriverRoadRoute([]);
+      return;
+    }
+
+    // Nếu tài xế mới ACCEPTED -> tài xế đang đi đến ĐIỂM LẤY HÀNG
+    // Nếu tài xế đã PICKED_UP / DELIVERING -> tài xế đang đi đến ĐIỂM GIAO HÀNG
+    const target = (order.status === 'ACCEPTED' || !order.deliveryCoordinates?.lat)
+      ? order.pickupCoordinates
+      : order.deliveryCoordinates;
+
+    if (!target?.lat || !target?.lng) return;
+
+    let isCancelled = false;
+    getRoadRoute(driverCoords, target).then(coords => {
+      if (!isCancelled && coords.length > 0) {
+        setDriverRoadRoute(coords);
+      }
+    });
+
+    return () => { isCancelled = true; };
+  }, [driverCoords?.lat, driverCoords?.lng, order?.status, order?.pickupCoordinates?.lat, order?.deliveryCoordinates?.lat]);
+
+  // Thao tác hủy đơn
   const handleCancelOrder = async () => {
     const reason = window.prompt('Hủy đơn hàng này? Vui lòng nhập lý do ngắn gọn:');
     if (reason === null) return;
     try {
-      setLoading(true);
+      setActionLoading(true);
       const res = await api.post(`/orders/${id}/cancel`, { reason });
       if (res.data.success) {
         showToast('Đã hủy đơn thành công', 'success');
@@ -174,7 +237,62 @@ export default function OrderDetail() {
       }
     } catch (e) {
       showToast(e.response?.data?.message || 'Không thể hủy đơn', 'error');
-      setLoading(false);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Thao tác của Cửa Hàng: Nhận đơn AloFood
+  const handleShopAcceptOrder = async () => {
+    try {
+      setActionLoading(true);
+      const res = await api.put(`/merchant/orders/${id}/accept`);
+      if (res.data.success) {
+        showToast('Quán đã nhận đơn thành công! Đang điều phối tài xế.', 'success');
+        fetchDetail();
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Lỗi khi nhận đơn', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Thao tác của Cửa Hàng: Từ chối / Hủy đơn AloFood
+  const handleShopRejectOrder = async () => {
+    const reason = window.prompt('Nhập lý do quán từ chối / hủy đơn:');
+    if (reason === null) return;
+    if (!reason.trim()) {
+      showToast('Vui lòng nhập lý do hủy đơn', 'warning');
+      return;
+    }
+    try {
+      setActionLoading(true);
+      const res = await api.put(`/merchant/orders/${id}/reject`, { cancelReason: reason.trim() });
+      if (res.data.success) {
+        showToast('Đã từ chối đơn hàng thành công', 'success');
+        fetchDetail();
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Lỗi khi từ chối đơn', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Thao tác của Cửa Hàng: Bàn giao món cho tài xế
+  const handleShopHandoverOrder = async () => {
+    try {
+      setActionLoading(true);
+      const res = await api.put(`/merchant/orders/${id}/handover`);
+      if (res.data.success) {
+        showToast('Đã xác nhận bàn giao món cho tài xế!', 'success');
+        fetchDetail();
+      }
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Lỗi khi bàn giao', 'error');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -195,7 +313,7 @@ export default function OrderDetail() {
     );
   }
 
-  // Helper để vẽ Stepper trạng thái chuẩn xác cho mọi dịch vụ & trạng thái DRAFT
+  // Stepper trạng thái chuẩn xác cho cả Khách hàng & Cửa hàng
   const baseSteps = order?.serviceType === 'DAT_XE' ? [
     { key: 'PENDING', label: 'Đang Tìm Tài Xế' },
     { key: 'ACCEPTED', label: 'Tài Xế Đang Đến Đón' },
@@ -218,7 +336,6 @@ export default function OrderDetail() {
     ? [{ key: 'DRAFT', label: 'Chờ Báo Giá / Xác Nhận Cước' }, ...baseSteps]
     : baseSteps;
 
-  // Map status thực tế sang stepper index
   let currentIndex = 0;
   if (order.status === 'DRAFT') {
     currentIndex = 0;
@@ -233,10 +350,10 @@ export default function OrderDetail() {
   } else if (order.status === 'COMPLETED') {
     currentIndex = order?.serviceType === 'ALOFOOD' ? 4 : 3;
   } else if (order.status === 'CANCELLED') {
-    currentIndex = -1; // Hủy
+    currentIndex = -1;
   }
 
-  // Chuẩn bị dữ liệu Bản đồ Theo dõi Trực tiếp (Live Tracking Map)
+  // Tọa độ các điểm ghim bản đồ
   const pickupPt = order.pickupCoordinates?.lat && order.pickupCoordinates?.lng
     ? [order.pickupCoordinates.lat, order.pickupCoordinates.lng]
     : null;
@@ -259,15 +376,19 @@ export default function OrderDetail() {
   ];
 
   return (
-    <div className="flex flex-col flex-1 w-full bg-slate-50 overflow-hidden">
+    <div className="flex flex-col flex-1 w-full bg-slate-50 overflow-hidden font-sans">
       {/* Header */}
       <div className="shrink-0 bg-white px-4 py-3 safe-pt z-40 flex items-center gap-3 shadow-sm border-b border-slate-100">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-slate-600 active:scale-90 transition-transform">
           <ArrowLeft size={22} />
         </button>
         <div className="flex-1">
-          <h1 className="font-bold text-slate-800 text-lg">Chi Tiết Đơn Hàng</h1>
-          <p className="text-[10px] text-slate-500 uppercase tracking-widest">#{order.orderCode || order._id.slice(-8)}</p>
+          <h1 className="font-bold text-slate-800 text-lg">
+            {isShopViewer ? 'Chi Tiết Đơn Hàng (Cửa Hàng)' : 'Chi Tiết Đơn Hàng'}
+          </h1>
+          <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">
+            #{order.orderCode || order._id.slice(-8).toUpperCase()}
+          </p>
         </div>
         <button onClick={fetchDetail} className="p-2 -mr-2 text-blue-600 active:rotate-180 transition-transform">
            <RefreshCcw size={20} />
@@ -277,10 +398,10 @@ export default function OrderDetail() {
       <div className="flex-1 min-h-0 w-full overflow-y-auto p-4">
         <div className="max-w-lg mx-auto space-y-4 pb-8">
 
-        {/* BẢN ĐỒ THEO DÕI HÀNH TRÌNH & VỊ TRÍ TÀI XẾ THỜI GIAN THỰC */}
+        {/* BẢN ĐỒ THEO DÕI HÀNH TRÌNH ĐƯỜNG BỘ & VỊ TRÍ TÀI XẾ THỜI GIAN THỰC */}
         {allMapPoints.length > 0 && order.status !== 'CANCELLED' && (
           <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm relative">
-            <div className="h-56 w-full relative z-0">
+            <div className="h-64 w-full relative z-0">
               <MapContainer
                 center={driverPt || pickupPt || deliveryPt || [10.045162, 105.746854]}
                 zoom={14}
@@ -291,27 +412,60 @@ export default function OrderDetail() {
                   attribution="&copy; Google Maps"
                   url="https://mt0.google.com/vt/lyrs=m&hl=vi&x={x}&y={y}&z={z}"
                 />
+                
+                {/* 1. ĐIỂM LẤY HÀNG */}
                 {pickupPt && <Marker position={pickupPt} icon={pickupMarkerIcon} />}
+
+                {/* 2. ĐIỂM GIAO HÀNG */}
                 {deliveryPt && <Marker position={deliveryPt} icon={deliveryMarkerIcon} />}
                 {batchedPts.map((pt, idx) => (
                   <Marker key={idx} position={pt} icon={deliveryMarkerIcon} />
                 ))}
+
+                {/* 3. TÀI XẾ DI CHUYỂN TRỰC TIẾP */}
                 {driverPt && <Marker position={driverPt} icon={driverMarkerIcon} zIndexOffset={1000} />}
-                {pickupPt && deliveryPt && (
-                  <Polyline positions={[pickupPt, deliveryPt]} color="#2563EB" weight={4} opacity={0.75} dashArray="6, 8" />
+
+                {/* 4. ĐƯỜNG ĐI GIAO HÀNG (ĐƯỜNG BỘ UỐN LƯỢN THỰC TẾ) */}
+                {deliveryRoadRoute.length > 1 && (
+                  <Polyline 
+                    positions={deliveryRoadRoute} 
+                    color="#2563EB" 
+                    weight={5} 
+                    opacity={0.85} 
+                  />
                 )}
-                {pickupPt && batchedPts.map((pt, idx) => (
-                  <Polyline key={idx} positions={[pickupPt, pt]} color="#0284C7" weight={3} opacity={0.65} dashArray="6, 8" />
-                ))}
+
+                {/* 5. ĐƯỜNG ĐI CỦA TÀI XẾ THEO ĐƯỜNG BỘ ĐẾN ĐÍCH (ĐƯỜNG BỘ THỜI GIAN THỰC) */}
+                {driverRoadRoute.length > 1 && (
+                  <Polyline 
+                    positions={driverRoadRoute} 
+                    color="#10B981" 
+                    weight={6} 
+                    opacity={0.95} 
+                  />
+                )}
+
                 <TrackingMapController points={allMapPoints} driverCoords={driverCoords} followDriverTrigger={followTrigger} />
               </MapContainer>
 
-              {/* Badge trạng thái trực tiếp trên bản đồ */}
+              {/* Badge thông báo trạng thái bản đồ đường bộ */}
               <div className="absolute top-3 left-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-full shadow-md border border-slate-100 flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full ${driverPt ? 'bg-emerald-500 animate-ping' : 'bg-blue-500'}`}></span>
                 <span className="text-[11px] font-extrabold text-slate-700">
-                  {driverPt ? 'Đang cập nhật GPS tài xế trực tiếp' : 'Bản đồ lộ trình đơn hàng'}
+                  {driverPt ? 'GPS tài xế trực tiếp (Đường bộ)' : 'Lộ trình đường bộ thực tế'}
                 </span>
+              </div>
+
+              {/* Chú thích màu đường */}
+              <div className="absolute top-12 left-3 z-[400] bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-xl shadow-sm border border-slate-100 text-[10px] font-bold text-slate-600 flex flex-col gap-0.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-3 h-1 bg-blue-600 rounded-full inline-block"></span> Lộ trình đơn
+                </div>
+                {driverPt && (
+                  <div className="flex items-center gap-1.5 text-emerald-700 font-extrabold">
+                    <span className="w-3 h-1 bg-emerald-500 rounded-full inline-block"></span> Đường xế đang chạy
+                  </div>
+                )}
               </div>
 
               {driverPt && (
@@ -320,7 +474,7 @@ export default function OrderDetail() {
                   onClick={() => setFollowTrigger(prev => prev + 1)}
                   className="absolute bottom-3 right-3 z-[400] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-slate-100 text-emerald-700 text-xs font-extrabold flex items-center gap-1.5 active:scale-95 transition-transform"
                 >
-                  <LocateFixed size={14} /> Vị trí tài xế
+                  <LocateFixed size={14} /> Tâm tài xế
                 </button>
               )}
             </div>
@@ -356,8 +510,17 @@ export default function OrderDetail() {
                             : 'Đang chờ tổng đài kiểm tra và báo cước phí...'}
                         </p>
                       )}
-                      {isCurrent && order.status === 'WAITING_SHOP' && <p className="text-[10px] text-slate-500">Đang chờ quán ăn xác nhận...</p>}
-                      {isCurrent && order.status === 'DELIVERING' && <p className="text-[10px] text-emerald-600 font-semibold">Tài xế đang trên đường di chuyển đến điểm giao...</p>}
+                      {isCurrent && order.status === 'WAITING_SHOP' && (
+                        <p className="text-[10px] text-amber-600 font-semibold">
+                          {isShopViewer ? 'Đơn hàng mới! Vui lòng bấm "Nhận Đơn" bên dưới.' : 'Đang chờ quán ăn xác nhận...'}
+                        </p>
+                      )}
+                      {isCurrent && order.status === 'ACCEPTED' && (
+                        <p className="text-[10px] text-blue-600 font-semibold">Tài xế đã nhận đơn và đang di chuyển đến điểm lấy hàng.</p>
+                      )}
+                      {isCurrent && order.status === 'DELIVERING' && (
+                        <p className="text-[10px] text-emerald-600 font-semibold">Tài xế đang trên đường di chuyển đến điểm giao...</p>
+                      )}
                     </div>
                   </div>
                 );
@@ -371,7 +534,7 @@ export default function OrderDetail() {
           </div>
         )}
 
-        {/* Khối Thông Tin Tài Xế (Bật khi có xế) */}
+        {/* Khối Thông Tin Tài Xế (Bật khi có xế) - Hiển thị giống hệt nhau cho Khách & Shop */}
         {order.assignedTo && (
           <div className="bg-white p-4 rounded-3xl border border-slate-100 mb-2 flex flex-col gap-3">
             <div className="flex justify-between items-center">
@@ -398,6 +561,11 @@ export default function OrderDetail() {
                  <p className="text-xs font-bold text-blue-600 uppercase mt-0.5">
                    {order.assignedTo.licensePlate || order.assignedTo.vehiclePlate || 'Đang cập nhật biển số'}
                  </p>
+                 {driverPt && (
+                   <p className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Đang trực tuyến
+                   </p>
+                 )}
                </div>
                <a href={`tel:${order.assignedTo.phone}`} className="w-10 h-10 bg-green-500 hover:bg-green-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-green-200 transition-transform active:scale-95 shrink-0">
                  <PhoneCall size={18} />
@@ -416,7 +584,7 @@ export default function OrderDetail() {
                  <div key={idx} className="flex justify-between items-start bg-slate-50 p-3 rounded-2xl">
                    <div className="flex-1 pr-2">
                      <p className="text-sm font-bold text-slate-800"><span className="text-blue-600 mr-1">{item.quantity}x</span> {item.name}</p>
-                     {item.note && <p className="text-[11px] text-orange-600 italic mt-1">Ghi chú: {item.note}</p>}
+                     {item.note && <p className="text-[11px] text-orange-600 italic mt-1 font-semibold">Ghi chú: {item.note}</p>}
                    </div>
                    <p className="text-sm font-bold text-slate-600">{(item.price * item.quantity).toLocaleString()}đ</p>
                  </div>
@@ -541,34 +709,6 @@ export default function OrderDetail() {
             </div>
         </div>
 
-        {/* Khối Thông Tin Giao Dịch Tài Chính (Nạp/Rút Tiền) */}
-        {order.serviceType === 'DIEU_PHOI' && (order.subServiceType === 'NAP_TIEN' || order.subServiceType === 'RUT_TIEN') && (
-          <div className="bg-blue-50 p-5 rounded-3xl border border-blue-100 mb-2 space-y-3 relative overflow-hidden">
-             <div className="absolute -right-4 -top-4 text-7xl opacity-[0.05]">🏦</div>
-             <h3 className="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-1 relative z-10">🏦 THÔNG TIN TÀI CHÍNH</h3>
-             
-             <div className="space-y-3 relative z-10">
-               <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-blue-100/50">
-                  <span className="text-xs text-slate-500 font-medium">Ngân Hàng</span>
-                  <span className="font-bold text-slate-800">{order.financialDetails?.bankName || 'Đang chờ cập nhật'}</span>
-               </div>
-               <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-blue-100/50">
-                  <span className="text-xs text-slate-500 font-medium">Tài Khoản</span>
-                  <span className="font-black text-blue-700 tracking-wider text-[15px]">{order.financialDetails?.bankAccount || 'Rỗng'}</span>
-               </div>
-               <div className="flex justify-between items-center bg-white p-3 rounded-2xl border border-blue-100/50">
-                  <span className="text-xs text-slate-500 font-medium">Tên Chủ Tài Khoản</span>
-                  <span className="font-bold text-slate-800 uppercase line-clamp-1 text-right max-w-[60%]">{order.financialDetails?.bankAccountName || 'Chưa cung cấp'}</span>
-               </div>
-               
-               <div className="flex justify-between items-end bg-blue-50 p-3 rounded-2xl border border-blue-200 mt-2">
-                  <span className="text-[11px] text-blue-800 font-bold uppercase tracking-wider">{order.subServiceType === 'NAP_TIEN' ? 'SỐ TIỀN CẦN NẠP VÀO' : 'SỐ TIỀN CẦN RÚT RA'}</span>
-                  <span className="font-black text-xl text-blue-600 ">{order.financialDetails?.transactionAmount?.toLocaleString() || 0}đ</span>
-               </div>
-             </div>
-          </div>
-        )}
-
         {/* Khối Thông tin Giao Nhận */}
         <div className="bg-white p-5 rounded-3xl border border-slate-100 mb-2 space-y-4">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
@@ -592,68 +732,9 @@ export default function OrderDetail() {
                </div>
 
                {/* ĐIỂM ĐẾN */}
-               {order.serviceType === 'DON_GHEP' && order.batchedDeliveries?.map((d, idx) => (
-                 <div key={idx} className="relative mb-5 last:mb-0">
-                    <div className="absolute -left-[27px] top-1 w-3 h-3 bg-blue-500 rounded-full ring-4 ring-blue-50"></div>
-                    <div className="flex justify-between items-start mb-2 gap-2">
-                       <div>
-                         <p className="text-[10px] font-bold text-slate-400 uppercase">ĐIỂM GIAO SỐ {idx + 1}</p>
-                         <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight">{d.deliveryAddress}</p>
-                       </div>
-                    </div>
-                    
-                    <div className="space-y-1 mb-2">
-                      <p className="text-xs text-slate-600 font-medium">👤 {d.receiverName || 'Khách hàng'}</p>
-                      <p className="text-xs text-slate-500 font-medium whitespace-nowrap overflow-x-hidden text-ellipsis">
-                        <span className="font-bold text-blue-600">SĐT Liên Hệ:</span> {d.receiverPhone}
-                      </p>
-                      {d.note && <p className="text-[11px] text-slate-500 italic mt-1 bg-slate-50 p-2 rounded-lg border border-slate-100">Ghi chú: {d.note}</p>}
-                    </div>
-
-                    {(() => {
-                      const pointShipFee = (d.fee || 0) + (d.extraSurcharge || 0);
-                      const pointCustomerAmount = d.feePaidBy === 'SENDER' ? (d.codAmount || 0) : ((d.codAmount || 0) + pointShipFee);
-                      const shopAdvance = d.feePaidBy === 'SENDER' ? ((d.codAmount || 0) - pointShipFee) : (d.codAmount || 0);
-
-                      return (
-                        <div className="flex flex-col gap-2 mt-2 border-t border-slate-100 pt-3">
-                          {shopAdvance !== 0 && (
-                            <div className="bg-blue-50 border border-blue-100 p-2.5 rounded-xl flex flex-col gap-1.5 relative overflow-hidden">
-                              <div className="absolute -right-3 -bottom-4 text-blue-100 opacity-30"><DollarSign size={60}/></div>
-                              <div className="flex justify-between items-center relative z-10">
-                                <span className="text-[11px] font-bold text-blue-700 uppercase">
-                                  {shopAdvance > 0 ? 'Tài Xế Ứng Cho Shop:' : 'Tài Xế Nhận Từ Shop:'}
-                                </span>
-                                <span className="text-lg font-black text-blue-700">{Math.abs(shopAdvance).toLocaleString()}đ</span>
-                              </div>
-                              {shopAdvance > 0 && d.feePaidBy === 'SENDER' && (
-                                <div className="text-[10px] text-blue-600 font-medium border-t border-blue-100/50 pt-1.5 relative z-10">
-                                  (COD {d.codAmount?.toLocaleString()}đ - Phí Ship {pointShipFee.toLocaleString()}đ)
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          <div className="bg-red-50 border border-red-100 p-2.5 rounded-xl flex flex-col gap-1.5 relative overflow-hidden">
-                            <div className="absolute -right-3 -bottom-4 text-red-100 opacity-40"><DollarSign size={60}/></div>
-                            <div className="flex justify-between items-center relative z-10">
-                              <span className="text-[11px] font-bold text-red-700 uppercase">Khách Cần Trả:</span>
-                              <span className="text-lg font-black text-red-600">{pointCustomerAmount.toLocaleString()}đ</span>
-                            </div>
-                            <div className="flex gap-2 text-[10px] text-slate-500 font-medium flex-wrap border-t border-red-100/60 pt-1.5 relative z-10">
-                              <span>• Thu hộ (COD): {d.codAmount?.toLocaleString() || 0}đ</span>
-                              <span>• Ship ({d.feePaidBy === 'SENDER' ? 'Shop trả' : 'Khách trả'}): {pointShipFee > 0 ? `${pointShipFee.toLocaleString()}đ` : '0đ'}</span>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                 </div>
-               ))}
-               
                {order.serviceType !== 'DIEU_PHOI' && order.serviceType !== 'DON_GHEP' && (
                  <div className="relative">
-                    <div className="absolute -left-[27px] top-1 w-3 h-3 bg-blue-500 rounded-full ring-4 ring-blue-50"></div>
+                    <div className="absolute -left-[27px] top-1 w-3 h-3 bg-red-500 rounded-full ring-4 ring-red-50"></div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase">{order.serviceType === 'DAT_XE' ? 'ĐIỂM ĐẾN (TRẢ KHÁCH)' : 'NGƯỜI NHẬN / NƠI GIAO'}</p>
                     <p className="text-sm font-bold text-slate-800 leading-snug tracking-tight mb-2">{order.deliveryAddress || 'Chưa xác định'}</p>
                     
@@ -666,36 +747,52 @@ export default function OrderDetail() {
                  </div>
                )}
             </div>
-            
-            {/* THÔNG TIN XE CHO LÁI HỘ / XE ÔM */}
-            {order.serviceType === 'DAT_XE' && order.rideDetails && (
-              <div className="mt-4 pt-4 border-t border-slate-100 grid grid-cols-2 gap-2">
-                 <div className="bg-indigo-50 p-2 rounded-xl text-center">
-                    <p className="text-[10px] text-indigo-400 font-bold uppercase">Phương Tiện</p>
-                    <p className="text-xs text-indigo-700 font-bold">{order.subServiceType === 'XE_OM' ? 'Xe Máy' : order.subServiceType === 'LAI_HO_OTO' ? 'Ô Tô' : 'Xe Máy'}</p>
-                 </div>
-                 {order.rideDetails.vehicleClass && (
-                 <div className="bg-teal-50 p-2 rounded-xl text-center">
-                    <p className="text-[10px] text-teal-400 font-bold uppercase">{order.subServiceType === 'LAI_HO_OTO' ? 'Dòng Xe' : 'Phân Khúc'}</p>
-                    <p className="text-xs text-teal-700 font-bold">
-                       {order.rideDetails.vehicleClass === 'TAY_GA' ? 'Xe Tay Ga' : 
-                        order.rideDetails.vehicleClass === 'XE_SO' ? 'Xe Số' : 
-                        order.rideDetails.vehicleClass === 'CON_TAY' ? 'Xe Côn Tay' : 
-                        order.rideDetails.vehicleClass}
-                    </p>
-                 </div>
-                 )}
-              </div>
-            )}
         </div>
         
-        {/* Nút Hủy Đơn & Xác Nhận Đơn */}
-        {['WAITING_SHOP', 'PENDING', 'DRAFT'].includes(order.status) && (
+        {/* NÚT THAO TÁC CỦA CỬA HÀNG (SHOP ACTIONS) */}
+        {isShopViewer && order.serviceType === 'ALOFOOD' && (
+          <div className="mt-6 mb-2 space-y-2">
+            {order.status === 'WAITING_SHOP' && (
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleShopRejectOrder}
+                  className="w-full bg-red-50 text-red-600 font-bold border border-red-200 py-3.5 rounded-2xl active:bg-red-100 transition-colors flex items-center justify-center gap-1.5"
+                >
+                  <X size={18} /> Từ chối
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleShopAcceptOrder}
+                  className="w-full bg-emerald-600 text-white font-bold py-3.5 rounded-2xl active:bg-emerald-700 transition-colors shadow-lg shadow-emerald-200 flex items-center justify-center gap-1.5"
+                >
+                  <Check size={18} /> Nhận đơn này
+                </button>
+              </div>
+            )}
+
+            {['ACCEPTED', 'PENDING'].includes(order.status) && (
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={handleShopHandoverOrder}
+                className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:bg-blue-700 transition-colors shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+              >
+                <Package size={20} /> BÀN GIAO MÓN CHO TÀI XẾ
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* NÚT THAO TÁC CỦA KHÁCH HÀNG (HOẶC SHOP VỚI ĐƠN TỰ TẠO) */}
+        {(!isShopViewer || order.serviceType !== 'ALOFOOD') && ['WAITING_SHOP', 'PENDING', 'DRAFT'].includes(order.status) && (
           <div className="mt-6 mb-2">
             <div className="grid grid-cols-2 gap-3">
               <button 
                 onClick={handleCancelOrder}
-                disabled={loading}
+                disabled={actionLoading}
                 className={`w-full bg-red-50 text-red-600 font-bold border border-red-200 py-3.5 rounded-2xl active:bg-red-100 transition-colors ${order.status === 'DRAFT' && order.deliveryFee > 0 && order.adminReviewed ? '' : 'col-span-2'}`}
               >
                 HỦY ĐƠN HÀNG
@@ -712,7 +809,7 @@ export default function OrderDetail() {
                   onClick={async () => {
                     if (window.confirm('Xác nhận đồng ý với mức cước phí này để hệ thống tìm tài xế?')) {
                       try {
-                        setLoading(true);
+                        setActionLoading(true);
                         const res = await api.post(`/orders/${id}/confirm`);
                         if (res.data.success) {
                           showToast('Đã xác nhận thành công, đang tìm tài xế!', 'success');
@@ -720,11 +817,11 @@ export default function OrderDetail() {
                         }
                       } catch (e) {
                         showToast(e.response?.data?.message || 'Không thể xác nhận đơn', 'error');
-                        setLoading(false);
+                        setActionLoading(false);
                       }
                     }
                   }}
-                  disabled={loading}
+                  disabled={actionLoading}
                   className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-2xl active:bg-blue-700 transition-colors shadow-lg shadow-blue-200 col-span-2"
                 >
                   {order.serviceType === 'DAT_XE'

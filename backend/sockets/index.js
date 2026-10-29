@@ -58,12 +58,10 @@ const setupSocket = (io) => {
     } else if (['admin', 'manager', 'staff'].includes(socket.user.role)) {
       socket.join('admins');
       console.log(`[Socket] Admin ${socket.user.id} joined admin room`);
-    } else if (socket.user.role?.toLowerCase() === 'customer') {
+    } else if (['customer', 'shop'].includes(socket.user.role?.toLowerCase())) {
       socket.join(`customer_${socket.user.id}`);
-      console.log(`[Socket] Customer ${socket.user.id} joined customer room`);
-    } else if (socket.user.role?.toLowerCase() === 'shop') {
       socket.join(`shop_${socket.user.id}`);
-      console.log(`[Socket] Shop ${socket.user.id} joined shop room`);
+      console.log(`[Socket] User ${socket.user.id} (${socket.user.role}) joined customer & shop rooms`);
     }
 
     // Ping/pong

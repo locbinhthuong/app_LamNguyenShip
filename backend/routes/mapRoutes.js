@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const rateLimit = require('express-rate-limit');
+const { getDrivingDistance } = require('../utils/distance');
 
 // Rate Limiter
 const mapLimiter = rateLimit({
   windowMs: 5 * 60 * 1000,
-  max: 50,
+  max: 120,
   message: { error: 'Bạn đã thực hiện quá nhiều thao tác tìm kiếm bản đồ. Vui lòng thử lại sau 5 phút.' }
 });
 
@@ -95,6 +96,35 @@ router.get('/geocode', async (req, res) => {
   } catch (error) {
     console.error('Error Goong Geocode:', error?.response?.data || error.message);
     res.status(500).json({ error: 'Failed to fetch geocode from Goong' });
+  }
+});
+
+// GET /api/maps/direction?origin=lat,lng&destination=lat,lng
+// Trả về lộ trình đường bộ thực tế (chuỗi tọa độ [lat, lng])
+router.get('/direction', async (req, res) => {
+  try {
+    const { origin, destination } = req.query;
+    if (!origin || !destination) {
+      return res.status(400).json({ error: 'Missing origin or destination' });
+    }
+    const [lat1, lng1] = origin.split(',').map(Number);
+    const [lat2, lng2] = destination.split(',').map(Number);
+
+    if (isNaN(lat1) || isNaN(lng1) || isNaN(lat2) || isNaN(lng2)) {
+      return res.status(400).json({ error: 'Invalid coordinates' });
+    }
+
+    const result = await getDrivingDistance(lat1, lng1, lat2, lng2);
+    const coordinates = (result.routeLine || []).map(p => [p.lat, p.lng]);
+
+    res.json({
+      success: true,
+      distanceKm: result.distanceKm,
+      coordinates
+    });
+  } catch (error) {
+    console.error('Error /maps/direction:', error.message);
+    res.status(500).json({ error: 'Failed to calculate direction' });
   }
 });
 

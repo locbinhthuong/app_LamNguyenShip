@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   PackageX, DollarSign, PackageCheck, PlusCircle, LogOut, Clock, Navigation, 
   MapPin, ChevronRight, UserX, User, ChevronRight as ChevronRightIcon, Bike, 
-  ShoppingCart, Headset, Newspaper, Gift, Package, ShoppingBag, Layers, History 
+  ShoppingCart, Headset, Newspaper, Gift, Package, ShoppingBag, Layers, History, Truck, AlertCircle 
 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
@@ -154,12 +154,38 @@ const ShopDashboard = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await api.get('/orders/customer/my');
-      if (res.data.success) {
-        const allOrders = res.data.data;
-        setOrders(allOrders);
-        calculateStatsAndSet(allOrders);
+      let myOrders = [];
+      let incomingOrders = [];
+      try {
+        const res = await api.get('/orders/customer/my');
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          myOrders = res.data.data;
+        }
+      } catch (e) {
+        console.error('Lỗi lấy đơn tự tạo của shop:', e);
       }
+
+      try {
+        const resInc = await api.get('/merchant/orders');
+        if (resInc.data?.success && Array.isArray(resInc.data.data)) {
+          incomingOrders = resInc.data.data;
+        }
+      } catch (e) {
+        // Có thể shop chưa có đơn merchant
+      }
+
+      const orderMap = new Map();
+      [...incomingOrders, ...myOrders].forEach(o => {
+        if (o && o._id && !orderMap.has(o._id)) {
+          orderMap.set(o._id, o);
+        }
+      });
+      const combined = Array.from(orderMap.values()).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setOrders(combined);
+      calculateStatsAndSet(combined);
     } catch (error) {
       console.error('Lỗi lấy đơn shop', error);
     }
@@ -204,6 +230,57 @@ const ShopDashboard = () => {
     return 'Chào buổi tối';
   };
 
+  const activeOrders = orders.filter(o =>
+    ['WAITING_SHOP', 'DRAFT', 'PENDING', 'ACCEPTED', 'PICKED_UP', 'DELIVERING'].includes(o.status)
+  );
+  const primaryActiveOrder = activeOrders[0] || null;
+
+  const getActiveOrderLabel = (order) => {
+    if (order.status === 'WAITING_SHOP') {
+      return {
+        title: '🍲 Đơn món mới! Quán cần bấm xác nhận ngay',
+        subtitle: order.deliveryAddress ? ('Giao đến: ' + order.deliveryAddress) : 'Bấm để xem món và nhận đơn',
+        urgent: true
+      };
+    }
+    if (order.status === 'DRAFT') {
+      if (order.adminReviewed && order.deliveryFee > 0) {
+        return {
+          title: '💰 Đã có báo giá: ' + order.deliveryFee.toLocaleString('vi-VN') + 'đ',
+          subtitle: 'Bấm vào đây để xác nhận tạo đơn!',
+          urgent: true
+        };
+      }
+      return {
+        title: '⏳ Tổng đài đang tính phí cho đơn hàng',
+        subtitle: 'Mã đơn #' + (order.orderCode || order._id.slice(-6).toUpperCase()),
+        urgent: false
+      };
+    }
+    if (order.status === 'PENDING') {
+      return {
+        title: '🔍 Hệ thống đang tìm tài xế gần quán...',
+        subtitle: order.deliveryAddress || order.pickupAddress,
+        urgent: false
+      };
+    }
+    if (order.status === 'ACCEPTED') {
+      const driverName = order.assignedTo?.name || 'Tài xế';
+      const plate = order.assignedTo?.licensePlate || order.assignedTo?.vehiclePlate || '';
+      return {
+        title: '🛵 ' + driverName + ' đang đến quán lấy hàng',
+        subtitle: plate ? ('Biển số: ' + plate + ' • Bấm để xem bản đồ trực tiếp') : 'Bấm để theo dõi vị trí tài xế trên bản đồ',
+        urgent: false
+      };
+    }
+    return {
+      title: '🚀 Tài xế đang giao hàng đến khách',
+      subtitle: order.assignedTo?.name ? ('Tài xế: ' + order.assignedTo.name + ' • Xem lộ trình đường bộ') : 'Bấm để xem lộ trình đường bộ trực tiếp',
+      urgent: false
+    };
+  };
+  const activeOrderInfo = primaryActiveOrder ? getActiveOrderLabel(primaryActiveOrder) : null;
+
   return (
     <motion.div 
       initial={{ opacity: 0, x: -20 }}
@@ -242,6 +319,42 @@ const ShopDashboard = () => {
           </button>
         )}
       </div>
+
+      {/* THANH NỔI ĐƠN HÀNG ĐANG DIỄN RA (LIVE ACTIVE ORDER BAR) */}
+      <AnimatePresence>
+        {primaryActiveOrder && activeOrderInfo && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            onClick={() => navigate('/shop/order/' + primaryActiveOrder._id)}
+            className={'mb-5 p-4 rounded-2xl cursor-pointer shadow-md border transition-all active:scale-[0.99] flex items-center justify-between gap-3 ' + (
+              activeOrderInfo.urgent
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400 animate-pulse'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-500'
+            )}
+          >
+            <div className="flex items-center gap-3.5 min-w-0 flex-1">
+              <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+                {activeOrderInfo.urgent ? <AlertCircle size={22} className="text-white" /> : <Truck size={22} className="text-white" />}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                    {'Đơn đang chạy' + (activeOrders.length > 1 ? (' (+' + (activeOrders.length - 1) + ')') : '')}
+                  </span>
+                </div>
+                <h4 className="font-extrabold text-sm md:text-[15px] truncate mt-1">{activeOrderInfo.title}</h4>
+                <p className="text-xs text-white/85 truncate mt-0.5">{activeOrderInfo.subtitle}</p>
+              </div>
+            </div>
+            <div className="bg-white text-blue-600 px-3 py-2 rounded-xl text-xs font-extrabold shrink-0 flex items-center gap-1 shadow-sm">
+              <span>Theo dõi</span>
+              <ChevronRight size={14} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* LỜI CHÀO GREETING */}
       <div className="mb-6 mt-1 px-1">

@@ -10,10 +10,37 @@ const ShopActivity = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await api.get('/orders/customer/my');
-      if (res.data.success) {
-        setOrders(res.data.data);
+      let myOrders = [];
+      let incomingOrders = [];
+      try {
+        const res = await api.get('/orders/customer/my');
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          myOrders = res.data.data;
+        }
+      } catch (e) {
+        console.error('Lỗi lấy đơn tự tạo:', e);
       }
+
+      try {
+        const resInc = await api.get('/merchant/orders');
+        if (resInc.data?.success && Array.isArray(resInc.data.data)) {
+          incomingOrders = resInc.data.data;
+        }
+      } catch (e) {
+        // Quán chưa có đơn merchant
+      }
+
+      const orderMap = new Map();
+      [...incomingOrders, ...myOrders].forEach(o => {
+        if (o && o._id && !orderMap.has(o._id)) {
+          orderMap.set(o._id, o);
+        }
+      });
+      const combined = Array.from(orderMap.values()).sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+
+      setOrders(combined);
     } catch (err) {
       console.error(err);
     } finally {
