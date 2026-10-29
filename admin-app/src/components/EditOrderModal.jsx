@@ -204,6 +204,63 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                </p>
           </div>
 
+          {/* KHỐI ĐÁNH GIÁ TỪ KHÁCH HÀNG / CỬA HÀNG */}
+          {order.driverRating?.stars && (
+            <div className="bg-amber-50/90 border-2 border-amber-300 rounded-2xl p-4 shadow-sm">
+              <div className="flex items-center justify-between mb-2 pb-2 border-b border-amber-200">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl">⭐</span>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-amber-900 uppercase tracking-wide">
+                      Đánh Giá Dịch Vụ Từ Khách Hàng
+                    </h3>
+                    <p className="text-[11px] text-amber-700">
+                      Khách: <b>{order.customerName || 'Khách vãng lai'}</b> (📞 {order.customerPhone || '—'})
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-lg font-black text-amber-600 mr-2">
+                    {order.driverRating.stars} ★
+                  </span>
+                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                    order.driverRating.satisfaction === 'SATISFIED' 
+                      ? 'bg-green-100 text-green-700 border border-green-300' 
+                      : 'bg-red-100 text-red-700 border border-red-300'
+                  }`}>
+                    {order.driverRating.satisfaction === 'SATISFIED' ? '😊 Hài lòng' : '😡 Không hài lòng'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Tài xế được đánh giá */}
+              <div className="text-xs text-slate-700 mb-2 flex items-center gap-2">
+                <span className="font-semibold text-slate-500">Tài xế thực hiện:</span>
+                <span className="font-bold text-slate-900 bg-white px-2 py-0.5 rounded border border-amber-200">
+                  🛵 {order.assignedTo?.name || 'Chưa rõ'} {order.assignedTo?.licensePlate ? `(${order.assignedTo.licensePlate})` : ''}
+                </span>
+              </div>
+
+              {/* Tags phản hồi */}
+              {order.driverRating.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {order.driverRating.tags.map((tag, idx) => (
+                    <span key={idx} className="text-xs bg-white text-amber-900 px-2.5 py-1 rounded-full border border-amber-200 font-semibold shadow-xs">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Lời nhận xét chi tiết */}
+              {order.driverRating.comment && (
+                <div className="bg-white/90 p-2.5 rounded-xl border border-amber-200 text-xs text-slate-800 italic">
+                  "{order.driverRating.comment}"
+                </div>
+              )}
+            </div>
+          )}
+
           {/* KHỐI 1: KHÁCH ĐẶT */}
           <div className="bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200 flex justify-between items-center">
             <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Khách Đặt Tự Động:</h3>

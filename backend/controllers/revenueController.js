@@ -602,7 +602,8 @@ const revenueController = {
             orderCode: order.orderCode || order._id.toString().slice(-8).toUpperCase(),
             customerName: order.customerName,
             deliveryFee: fee,
-            date: date
+            date: date,
+            driverRating: order.driverRating
           });
         }
       });

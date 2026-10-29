@@ -1,43 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Star, X, Check, ThumbsUp, ThumbsDown, MessageSquare, Send, Truck } from 'lucide-react';
+import { Star, X, ThumbsUp, ThumbsDown, MessageSquare, Send } from 'lucide-react';
 import { rateDriverOrder, getFullImageUrl } from '../services/api';
 import { useToast } from '../context/ToastContext';
 
 const SATISFIED_TAGS = [
-  '⚡ Giao hàng siêu nhanh',
-  '😊 Thái độ thân thiện, lịch sự',
-  '📦 Bảo quản hàng hóa cẩn thận',
-  '🛵 Lái xe an toàn, đúng hẹn',
-  '📞 Gọi điện trước chu đáo'
+  '⚡ Giao siêu nhanh',
+  '😊 Thân thiện, lịch sự',
+  '📦 Giữ hàng cẩn thận',
+  '🛵 Lái xe an toàn',
+  '📞 Gọi trước chu đáo'
 ];
 
 const UNSATISFIED_TAGS = [
-  '🐢 Giao hàng quá lâu / Trễ hẹn',
-  '😡 Thái độ cộc cằn, bất lịch sự',
-  '💸 Tự ý đòi thêm tiền ngoài app',
-  '📦 Hàng hóa bị đổ vỡ, móp méo',
-  '📞 Không liên hệ trước khi đến',
-  '🧭 Đi sai lộ trình / Lạc đường'
+  '🐢 Giao hàng quá lâu',
+  '😡 Thái độ cộc cằn',
+  '💸 Đòi thêm tiền ngoài app',
+  '📦 Hàng bị đổ vỡ',
+  '📞 Không gọi trước khi đến',
+  '🧭 Đi lạc đường'
 ];
 
 const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
   const { showToast } = useToast();
-  const [stars, setStars] = useState(5);
+  const [stars, setStars] = useState(order?.driverRating?.stars || order?.rating || 5);
   const [hoverStars, setHoverStars] = useState(0);
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [comment, setComment] = useState('');
+  const [selectedTags, setSelectedTags] = useState(order?.driverRating?.tags || []);
+  const [comment, setComment] = useState(order?.driverRating?.comment || '');
   const [submitting, setSubmitting] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!isOpen || !order) return null;
+  useEffect(() => {
+    setMounted(true);
+    if (order?.driverRating?.stars) {
+      setStars(order.driverRating.stars);
+      setSelectedTags(order.driverRating.tags || []);
+      setComment(order.driverRating.comment || '');
+    }
+    return () => setMounted(false);
+  }, [order]);
+
+  if (!isOpen || !order || !mounted) return null;
 
   const driver = order.assignedTo || {};
-  const isSatisfied = (hoverStars || stars) >= 4;
+  const activeStars = hoverStars || stars;
+  const isSatisfied = activeStars >= 4;
   const currentTags = isSatisfied ? SATISFIED_TAGS : UNSATISFIED_TAGS;
 
   const handleStarClick = (num) => {
     setStars(num);
-    setSelectedTags([]); // Reset tags khi chuyển từ hài lòng sang không hài lòng
+    // Nếu đổi nhóm từ hài lòng sang không hài lòng hoặc ngược lại thì reset tag
+    const willBeSatisfied = num >= 4;
+    if (willBeSatisfied !== isSatisfied) {
+      setSelectedTags([]);
+    }
   };
 
   const toggleTag = (tag) => {
@@ -58,7 +75,9 @@ const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
+    if (submitting) return;
+
     setSubmitting(true);
     try {
       const res = await rateDriverOrder(order._id, {
@@ -82,35 +101,48 @@ const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
     }
   };
 
-  return (
+  const modalContent = (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div 
+        className="fixed inset-0 z-[99999] bg-black/75 backdrop-blur-sm flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4"
+        onClick={onClose}
+      >
         <motion.div 
-          initial={{ opacity: 0, scale: 0.92, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.92, y: 15 }}
-          transition={{ duration: 0.25 }}
-          className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]"
+          initial={{ opacity: 0, y: 100, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 100, scale: 0.95 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="bg-white rounded-t-[28px] sm:rounded-3xl w-full max-w-md overflow-hidden shadow-2xl flex flex-col max-h-[88vh] sm:max-h-[90vh] z-[100000]"
           onClick={e => e.stopPropagation()}
         >
+          {/* Mobile Handle Bar */}
+          <div className="w-full flex justify-center pt-2.5 pb-1 sm:hidden">
+            <div className="w-12 h-1.5 bg-slate-300 rounded-full" />
+          </div>
+
           {/* Header */}
-          <div className={`p-4 text-white flex items-center justify-between transition-colors ${
+          <div className={`px-4 py-3 sm:py-3.5 text-white flex items-center justify-between transition-colors ${
             isSatisfied ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-gradient-to-r from-amber-600 to-orange-600'
           }`}>
             <div className="flex items-center gap-2">
-              <Star size={20} className="fill-white text-white" />
-              <h3 className="font-extrabold text-base">Đánh Giá Dịch Vụ Tài Xế</h3>
+              <Star size={18} className="fill-white text-white" />
+              <h3 className="font-extrabold text-sm sm:text-base">Đánh Giá Bác Tài & Dịch Vụ</h3>
             </div>
-            <button onClick={onClose} className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="p-1 rounded-full bg-white/20 hover:bg-white/30 text-white transition-colors"
+            >
               <X size={18} />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-5 overflow-y-auto space-y-4">
+          {/* Scrollable Form Body */}
+          <div className="p-4 overflow-y-auto space-y-3.5 flex-1 overscroll-contain">
             
             {/* Thông tin tài xế */}
-            <div className="flex items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
-              <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg overflow-hidden shrink-0 border-2 border-white shadow-sm">
+            <div className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
+              <div className="w-11 h-11 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-base overflow-hidden shrink-0 border-2 border-white shadow-sm">
                 {driver.avatar ? (
                   <img src={getFullImageUrl(driver.avatar)} alt={driver.name} className="w-full h-full object-cover" />
                 ) : (
@@ -119,21 +151,21 @@ const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-slate-800 text-sm truncate">{driver.name || 'Tài xế AloShipp'}</p>
-                <p className="text-xs text-blue-600 font-semibold uppercase mt-0.5">
+                <p className="text-xs text-blue-600 font-semibold uppercase">
                   {driver.licensePlate || driver.vehiclePlate || 'Biển số đang cập nhật'}
                 </p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Mã đơn: #{order.orderCode || order._id.slice(-6).toUpperCase()}</p>
+                <p className="text-[10px] text-slate-400">Mã đơn: #{order.orderCode || order._id?.slice(-6).toUpperCase()}</p>
               </div>
             </div>
 
             {/* Chọn Sao */}
-            <div className="text-center py-2">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+            <div className="text-center py-1 bg-amber-50/50 rounded-2xl border border-amber-100/60 p-2.5">
+              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">
                 Mức độ hài lòng của bạn
               </p>
-              <div className="flex items-center justify-center gap-2 mb-1.5">
+              <div className="flex items-center justify-center gap-2 mb-1">
                 {[1, 2, 3, 4, 5].map(starNum => {
-                  const isActive = starNum <= (hoverStars || stars);
+                  const isActive = starNum <= activeStars;
                   return (
                     <button
                       key={starNum}
@@ -144,32 +176,32 @@ const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
                       className="p-1 transition-transform active:scale-125 focus:outline-none"
                     >
                       <Star 
-                        size={34} 
+                        size={32} 
                         className={`transition-colors ${
                           isActive 
                             ? isSatisfied ? 'text-amber-400 fill-amber-400 drop-shadow-sm' : 'text-orange-500 fill-orange-500'
-                            : 'text-gray-300'
+                            : 'text-gray-200'
                         }`} 
                       />
                     </button>
                   );
                 })}
               </div>
-              <p className={`text-sm font-extrabold transition-colors ${isSatisfied ? 'text-blue-600' : 'text-orange-600'}`}>
-                {getStarLabel(hoverStars || stars)}
+              <p className={`text-xs font-extrabold transition-colors ${isSatisfied ? 'text-blue-600' : 'text-orange-600'}`}>
+                {getStarLabel(activeStars)}
               </p>
             </div>
 
             {/* Huy hiệu chọn nhanh */}
             <div>
-              <p className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1.5">
+              <p className="text-xs font-bold text-gray-700 mb-1.5 flex items-center gap-1.5">
                 {isSatisfied ? (
-                  <><ThumbsUp size={14} className="text-blue-600" /> Bạn hài lòng nhất về điều gì?</>
+                  <><ThumbsUp size={13} className="text-blue-600" /> Bạn hài lòng nhất về điều gì?</>
                 ) : (
-                  <><ThumbsDown size={14} className="text-orange-600" /> Bác tài cần cải thiện điều gì?</>
+                  <><ThumbsDown size={13} className="text-orange-600" /> Bác tài cần cải thiện điều gì?</>
                 )}
               </p>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {currentTags.map((tag, idx) => {
                   const isSelected = selectedTags.includes(tag);
                   return (
@@ -177,7 +209,7 @@ const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
                       key={idx}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className={`text-xs px-3 py-1.5 rounded-full font-medium transition-all active:scale-95 ${
+                      className={`text-[11px] px-2.5 py-1 rounded-full font-medium transition-all active:scale-95 ${
                         isSelected 
                           ? isSatisfied 
                             ? 'bg-blue-600 text-white font-bold shadow-sm' 
@@ -195,7 +227,7 @@ const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
             {/* Góp ý chi tiết */}
             <div>
               <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center gap-1">
-                <MessageSquare size={13} className="text-gray-400" />
+                <MessageSquare size={12} className="text-gray-400" />
                 Góp ý chi tiết cho bác tài (Tùy chọn):
               </label>
               <textarea
@@ -203,31 +235,35 @@ const DriverRatingModal = ({ isOpen, onClose, order, onRatingSuccess }) => {
                 value={comment}
                 onChange={e => setComment(e.target.value)}
                 placeholder="Nhập cảm nhận của bạn về chuyến đi..."
-                className="w-full border border-gray-300 rounded-xl p-3 text-xs text-gray-700 focus:border-blue-500 outline-none"
+                className="w-full border border-gray-300 rounded-xl p-2.5 text-xs text-gray-700 focus:border-blue-500 outline-none"
               />
             </div>
 
-            {/* Nút hành động */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className={`w-full py-3.5 text-white font-extrabold rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm disabled:opacity-50 ${
-                  isSatisfied 
-                    ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 shadow-blue-500/25' 
-                    : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 shadow-orange-500/25'
-                }`}
-              >
-                <Send size={16} />
-                {submitting ? 'Đang gửi...' : 'Gửi Đánh Giá'}
-              </button>
-            </div>
+          </div>
 
-          </form>
+          {/* Sticky Pinned Footer - BẢO ĐẢM NÚT LUÔN NẰM TRÊN MỌI MENU VÀ KHÔNG BỊ DÍNH */}
+          <div className="p-4 pt-3 border-t border-slate-100 bg-white shadow-[0_-4px_16px_rgba(0,0,0,0.05)] pb-[calc(1.2rem+env(safe-area-inset-bottom))] sm:pb-4">
+            <button
+              type="button"
+              disabled={submitting}
+              onClick={handleSubmit}
+              className={`w-full py-3 text-white font-extrabold rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm disabled:opacity-50 cursor-pointer ${
+                isSatisfied 
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 shadow-blue-500/25' 
+                  : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 shadow-orange-500/25'
+              }`}
+            >
+              <Send size={15} />
+              {submitting ? 'Đang gửi...' : 'Gửi Đánh Giá Ngay'}
+            </button>
+          </div>
+
         </motion.div>
       </div>
     </AnimatePresence>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default DriverRatingModal;

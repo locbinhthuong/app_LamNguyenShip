@@ -585,9 +585,18 @@ export default function OrderDetail() {
                   <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
                     <Star size={14} className="text-amber-500 fill-amber-500" /> ĐÁNH GIÁ CHUYẾN ĐI
                   </h3>
-                  <span className="text-xs font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
-                    {order.driverRating.stars} ★ {order.driverRating.satisfaction === 'SATISFIED' ? 'Hài lòng' : 'Chưa hài lòng'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                      {order.driverRating.stars} ★ {order.driverRating.satisfaction === 'SATISFIED' ? 'Hài lòng' : 'Chưa hài lòng'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowRatingModal(true)}
+                      className="text-[11px] font-bold text-blue-600 hover:underline"
+                    >
+                      Sửa
+                    </button>
+                  </div>
                 </div>
                 {order.driverRating.tags?.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mt-2">

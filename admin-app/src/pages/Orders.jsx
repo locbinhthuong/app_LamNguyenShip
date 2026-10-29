@@ -57,12 +57,14 @@ export default function Orders() {
     { key: 'ACCEPTED', label: 'Đã nhận', color: 'blue' },
     { key: 'PICKED_UP,DELIVERING', label: 'Đang giao', color: 'orange' },
     { key: 'COMPLETED', label: 'Đã hoàn tất', color: 'green' },
+    { key: 'RATED', label: '⭐ Đánh giá KH', color: 'amber' },
     { key: 'CANCELLED', label: 'Đã hủy', color: 'red' },
   ];
 
   const doesOrderMatchFilter = useCallback((order, currentFilter) => {
     if (!order) return false;
     if (!currentFilter) return true;
+    if (currentFilter === 'RATED') return Boolean(order.driverRating?.stars || order.rating);
     if (currentFilter === 'SCHEDULED') return order.status === 'DRAFT' && Boolean(order.scheduledPublishAt);
     if (currentFilter === 'DRAFT') return order.status === 'DRAFT' && !order.scheduledPublishAt;
     const statuses = currentFilter.split(',').map(s => s.trim().toUpperCase());
@@ -298,9 +300,12 @@ export default function Orders() {
     slate: 'text-slate-600',
     yellow: 'text-yellow-400',
     blue: 'text-blue-400',
-    orange: 'text-blue-600',
-    green: 'text-green-400',
-    red: 'text-red-400',
+    orange: 'text-orange-500',
+    green: 'text-green-500',
+    red: 'text-red-500',
+    amber: 'text-amber-500',
+    indigo: 'text-indigo-500',
+    purple: 'text-purple-500',
   };
 
   return (

@@ -227,6 +227,12 @@ export default function DriverDetail() {
             )}
 
             <div className="mt-6 border-t border-slate-200 pt-4 text-left text-sm space-y-3">
+              <div className="flex justify-between items-center bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+                <span className="text-amber-800 font-bold text-xs flex items-center gap-1">⭐ Đánh giá sao:</span>
+                <span className="text-amber-700 font-extrabold text-sm">
+                  {driver.rating ? Number(driver.rating).toFixed(1) : '5.0'} ★ <span className="text-xs text-slate-500 font-normal">({driver.totalRatings || 0} lượt)</span>
+                </span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Biển số:</span>
                 <span className="text-slate-800 font-medium">{driver.licensePlate || '—'}</span>
@@ -379,6 +385,12 @@ export default function DriverDetail() {
                        <span className="text-xs text-slate-500 block uppercase font-semibold">Khách Hàng</span>
                        <span className="font-bold text-slate-800">{order.customerName}</span>
                     </div>
+                    {order.driverRating?.stars && (
+                      <div className="bg-amber-50 p-2 rounded-lg border border-amber-200 text-xs">
+                        <span className="font-bold text-amber-700">⭐ {order.driverRating.stars}★ ({order.driverRating.satisfaction === 'SATISFIED' ? 'Hài lòng' : 'Không hài lòng'})</span>
+                        {order.driverRating.comment && <p className="text-[11px] text-slate-600 italic mt-0.5">"{order.driverRating.comment}"</p>}
+                      </div>
+                    )}
                     <div className="text-left">
                        <span className="text-xs text-slate-500 block uppercase font-semibold">Hoàn Thành Lúc</span>
                        <span className="text-sm font-medium text-slate-600">{new Date(order.date).toLocaleString('vi-VN')}</span>
@@ -394,6 +406,7 @@ export default function DriverDetail() {
                     <tr>
                       <th className="px-4 py-3">Mã Đơn</th>
                       <th className="px-4 py-3">Khách Hàng</th>
+                      <th className="px-4 py-3">Đánh Giá KH</th>
                       <th className="px-4 py-3 text-right">Phí Giao</th>
                       <th className="px-4 py-3 text-right">Hoàn Thành Lúc</th>
                     </tr>
@@ -403,6 +416,15 @@ export default function DriverDetail() {
                       <tr key={order.id} className="hover:bg-blue-50 hover:bg-blue-100/30 transition-colors">
                         <td className="px-4 py-3 font-mono text-blue-600">#{order.orderCode}</td>
                         <td className="px-4 py-3 font-medium text-slate-800">{order.customerName}</td>
+                        <td className="px-4 py-3 text-xs">
+                          {order.driverRating?.stars ? (
+                            <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              ⭐ {order.driverRating.stars}★ {order.driverRating.satisfaction === 'SATISFIED' ? 'Hài lòng' : 'Chưa hài lòng'}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400 italic">Chưa đánh giá</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3 text-right font-bold text-sky-600">+{formatCurrency((order.deliveryFee || 0) + (order.extraSurcharge || 0))}</td>
                         <td className="px-4 py-3 text-right text-xs text-slate-500">
                            {new Date(order.date).toLocaleString('vi-VN')}

@@ -203,7 +203,9 @@ const orderController = {
 
       let query = {};
 
-      if (status === 'SCHEDULED') {
+      if (status === 'RATED' || req.query.hasRating === 'true') {
+        query['driverRating.stars'] = { $exists: true, $gt: 0 };
+      } else if (status === 'SCHEDULED') {
         query.status = 'DRAFT';
         query.scheduledPublishAt = { $ne: null };
       } else if (status === 'DRAFT') {
