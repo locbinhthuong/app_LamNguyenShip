@@ -894,7 +894,8 @@ const authController = {
           region: region || null,
           shopName: userRole === 'SHOP' ? shopName : null,
           shopAddress: userRole === 'SHOP' ? shopAddress : null,
-          defaultLocation: userRole === 'SHOP' ? defaultLocation : undefined
+          defaultLocation: userRole === 'SHOP' ? defaultLocation : undefined,
+          verificationStatus: 'UNVERIFIED'
         });
         await user.save();
       }
@@ -924,7 +925,9 @@ const authController = {
             coverImage: user.coverImage,
             isOpen: user.isOpen,
             isApprovedShop: user.isApprovedShop,
-            shopCategory: user.shopCategory
+            shopCategory: user.shopCategory,
+            verificationStatus: user.verificationStatus || 'UNVERIFIED',
+            rejectReason: user.rejectReason || null
           }
         }
       });
@@ -993,7 +996,9 @@ const authController = {
             coverImage: user.coverImage,
             isOpen: user.isOpen,
             isApprovedShop: user.isApprovedShop,
-            shopCategory: user.shopCategory
+            shopCategory: user.shopCategory,
+            verificationStatus: user.verificationStatus || 'VERIFIED',
+            rejectReason: user.rejectReason || null
           }
         }
       });

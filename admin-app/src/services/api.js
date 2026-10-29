@@ -304,8 +304,13 @@ export const bulkDeleteWalletTxAdmin = async (txIds) => {
 };
 
 // ==================== USERS (CUSTOMERS) ====================
-export const getCustomers = async () => {
-  const response = await api.get('/api/users');
+export const getCustomers = async (params = {}) => {
+  const response = await api.get('/api/users', { params });
+  return response.data;
+};
+
+export const verifyCustomer = async (id, status, rejectReason = '') => {
+  const response = await api.put(`/api/users/${id}/verify`, { status, rejectReason });
   return response.data;
 };
 

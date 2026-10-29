@@ -27,6 +27,9 @@ router.post('/:id/deliver', verifyToken, onlyDriver, orderController.deliveringO
 // POST /api/orders/:id/complete - Hoàn thành
 router.post('/:id/complete', verifyToken, onlyDriver, orderController.completeOrder);
 
+// POST /api/orders/:id/rate-driver - Đánh giá tài xế
+router.post('/:id/rate-driver', verifyToken, orderController.rateDriver);
+
 // PUT /api/orders/:id/late-reason - Tài xế báo lý do giao đơn trễ (>35p)
 router.put('/:id/late-reason', verifyToken, onlyDriver, orderController.updateOrderLateReason);
 

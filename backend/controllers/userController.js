@@ -9,19 +9,42 @@ const userController = {
       const page = parseInt(req.query.page) || 1;
       const skip = (page - 1) * limit;
 
-      const [users, total] = await Promise.all([
-        User.find({ role: { $in: ['CUSTOMER', 'SHOP'] } })
-          .sort({ createdAt: -1 })
+      const { verificationStatus, role } = req.query;
+      const query = {};
+      if (role) {
+        query.role = role;
+      } else {
+        query.role = { $in: ['CUSTOMER', 'SHOP'] };
+      }
+      if (verificationStatus) {
+        query.verificationStatus = verificationStatus;
+      }
+
+      const sortQuery = verificationStatus === 'PENDING'
+        ? { verificationRequestedAt: -1, createdAt: -1 }
+        : { createdAt: -1 };
+
+      const [users, total, pendingCount, verifiedCount, rejectedCount] = await Promise.all([
+        User.find(query)
+          .sort(sortQuery)
           .select('-password')
           .skip(skip)
           .limit(limit)
           .lean(),
-        User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] } })
+        User.countDocuments(query),
+        User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] }, verificationStatus: 'PENDING' }),
+        User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] }, verificationStatus: 'VERIFIED' }),
+        User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] }, verificationStatus: 'REJECTED' })
       ]);
 
       res.status(200).json({
         success: true,
         data: users,
+        counts: {
+          pending: pendingCount,
+          verified: verifiedCount,
+          rejected: rejectedCount
+        },
         pagination: {
           currentPage: page,
           totalPages: Math.ceil(total / limit),
@@ -99,6 +122,107 @@ const userController = {
       res.status(500).json({ success: false, message: 'Lỗi server' });
     }
   }
+  requestVerification: async (req, res) => {
+    try {
+      const userId = req.customer?._id || req.user?.id;
+      const { zaloPhone, verificationNote } = req.body;
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Tài khoản không tồn tại' });
+      }
+
+      user.verificationStatus = 'PENDING';
+      user.verificationRequestedAt = new Date();
+      if (zaloPhone) user.zaloPhone = zaloPhone;
+      if (verificationNote) user.verificationNote = verificationNote;
+      user.rejectReason = null;
+      await user.save();
+
+      if (req.io) {
+        req.io.to('admin_room').emit('new_verification_request', {
+          userId: user._id,
+          name: user.name,
+          phone: user.phone,
+          zaloPhone: user.zaloPhone || user.phone,
+          role: user.role,
+          shopName: user.shopName,
+          verificationRequestedAt: user.verificationRequestedAt,
+          verificationNote: user.verificationNote
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Đã gửi yêu cầu xác minh. Ban quản trị sẽ kiểm tra SĐT/Zalo của bạn trong ít phút!',
+        data: {
+          verificationStatus: user.verificationStatus,
+          verificationRequestedAt: user.verificationRequestedAt,
+          zaloPhone: user.zaloPhone,
+          verificationNote: user.verificationNote
+        }
+      });
+    } catch (error) {
+      console.error('Error requestVerification:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi gửi yêu cầu xác minh' });
+    }
+  },
+
+  verifyUser: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status, rejectReason } = req.body;
+      if (!['VERIFIED', 'REJECTED'].includes(status)) {
+        return res.status(400).json({ success: false, message: 'Trạng thái xác minh không hợp lệ' });
+      }
+
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Không tìm thấy người dùng' });
+      }
+
+      user.verificationStatus = status;
+      if (status === 'VERIFIED') {
+        user.verifiedAt = new Date();
+        user.verifiedBy = req.admin?._id || req.user?.id || null;
+        user.rejectReason = null;
+        if (user.role === 'SHOP') {
+          user.isApprovedShop = true;
+        }
+      } else {
+        user.rejectReason = rejectReason || 'Số điện thoại không thể liên lạc hoặc chưa xác định được Zalo chính chủ';
+      }
+
+      await user.save();
+
+      if (req.io) {
+        const payload = {
+          userId: user._id,
+          verificationStatus: user.verificationStatus,
+          verifiedAt: user.verifiedAt,
+          rejectReason: user.rejectReason,
+          message: status === 'VERIFIED'
+            ? '🎉 Tài khoản của bạn đã được Admin xác minh thành công! Bạn có thể sử dụng tất cả dịch vụ ngay bây giờ.'
+            : `⚠️ Yêu cầu xác minh bị từ chối: ${user.rejectReason}`
+        };
+        req.io.to(`customer_${user._id}`).emit('user_verification_updated', payload);
+        req.io.to(`shop_${user._id}`).emit('user_verification_updated', payload);
+      }
+
+      res.status(200).json({
+        success: true,
+        message: status === 'VERIFIED' ? 'Đã phê duyệt tài khoản thành công' : 'Đã từ chối tài khoản',
+        data: {
+          id: user._id,
+          verificationStatus: user.verificationStatus,
+          verifiedAt: user.verifiedAt,
+          rejectReason: user.rejectReason
+        }
+      });
+    } catch (error) {
+      console.error('Error verifyUser:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi xác minh tài khoản' });
+    }
+  },
 };
 
 module.exports = userController;

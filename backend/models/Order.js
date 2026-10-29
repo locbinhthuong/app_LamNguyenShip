@@ -301,6 +301,14 @@ const orderSchema = new mongoose.Schema({
     min: 1,
     max: 5
   },
+  driverRating: {
+    stars: { type: Number, min: 1, max: 5, default: null },
+    satisfaction: { type: String, enum: ['SATISFIED', 'UNSATISFIED'], default: null },
+    tags: [{ type: String }],
+    comment: { type: String, default: '' },
+    ratedAt: { type: Date, default: null },
+    ratedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null }
+  },
 
   // Metadata
   ipAddress: {

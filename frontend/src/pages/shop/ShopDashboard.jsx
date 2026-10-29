@@ -11,6 +11,8 @@ import { Geolocation } from '@capacitor/geolocation';
 import { api, getActiveAnnouncements, getFullImageUrl } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import LocationPicker from '../../components/LocationPicker';
+import AccountVerificationModal from '../../components/AccountVerificationModal';
+import { ShieldAlert } from 'lucide-react';
 
 const ShopDashboard = () => {
   const navigate = useNavigate();
@@ -26,6 +28,14 @@ const ShopDashboard = () => {
   const [address, setAddress] = useState('Đang lấy vị trí...');
   const [locationDetails, setLocationDetails] = useState(null);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [shopUser, setShopUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('customerData') || '{}');
+    } catch (e) {
+      return {};
+    }
+  });
   
   // Banner & Tin tức
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -352,7 +362,18 @@ const ShopDashboard = () => {
               <span>Theo dõi</span>
               <ChevronRight size={14} />
             </div>
-          </motion.div>
+            {/* Modal Xác Minh Tài Khoản Quán */}
+      {showVerificationModal && (
+        <AccountVerificationModal 
+          isOpen={showVerificationModal}
+          onClose={() => setShowVerificationModal(false)}
+          user={shopUser}
+          onVerifiedSuccess={(updated) => {
+            setShopUser(prev => ({ ...prev, ...updated }));
+          }}
+        />
+      )}
+    </motion.div>
         )}
       </AnimatePresence>
 
@@ -370,6 +391,45 @@ const ShopDashboard = () => {
         </motion.div>
       </div>
 
+      {/* BANNER CẢNH BÁO XÁC MINH CỬA HÀNG (CHỐNG BOM HÀNG) */}
+      {shopUser.verificationStatus && shopUser.verificationStatus !== 'VERIFIED' && (
+        <div 
+          onClick={() => setShowVerificationModal(true)}
+          className={`mb-6 p-4 rounded-2xl cursor-pointer border flex items-center justify-between gap-3 transition-all active:scale-[0.99] ${
+            shopUser.verificationStatus === 'PENDING'
+              ? 'bg-amber-50 border-amber-300 text-amber-900'
+              : shopUser.verificationStatus === 'REJECTED'
+              ? 'bg-red-50 border-red-300 text-red-900'
+              : 'bg-blue-50 border-blue-300 text-blue-900'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              shopUser.verificationStatus === 'PENDING' ? 'bg-amber-500 text-white animate-pulse' : 'bg-blue-600 text-white'
+            }`}>
+              <ShieldAlert size={20} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-extrabold text-sm truncate">
+                {shopUser.verificationStatus === 'PENDING' 
+                  ? '⏳ Đang chờ Admin duyệt tài khoản Quán'
+                  : shopUser.verificationStatus === 'REJECTED'
+                  ? '⚠️ Yêu cầu mở quán bị từ chối'
+                  : '🛡️ Quán chưa xác minh SĐT/Zalo'}
+              </h4>
+              <p className="text-xs opacity-85 truncate mt-0.5">
+                {shopUser.verificationStatus === 'PENDING'
+                  ? 'Nhấn vào đây để xem chi tiết hoặc liên hệ Admin duyệt nhanh'
+                  : 'Bấm để xác nhận thông tin mở khóa tính năng tạo đơn & bán hàng'}
+              </p>
+            </div>
+          </div>
+          <div className="px-3 py-1.5 bg-white text-blue-600 rounded-xl text-xs font-extrabold shadow-sm shrink-0 border border-blue-200">
+            Chi tiết
+          </div>
+        </div>
+      )}
+
       {/* DỊCH VỤ NỔI BẬT */}
       <div className="mb-10">
         <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-6">Dịch vụ nổi bật</h2>
@@ -377,7 +437,7 @@ const ShopDashboard = () => {
           
           {/* THỰC ĐƠN */}
           <div 
-            onClick={() => navigate('/shop/menu')}
+            onClick={() => { const u = JSON.parse(localStorage.getItem('customerData') || '{}'); if (u.verificationStatus && u.verificationStatus !== 'VERIFIED') { setShowVerificationModal(true); } else { navigate('/shop/menu'); } }}
             className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 md:px-2 md:py-1 rounded-bl-lg">HOT</div>
@@ -389,7 +449,7 @@ const ShopDashboard = () => {
 
           {/* GIAO HÀNG */}
           <div 
-            onClick={() => navigate('/shop/book/delivery')}
+            onClick={() => { const u = JSON.parse(localStorage.getItem('customerData') || '{}'); if (u.verificationStatus && u.verificationStatus !== 'VERIFIED') { setShowVerificationModal(true); } else { navigate('/shop/book/delivery'); } }}
             className="bg-white rounded-[20px] py-4 px-2 flex flex-col items-center justify-center cursor-pointer shadow-[0_2px_15px_rgba(0,0,0,0.03)] border border-gray-100 hover:-translate-y-1 transition-transform"
           >
             <div className="w-11 h-11 md:w-14 md:h-14 rounded-full bg-blue-50 flex items-center justify-center mb-2.5 text-blue-600">

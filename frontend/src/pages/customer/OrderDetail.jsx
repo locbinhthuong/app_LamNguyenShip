@@ -574,6 +574,47 @@ export default function OrderDetail() {
           </div>
         )}
 
+{/* Khối Đánh Giá Tài Xế (Khi đơn hoàn thành) */}
+        {order.status === 'COMPLETED' && order.assignedTo && (
+          <div className="mb-2">
+            {order.driverRating?.stars ? (
+              <div className="bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                <div className="flex justify-between items-center mb-1.5">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                    <Star size={14} className="text-amber-500 fill-amber-500" /> ĐÁNH GIÁ CHUYẾN ĐI
+                  </h3>
+                  <span className="text-xs font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
+                    {order.driverRating.stars} ★ {order.driverRating.satisfaction === 'SATISFIED' ? 'Hài lòng' : 'Chưa hài lòng'}
+                  </span>
+                </div>
+                {order.driverRating.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {order.driverRating.tags.map((tag, idx) => (
+                      <span key={idx} className="text-[11px] bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full font-medium">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {order.driverRating.comment && (
+                  <p className="text-xs text-slate-600 italic mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    "{order.driverRating.comment}"
+                  </p>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowRatingModal(true)}
+                className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-extrabold rounded-2xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 active:scale-95 transition-all text-sm animate-pulse"
+              >
+                <Star size={18} className="fill-white" />
+                Đánh Giá Bác Tài & Dịch Vụ
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Khối Thông Tin Món Ăn (Chỉ dành cho ALOFOOD) */}
         {order.serviceType === 'ALOFOOD' && order.alofoodDetails && (
           <div className="bg-white p-5 rounded-3xl border border-slate-100 mb-2">

@@ -666,6 +666,19 @@ const orderController = {
   createCustomerOrder: async (req, res) => {
     try {
       const customerId = req.customer._id;
+
+      if (req.customer.verificationStatus && req.customer.verificationStatus !== 'VERIFIED') {
+        return res.status(403).json({
+          success: false,
+          code: 'ACCOUNT_NOT_VERIFIED',
+          verificationStatus: req.customer.verificationStatus,
+          message: req.customer.verificationStatus === 'PENDING'
+            ? 'Tài khoản của bạn đang chờ Admin xác minh SĐT/Zalo. Vui lòng đợi trong giây lát hoặc liên hệ Hotline để được duyệt nhanh!'
+            : req.customer.verificationStatus === 'REJECTED'
+            ? `Tài khoản của bạn bị từ chối xác minh: ${req.customer.rejectReason || 'Vui lòng liên hệ Admin'}`
+            : 'Tài khoản chưa được xác minh số điện thoại. Vui lòng gửi yêu cầu xác minh để tiếp tục đặt đơn.'
+        });
+      }
       const {
         serviceType, subServiceType, customerName, customerPhone, pickupPhone,
         senderName, senderPhone, receiverName, receiverPhone, receiverPhone2,
@@ -2507,6 +2520,99 @@ const orderController = {
       res.status(500).json({ success: false, message: 'Lỗi server khi tính phí' });
     }
   }
+  // POST /api/orders/:id/rate-driver - Khách hàng / Shop đánh giá tài xế
+  rateDriver: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { stars, satisfaction, tags, comment } = req.body;
+
+      const order = await Order.findById(id);
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
+      }
+
+      if (order.status !== 'COMPLETED') {
+        return res.status(400).json({ success: false, message: 'Chỉ có thể đánh giá đơn hàng đã hoàn thành' });
+      }
+
+      if (order.driverRating && order.driverRating.stars) {
+        return res.status(400).json({ success: false, message: 'Đơn hàng này đã được đánh giá rồi' });
+      }
+
+      const numStars = Number(stars);
+      if (!numStars || numStars < 1 || numStars > 5) {
+        return res.status(400).json({ success: false, message: 'Số sao đánh giá phải từ 1 đến 5 sao' });
+      }
+
+      const ratingObj = {
+        stars: numStars,
+        satisfaction: satisfaction || (numStars >= 4 ? 'SATISFIED' : 'UNSATISFIED'),
+        tags: Array.isArray(tags) ? tags : [],
+        comment: comment ? String(comment).trim() : '',
+        ratedAt: new Date(),
+        ratedBy: req.customer?._id || req.user?.id || null
+      };
+
+      order.rating = numStars;
+      order.driverRating = ratingObj;
+      await order.save();
+
+      // Cập nhật điểm sao tài xế
+      if (order.assignedTo) {
+        const Driver = require('../models/Driver');
+        const driver = await Driver.findById(order.assignedTo);
+        if (driver) {
+          if (!driver.stats) {
+            driver.stats = { rating: 5, totalRatingCount: 0 };
+          }
+          const currentCount = driver.stats.totalRatingCount || 0;
+          const currentRating = driver.stats.rating || 5;
+          const newTotal = currentCount + 1;
+          const newRating = Math.round((((currentRating * currentCount) + numStars) / newTotal) * 10) / 10;
+
+          driver.stats.rating = newRating;
+          driver.stats.totalRatingCount = newTotal;
+          await driver.save();
+
+          if (req.io) {
+            req.io.to(`driver_${driver._id}`).emit('new_order_rating', {
+              orderId: order._id,
+              orderCode: order.orderCode,
+              stars: numStars,
+              satisfaction: ratingObj.satisfaction,
+              tags: ratingObj.tags,
+              comment: ratingObj.comment,
+              newAverageRating: newRating
+            });
+          }
+        }
+      }
+
+      // Cảnh báo Admin nếu đánh giá 1-2 sao hoặc không hài lòng
+      if (numStars <= 2 && req.io) {
+        req.io.to('admin_room').emit('low_rating_alert', {
+          orderId: order._id,
+          orderCode: order.orderCode,
+          driverId: order.assignedTo,
+          stars: numStars,
+          tags: ratingObj.tags,
+          comment: ratingObj.comment,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          createdAt: new Date()
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Cảm ơn bạn đã gửi đánh giá tài xế!',
+        data: ratingObj
+      });
+    } catch (error) {
+      console.error('Error rateDriver:', error);
+      res.status(500).json({ success: false, message: 'Lỗi server khi gửi đánh giá' });
+    }
+  },
 };
 
 module.exports = orderController;

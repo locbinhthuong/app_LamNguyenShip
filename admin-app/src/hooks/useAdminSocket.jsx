@@ -199,6 +199,19 @@ export const useAdminSocket = () => {
       window.dispatchEvent(new CustomEvent('show_debt_approval_modal', { detail: payload }));
     });
 
+    socket.on('new_verification_request', (payload) => {
+      playAdminAlarm('NORMAL');
+      showToast(`🛡️ KHÁCH/SHOP MỚI CHỜ DUYỆT: ${payload.name} (${payload.phone}). Vào mục Khách Hàng kiểm tra!`, 'warning', 25000);
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        new Notification('Yêu Cầu Xác Minh Tài Khoản Mới', { body: `${payload.name} (${payload.phone}) đang chờ xác minh.`, icon: '/logoALOSHIPP.png' });
+      }
+      window.dispatchEvent(new CustomEvent('refresh_customer_verifications', { detail: payload }));
+    });
+
+    socket.on('low_rating_alert', (payload) => {
+      showToast(`⚠️ CẢNH BÁO ĐÁNH GIÁ THẤP: Đơn ${payload.orderCode || ''} bị đánh giá ${payload.stars} sao! Khách: ${payload.customerName || ''}`, 'error', 15000);
+    });
+
     socket.on('wallet_withdrawal_request', (payload) => {
       playAdminAlarm('FINANCE'); // finance alarm
 

@@ -77,6 +77,38 @@ const userSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+
+  // Trạng thái xác minh tài khoản Khách hàng & Cửa hàng (Chống bom hàng, sim rác)
+  verificationStatus: {
+    type: String,
+    enum: ['UNVERIFIED', 'PENDING', 'VERIFIED', 'REJECTED'],
+    default: 'UNVERIFIED'
+  },
+  verificationRequestedAt: {
+    type: Date,
+    default: null
+  },
+  verifiedAt: {
+    type: Date,
+    default: null
+  },
+  verifiedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
+    default: null
+  },
+  rejectReason: {
+    type: String,
+    default: null
+  },
+  zaloPhone: {
+    type: String,
+    default: null
+  },
+  verificationNote: {
+    type: String,
+    default: null
   }
 }, {
   timestamps: true,
@@ -86,5 +118,7 @@ const userSchema = new mongoose.Schema({
 
 // Indexes cho truy vấn nhanh
 userSchema.index({ role: 1 });
+userSchema.index({ verificationStatus: 1 });
+userSchema.index({ verificationRequestedAt: -1 });
 
 module.exports = mongoose.model('User', userSchema);

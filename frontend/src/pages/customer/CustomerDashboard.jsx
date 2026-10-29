@@ -5,6 +5,8 @@ import { MapPin, Clock, Package, CarFront, ShoppingBag, Headset, ChevronRight, N
 import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import LocationPicker from '../../components/LocationPicker';
+import AccountVerificationModal from '../../components/AccountVerificationModal';
+import { ShieldAlert } from 'lucide-react';
 import { getActiveAnnouncements, getMyOrders, api, getFullImageUrl } from '../../services/api';
 
 const CustomerDashboard = () => {
@@ -17,6 +19,14 @@ const CustomerDashboard = () => {
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [listModalType, setListModalType] = useState(null); // 'PROMO' | 'NEWS' | null
   const [activeOrders, setActiveOrders] = useState([]);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [customerData, setCustomerData] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('customerData') || '{}');
+    } catch (e) {
+      return {};
+    }
+  });
   const [customerName, setCustomerName] = useState(() => {
     try {
       const savedUser = JSON.parse(localStorage.getItem('customerData') || '{}');
@@ -196,7 +206,16 @@ const CustomerDashboard = () => {
     if (!isAuthenticated) {
       localStorage.setItem('intendedService', serviceType);
       navigate('/login');
-    } else if (serviceType === 'ALOFOOD') {
+      return;
+    }
+
+    const currentCust = JSON.parse(localStorage.getItem('customerData') || '{}');
+    if (currentCust.verificationStatus && currentCust.verificationStatus !== 'VERIFIED') {
+      setShowVerificationModal(true);
+      return;
+    }
+
+    if (serviceType === 'ALOFOOD') {
       navigate('/alofood');
     } else {
       navigate(`/customer/book/${serviceType}`);
@@ -310,7 +329,18 @@ const CustomerDashboard = () => {
               <span>Theo dõi</span>
               <ChevronRight size={14} />
             </div>
-          </motion.div>
+            {/* Modal Xác Minh Tài Khoản */}
+      {showVerificationModal && (
+        <AccountVerificationModal 
+          isOpen={showVerificationModal}
+          onClose={() => setShowVerificationModal(false)}
+          user={customerData}
+          onVerifiedSuccess={(updated) => {
+            setCustomerData(prev => ({ ...prev, ...updated }));
+          }}
+        />
+      )}
+    </motion.div>
         )}
       </AnimatePresence>
 
@@ -327,6 +357,45 @@ const CustomerDashboard = () => {
           Chúng tôi luôn sẵn sàng phục vụ bạn mọi lúc, mọi nơi 🚀
         </motion.div>
       </div>
+
+      {/* BANNER CẢNH BÁO XÁC MINH TÀI KHOẢN (CHỐNG BOM HÀNG) */}
+      {customerData.verificationStatus && customerData.verificationStatus !== 'VERIFIED' && (
+        <div 
+          onClick={() => setShowVerificationModal(true)}
+          className={`mb-6 p-4 rounded-2xl cursor-pointer border flex items-center justify-between gap-3 transition-all active:scale-[0.99] ${
+            customerData.verificationStatus === 'PENDING'
+              ? 'bg-amber-50 border-amber-300 text-amber-900'
+              : customerData.verificationStatus === 'REJECTED'
+              ? 'bg-red-50 border-red-300 text-red-900'
+              : 'bg-blue-50 border-blue-300 text-blue-900'
+          }`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+              customerData.verificationStatus === 'PENDING' ? 'bg-amber-500 text-white animate-pulse' : 'bg-blue-600 text-white'
+            }`}>
+              <ShieldAlert size={20} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-extrabold text-sm truncate">
+                {customerData.verificationStatus === 'PENDING' 
+                  ? '⏳ Đang chờ Admin xác minh SĐT/Zalo'
+                  : customerData.verificationStatus === 'REJECTED'
+                  ? '⚠️ Yêu cầu xác minh bị từ chối'
+                  : '🛡️ Tài khoản chưa xác minh SĐT'}
+              </h4>
+              <p className="text-xs opacity-85 truncate mt-0.5">
+                {customerData.verificationStatus === 'PENDING'
+                  ? 'Nhấn vào đây để xem chi tiết hoặc liên hệ Admin duyệt ngay'
+                  : 'Bấm để xác nhận số chính chủ và mở khóa đặt đơn'}
+              </p>
+            </div>
+          </div>
+          <div className="px-3 py-1.5 bg-white text-blue-600 rounded-xl text-xs font-extrabold shadow-sm shrink-0 border border-blue-200">
+            Chi tiết
+          </div>
+        </div>
+      )}
 
       {/* DỊCH VỤ NỔI BẬT */}
       <div className="mb-10">

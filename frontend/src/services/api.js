@@ -77,6 +77,16 @@ export const deleteMyAccount = async () => {
   return response.data;
 };
 
+export const requestAccountVerification = async (data = {}) => {
+  const response = await api.post('/users/request-verification', data);
+  return response.data;
+};
+
+export const rateDriverOrder = async (orderId, ratingData) => {
+  const response = await api.post(`/orders/${orderId}/rate-driver`, ratingData);
+  return response.data;
+};
+
 export const updateFcmToken = async (token) => {
   const response = await api.post('/auth/fcm-token', { token });
   return response.data;
@@ -133,6 +143,18 @@ export const connectSocket = (token, role, options = {}) => {
   if (options.onOrderStatusChanged) {
     socket.on('order_status_changed', options.onOrderStatusChanged);
   }
+
+  socket.on('user_verification_updated', (data) => {
+    // Cập nhật customerData trong localStorage
+    try {
+      const saved = JSON.parse(localStorage.getItem('customerData') || '{}');
+      saved.verificationStatus = data.verificationStatus;
+      saved.rejectReason = data.rejectReason;
+      localStorage.setItem('customerData', JSON.stringify(saved));
+    } catch (e) {}
+
+    window.dispatchEvent(new CustomEvent('user_verification_updated_event', { detail: data }));
+  });
 
   return socket;
 };

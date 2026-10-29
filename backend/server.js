@@ -241,6 +241,20 @@ const connectDB = async () => {
   } catch (seedErr) {
     console.error('Lỗi khi tạo tài khoản Admin mặc định:', seedErr);
   }
+
+  // Tự động đồng bộ tài khoản cũ đã có trước đây thành VERIFIED (tránh bị khoá oan)
+  try {
+    const User = require('./models/User');
+    const migrated = await User.updateMany(
+      { verificationStatus: { $exists: false } },
+      { $set: { verificationStatus: 'VERIFIED' } }
+    );
+    if (migrated.modifiedCount > 0) {
+      console.log(`✅ Đã tự động kích hoạt VERIFIED cho ${migrated.modifiedCount} tài khoản khách hàng cũ.`);
+    }
+  } catch (migErr) {
+    console.error('Lỗi khi auto-migrate verificationStatus:', migErr);
+  }
 };
 
 connectDB()
