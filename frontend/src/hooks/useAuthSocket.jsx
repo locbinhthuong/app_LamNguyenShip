@@ -148,6 +148,25 @@ export const useAuthSocket = () => {
         socket.on('driver_location_update', (locData) => {
           window.dispatchEvent(new CustomEvent('driver_location_update', { detail: locData }));
         });
+
+        // Lắng nghe realtime khi Admin xác minh tài khoản
+        socket.on('user_verification_updated', (data) => {
+          try {
+            const saved = JSON.parse(localStorage.getItem('customerData') || '{}');
+            saved.verificationStatus = data.verificationStatus;
+            saved.rejectReason = data.rejectReason;
+            localStorage.setItem('customerData', JSON.stringify(saved));
+          } catch (e) {}
+
+          if (data.verificationStatus === 'VERIFIED') {
+            showToast('🎉 Chúc mừng! Tài khoản của bạn đã được xác minh. Bạn có thể sử dụng tất cả dịch vụ ngay!', 'success', 8000);
+            playCustomerPing();
+          } else if (data.verificationStatus === 'REJECTED') {
+            showToast(`⚠️ Yêu cầu xác minh tài khoản bị từ chối: ${data.rejectReason || ''}`, 'error', 8000);
+          }
+
+          window.dispatchEvent(new CustomEvent('user_verification_updated_event', { detail: data }));
+        });
       }
     };
 

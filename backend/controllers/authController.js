@@ -895,9 +895,21 @@ const authController = {
           shopName: userRole === 'SHOP' ? shopName : null,
           shopAddress: userRole === 'SHOP' ? shopAddress : null,
           defaultLocation: userRole === 'SHOP' ? defaultLocation : undefined,
-          verificationStatus: 'UNVERIFIED'
+          verificationStatus: 'PENDING',
+          verificationRequestedAt: new Date()
         });
         await user.save();
+
+        if (req.io) {
+          req.io.to('admin_room').emit('new_verification_request', {
+            userId: user._id,
+            name: user.name,
+            phone: user.phone,
+            role: user.role,
+            shopName: user.shopName,
+            verificationRequestedAt: user.verificationRequestedAt
+          });
+        }
       }
 
       // Generate token

@@ -67,6 +67,21 @@ const ShopDashboard = () => {
   };
 
   useEffect(() => {
+    const handleVerificationUpdated = (e) => {
+      const data = e.detail;
+      if (data && data.verificationStatus) {
+        setShopUser(prev => ({
+          ...prev,
+          verificationStatus: data.verificationStatus,
+          rejectReason: data.rejectReason
+        }));
+      }
+    };
+    window.addEventListener('user_verification_updated_event', handleVerificationUpdated);
+    return () => window.removeEventListener('user_verification_updated_event', handleVerificationUpdated);
+  }, []);
+
+  useEffect(() => {
     fetchOrders();
     fetchAnnouncements();
 
@@ -362,17 +377,7 @@ const ShopDashboard = () => {
               <span>Theo dõi</span>
               <ChevronRight size={14} />
             </div>
-            {/* Modal Xác Minh Tài Khoản Quán */}
-      {showVerificationModal && (
-        <AccountVerificationModal 
-          isOpen={showVerificationModal}
-          onClose={() => setShowVerificationModal(false)}
-          user={shopUser}
-          onVerifiedSuccess={(updated) => {
-            setShopUser(prev => ({ ...prev, ...updated }));
-          }}
-        />
-      )}
+
     </motion.div>
         )}
       </AnimatePresence>
@@ -706,6 +711,15 @@ const ShopDashboard = () => {
         </div>
       )}
 
+      {/* Modal Xác Minh Tài Khoản Quán (Độc lập tại Root) */}
+      <AccountVerificationModal 
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        user={shopUser}
+        onVerifiedSuccess={(updated) => {
+          setShopUser(prev => ({ ...prev, ...updated }));
+        }}
+      />
     </motion.div>
   );
 };

@@ -71,7 +71,7 @@ const CustomerDashboard = () => {
           const pos = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
-              timeout: 6000,
+              timeout: 10000,
               maximumAge: 30000
             });
           });
@@ -329,17 +329,7 @@ const CustomerDashboard = () => {
               <span>Theo dõi</span>
               <ChevronRight size={14} />
             </div>
-            {/* Modal Xác Minh Tài Khoản */}
-      {showVerificationModal && (
-        <AccountVerificationModal 
-          isOpen={showVerificationModal}
-          onClose={() => setShowVerificationModal(false)}
-          user={customerData}
-          onVerifiedSuccess={(updated) => {
-            setCustomerData(prev => ({ ...prev, ...updated }));
-          }}
-        />
-      )}
+
     </motion.div>
         )}
       </AnimatePresence>
@@ -710,6 +700,15 @@ const CustomerDashboard = () => {
           </div>
         </div>
       )}
+      {/* Modal Xác Minh Tài Khoản (Độc lập tại Root) */}
+      <AccountVerificationModal 
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        user={customerData}
+        onVerifiedSuccess={(updated) => {
+          setCustomerData(prev => ({ ...prev, ...updated }));
+        }}
+      />
     </motion.div>
   );
 };

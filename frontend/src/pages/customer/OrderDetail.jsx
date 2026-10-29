@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft, MapPin, Navigation, Package, DollarSign, Clock, CheckCircle2, Truck, Info, PhoneCall, RefreshCcw, LocateFixed, Check, X } from 'lucide-react';
+import { ArrowLeft, MapPin, Navigation, Package, DollarSign, Clock, CheckCircle2, Truck, Info, PhoneCall, RefreshCcw, LocateFixed, Check, X, Star } from 'lucide-react';
+import DriverRatingModal from '../../components/DriverRatingModal';
 import { MapContainer, TileLayer, Marker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';

@@ -249,7 +249,7 @@ const connectDB = async () => {
   try {
     const User = require('./models/User');
     const migrated = await User.updateMany(
-      { verificationStatus: { $exists: false } },
+      { verificationStatus: { $in: [null, undefined, '', 'UNVERIFIED'] } },
       { $set: { verificationStatus: 'VERIFIED' } }
     );
     if (migrated.modifiedCount > 0) {

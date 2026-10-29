@@ -255,8 +255,8 @@ const Customers = () => {
       );
     }
     return (
-      <span className="bg-gray-100 text-gray-600 px-2.5 py-0.5 rounded-full text-[11px] font-medium">
-        Chưa gửi YC
+      <span className="bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold flex items-center gap-1 animate-pulse">
+        ⏳ Chờ duyệt SĐT
       </span>
     );
   };

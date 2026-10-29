@@ -17,7 +17,11 @@ const userController = {
         query.role = { $in: ['CUSTOMER', 'SHOP'] };
       }
       if (verificationStatus) {
-        query.verificationStatus = verificationStatus;
+        if (verificationStatus === 'PENDING') {
+          query.verificationStatus = { $in: ['PENDING', 'UNVERIFIED'] };
+        } else {
+          query.verificationStatus = verificationStatus;
+        }
       }
 
       const sortQuery = verificationStatus === 'PENDING'
@@ -32,7 +36,7 @@ const userController = {
           .limit(limit)
           .lean(),
         User.countDocuments(query),
-        User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] }, verificationStatus: 'PENDING' }),
+        User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] }, verificationStatus: { $in: ['PENDING', 'UNVERIFIED'] } }),
         User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] }, verificationStatus: 'VERIFIED' }),
         User.countDocuments({ role: { $in: ['CUSTOMER', 'SHOP'] }, verificationStatus: 'REJECTED' })
       ]);
