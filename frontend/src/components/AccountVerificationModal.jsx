@@ -125,7 +125,7 @@ const AccountVerificationModal = ({ isOpen, onClose, user, onVerifiedSuccess }) 
                   </p>
                   <div className="flex gap-2 pt-1">
                     <a 
-                      href="https://zalo.me/0868844883" 
+                      href="https://zalo.me/0765120777" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all text-xs shadow-sm"
@@ -133,7 +133,7 @@ const AccountVerificationModal = ({ isOpen, onClose, user, onVerifiedSuccess }) 
                       <MessageSquare size={14} /> Nhắn Zalo Admin
                     </a>
                     <a 
-                      href="tel:0868844883" 
+                      href="tel:0765120777" 
                       className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center justify-center gap-1.5 transition-all text-xs shadow-sm"
                     >
                       <Phone size={14} /> Gọi Hotline
