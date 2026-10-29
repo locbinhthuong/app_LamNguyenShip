@@ -42,7 +42,7 @@ if (!Capacitor.isNativePlatform()) {
 
 const playCustomerPing = () => {
     try {
-        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        if (typeof navigator !== 'undefined' && navigator.vibrate && navigator.userActivation?.hasBeenActive) {
             navigator.vibrate([200, 100, 200]); // Rung máy (Mobile) hỗ trợ fallback cho loa
         }
         

@@ -75,6 +75,7 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
   
   const [driverCoords, setDriverCoords] = useState(null);
   const [followTrigger, setFollowTrigger] = useState(0);
@@ -874,6 +875,18 @@ export default function OrderDetail() {
             </div>
             <p className="text-center text-[10px] text-slate-400 mt-2">Bạn chỉ có thể hủy trước khi Tài xế nhận đơn.</p>
           </div>
+        )}
+
+        {/* Modal Đánh Giá Tài Xế */}
+        {showRatingModal && (
+          <DriverRatingModal
+            isOpen={showRatingModal}
+            onClose={() => setShowRatingModal(false)}
+            order={order}
+            onRatingSuccess={(ratingData) => {
+              setOrder(prev => ({ ...prev, driverRating: ratingData, rating: ratingData.stars }));
+            }}
+          />
         )}
 
         </div>

@@ -388,7 +388,7 @@ export default function Orders() {
                   <th className="table-th">Mã</th>
                   <th className="table-th">Khách hàng</th>
                   <th className="table-th">Lộ trình / Địa chỉ giao</th>
-                  <th className="table-th">Tài xế</th>
+                  <th className="table-th">Tài xế / Đánh giá</th>
                   <th className="table-th">Thời gian</th>
                   <th className="table-th">Trạng thái</th>
                   <th className="table-th">PHÍ & THƯỞNG</th>
@@ -463,7 +463,36 @@ export default function Orders() {
                           </div>
                        )}
                     </td>
-                    <td className="table-td text-slate-600 text-sm">{order.assignedTo?.name || '—'}</td>
+                    <td className="table-td text-slate-600 text-sm">
+                      <p className="font-semibold text-slate-800">{order.assignedTo?.name || '—'}</p>
+                      {order.assignedTo?.driverCode && (
+                        <p className="text-[10px] text-gray-500 font-mono">Mã: {order.assignedTo.driverCode}</p>
+                      )}
+                      {order.driverRating?.stars && (
+                        <div className="mt-1.5 flex flex-col items-start gap-1 p-2 rounded-lg bg-amber-50/80 border border-amber-200">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[11px] font-extrabold text-amber-700">
+                              ⭐ {order.driverRating.stars}★
+                            </span>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded ${
+                              order.driverRating.satisfaction === 'SATISFIED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                            }`}>
+                              {order.driverRating.satisfaction === 'SATISFIED' ? 'Hài lòng' : 'Không hài lòng'}
+                            </span>
+                          </div>
+                          {order.driverRating.tags?.length > 0 && (
+                            <p className="text-[10px] text-amber-900 max-w-[170px] truncate" title={order.driverRating.tags.join(', ')}>
+                              🏷️ {order.driverRating.tags.join(', ')}
+                            </p>
+                          )}
+                          {order.driverRating.comment && (
+                            <p className="text-[10px] italic text-gray-600 bg-white/80 p-1 rounded border border-amber-100 max-w-[170px] truncate" title={order.driverRating.comment}>
+                              "{order.driverRating.comment}"
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </td>
                     <td className="table-td text-[11px] text-slate-500 whitespace-nowrap">
                       <div className="flex flex-col gap-1">
                         <div><span className="font-bold text-slate-700">Tạo:</span> {formatTime(order.createdAt)}</div>
