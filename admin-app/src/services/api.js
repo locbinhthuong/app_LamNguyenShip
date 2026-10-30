@@ -372,6 +372,11 @@ export const deleteSavedPlace = async (id) => {
 };
 
 // ==================== QUẢN LÝ LỊCH CA TUẦN (ADMIN) ====================
+export const adminUpdateDriverShift = async (data) => {
+  const response = await api.put('/api/schedules/admin/update-shift', data);
+  return response.data;
+};
+
 export const getAdminWeeklySchedules = async (weekKey = '') => {
   const response = await api.get('/api/schedules/admin', { params: { weekKey } });
   return response.data;

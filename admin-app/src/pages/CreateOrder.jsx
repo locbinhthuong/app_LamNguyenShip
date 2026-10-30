@@ -1057,17 +1057,49 @@ export default function CreateOrder() {
              </select>
              
              {!form.forceAssignDriverId && (
-               <label className="flex items-center gap-2 mt-3 cursor-pointer relative z-10">
-                 <input 
-                   type="checkbox" 
-                   checked={form.autoAssignNearest}
-                   onChange={(e) => setForm({...form, autoAssignNearest: e.target.checked})}
-                   className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
-                 />
-                 <span className="text-sm font-bold text-purple-800">
-                   Tự động quét & Gán đơn cho Tài xế gần nhất (Popup 30s)
-                 </span>
-               </label>
+               <div className={`mt-3 p-3.5 rounded-2xl border transition-all ${
+                 form.autoAssignNearest
+                   ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300 shadow-xs'
+                   : 'bg-slate-50 border-slate-300'
+               }`}>
+                 <div className="flex items-center justify-between gap-3">
+                   <div className="flex items-center gap-2.5">
+                     <div className={`flex h-9 w-9 items-center justify-center rounded-xl text-base font-bold ${
+                       form.autoAssignNearest ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-300 text-slate-600'
+                     }`}>
+                       {form.autoAssignNearest ? '⚡' : '🛑'}
+                     </div>
+                     <div>
+                       <h4 className={`text-xs sm:text-sm font-black ${
+                         form.autoAssignNearest ? 'text-emerald-900' : 'text-slate-700'
+                       }`}>
+                         {form.autoAssignNearest 
+                           ? 'ĐANG BẬT: GÁN ĐƠN TỰ ĐỘNG (FULLTIME 1KM)' 
+                           : 'ĐANG TẮT: LÊN ĐƠN TREO THỦ CÔNG'}
+                       </h4>
+                       <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                         {form.autoAssignNearest
+                           ? 'Hệ thống tự quét tài xế Fulltime trong 1km, chia đều đơn rảnh (popup đếm 30s). Nếu không ai nhận mới treo lên.'
+                           : 'Đơn sẽ treo thẳng lên cho TOÀN BỘ tài xế nhận tự do như cũ (không qua vòng gán Fulltime 1km).'}
+                       </p>
+                     </div>
+                   </div>
+
+                   <button
+                     type="button"
+                     onClick={() => setForm(prev => ({ ...prev, autoAssignNearest: !prev.autoAssignNearest }))}
+                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                       form.autoAssignNearest ? 'bg-emerald-600' : 'bg-slate-300'
+                     }`}
+                   >
+                     <span
+                       className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                         form.autoAssignNearest ? 'translate-x-5' : 'translate-x-0'
+                       }`}
+                     />
+                   </button>
+                 </div>
+               </div>
              )}
 
              <p className="text-[10px] text-purple-600 mt-2 font-medium italic relative z-10">

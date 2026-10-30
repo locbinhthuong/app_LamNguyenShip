@@ -374,3 +374,83 @@ exports.getAllSchedulesAdmin = async (req, res) => {
     });
   }
 };
+
+
+/**
+ * Admin chỉnh sửa ca làm việc của tài xế
+ * PUT /api/schedules/admin/update-shift
+ * Body: { driverId, weekKey, dayKey, shift, isDowngraded }
+ */
+exports.adminUpdateDriverShift = async (req, res) => {
+  try {
+    const { driverId, weekKey, dayKey, shift, isDowngraded } = req.body;
+
+    const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const validShifts = ['FULLTIME', 'PARTTIME', 'OFF'];
+
+    if (!driverId || !weekKey || !validDays.includes(dayKey) || !validShifts.includes(shift)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thông tin cập nhật không hợp lệ'
+      });
+    }
+
+    let scheduleDoc = await DriverSchedule.findOne({ driverId, weekKey });
+    if (!scheduleDoc) {
+      scheduleDoc = new DriverSchedule({
+        driverId,
+        weekKey,
+        schedule: {
+          monday: { shift: 'PARTTIME' },
+          tuesday: { shift: 'PARTTIME' },
+          wednesday: { shift: 'PARTTIME' },
+          thursday: { shift: 'PARTTIME' },
+          friday: { shift: 'PARTTIME' },
+          saturday: { shift: 'PARTTIME' },
+          sunday: { shift: 'PARTTIME' }
+        }
+      });
+    }
+
+    const oldShift = scheduleDoc.schedule[dayKey]?.shift || 'PARTTIME';
+
+    if (!scheduleDoc.schedule[dayKey]) {
+      scheduleDoc.schedule[dayKey] = {};
+    }
+
+    scheduleDoc.schedule[dayKey].shift = shift;
+
+    if (isDowngraded !== undefined) {
+      scheduleDoc.schedule[dayKey].isDowngraded = Boolean(isDowngraded);
+      if (!isDowngraded) {
+        scheduleDoc.schedule[dayKey].offlineCount = 0;
+      }
+    } else if (shift === 'FULLTIME') {
+      scheduleDoc.schedule[dayKey].isDowngraded = false;
+      scheduleDoc.schedule[dayKey].offlineCount = 0;
+    }
+
+    scheduleDoc.changeHistory.push({
+      dayKey,
+      oldShift,
+      newShift: shift,
+      changedAt: new Date(),
+      reason: `Admin (${req.admin?.name || 'Admin'}) điều chỉnh ca trực tiếp`
+    });
+
+    await scheduleDoc.save();
+
+    return res.json({
+      success: true,
+      message: `Đã cập nhật ca ${dayKey.toUpperCase()} của tài xế thành ${shift}`,
+      data: scheduleDoc
+    });
+  } catch (error) {
+    console.error('[ScheduleController] adminUpdateDriverShift error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Lỗi khi Admin cập nhật ca làm việc',
+      error: error.message
+    });
+  }
+};

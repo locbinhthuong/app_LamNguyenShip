@@ -14,5 +14,6 @@ router.post('/change-shift', verifyToken, onlyDriver, scheduleController.changeS
 
 // Admin xem bảng ma trận lịch tuần
 router.get('/admin', verifyToken, onlyAdmin, scheduleController.getAllSchedulesAdmin);
+router.put('/admin/update-shift', verifyToken, onlyAdmin, scheduleController.adminUpdateDriverShift);
 
 module.exports = router;
