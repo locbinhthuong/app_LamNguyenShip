@@ -15,12 +15,20 @@ function getNowVN() {
 
 /**
  * Lấy thứ hiện tại trong tuần theo giờ VN
- * 0: Chủ Nhật, 1: Thứ 2, 2: Thứ 3, ..., 6: Thứ 7
+ * 0: Chủ Nhật, 1: Thứ 2, ..., 6: Thứ 7
  */
 function getDayOfWeekVN(date = new Date()) {
   const vnTimeStr = date.toLocaleString('en-US', { timeZone: TIMEZONE });
   const vnDate = new Date(vnTimeStr);
   return vnDate.getDay();
+}
+
+/**
+ * Lấy số thứ tự ngày trong tuần ISO (1: Thứ Hai -> 7: Chủ Nhật)
+ */
+function getDayNumInISOWeek(date = new Date()) {
+  const day = getDayOfWeekVN(date);
+  return day === 0 ? 7 : day;
 }
 
 /**
@@ -32,7 +40,6 @@ function getWeekKey(date = new Date()) {
   
   // ISO-8601: Tuần bắt đầu từ Thứ Hai
   const day = d.getDay();
-  // Điều chỉnh ngày về thứ Năm của tuần đó để tính số tuần chính xác
   d.setDate(d.getDate() + 4 - (day === 0 ? 7 : day));
   
   const yearStart = new Date(d.getFullYear(), 0, 1);
@@ -52,7 +59,7 @@ function getNextWeekKey(date = new Date()) {
 }
 
 /**
- * Lấy ngày (YYYY-MM-DD) của Thứ 2 đến Thứ 6 trong một tuần xác định
+ * Lấy ngày (YYYY-MM-DD) của cả 7 ngày trong tuần: Thứ 2 đến Chủ Nhật
  * @param {Date} refDate
  */
 function getWeekDates(refDate = new Date()) {
@@ -66,7 +73,7 @@ function getWeekDates(refDate = new Date()) {
   monday.setDate(d.getDate() + diffToMonday);
   monday.setHours(0, 0, 0, 0);
 
-  const daysMap = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+  const daysMap = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
   const result = {};
 
   daysMap.forEach((dayKey, idx) => {
@@ -101,6 +108,7 @@ function getDayKeyFromDayOfWeek(dayNum) {
 module.exports = {
   getNowVN,
   getDayOfWeekVN,
+  getDayNumInISOWeek,
   getWeekKey,
   getNextWeekKey,
   getWeekDates,

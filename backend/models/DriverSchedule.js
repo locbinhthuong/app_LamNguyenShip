@@ -43,7 +43,9 @@ const driverScheduleSchema = new mongoose.Schema(
       tuesday: { type: dayScheduleSchema, default: () => ({ shift: 'PARTTIME' }) },
       wednesday: { type: dayScheduleSchema, default: () => ({ shift: 'PARTTIME' }) },
       thursday: { type: dayScheduleSchema, default: () => ({ shift: 'PARTTIME' }) },
-      friday: { type: dayScheduleSchema, default: () => ({ shift: 'PARTTIME' }) }
+      friday: { type: dayScheduleSchema, default: () => ({ shift: 'PARTTIME' }) },
+      saturday: { type: dayScheduleSchema, default: () => ({ shift: 'PARTTIME' }) },
+      sunday: { type: dayScheduleSchema, default: () => ({ shift: 'PARTTIME' }) }
     },
     // Ghi nhận lịch sử đổi ca
     changeHistory: [

@@ -2,12 +2,24 @@ const DriverSchedule = require('../models/DriverSchedule');
 const Driver = require('../models/Driver');
 const {
   getDayOfWeekVN,
+  getDayNumInISOWeek,
   getWeekKey,
   getNextWeekKey,
   getWeekDates,
   getDayKeyFromDayOfWeek,
   getNowVN
 } = require('../utils/scheduleUtils');
+
+const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const DAYS_INDEX_MAP = {
+  monday: 1,
+  tuesday: 2,
+  wednesday: 3,
+  thursday: 4,
+  friday: 5,
+  saturday: 6,
+  sunday: 7
+};
 
 /**
  * Lấy thông tin lịch làm việc của tài xế (Tuần hiện tại & Tuần tới)
@@ -19,15 +31,13 @@ exports.getMyWeeklySchedule = async (req, res) => {
     const currentWeekKey = getWeekKey();
     const nextWeekKey = getNextWeekKey();
     const dayOfWeek = getDayOfWeekVN(); // 0: CN, 1: T2, ..., 6: T7
+    const currentIsoDay = getDayNumInISOWeek(); // 1: T2 -> 7: CN
     const currentDayKey = getDayKeyFromDayOfWeek(dayOfWeek);
 
     // 1. Tìm hoặc khởi tạo lịch tuần hiện tại
     let currentSchedule = await DriverSchedule.findOne({ driverId, weekKey: currentWeekKey });
 
-    // Xử lý trường hợp quên đăng ký vào Chủ Nhật:
-    // Nếu hôm nay là Thứ 2 trở đi mà chưa có lịch tuần này -> Tự khởi tạo lịch với các ngày đã qua/hôm nay là PARTTIME
     let noticeMessage = null;
-    let canRegisterRemaining = false;
 
     if (!currentSchedule) {
       // Tự động tạo bản ghi mặc định PARTTIME cho các ngày
@@ -39,33 +49,51 @@ exports.getMyWeeklySchedule = async (req, res) => {
           tuesday: { shift: 'PARTTIME' },
           wednesday: { shift: 'PARTTIME' },
           thursday: { shift: 'PARTTIME' },
-          friday: { shift: 'PARTTIME' }
+          friday: { shift: 'PARTTIME' },
+          saturday: { shift: 'PARTTIME' },
+          sunday: { shift: 'PARTTIME' }
         },
         isSubmitted: false
       });
 
-      if (dayOfWeek === 1) { // Thứ 2
-        noticeMessage = 'Bạn chưa đăng ký ca tuần này vào Chủ Nhật. Hôm nay (Thứ Hai) bạn sẽ chạy Part-time, và bạn có thể đăng ký ca cho Thứ 3 đến Thứ 6!';
-        canRegisterRemaining = true;
+      if (currentIsoDay < 7) {
+        noticeMessage = 'Hôm nay bạn đang chạy Part-time. Bạn có thể đăng ký ca cho các ngày còn lại trong tuần!';
       }
-    } else if (!currentSchedule.isSubmitted && dayOfWeek >= 1 && dayOfWeek <= 4) {
-      canRegisterRemaining = true;
     }
 
-    // 2. Tìm lịch tuần tiếp theo (nếu hôm nay là Chủ Nhật thì mở đăng ký tuần tới)
+    // 2. Tìm hoặc khởi tạo lịch tuần tiếp theo (Luôn cho phép tài xế xem và đăng ký trước tuần tới)
     let nextSchedule = await DriverSchedule.findOne({ driverId, weekKey: nextWeekKey });
-    const isSunday = (dayOfWeek === 0);
+    if (!nextSchedule) {
+      nextSchedule = new DriverSchedule({
+        driverId,
+        weekKey: nextWeekKey,
+        schedule: {
+          monday: { shift: 'PARTTIME' },
+          tuesday: { shift: 'PARTTIME' },
+          wednesday: { shift: 'PARTTIME' },
+          thursday: { shift: 'PARTTIME' },
+          friday: { shift: 'PARTTIME' },
+          saturday: { shift: 'PARTTIME' },
+          sunday: { shift: 'PARTTIME' }
+        },
+        isSubmitted: false
+      });
+    }
 
-    // 3. Tính toán ngày khóa không được đổi (từ ngày mai trở đi mới được đổi)
-    const weekDates = getWeekDates();
-    const editableDays = {};
-    const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+    // 3. Tính toán các ngày được phép sửa:
+    // - Tuần hiện tại: Chỉ được sửa các ngày từ ngày mai trở đi (targetDayNum > currentIsoDay)
+    // - Tuần tiếp theo: Được sửa TẤT CẢ 7 ngày!
+    const editableDaysCurrentWeek = {};
+    const editableDaysNextWeek = {};
 
-    daysOrder.forEach((day, index) => {
-      const dayNum = index + 1; // 1: T2, 2: T3, ...
-      // Chỉ cho phép đổi nếu ngày đó lớn hơn ngày hôm nay (tức là từ ngày mai trở đi)
-      editableDays[day] = dayNum > dayOfWeek;
+    ALL_DAYS.forEach((day) => {
+      const targetDayNum = DAYS_INDEX_MAP[day];
+      editableDaysCurrentWeek[day] = targetDayNum > currentIsoDay;
+      editableDaysNextWeek[day] = true; // Tuần sau luôn mở
     });
+
+    const isSunday = (dayOfWeek === 0);
+    const weekDates = getWeekDates();
 
     return res.json({
       success: true,
@@ -73,13 +101,14 @@ exports.getMyWeeklySchedule = async (req, res) => {
         currentWeekKey,
         nextWeekKey,
         dayOfWeek,
+        currentIsoDay,
         currentDayKey,
-        isSunday, // Có đang là Chủ Nhật mở cổng tuần mới không
-        canRegisterRemaining, // Có được đăng ký bổ sung các ngày còn lại không
+        isSunday,
         noticeMessage,
         currentSchedule,
         nextSchedule,
-        editableDays,
+        editableDays: editableDaysCurrentWeek,
+        editableDaysNextWeek,
         weekDates
       }
     });
@@ -96,7 +125,7 @@ exports.getMyWeeklySchedule = async (req, res) => {
 /**
  * Đăng ký ca làm việc tuần
  * POST /api/schedules/register
- * Body: { weekKey, schedule: { monday, tuesday, wednesday, thursday, friday } }
+ * Body: { weekKey, schedule: { monday, tuesday, ... } }
  */
 exports.registerWeeklySchedule = async (req, res) => {
   try {
@@ -112,11 +141,8 @@ exports.registerWeeklySchedule = async (req, res) => {
 
     const currentWeekKey = getWeekKey();
     const nextWeekKey = getNextWeekKey();
-    const dayOfWeek = getDayOfWeekVN();
+    const currentIsoDay = getDayNumInISOWeek();
 
-    // Kiểm tra tính hợp lệ về thời gian đăng ký:
-    // 1. Nếu đăng ký cho tuần tiếp theo: Cho phép vào ngày Chủ Nhật
-    // 2. Nếu đăng ký cho tuần hiện tại: Cho phép đăng ký bổ sung các ngày từ ngày mai trở đi
     const isRegisteringNextWeek = (weekKey === nextWeekKey);
     const isRegisteringCurrentWeek = (weekKey === currentWeekKey);
 
@@ -136,22 +162,20 @@ exports.registerWeeklySchedule = async (req, res) => {
       });
     }
 
-    const daysOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
     const validShifts = ['FULLTIME', 'PARTTIME', 'OFF'];
 
-    daysOrder.forEach((day, index) => {
-      const targetDayNum = index + 1;
+    ALL_DAYS.forEach((day) => {
+      const targetDayNum = DAYS_INDEX_MAP[day];
       const inputShift = schedule[day]?.shift || schedule[day] || 'PARTTIME';
       const cleanShift = validShifts.includes(inputShift) ? inputShift : 'PARTTIME';
 
       if (isRegisteringNextWeek) {
-        // Tuần tới: Được set toàn bộ 5 ngày
+        // Tuần tới: Được set toàn bộ 7 ngày
         if (!existing.schedule[day]) existing.schedule[day] = {};
         existing.schedule[day].shift = cleanShift;
       } else {
-        // Tuần hiện tại (đăng ký bổ sung khi quên CN):
-        // Chỉ cho phép cập nhật các ngày từ ngày mai trở đi (targetDayNum > dayOfWeek)
-        if (targetDayNum > dayOfWeek) {
+        // Tuần hiện tại: Chỉ được cập nhật các ngày từ ngày mai trở đi
+        if (targetDayNum > currentIsoDay) {
           if (!existing.schedule[day]) existing.schedule[day] = {};
           existing.schedule[day].shift = cleanShift;
         } else {
@@ -192,10 +216,9 @@ exports.changeShiftBeforehand = async (req, res) => {
     const driverId = req.driver._id;
     const { weekKey, dayKey, newShift, reason } = req.body;
 
-    const validDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
     const validShifts = ['FULLTIME', 'PARTTIME', 'OFF'];
 
-    if (!weekKey || !validDays.includes(dayKey) || !validShifts.includes(newShift)) {
+    if (!weekKey || !ALL_DAYS.includes(dayKey) || !validShifts.includes(newShift)) {
       return res.status(400).json({
         success: false,
         message: 'Thông tin đổi ca không hợp lệ'
@@ -204,17 +227,14 @@ exports.changeShiftBeforehand = async (req, res) => {
 
     const currentWeekKey = getWeekKey();
     const nextWeekKey = getNextWeekKey();
-    const dayOfWeek = getDayOfWeekVN(); // 0: CN, 1: T2, ..., 5: T6
+    const currentIsoDay = getDayNumInISOWeek();
 
     // Kiểm tra điều kiện thời gian:
     if (weekKey === currentWeekKey) {
-      const daysIndexMap = { monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5 };
-      const targetDayNum = daysIndexMap[dayKey];
+      const targetDayNum = DAYS_INDEX_MAP[dayKey];
 
-      // BẮT BUỘC TRƯỚC 1 NGÀY: targetDayNum phải lớn hơn dayOfWeek
-      // Ví dụ: Hôm nay là Thứ 5 (dayOfWeek = 4), muốn đổi Thứ 6 (targetDayNum = 5) -> 5 > 4 (HỢP LỆ)
-      // Nếu hôm nay là Thứ 6 (dayOfWeek = 5), muốn đổi Thứ 6 -> 5 > 5 là FALSE (BỊ CHẶN)
-      if (targetDayNum <= dayOfWeek) {
+      // BẮT BUỘC TRƯỚC 1 NGÀY: targetDayNum phải lớn hơn currentIsoDay
+      if (targetDayNum <= currentIsoDay) {
         return res.status(400).json({
           success: false,
           message: 'Chỉ được phép đổi lịch trước ít nhất 1 ngày (trước 23:59 đêm hôm trước). Không thể đổi lịch cho ngày hôm nay hoặc ngày đã qua!'
@@ -298,7 +318,6 @@ exports.getAllSchedulesAdmin = async (req, res) => {
         .lean()
     ]);
 
-    // Tạo map danh sách đầy đủ tất cả tài xế (kể cả người chưa đăng ký)
     const scheduleMap = new Map();
     schedules.forEach(s => {
       if (s.driverId?._id) {
@@ -315,7 +334,9 @@ exports.getAllSchedulesAdmin = async (req, res) => {
           tuesday: { shift: 'PARTTIME' },
           wednesday: { shift: 'PARTTIME' },
           thursday: { shift: 'PARTTIME' },
-          friday: { shift: 'PARTTIME' }
+          friday: { shift: 'PARTTIME' },
+          saturday: { shift: 'PARTTIME' },
+          sunday: { shift: 'PARTTIME' }
         },
         isSubmitted: existing ? existing.isSubmitted : false,
         submittedAt: existing ? existing.submittedAt : null,
@@ -323,17 +344,14 @@ exports.getAllSchedulesAdmin = async (req, res) => {
       };
     });
 
-    // Thống kê số lượng Fulltime theo từng ngày
-    const stats = {
-      monday: { fulltime: 0, parttime: 0, off: 0 },
-      tuesday: { fulltime: 0, parttime: 0, off: 0 },
-      wednesday: { fulltime: 0, parttime: 0, off: 0 },
-      thursday: { fulltime: 0, parttime: 0, off: 0 },
-      friday: { fulltime: 0, parttime: 0, off: 0 }
-    };
+    // Thống kê cho cả 7 ngày
+    const stats = {};
+    ALL_DAYS.forEach(day => {
+      stats[day] = { fulltime: 0, parttime: 0, off: 0 };
+    });
 
     fullList.forEach(item => {
-      ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].forEach(d => {
+      ALL_DAYS.forEach(d => {
         const shift = item.schedule[d]?.shift || 'PARTTIME';
         if (shift === 'FULLTIME') stats[d].fulltime++;
         else if (shift === 'OFF') stats[d].off++;
