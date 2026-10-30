@@ -175,4 +175,4 @@ jobs:
           ruby generate_api_key.rb
           
           fastlane pilot upload --api_key_path api_key.json --ipa "$IPA_PATH" --skip_waiting_for_build_processing true || \
-          xcrun altool --upload-package "$IPA_PATH" --type ios --apple-id "6764137870" --bundle-id "vn.lamnguyenship.driver" --bundle-short-version-string "1.8.36" --bundle-version "126" --apiKey "$APP_STORE_CONNECT_API_KEY_KEY_ID" --apiIssuer "$APP_STORE_CONNECT_API_KEY_ISSUER_ID"
+          xcrun altool --upload-package "$IPA_PATH" --type ios --apple-id "6764137870" --bundle-id "vn.lamnguyenship.driver" --bundle-short-version-string "1.8.37" --bundle-version "127" --apiKey "$APP_STORE_CONNECT_API_KEY_KEY_ID" --apiIssuer "$APP_STORE_CONNECT_API_KEY_ISSUER_ID"

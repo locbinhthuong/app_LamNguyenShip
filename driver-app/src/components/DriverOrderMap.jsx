@@ -332,23 +332,28 @@ export default function DriverOrderMap({
       {/* CONTAINER BẢN ĐỒ LEAFLET */}
       <div ref={mapRef} className="w-full h-full z-0" />
 
-      {/* MINI CARD CHI TIẾT ĐƠN HÀNG KHI CLICK VÀO PIN (HỖ TRỢ XEM TẤT CẢ CÁC ĐƠN TẠI CÙNG ĐIỂM) */}
+      {/* MODAL CHI TIẾT ĐƠN HÀNG NẰM CHÍNH GIỮA MÀN HÌNH (KHÔNG BỊ CHE KHUẤT BỞI MENU ĐÁY) */}
       {selectedCluster && currentOrder && (
-        <div className="absolute bottom-2 left-2 right-2 z-[500] max-w-md mx-auto animate-in slide-in-from-bottom duration-200">
-          <div className="bg-white rounded-3xl p-3.5 shadow-2xl border border-slate-200/90 space-y-2.5 relative">
+        <div 
+          className="absolute inset-0 z-[600] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-[2px] animate-in fade-in duration-150"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setSelectedCluster(null);
+          }}
+        >
+          <div className="bg-white rounded-3xl p-4 shadow-2xl border border-slate-100 w-full max-w-sm space-y-3 relative animate-in zoom-in-95 duration-150 mx-auto">
             {/* Nút đóng mini card */}
             <button
               type="button"
               onClick={() => setSelectedCluster(null)}
-              className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-xs transition"
+              className="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-bold transition shadow-xs"
             >
               ✕
             </button>
 
             {/* Dòng 1: Tag Dịch vụ & Điều hướng nếu điểm này có NHIỀU ĐƠN */}
-            <div className="flex items-center justify-between pr-8">
+            <div className="flex items-center justify-between pr-9">
               <div className="flex items-center gap-1.5">
-                <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black uppercase text-white shadow-xs ${
+                <span className={`px-2.5 py-1 rounded-xl text-[11px] font-black uppercase text-white shadow-xs ${
                   currentOrder.serviceType === 'ALOFOOD' ? 'bg-amber-600' :
                   currentOrder.serviceType === 'MUA_HO' ? 'bg-emerald-600' :
                   currentOrder.serviceType === 'DAT_XE' ? 'bg-purple-600' : 'bg-blue-600'
@@ -357,30 +362,30 @@ export default function DriverOrderMap({
                    currentOrder.serviceType === 'MUA_HO' ? '🛒 Mua Hộ' :
                    currentOrder.serviceType === 'DAT_XE' ? '🛵 Đặt Xe' : '📦 Giao Hàng'}
                 </span>
-                <span className="text-[11px] font-mono font-bold text-slate-500">
+                <span className="text-xs font-mono font-bold text-slate-600">
                   #{currentOrder.orderCode || currentOrder._id?.slice(-6).toUpperCase()}
                 </span>
               </div>
 
               {/* NẾU ĐIỂM NÀY CÓ NHIỀU ĐƠN: Cho phép bấm chuyển qua lại xem từng đơn */}
               {selectedCluster.orders.length > 1 && (
-                <div className="flex items-center gap-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-xl">
+                <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2 py-1 rounded-xl">
                   <button
                     type="button"
                     disabled={activeOrderIdx === 0}
                     onClick={() => setActiveOrderIdx(prev => Math.max(0, prev - 1))}
-                    className="text-amber-800 disabled:opacity-30 hover:scale-110 active:scale-95"
+                    className="w-6 h-6 rounded-lg bg-amber-100 hover:bg-amber-200 flex items-center justify-center text-amber-900 disabled:opacity-30 active:scale-95 transition"
                   >
                     <ChevronLeft size={16} />
                   </button>
-                  <span className="text-[10px] font-black text-amber-900 font-mono">
+                  <span className="text-[11px] font-black text-amber-900 font-mono">
                     Đơn {activeOrderIdx + 1}/{selectedCluster.orders.length}
                   </span>
                   <button
                     type="button"
                     disabled={activeOrderIdx === selectedCluster.orders.length - 1}
                     onClick={() => setActiveOrderIdx(prev => Math.min(selectedCluster.orders.length - 1, prev + 1))}
-                    className="text-amber-800 disabled:opacity-30 hover:scale-110 active:scale-95"
+                    className="w-6 h-6 rounded-lg bg-amber-100 hover:bg-amber-200 flex items-center justify-center text-amber-900 disabled:opacity-30 active:scale-95 transition"
                   >
                     <ChevronRight size={16} />
                   </button>
@@ -389,37 +394,37 @@ export default function DriverOrderMap({
             </div>
 
             {/* Dòng 2: ĐIỂM LẤY HÀNG (CHỈ HIỂN THỊ ĐIỂM LẤY - TUYỆT ĐỐI ẨN ĐIỂM GIAO THEO QUY ĐỊNH) */}
-            <div className="space-y-1 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
-              <div className="flex items-start gap-1.5">
-                <span className="mt-0.5 text-sm">📍</span>
+            <div className="space-y-1.5 bg-slate-50 p-3 rounded-2xl border border-slate-200/80">
+              <div className="flex items-start gap-2">
+                <span className="mt-0.5 text-base">📍</span>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-[9.5px] font-black uppercase tracking-wider text-blue-600">
+                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-600">
                       ĐIỂM LẤY HÀNG {selectedCluster.orders.length > 1 ? `(CÓ ${selectedCluster.orders.length} ĐƠN)` : ''}
                     </span>
                     {driverCoords && selectedCluster.lat && (
-                      <span className="text-[9.5px] font-bold text-slate-500 bg-white px-1.5 py-0.5 rounded-md border border-slate-200">
+                      <span className="text-[10px] font-bold text-slate-600 bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
                         {getDistanceKm(driverCoords.lat, driverCoords.lng, selectedCluster.lat, selectedCluster.lng)} từ bạn
                       </span>
                     )}
                   </div>
-                  <p className="text-xs font-bold text-slate-800 line-clamp-2 mt-0.5">
+                  <p className="text-xs font-bold text-slate-800 leading-snug">
                     {selectedCluster.address}
                   </p>
                 </div>
               </div>
 
               {/* Thông báo bảo mật: Điểm giao không hiển thị trước */}
-              <div className="flex items-center gap-1 pt-0.5 text-[9.5px] text-slate-400 font-medium">
-                <ShieldAlert size={11} className="text-slate-400 shrink-0" />
+              <div className="flex items-center gap-1.5 pt-1 text-[10px] text-slate-400 font-medium">
+                <ShieldAlert size={12} className="text-slate-400 shrink-0" />
                 <span>Điểm giao hàng sẽ hiển thị sau khi bạn nhận đơn</span>
               </div>
             </div>
 
             {/* Dòng 3: Cước Ship & COD */}
-            <div className="flex items-center justify-between px-1">
+            <div className="flex items-center justify-between px-1.5 py-1 bg-slate-50/60 rounded-xl border border-slate-100">
               <div>
-                <span className="text-[9.5px] uppercase font-bold text-slate-400 block">Thu hộ (COD)</span>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Thu hộ (COD)</span>
                 <span className="text-xs font-black text-slate-700">
                   {currentOrder.codAmount > 0 
                     ? `${currentOrder.codAmount.toLocaleString('vi-VN')}đ` 
@@ -427,8 +432,8 @@ export default function DriverOrderMap({
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-[9.5px] uppercase font-bold text-slate-400 block">Tiền ship nhận</span>
-                <span className="text-sm font-black text-emerald-600">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Tiền ship nhận</span>
+                <span className="text-base font-black text-emerald-600">
                   {currentOrder.deliveryFee > 0 
                     ? `${currentOrder.deliveryFee.toLocaleString('vi-VN')}đ` 
                     : 'Thỏa thuận'}
@@ -436,12 +441,12 @@ export default function DriverOrderMap({
               </div>
             </div>
 
-            {/* Dòng 4: Các nút hành động */}
-            <div className="flex items-center gap-2 pt-0.5">
+            {/* Dòng 4: Các nút hành động - CĂN CHỈNH TO ĐẸP, RÕ RÀNG */}
+            <div className="flex items-center gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => navigate(`/order/${currentOrder._id}`)}
-                className="flex-1 rounded-xl bg-slate-100 hover:bg-slate-200 py-2.5 text-xs font-bold text-slate-700 transition active:scale-95"
+                className="flex-1 rounded-2xl bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-3 text-xs font-bold text-slate-700 transition active:scale-95 shadow-xs"
               >
                 Chi tiết
               </button>
@@ -449,7 +454,7 @@ export default function DriverOrderMap({
                 type="button"
                 disabled={acceptingId === currentOrder._id}
                 onClick={() => handleAcceptMini(currentOrder._id)}
-                className="flex-[2] rounded-xl bg-emerald-600 hover:bg-emerald-700 py-2.5 text-xs font-black text-white shadow-md shadow-emerald-600/30 transition active:scale-95 flex items-center justify-center gap-1.5"
+                className="flex-[2] rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/30 transition active:scale-95 flex items-center justify-center gap-1.5"
               >
                 {acceptingId === currentOrder._id ? 'Đang nhận...' : '✅ NHẬN ĐƠN NÀY'}
               </button>
