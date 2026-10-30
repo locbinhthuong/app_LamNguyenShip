@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { getAdminWeeklySchedules, adminUpdateDriverShift } from '../services/api';
 
 const DAY_LABELS = {
@@ -13,7 +13,53 @@ const DAY_LABELS = {
 
 const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+// ==================== HELPER TÍNH TOÁN TUẦN ISO-8601 ====================
+function getISOWeekKey(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+}
+
+function getMondayOfISOWeek(weekKey) {
+  if (!weekKey || !weekKey.includes('-W')) return new Date();
+  const [yearStr, weekStr] = weekKey.split('-W');
+  const year = parseInt(yearStr, 10);
+  const week = parseInt(weekStr, 10);
+  const jan4 = new Date(year, 0, 4);
+  const dayOfWeekJan4 = jan4.getDay() === 0 ? 7 : jan4.getDay();
+  const monW1 = new Date(year, 0, 4 - (dayOfWeekJan4 - 1));
+  return new Date(monW1.getTime() + (week - 1) * 7 * 86400000);
+}
+
+function getAdjacentWeekKey(weekKey, offsetWeeks = 1) {
+  const monday = getMondayOfISOWeek(weekKey);
+  const targetDate = new Date(monday.getTime() + offsetWeeks * 7 * 86400000 + 43200000);
+  return getISOWeekKey(targetDate);
+}
+
+function getWeekRangeDisplay(weekKey) {
+  if (!weekKey || !weekKey.includes('-W')) return '';
+  const monday = getMondayOfISOWeek(weekKey);
+  const sunday = new Date(monday.getTime() + 6 * 86400000);
+  const f = d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+  return `${f(monday)} - ${f(sunday)}/${sunday.getFullYear()}`;
+}
+
+function getDayDateLabel(weekKey, dayIndex) {
+  // dayIndex: 0 (monday) -> 6 (sunday)
+  if (!weekKey || !weekKey.includes('-W')) return '';
+  const monday = getMondayOfISOWeek(weekKey);
+  const d = new Date(monday.getTime() + dayIndex * 86400000);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+}
+
 export default function DriverSchedules() {
+  const realCurrentWeekKey = useMemo(() => getISOWeekKey(new Date()), []);
+  const [selectedWeekKey, setSelectedWeekKey] = useState(realCurrentWeekKey);
+
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const [search, setSearch] = useState('');
@@ -32,14 +78,48 @@ export default function DriverSchedules() {
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
-  useEffect(() => {
-    loadSchedules();
-  }, []);
+  // Tạo danh sách các tuần gợi ý để Admin chọn nhanh (+2 tuần tới đến -8 tuần trước)
+  const quickWeekOptions = useMemo(() => {
+    const list = [];
+    // 2 tuần tới
+    for (let i = 2; i >= 1; i--) {
+      const wKey = getAdjacentWeekKey(realCurrentWeekKey, i);
+      list.push({
+        weekKey: wKey,
+        label: i === 1 
+          ? `📅 Tuần sau: ${wKey} (${getWeekRangeDisplay(wKey)})` 
+          : `🚀 2 tuần tới: ${wKey} (${getWeekRangeDisplay(wKey)})`,
+        isNext: true
+      });
+    }
+    // Tuần hiện tại
+    list.push({
+      weekKey: realCurrentWeekKey,
+      label: `📌 Tuần này: ${realCurrentWeekKey} (${getWeekRangeDisplay(realCurrentWeekKey)})`,
+      isCurrent: true
+    });
+    // 8 tuần cũ trước đó
+    for (let i = -1; i >= -8; i--) {
+      const wKey = getAdjacentWeekKey(realCurrentWeekKey, i);
+      list.push({
+        weekKey: wKey,
+        label: i === -1 
+          ? `📁 Tuần trước: ${wKey} (${getWeekRangeDisplay(wKey)})` 
+          : `📁 ${Math.abs(i)} tuần trước: ${wKey} (${getWeekRangeDisplay(wKey)})`,
+        isPast: true
+      });
+    }
+    return list;
+  }, [realCurrentWeekKey]);
 
-  const loadSchedules = async (weekKey = '') => {
+  useEffect(() => {
+    loadSchedules(selectedWeekKey);
+  }, [selectedWeekKey]);
+
+  const loadSchedules = async (weekKeyToLoad = selectedWeekKey) => {
     try {
       setLoading(true);
-      const res = await getAdminWeeklySchedules(weekKey);
+      const res = await getAdminWeeklySchedules(weekKeyToLoad);
       if (res?.success) {
         setData(res);
       }
@@ -50,9 +130,28 @@ export default function DriverSchedules() {
     }
   };
 
+  const handlePrevWeek = () => {
+    const prev = getAdjacentWeekKey(selectedWeekKey, -1);
+    setSelectedWeekKey(prev);
+  };
+
+  const handleNextWeek = () => {
+    const next = getAdjacentWeekKey(selectedWeekKey, 1);
+    setSelectedWeekKey(next);
+  };
+
+  const handleCurrentWeek = () => {
+    setSelectedWeekKey(realCurrentWeekKey);
+  };
+
   const fullList = data?.data || [];
   const stats = data?.stats || {};
-  const currentWeekKey = data?.weekKey || '';
+  const currentWeekKey = data?.weekKey || selectedWeekKey;
+
+  // Xác định tính chất của tuần đang xem
+  const isViewingCurrentWeek = selectedWeekKey === realCurrentWeekKey;
+  const isViewingNextWeek = selectedWeekKey > realCurrentWeekKey;
+  const isViewingPastWeek = selectedWeekKey < realCurrentWeekKey;
 
   const filteredList = fullList.filter(item => {
     const driver = item.driver || {};
@@ -76,16 +175,16 @@ export default function DriverSchedules() {
 
       const res = await adminUpdateDriverShift({
         driverId: editModal.driverId,
-        weekKey: currentWeekKey,
+        weekKey: selectedWeekKey,
         dayKey: editModal.dayKey,
         shift: newShift,
         isDowngraded: resetDowngrade ? false : editModal.isDowngraded
       });
 
       if (res?.success) {
-        setToastMessage(`✅ Đã đổi ca ${DAY_LABELS[editModal.dayKey]} của ${editModal.driverName} thành ${newShift}`);
+        setToastMessage(`✅ Đã đổi ca ${DAY_LABELS[editModal.dayKey]} (${selectedWeekKey}) của ${editModal.driverName} thành ${newShift}`);
         setEditModal({ isOpen: false, driverId: null });
-        await loadSchedules(currentWeekKey);
+        await loadSchedules(selectedWeekKey);
         setTimeout(() => setToastMessage(''), 3000);
       }
     } catch (err) {
@@ -148,22 +247,94 @@ export default function DriverSchedules() {
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      {/* Header & Điều hướng tuần */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2.5">
-            <span>📅</span> Bảng Phân Ca Làm Việc Tuần (7 Ngày)
-          </h1>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
+              <span>📅</span> Bảng Phân Ca Làm Việc Tuần (7 Ngày)
+            </h1>
+            {isViewingCurrentWeek && (
+              <span className="rounded-full bg-blue-100 text-blue-800 px-2.5 py-0.5 text-xs font-bold border border-blue-200">
+                📌 Tuần Hiện Tại
+              </span>
+            )}
+            {isViewingNextWeek && (
+              <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-0.5 text-xs font-bold border border-emerald-200 animate-pulse">
+                🌟 Tuần Sau (Mở Đăng Ký)
+              </span>
+            )}
+            {isViewingPastWeek && (
+              <span className="rounded-full bg-slate-100 text-slate-600 px-2.5 py-0.5 text-xs font-bold border border-slate-300">
+                📁 Tuần Cũ (Lịch Sử)
+              </span>
+            )}
+          </div>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Mã tuần: <strong className="text-blue-600 font-mono">{currentWeekKey}</strong> (Admin có thể click trực tiếp vào từng ô để đổi ca cho tài xế)
+            Đang xem: <strong className="text-blue-600 font-mono text-sm sm:text-base">{selectedWeekKey}</strong>
+            <span className="ml-2 font-medium text-slate-700">({getWeekRangeDisplay(selectedWeekKey)})</span>
+            <span className="hidden sm:inline text-slate-400 ml-1.5">— Admin có thể bấm trực tiếp vào từng ô để đổi ca</span>
           </p>
         </div>
-        <button
-          onClick={() => loadSchedules(currentWeekKey)}
-          className="self-start sm:self-auto rounded-xl bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 transition"
-        >
-          🔄 Làm mới dữ liệu
-        </button>
+
+        {/* BỘ ĐIỀU HƯỚNG TUẦN (WEEK NAVIGATOR) */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Nút lùi 1 tuần */}
+          <button
+            type="button"
+            onClick={handlePrevWeek}
+            className="flex items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition active:scale-95 shadow-xs"
+            title="Xem tuần trước đó"
+          >
+            <span>◀</span>
+            <span className="hidden sm:inline">Tuần trước</span>
+          </button>
+
+          {/* Dropdown chọn nhanh tuần */}
+          <select
+            value={selectedWeekKey}
+            onChange={(e) => setSelectedWeekKey(e.target.value)}
+            className="rounded-xl border-2 border-blue-500 bg-blue-50/50 px-3 py-2 text-xs font-black text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-400 cursor-pointer shadow-xs max-w-[210px] sm:max-w-none"
+          >
+            {quickWeekOptions.map((opt) => (
+              <option key={opt.weekKey} value={opt.weekKey}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+
+          {/* Nút tiến 1 tuần */}
+          <button
+            type="button"
+            onClick={handleNextWeek}
+            className="flex items-center gap-1 rounded-xl bg-slate-100 hover:bg-slate-200 px-3 py-2 text-xs font-bold text-slate-700 transition active:scale-95 shadow-xs"
+            title="Xem tuần tiếp theo"
+          >
+            <span className="hidden sm:inline">Tuần sau</span>
+            <span>▶</span>
+          </button>
+
+          {/* Nút quay về tuần hiện tại (nếu đang ở tuần khác) */}
+          {!isViewingCurrentWeek && (
+            <button
+              type="button"
+              onClick={handleCurrentWeek}
+              className="rounded-xl bg-blue-600 hover:bg-blue-700 px-3 py-2 text-xs font-bold text-white transition active:scale-95 shadow-xs"
+            >
+              📌 Về tuần này
+            </button>
+          )}
+
+          {/* Nút làm mới dữ liệu */}
+          <button
+            type="button"
+            onClick={() => loadSchedules(selectedWeekKey)}
+            className="rounded-xl bg-slate-100 hover:bg-slate-200 p-2 text-xs font-bold text-slate-600 transition"
+            title="Làm mới dữ liệu"
+          >
+            🔄
+          </button>
+        </div>
       </div>
 
       {toastMessage && (
@@ -174,9 +345,12 @@ export default function DriverSchedules() {
 
       {/* Thống kê cả 7 ngày */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
-        {ALL_DAYS.map(day => (
+        {ALL_DAYS.map((day, idx) => (
           <div key={day} className="rounded-2xl bg-white border border-slate-200 p-3 shadow-xs flex flex-col justify-between">
-            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">{DAY_LABELS[day]}</span>
+            <div className="flex items-center justify-between border-b pb-1.5 border-slate-100">
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">{DAY_LABELS[day]}</span>
+              <span className="text-[10px] font-mono text-slate-400 font-semibold">{getDayDateLabel(selectedWeekKey, idx)}</span>
+            </div>
             <div className="mt-2 space-y-1 text-[11px]">
               <div className="flex items-center justify-between">
                 <span className="text-emerald-700 font-medium">⭐ Full:</span>
@@ -196,7 +370,7 @@ export default function DriverSchedules() {
       </div>
 
       {/* Bộ lọc & Tìm kiếm */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         <input
           type="text"
           value={search}
@@ -222,28 +396,27 @@ export default function DriverSchedules() {
 
       {/* Bảng ma trận 7 ngày */}
       <div className="overflow-x-auto rounded-2xl bg-white border border-slate-200 shadow-sm">
-        <table className="w-full text-left border-collapse text-xs min-w-[800px]">
+        <table className="w-full text-left border-collapse text-xs min-w-[850px]">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-bold text-slate-600 uppercase">
               <th className="py-3 px-3">Tài xế</th>
               <th className="py-3 px-2 text-center">Mã</th>
-              <th className="py-3 px-1 text-center">Thứ 2</th>
-              <th className="py-3 px-1 text-center">Thứ 3</th>
-              <th className="py-3 px-1 text-center">Thứ 4</th>
-              <th className="py-3 px-1 text-center">Thứ 5</th>
-              <th className="py-3 px-1 text-center">Thứ 6</th>
-              <th className="py-3 px-1 text-center">Thứ 7</th>
-              <th className="py-3 px-1 text-center">Chủ Nhật</th>
+              {ALL_DAYS.map((day, idx) => (
+                <th key={day} className="py-3 px-1 text-center">
+                  <div>{DAY_LABELS[day]}</div>
+                  <div className="text-[9px] font-mono font-normal text-slate-400 normal-case">{getDayDateLabel(selectedWeekKey, idx)}</div>
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {loading ? (
               <tr>
-                <td colSpan="9" className="py-12 text-center text-slate-400">Đang tải bảng phân ca...</td>
+                <td colSpan="9" className="py-12 text-center text-slate-400">Đang tải bảng phân ca tuần {selectedWeekKey}...</td>
               </tr>
             ) : filteredList.length === 0 ? (
               <tr>
-                <td colSpan="9" className="py-12 text-center text-slate-400">Không tìm thấy tài xế nào</td>
+                <td colSpan="9" className="py-12 text-center text-slate-400">Không tìm thấy tài xế nào trong tuần này</td>
               </tr>
             ) : (
               filteredList.map((item) => {
@@ -284,7 +457,7 @@ export default function DriverSchedules() {
                   ✏️ Admin Sửa Ca Làm Việc
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  {editModal.driverName} - <strong>{DAY_LABELS[editModal.dayKey]}</strong>
+                  {editModal.driverName} - <strong>{DAY_LABELS[editModal.dayKey]}</strong> ({selectedWeekKey})
                 </p>
               </div>
               <button
