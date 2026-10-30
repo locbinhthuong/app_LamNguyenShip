@@ -241,3 +241,19 @@ export default api;
 export const getAppVersionConfig = async () => { const response = await api.get(`/api/config/APP_VERSION_CONFIG?t=${new Date().getTime()}`); return response.data; };
 export const reportRain = async () => { const response = await api.post('/api/drivers/report-rain'); return response.data; };
 export const getRainConfig = async () => { const response = await api.get(`/api/config/RAIN_SURCHARGE_CONFIG?t=${new Date().getTime()}`); return response.data; };
+
+// ==================== LỊCH LÀM VIỆC TUẦN ====================
+export const getMyWeeklySchedule = async () => {
+  const response = await api.get('/api/schedules/my');
+  return response.data;
+};
+
+export const registerWeeklySchedule = async (weekKey, schedule) => {
+  const response = await api.post('/api/schedules/register', { weekKey, schedule });
+  return response.data;
+};
+
+export const changeShiftBeforehand = async (weekKey, dayKey, newShift, reason = '') => {
+  const response = await api.post('/api/schedules/change-shift', { weekKey, dayKey, newShift, reason });
+  return response.data;
+};

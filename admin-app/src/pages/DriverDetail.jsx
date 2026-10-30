@@ -30,7 +30,7 @@ export default function DriverDetail() {
   
   // Popup Sửa thông tin
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 15, isCustomCommission: false, driverTier: 1, weeklyPoints: 0, isPriority5s: false });
+  const [editForm, setEditForm] = useState({ name: '', vehicleType: '', licensePlate: '', avatar: '', commissionRate: 15, isCustomCommission: false, driverTier: 1, weeklyPoints: 0, isPriority5s: false, driverType: 'FULLTIME' });
   const [isUploading, setIsUploading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -70,7 +70,8 @@ export default function DriverDetail() {
         avatar: drRes.data.avatar || '',
         cccd: drRes.data.cccd || '',
         gplx: drRes.data.gplx || '',
-        isPriority5s: drRes.data.isPriority5s || false
+        isPriority5s: drRes.data.isPriority5s || false,
+        driverType: drRes.data.driverType || 'FULLTIME'
       });
       setAvatarPreview(drRes.data.avatar || null);
       setAvatarFile(null);
@@ -582,6 +583,28 @@ export default function DriverDetail() {
                   )}
                 </div>
               </div>
+              
+              {/* Phân loại tài xế Fulltime / Part-time */}
+              <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-3">
+                <label className="text-xs font-bold text-indigo-900 mb-1.5 block flex items-center justify-between">
+                  <span>💼 HÌNH THỨC LÀM VIỆC</span>
+                  <span className="text-[10px] text-indigo-600 font-normal">Quy định quyền nhận đơn</span>
+                </label>
+                <select 
+                  value={editForm.driverType || 'FULLTIME'} 
+                  onChange={e => setEditForm({...editForm, driverType: e.target.value})}
+                  className="w-full rounded-xl border border-indigo-300 bg-white p-2.5 text-xs font-bold text-indigo-800 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+                >
+                  <option value="FULLTIME">⭐ Fulltime (Ưu tiên gán tự động trong bán kính 1km)</option>
+                  <option value="PARTTIME">⚡ Part-time (Chỉ xem và nhận Đơn treo / Tự do)</option>
+                </select>
+                <p className="mt-1.5 text-[10px] text-indigo-600 leading-tight">
+                  {editForm.driverType === 'PARTTIME' 
+                    ? '• Tài xế Part-time sẽ nhận các đơn treo khi khu vực không có tài xế Fulltime rảnh.' 
+                    : '• Tài xế Fulltime sẽ được hệ thống quét trong bán kính 1km để chia đều đơn tự động.'}
+                </p>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1 block">Mức chiết khấu (%)</label>
                 <select 

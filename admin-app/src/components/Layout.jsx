@@ -7,7 +7,7 @@ import RainConfirmModal from './RainConfirmModal';
 import { getRainConfig } from '../services/configService';
 import { requestFirebaseToken, setupForegroundListener } from '../utils/firebase';
 import { updateFcmToken } from '../services/api';
-import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset, Settings, CloudRain } from 'lucide-react';
+import { LayoutDashboard, Package, Map, DollarSign, Landmark, Newspaper, Car, Users, Headset, Settings, CloudRain, CalendarDays } from 'lucide-react';
 
 export default function Layout() {
   const { admin, logout } = useAuth();
@@ -108,6 +108,7 @@ export default function Layout() {
         { to: '/finance',              icon: <Landmark size={20} />, label: 'Tài chính' },
         { to: '/announcements',        icon: <Newspaper size={20} />, label: 'Bảng Tin' },
         { to: '/drivers',              icon: <Car size={20} />, label: 'Tài xế' },
+        { to: '/schedules',            icon: <CalendarDays size={20} />, label: 'Lịch trực tuần' },
         { to: '/customers',            icon: <Users size={20} />, label: 'Khách hàng' },
         ...(admin?.role === 'admin' ? [{ to: '/dispatchers', icon: <Headset size={20} />, label: 'Tổng đài viên' }] : []),
         ...(admin?.role === 'admin' ? [{ to: '/settings', icon: <Settings size={20} />, label: 'Cấu hình Tính tiền' }] : []),

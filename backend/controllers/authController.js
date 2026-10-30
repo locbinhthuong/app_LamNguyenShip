@@ -451,6 +451,44 @@ const authController = {
         // Tài xế tắt Online -> Đóng phiên
         await endDriverOnlineSession(req.driver._id, now, 'MANUAL');
         updateData.currentOnlineSessionId = null;
+
+        // Giám sát số lần bấm Offline trong ca Fulltime hôm nay
+        try {
+          const DriverSchedule = require('../models/DriverSchedule');
+          const { getWeekKey, getDayOfWeekVN, getDayKeyFromDayOfWeek } = require('../utils/scheduleUtils');
+          const currentWeekKey = getWeekKey(now);
+          const dayOfWeek = getDayOfWeekVN(now);
+          const currentDayKey = getDayKeyFromDayOfWeek(dayOfWeek);
+
+          const scheduleDoc = await DriverSchedule.findOne({ driverId: req.driver._id, weekKey: currentWeekKey });
+          if (scheduleDoc && scheduleDoc.schedule && scheduleDoc.schedule[currentDayKey]) {
+            const todaySchedule = scheduleDoc.schedule[currentDayKey];
+
+            // Nếu hôm nay là ca FULLTIME và chưa bị hạ Part-time
+            if (todaySchedule.shift === 'FULLTIME' && !todaySchedule.isDowngraded) {
+              todaySchedule.offlineCount = (todaySchedule.offlineCount || 0) + 1;
+
+              if (todaySchedule.offlineCount === 2) {
+                req.scheduleNotice = '⚠️ Bạn đã bấm Offline 2 lần hôm nay. Nếu bấm Offline thêm 1 lần nữa trong ca Fulltime, bạn sẽ bị hạ xuống chế độ Part-time cho đến hết ngày hôm nay!';
+              } else if (todaySchedule.offlineCount >= 3) {
+                todaySchedule.isDowngraded = true;
+                todaySchedule.downgradedAt = now;
+                req.scheduleNotice = '🚨 Bạn đã bấm Offline quá 2 lần trong ca Fulltime hôm nay. Hệ thống đã chuyển bạn về chế độ Part-time cho đến hết ngày hôm nay (chỉ nhận đơn treo)!';
+
+                if (req.io) {
+                  req.io.to(`driver_${req.driver._id.toString()}`).emit('schedule_downgraded_parttime', {
+                    message: req.scheduleNotice,
+                    dayKey: currentDayKey,
+                    offlineCount: todaySchedule.offlineCount
+                  });
+                }
+              }
+              await scheduleDoc.save();
+            }
+          }
+        } catch (scheduleErr) {
+          console.error('[DriverSchedule] Lỗi đếm số lần offline:', scheduleErr.message);
+        }
       }
 
       if (!IDLE_MONITOR_ENABLED) {
@@ -561,6 +599,7 @@ const authController = {
       res.status(200).json({
         success: true,
         message: isOnline ? 'Đang online' : 'Đã offline',
+        scheduleNotice: req.scheduleNotice || null,
         data: driver
       });
     } catch (error) {

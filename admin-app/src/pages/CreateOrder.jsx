@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createOrder, getDrivers } from '../services/api';
+import { createOrder, getDrivers, searchSavedPlaces, upsertSavedPlace } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -155,6 +155,50 @@ export default function CreateOrder() {
     driverReminders: [],
     senders: []
   });
+
+  // State cho Sổ địa chỉ điểm lấy / Quán quen
+  const [savedPlaces, setSavedPlaces] = useState([]);
+  const [showSavedPlaceDropdown, setShowSavedPlaceDropdown] = useState(false);
+  const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
+
+  // Debounced search quán quen khi gõ pickupAddress
+  useEffect(() => {
+    if (!form.pickupAddress || form.pickupAddress.trim().length < 2) {
+      setSavedPlaces([]);
+      setShowSavedPlaceDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        setIsSearchingPlaces(true);
+        const res = await searchSavedPlaces(form.pickupAddress.trim());
+        if (res?.data && res.data.length > 0) {
+          setSavedPlaces(res.data);
+          setShowSavedPlaceDropdown(true);
+        } else {
+          setSavedPlaces([]);
+          setShowSavedPlaceDropdown(false);
+        }
+      } catch (e) {
+        console.error('Lỗi tìm kiếm quán quen:', e);
+      } finally {
+        setIsSearchingPlaces(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [form.pickupAddress]);
+
+  const handleSelectSavedPlace = (place) => {
+    setForm(prev => ({
+      ...prev,
+      pickupAddress: place.address,
+      pickupPhone: place.phone || prev.pickupPhone,
+      pickupCoordinates: { ...place.coordinates }
+    }));
+    setShowSavedPlaceDropdown(false);
+  };
 
   const geocodeAddress = async (address, type) => {
     if (!address || address.length < 5) return;
@@ -500,6 +544,17 @@ export default function CreateOrder() {
         packageDetails
       });
       saveToHistory(form);
+
+      // Tự động lưu hoặc cập nhật quán / điểm lấy vào cơ sở dữ liệu nếu có toạ độ
+      if (form.pickupAddress && form.pickupCoordinates?.lat && form.pickupCoordinates?.lng) {
+        upsertSavedPlace({
+          name: form.pickupAddress.split(',')[0].trim() || form.pickupAddress.trim(),
+          address: form.pickupAddress.trim(),
+          phone: form.pickupPhone ? form.pickupPhone.trim() : '',
+          coordinates: form.pickupCoordinates
+        }).catch(err => console.warn('Không thể tự động lưu điểm lấy:', err));
+      }
+
       alert('Tạo đơn hàng thành công!');
       navigate('/orders');
     } catch (err) {
@@ -706,24 +761,69 @@ export default function CreateOrder() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
+            <div className="relative">
               <label className="mb-1.5 block text-sm font-medium text-slate-600">
                 {form.serviceType === 'DAT_XE' ? 'Điểm đón' : form.serviceType === 'DIEU_PHOI' ? 'Địa chỉ khách' : form.serviceType === 'MUA_HO' ? 'Nơi mua hàng' : 'Địa chỉ lấy hàng (Shop)'} 
                 <span className="text-red-400">*</span>
-                {form.pickupCoordinates && <span className="ml-2 text-green-500 text-[10px] bg-green-50 px-1.5 py-0.5 rounded-full font-bold" title="Hệ thống đã nhận diện toạ độ">📍 Đã quét vị trí</span>}
+                {form.pickupCoordinates && (
+                  <span className="ml-2 text-green-600 text-[10px] bg-green-50 border border-green-200 px-1.5 py-0.5 rounded-full font-bold inline-flex items-center gap-1" title="Hệ thống đã nhận diện toạ độ">
+                    📍 Đã có toạ độ chuẩn
+                  </span>
+                )}
               </label>
-              <input
-                name="pickupAddress"
-                value={form.pickupAddress}
-                onChange={handleChange}
-                placeholder="123 Nguyễn Trãi, Quận 1, TP.HCM"
-                className="input-field"
-                list="pickupAddressList"
-                autoComplete="off"
-              />
-              <datalist id="pickupAddressList">
-                {history.pickupAddresses.map((item, index) => <option key={index} value={item} />)}
-              </datalist>
+              <div className="relative">
+                <input
+                  name="pickupAddress"
+                  value={form.pickupAddress}
+                  onChange={handleChange}
+                  onFocus={() => { if (savedPlaces.length > 0) setShowSavedPlaceDropdown(true); }}
+                  placeholder="Gõ tên quán hoặc địa chỉ lấy hàng..."
+                  className="input-field"
+                  autoComplete="off"
+                />
+                {isSearchingPlaces && (
+                  <div className="absolute right-3 top-3 text-xs text-slate-400">Đang tìm...</div>
+                )}
+              </div>
+
+              {/* DROPDOWN QUÁN QUEN / ĐIỂM LẤY ĐÃ LƯU */}
+              {showSavedPlaceDropdown && savedPlaces.length > 0 && (
+                <div 
+                  className="absolute left-0 right-0 top-full mt-1 z-50 max-h-60 overflow-y-auto rounded-xl bg-white p-1.5 shadow-xl border border-blue-200 text-sm"
+                  onMouseDown={(e) => e.preventDefault()}
+                >
+                  <div className="px-2 py-1 text-[11px] font-bold text-blue-700 bg-blue-50 rounded mb-1 flex items-center justify-between">
+                    <span>🏪 QUÁN QUEN / ĐIỂM LẤY ĐÃ LƯU TỌA ĐỘ</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setShowSavedPlaceDropdown(false)} 
+                      className="text-slate-400 hover:text-slate-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  {savedPlaces.map((place) => (
+                    <div
+                      key={place._id}
+                      onClick={() => handleSelectSavedPlace(place)}
+                      className="cursor-pointer rounded-lg px-2.5 py-2 hover:bg-blue-50 transition border-b border-slate-50 last:border-b-0"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                          📍 {place.name}
+                        </span>
+                        {place.usageCount > 1 && (
+                          <span className="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-mono">
+                            {place.usageCount} lần
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-slate-500 truncate mt-0.5">{place.address}</div>
+                      {place.phone && <div className="text-[10px] text-blue-600 font-mono">📞 {place.phone}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
               {form.pickupCoordinates && (
                 <div className="mt-2 w-full rounded-lg overflow-hidden border border-slate-200">
                   <div className="bg-indigo-50 px-2 py-1.5 border-b border-indigo-100 flex items-center justify-between">

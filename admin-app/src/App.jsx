@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import CreateOrder from './pages/CreateOrder';
 import Drivers from './pages/Drivers';
+import DriverSchedules from './pages/DriverSchedules';
 import CreateDriver from './pages/CreateDriver';
 import DriverMap from './pages/DriverMap';
 import Revenue from './pages/Revenue';
@@ -47,6 +48,7 @@ export default function App() {
         <Route path="orders/create" element={<CreateOrder />} />
         <Route path="driver-map" element={<DriverMap />} />
         <Route path="drivers" element={<Drivers />} />
+        <Route path="schedules" element={<DriverSchedules />} />
         <Route path="drivers/create" element={<CreateDriver />} />
         <Route path="drivers/:id" element={<DriverDetail />} />
         <Route path="finance" element={<Finance />} />

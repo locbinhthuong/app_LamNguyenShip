@@ -154,6 +154,8 @@ app.use('/api/config', configRoutes);
 app.use('/api/maps', mapRoutes);
 app.use('/api/alofood', alofoodRoutes);
 app.use('/api/merchant', require('./routes/shopRoutes'));
+app.use('/api/saved-places', require('./routes/savedPlaceRoutes'));
+app.use('/api/schedules', require('./routes/scheduleRoutes'));
 
 // Phục vụ các File tĩnh từ thư mục /uploads
 const path = require('path');

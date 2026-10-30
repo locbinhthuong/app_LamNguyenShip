@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
+import WeeklyScheduleModal from '../components/WeeklyScheduleModal';
 import { getAvailableOrders, acceptOrder, pickedUpOrder, completeOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi, reportRain, getRainConfig } from '../services/api';
 import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, BarChart3, User, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass, CloudRain } from 'lucide-react';
 import api from '../services/api';
@@ -435,6 +436,7 @@ export default function Home() {
   const [filter, setFilter] = useState('available');
   const [showToast, setShowToast] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [editModal, setEditModal] = useState(false);
   const [confirmAcceptOrder, setConfirmAcceptOrder] = useState(null); // ID đơn hàng đang được hỏi Xác Nhận
@@ -1003,6 +1005,14 @@ export default function Home() {
         <div className="flex shrink-0 items-center gap-1.5">
           <button
             type="button"
+            onClick={() => setShowScheduleModal(true)}
+            className="rounded-full bg-blue-50 border border-blue-200 px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-bold text-blue-700 shadow-sm hover:bg-blue-100 flex items-center gap-1 active:scale-95 transition"
+            title="Đăng ký & Xem lịch tuần"
+          >
+            <span>📅</span> Lịch ca
+          </button>
+          <button
+            type="button"
             disabled={isOnlineToggling}
             onClick={toggleOnline}
             className={`rounded-full px-2.5 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs font-bold transition-all flex items-center shadow-sm ${
@@ -1275,6 +1285,11 @@ export default function Home() {
         </div>
       </div>
 
+      <WeeklyScheduleModal 
+        isOpen={showScheduleModal} 
+        onClose={() => setShowScheduleModal(false)} 
+        onScheduleUpdated={() => loadData(true)} 
+      />
       <DriverProfileModal
         isOpen={editModal}
         onClose={() => setEditModal(false)}

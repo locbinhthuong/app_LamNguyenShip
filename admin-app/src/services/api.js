@@ -350,4 +350,31 @@ export const deleteStaff = async (id) => {
   return response.data;
 };
 
+// ==================== SAVED PLACES (SỔ ĐỊA CHỈ ĐIỂM LẤY / QUÁN) ====================
+export const searchSavedPlaces = async (query) => {
+  const response = await api.get('/api/saved-places/search', { params: { q: query } });
+  return response.data;
+};
+
+export const getSavedPlaces = async (page = 1, limit = 20) => {
+  const response = await api.get('/api/saved-places', { params: { page, limit } });
+  return response.data;
+};
+
+export const upsertSavedPlace = async (data) => {
+  const response = await api.post('/api/saved-places', data);
+  return response.data;
+};
+
+export const deleteSavedPlace = async (id) => {
+  const response = await api.delete(`/api/saved-places/${id}`);
+  return response.data;
+};
+
+// ==================== QUẢN LÝ LỊCH CA TUẦN (ADMIN) ====================
+export const getAdminWeeklySchedules = async (weekKey = '') => {
+  const response = await api.get('/api/schedules/admin', { params: { weekKey } });
+  return response.data;
+};
+
 export default api;

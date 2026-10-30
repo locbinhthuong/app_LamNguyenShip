@@ -344,7 +344,14 @@ export default function Drivers() {
                 {drivers.map(driver => (
                   <tr key={driver._id} className="hover:bg-blue-50/50">
                     <td className="table-td">
-                      <p className="font-medium text-slate-800">{driver.name}</p>
+                      <div className="flex items-center gap-1.5">
+    <p className="font-medium text-slate-800">{driver.name}</p>
+    {driver.driverType === 'PARTTIME' ? (
+      <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold border border-purple-200">⚡ Part-time</span>
+    ) : (
+      <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-semibold border border-indigo-200">⭐ Fulltime</span>
+    )}
+  </div>
                       <p className="text-slate-500 text-xs">{driver.phone}</p>
                     </td>
                     <td className="table-td font-mono text-blue-600">{driver.driverCode}</td>
