@@ -37,6 +37,12 @@ export const GpsProvider = ({ children }) => {
   const { driver } = useAuth();
   
   const [gpsStatus, setGpsStatus] = useState('OFF'); // 'OFF', 'FINDING', 'TRACKING', 'ERROR'
+  const [currentCoords, setCurrentCoords] = useState(() => {
+    if (driver?.currentLocation?.lat != null && driver?.currentLocation?.lng != null) {
+      return { lat: Number(driver.currentLocation.lat), lng: Number(driver.currentLocation.lng) };
+    }
+    return null;
+  });
   const [isToggling, setIsToggling] = useState(false);
   const [showLocationDisclosure, setShowLocationDisclosure] = useState(false);
   const [pendingGpsAction, setPendingGpsAction] = useState(null);
@@ -185,6 +191,7 @@ export const GpsProvider = ({ children }) => {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
         lastCoordsRef.current = { lat, lng };
+        setCurrentCoords({ lat, lng });
 
         const now = Date.now();
         if (now - lastLocationEmitRef.current >= 6000) {
@@ -231,6 +238,7 @@ export const GpsProvider = ({ children }) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           lastCoordsRef.current = { lat, lng };
+          setCurrentCoords({ lat, lng });
           
           const now = Date.now();
           // Rate limit: Chỉ cập nhật lên máy chủ mỗi 6 giây
@@ -318,7 +326,7 @@ export const GpsProvider = ({ children }) => {
   }, []);
 
   return (
-    <GpsContext.Provider value={{ gpsStatus, toggleGPS, isToggling, showLocationDisclosure, handleAcceptDisclosure, handleDeclineDisclosure }}>
+    <GpsContext.Provider value={{ gpsStatus, currentCoords, toggleGPS, isToggling, showLocationDisclosure, handleAcceptDisclosure, handleDeclineDisclosure }}>
       {children}
     </GpsContext.Provider>
   );

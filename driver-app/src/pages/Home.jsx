@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext';
 import ConfirmModal from '../components/ConfirmModal';
 import DriverProfileModal from '../components/DriverProfileModal';
 import WeeklyScheduleModal from '../components/WeeklyScheduleModal';
+import DriverOrderMap from '../components/DriverOrderMap';
 import { getAvailableOrders, acceptOrder, pickedUpOrder, completeOrder, getMyOrders, updateMyProfile, getFullImageUrl, getDriverRevenue, updateDriverLocationApi, reportRain, getRainConfig } from '../services/api';
-import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, BarChart3, User, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass, CloudRain } from 'lucide-react';
+import { Package, Bike, Key, Car, Building2, Landmark, Wrench, ShoppingCart, MapPin, Map, CheckCircle2, Gift, Home as HomeIcon, ClipboardList, Wallet, BarChart3, User, Flag, Navigation, Phone, MessageSquare, AlertCircle, RefreshCw, X, ShieldAlert, Inbox, Truck, Moon, Hourglass, CloudRain } from 'lucide-react';
 import api from '../services/api';
 import { requestFirebaseToken } from '../utils/firebase';
 import { Capacitor } from '@capacitor/core';
@@ -432,12 +433,14 @@ function ActiveOrderCard({ order, onAction, loading }) {
 
 export default function Home() {
   const { driver, setOnline, logout, loadProfile } = useAuth();
+  const { currentCoords } = useGps();
   const navigate = useNavigate();
   const [availableOrders, setAvailableOrders] = useState([]);
   const [myActiveOrders, setMyActiveOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(null);
   const [filter, setFilter] = useState('available');
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'map'
   const [showToast, setShowToast] = useState(null);
   const [logoutModal, setLogoutModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -1171,19 +1174,72 @@ export default function Home() {
                   Hãy bật nút <b className="text-slate-800 bg-slate-200 px-2 py-1 rounded">Mở Nhận Đơn</b> phía trên để tiếp tục Cày cuốc!
                 </p>
               </div>
-            ) : availableOrders.length > 0 ? (
-              <>
-                <p className="text-slate-500 text-sm mb-3 font-medium">Có {availableOrders.length} đơn hàng chờ bạn</p>
-                {availableOrders.map(order => (
-                  <OrderCard key={order._id} order={order} onAccept={() => { driver?.isPriority5s ? handleAccept(order._id) : setConfirmAcceptOrder(order._id) }} loading={actionLoading === order._id || confirmAcceptOrder === order._id} />
-                ))}
-              </>
             ) : (
-              <div className="text-center py-12 text-slate-400 flex flex-col items-center">
-                <Hourglass size={48} strokeWidth={1} className="mb-4 text-slate-300" />
-                <p className="font-medium text-slate-600">Không có đơn hàng nào</p>
-                <p className="text-sm mt-1">Đơn mới sẽ xuất hiện tại đây</p>
-              </div>
+              <>
+                {/* THANH CHUYỂN ĐỔI CHẾ ĐỘ XEM: DANH SÁCH / BẢN ĐỒ */}
+                <div className="flex items-center justify-between mb-3 bg-white p-1.5 px-3 rounded-2xl border border-slate-200 shadow-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black text-slate-700">
+                      📦 Có {availableOrders.length} đơn có sẵn
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('list')}
+                      className={`px-3 py-1 text-xs font-black rounded-lg transition-all ${
+                        viewMode === 'list' 
+                          ? 'bg-white text-blue-600 shadow-xs' 
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      📋 Danh sách
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('map')}
+                      className={`px-3 py-1 text-xs font-black rounded-lg transition-all flex items-center gap-1 ${
+                        viewMode === 'map' 
+                          ? 'bg-blue-600 text-white shadow-xs' 
+                          : 'text-slate-500 hover:text-slate-700'
+                      }`}
+                    >
+                      <Map size={13} /> Bản đồ
+                    </button>
+                  </div>
+                </div>
+
+                {viewMode === 'map' ? (
+                  <div className="w-full h-[calc(100vh-270px)] min-h-[420px] rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative no-swipe">
+                    <DriverOrderMap
+                      orders={availableOrders}
+                      driverCoords={currentCoords || (driver?.currentLocation?.lat ? { lat: Number(driver.currentLocation.lat), lng: Number(driver.currentLocation.lng) } : null)}
+                      onAcceptOrder={(orderId) => {
+                        driver?.isPriority5s ? handleAccept(orderId) : setConfirmAcceptOrder(orderId);
+                      }}
+                      onRefresh={() => loadData(true)}
+                      onClose={() => setViewMode('list')}
+                    />
+                  </div>
+                ) : availableOrders.length > 0 ? (
+                  <>
+                    {availableOrders.map(order => (
+                      <OrderCard 
+                        key={order._id} 
+                        order={order} 
+                        onAccept={() => { driver?.isPriority5s ? handleAccept(order._id) : setConfirmAcceptOrder(order._id) }} 
+                        loading={actionLoading === order._id || confirmAcceptOrder === order._id} 
+                      />
+                    ))}
+                  </>
+                ) : (
+                  <div className="text-center py-12 text-slate-400 flex flex-col items-center">
+                    <Hourglass size={48} strokeWidth={1} className="mb-4 text-slate-300" />
+                    <p className="font-medium text-slate-600">Không có đơn hàng nào</p>
+                    <p className="text-sm mt-1">Đơn mới sẽ xuất hiện tại đây</p>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
