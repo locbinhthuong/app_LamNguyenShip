@@ -1157,15 +1157,19 @@ export default function Home() {
         
         {/* TAB 1: CHỜ NHẬN */}
         <div
-          className="driver-tab-panel w-1/3 h-full shrink-0 overflow-y-auto overflow-x-hidden px-4 py-3"
-          style={{ WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', touchAction: 'pan-y' }}
+          className={`driver-tab-panel w-1/3 h-full shrink-0 ${
+            viewMode === 'map' && driver?.isOnline
+              ? 'overflow-hidden p-0 relative'
+              : 'overflow-y-auto overflow-x-hidden px-4 py-3'
+          }`}
+          style={viewMode === 'map' && driver?.isOnline ? { touchAction: 'none' } : { WebkitOverflowScrolling: 'touch', overscrollBehaviorY: 'contain', touchAction: 'pan-y' }}
         >
-          <div className="mx-auto max-w-lg sm:max-w-xl pb-6">
-            {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : !driver?.isOnline ? (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : !driver?.isOnline ? (
+            <div className="mx-auto max-w-lg sm:max-w-xl pb-6">
               <div className="text-center py-12 bg-slate-100 rounded-2xl mt-4 border border-slate-200 flex flex-col items-center">
                 <Moon size={48} strokeWidth={1} className="mb-3 text-slate-400" />
                 <p className="font-black text-slate-700 text-lg uppercase tracking-wide">Bạn đang Nghỉ / Offline</p>
@@ -1174,74 +1178,67 @@ export default function Home() {
                   Hãy bật nút <b className="text-slate-800 bg-slate-200 px-2 py-1 rounded">Mở Nhận Đơn</b> phía trên để tiếp tục Cày cuốc!
                 </p>
               </div>
-            ) : (
-              <>
-                {/* THANH CHUYỂN ĐỔI CHẾ ĐỘ XEM: DANH SÁCH / BẢN ĐỒ */}
-                <div className="flex items-center justify-between mb-3 bg-white p-1.5 px-3 rounded-2xl border border-slate-200 shadow-xs">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-black text-slate-700">
-                      📦 Có {availableOrders.length} đơn có sẵn
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('list')}
-                      className={`px-3 py-1 text-xs font-black rounded-lg transition-all ${
-                        viewMode === 'list' 
-                          ? 'bg-white text-blue-600 shadow-xs' 
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      📋 Danh sách
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setViewMode('map')}
-                      className={`px-3 py-1 text-xs font-black rounded-lg transition-all flex items-center gap-1 ${
-                        viewMode === 'map' 
-                          ? 'bg-blue-600 text-white shadow-xs' 
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      <Map size={13} /> Bản đồ
-                    </button>
-                  </div>
+            </div>
+          ) : viewMode === 'map' ? (
+            /* VIEW BẢN ĐỒ VỪA VẶN HOÀN TOÀN KHUNG NHÌN, KHÔNG BỊ CUỘN TRANG */
+            <div className="w-full h-full relative no-swipe overflow-hidden">
+              <DriverOrderMap
+                orders={availableOrders}
+                driverCoords={currentCoords || (driver?.currentLocation?.lat ? { lat: Number(driver.currentLocation.lat), lng: Number(driver.currentLocation.lng) } : null)}
+                onAcceptOrder={(orderId) => {
+                  driver?.isPriority5s ? handleAccept(orderId) : setConfirmAcceptOrder(orderId);
+                }}
+                onRefresh={() => loadData(true)}
+                onClose={() => setViewMode('list')}
+              />
+            </div>
+          ) : (
+            <div className="mx-auto max-w-lg sm:max-w-xl pb-6">
+              {/* THANH CHUYỂN ĐỔI CHẾ ĐỘ XEM: DANH SÁCH / BẢN ĐỒ */}
+              <div className="flex items-center justify-between mb-3 bg-white p-1.5 px-3 rounded-2xl border border-slate-200 shadow-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-black text-slate-700">
+                    📦 Có {availableOrders.length} đơn có sẵn
+                  </span>
                 </div>
+                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('list')}
+                    className="px-3 py-1 text-xs font-black rounded-lg transition-all bg-white text-blue-600 shadow-xs"
+                  >
+                    📋 Danh sách
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('map')}
+                    className="px-3 py-1 text-xs font-black rounded-lg transition-all flex items-center gap-1 text-slate-600 hover:text-blue-600"
+                  >
+                    <Map size={13} /> Bản đồ
+                  </button>
+                </div>
+              </div>
 
-                {viewMode === 'map' ? (
-                  <div className="w-full h-[calc(100vh-270px)] min-h-[420px] rounded-3xl overflow-hidden border border-slate-200 shadow-sm relative no-swipe">
-                    <DriverOrderMap
-                      orders={availableOrders}
-                      driverCoords={currentCoords || (driver?.currentLocation?.lat ? { lat: Number(driver.currentLocation.lat), lng: Number(driver.currentLocation.lng) } : null)}
-                      onAcceptOrder={(orderId) => {
-                        driver?.isPriority5s ? handleAccept(orderId) : setConfirmAcceptOrder(orderId);
-                      }}
-                      onRefresh={() => loadData(true)}
-                      onClose={() => setViewMode('list')}
+              {availableOrders.length > 0 ? (
+                <>
+                  {availableOrders.map(order => (
+                    <OrderCard 
+                      key={order._id} 
+                      order={order} 
+                      onAccept={() => { driver?.isPriority5s ? handleAccept(order._id) : setConfirmAcceptOrder(order._id) }} 
+                      loading={actionLoading === order._id || confirmAcceptOrder === order._id} 
                     />
-                  </div>
-                ) : availableOrders.length > 0 ? (
-                  <>
-                    {availableOrders.map(order => (
-                      <OrderCard 
-                        key={order._id} 
-                        order={order} 
-                        onAccept={() => { driver?.isPriority5s ? handleAccept(order._id) : setConfirmAcceptOrder(order._id) }} 
-                        loading={actionLoading === order._id || confirmAcceptOrder === order._id} 
-                      />
-                    ))}
-                  </>
-                ) : (
-                  <div className="text-center py-12 text-slate-400 flex flex-col items-center">
-                    <Hourglass size={48} strokeWidth={1} className="mb-4 text-slate-300" />
-                    <p className="font-medium text-slate-600">Không có đơn hàng nào</p>
-                    <p className="text-sm mt-1">Đơn mới sẽ xuất hiện tại đây</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                  ))}
+                </>
+              ) : (
+                <div className="text-center py-12 text-slate-400 flex flex-col items-center">
+                  <Hourglass size={48} strokeWidth={1} className="mb-4 text-slate-300" />
+                  <p className="font-medium text-slate-600">Không có đơn hàng nào</p>
+                  <p className="text-sm mt-1">Đơn mới sẽ xuất hiện tại đây</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* TAB 2: ĐANG GIAO */}
