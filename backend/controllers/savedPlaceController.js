@@ -40,6 +40,114 @@ exports.searchSavedPlaces = async (req, res) => {
 };
 
 /**
+ * Tự động khớp điểm lấy và toạ độ đã ghim (dành cho Smart Paste Zalo/FB hoặc nhập địa chỉ)
+ * GET /api/saved-places/match?address=...&phone=...
+ */
+exports.matchSavedPlace = async (req, res) => {
+  try {
+    const { address, phone } = req.query;
+    const Order = require('../models/Order');
+
+    let matched = null;
+
+    // 1. Tìm ưu tiên theo Số điện thoại (nếu có SĐT)
+    if (phone && phone.trim()) {
+      const cleanPhone = phone.trim().replace(/\D/g, '');
+      if (cleanPhone.length >= 9) {
+        matched = await SavedPlace.findOne({
+          phone: new RegExp(cleanPhone, 'i'),
+          'coordinates.lat': { $ne: null }
+        }).lean();
+
+        if (!matched) {
+          // Tìm trong Order cũ gần nhất
+          const oldOrder = await Order.findOne({
+            pickupPhone: new RegExp(cleanPhone, 'i'),
+            'pickupCoordinates.lat': { $ne: null }
+          }).sort({ createdAt: -1 }).lean();
+
+          if (oldOrder && oldOrder.pickupCoordinates?.lat) {
+            matched = {
+              name: oldOrder.pickupAddress?.split(',')[0] || 'Điểm lấy quen',
+              address: oldOrder.pickupAddress,
+              phone: oldOrder.pickupPhone,
+              coordinates: oldOrder.pickupCoordinates,
+              fromHistory: true
+            };
+          }
+        }
+      }
+    }
+
+    // 2. Nếu chưa tìm thấy theo SĐT, tìm theo Địa chỉ / Tên quán
+    if (!matched && address && address.trim()) {
+      const cleanAddr = address.trim();
+      const firstPart = cleanAddr.split(',')[0].trim();
+      
+      const escapedQuery = cleanAddr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedFirstPart = firstPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+      // Tìm trong SavedPlace
+      matched = await SavedPlace.findOne({
+        $or: [
+          { name: new RegExp(escapedFirstPart, 'i') },
+          { address: new RegExp(escapedFirstPart, 'i') },
+          { address: new RegExp(escapedQuery, 'i') }
+        ],
+        'coordinates.lat': { $ne: null }
+      }).sort({ usageCount: -1, lastUsedAt: -1 }).lean();
+
+      // Nếu chưa có trong SavedPlace, tìm trong Order cũ gần nhất
+      if (!matched) {
+        const oldOrder = await Order.findOne({
+          $or: [
+            { pickupAddress: new RegExp(escapedFirstPart, 'i') },
+            { pickupAddress: new RegExp(escapedQuery, 'i') }
+          ],
+          'pickupCoordinates.lat': { $ne: null }
+        }).sort({ createdAt: -1 }).lean();
+
+        if (oldOrder && oldOrder.pickupCoordinates?.lat) {
+          matched = {
+            name: oldOrder.pickupAddress?.split(',')[0] || 'Điểm lấy quen',
+            address: oldOrder.pickupAddress,
+            phone: oldOrder.pickupPhone || '',
+            coordinates: oldOrder.pickupCoordinates,
+            fromHistory: true
+          };
+        }
+      }
+    }
+
+    if (matched) {
+      return res.json({
+        success: true,
+        matched: true,
+        data: {
+          name: matched.name,
+          address: matched.address,
+          phone: matched.phone || '',
+          coordinates: matched.coordinates
+        }
+      });
+    }
+
+    return res.json({
+      success: true,
+      matched: false,
+      data: null
+    });
+  } catch (error) {
+    console.error('[SavedPlace] Match error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Lỗi khi khớp toạ độ điểm lấy',
+      error: error.message
+    });
+  }
+};
+
+/**
  * Thêm mới hoặc cập nhật điểm lấy (gọi khi điều phối tạo đơn hoặc chủ động lưu)
  * POST /api/saved-places
  */

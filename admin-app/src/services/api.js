@@ -356,6 +356,11 @@ export const searchSavedPlaces = async (query) => {
   return response.data;
 };
 
+export const matchSavedPlace = async (params) => {
+  const response = await api.get('/api/saved-places/match', { params });
+  return response.data;
+};
+
 export const getSavedPlaces = async (page = 1, limit = 20) => {
   const response = await api.get('/api/saved-places', { params: { page, limit } });
   return response.data;

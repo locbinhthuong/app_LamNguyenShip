@@ -607,6 +607,17 @@ const orderController = {
         rainSurchargeAmount = rainFee;
       }
 
+      const isAutoAssignMode = (String(autoAssignNearest) === 'true' || autoAssignNearest === true);
+      let eligibleFulltime = null;
+      if (isAutoAssignMode && !didAdminForceAssign && !scheduledPublishAt && pickupCoordinates?.lat != null && pickupCoordinates?.lng != null) {
+        eligibleFulltime = await findEligibleFulltimeDriver({
+          pickupLat: pickupCoordinates.lat,
+          pickupLng: pickupCoordinates.lng,
+          radiusKm: 1.0,
+          commissionRate: commissionRate !== undefined ? commissionRate : null
+        });
+      }
+
       const order = new Order({
         serviceType: serviceType || 'GIAO_HANG',
         subServiceType: subServiceType || null,
@@ -639,7 +650,8 @@ const orderController = {
         assignedTo: didAdminForceAssign ? forceAssignDriverId : undefined,
         acceptedAt: didAdminForceAssign ? new Date() : undefined,
         scheduledPublishAt: scheduledPublishAt ? new Date(scheduledPublishAt) : null,
-        autoAssignNearest: (String(autoAssignNearest) === 'true' || autoAssignNearest === true),
+        autoAssignNearest: isAutoAssignMode,
+        pendingAssignTo: eligibleFulltime ? [eligibleFulltime._id] : [],
         createdBy: req.admin._id,
         ipAddress: req.ip
       });
@@ -738,6 +750,21 @@ const orderController = {
         finalDeliveryFee += 5000;
       }
 
+      // Quét trước tài xế Fulltime rảnh trong bán kính 1km TRƯỚC KHI LƯU DATABASE để tránh lộ đơn treo cho Part-time
+      let eligibleFulltime = null;
+      const hasCoords = pickupCoordinates && 
+                        pickupCoordinates.lat != null && 
+                        pickupCoordinates.lng != null;
+
+      if (hasCoords) {
+        eligibleFulltime = await findEligibleFulltimeDriver({
+          pickupLat: pickupCoordinates.lat,
+          pickupLng: pickupCoordinates.lng,
+          radiusKm: 1.0,
+          commissionRate: null
+        });
+      }
+
       const order = new Order({
         serviceType: resolvedServiceType,
         subServiceType: subServiceType || null,
@@ -767,8 +794,9 @@ const orderController = {
         isRainSurchargeApplied,
         rainSurchargeAmount,
         feePaidBy: feePaidBy || 'RECEIVER',
-        status: 'PENDING', // Đã đổi thành PENDING để treo thẳng lên cho tài xế nhận luôn (theo yêu cầu)
-        autoAssignNearest: String(autoAssignNearest) === "true",
+        status: 'PENDING',
+        autoAssignNearest: true, // Đơn khách/quán luôn ưu tiên tự động gán Fulltime gần
+        pendingAssignTo: eligibleFulltime ? [eligibleFulltime._id] : [],
         ipAddress: req.ip
       });
 

@@ -61,7 +61,7 @@ export default function OrderDetail() {
   }, []);
 
   useEffect(() => {
-    if (!order || order.status !== 'PENDING' || order.assignedTo) {
+    if (!order || order.status !== 'PENDING' || order.assignedTo || order.autoAssignNearest || (order.pendingAssignTo && order.pendingAssignTo.length > 0)) {
       setCooldown(0);
       return;
     }

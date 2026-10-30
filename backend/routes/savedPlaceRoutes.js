@@ -6,6 +6,9 @@ const { verifyToken, anyAuthenticatedUser, onlyAdmin } = require('../middleware/
 // Tìm kiếm điểm lấy (dành cho Admin / Staff / Customer / Merchant tạo đơn)
 router.get('/search', verifyToken, anyAuthenticatedUser, savedPlaceController.searchSavedPlaces);
 
+// Khớp tự động điểm lấy và toạ độ đã ghim (dành cho Smart Paste Zalo/FB hoặc nhập địa chỉ)
+router.get('/match', verifyToken, anyAuthenticatedUser, savedPlaceController.matchSavedPlace);
+
 // Lấy toàn bộ danh sách điểm lấy
 router.get('/', verifyToken, anyAuthenticatedUser, savedPlaceController.getAllSavedPlaces);
 

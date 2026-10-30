@@ -91,19 +91,19 @@ const findEligibleFulltimeDriver = async ({
     const currentDayKey = getDayKeyFromDayOfWeek(dayOfWeek);
 
     for (const driver of driversInRadius) {
-      // Kiểm tra ca làm việc hôm nay (Thứ 2 - Thứ 6)
-      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-        const scheduleDoc = await DriverSchedule.findOne({ driverId: driver._id, weekKey: currentWeekKey }).lean();
-        if (scheduleDoc?.schedule?.[currentDayKey]) {
-          const todayShift = scheduleDoc.schedule[currentDayKey];
-          // Nếu ca hôm nay là PARTTIME, OFF hoặc đã bị HẠ Fulltime do offline quá 2 lần -> BỎ QUA
-          if (todayShift.shift !== 'FULLTIME' || todayShift.isDowngraded) {
-            console.log(`[AutoAssign] Bỏ qua ${driver.name} vì ca hôm nay là ${todayShift.shift} (isDowngraded: ${todayShift.isDowngraded})`);
-            continue;
-          }
-        } else if (driver.driverType === 'PARTTIME') {
+      // Kiểm tra ca làm việc hôm nay theo lịch tuần 7 ngày (Thứ Hai -> Chủ Nhật)
+      const scheduleDoc = await DriverSchedule.findOne({ driverId: driver._id, weekKey: currentWeekKey }).lean();
+      if (scheduleDoc?.schedule?.[currentDayKey]) {
+        const todayShift = scheduleDoc.schedule[currentDayKey];
+        // Nếu ca hôm nay là PARTTIME, OFF hoặc đã bị HẠ Fulltime do offline quá 2 lần -> BỎ QUA
+        if (todayShift.shift !== 'FULLTIME' || todayShift.isDowngraded) {
+          console.log(`[AutoAssign] Bỏ qua ${driver.name} vì ca hôm nay (${currentDayKey}) là ${todayShift.shift} (isDowngraded: ${todayShift.isDowngraded})`);
           continue;
         }
+      } else if (driver.driverType === 'PARTTIME') {
+        // Nếu chưa đăng ký ca mà tài xế thuộc nhóm Part-time -> Bỏ qua
+        console.log(`[AutoAssign] Bỏ qua ${driver.name} vì chưa đăng ký ca Fulltime`);
+        continue;
       }
 
       if (driver.idleLockedUntil && new Date(driver.idleLockedUntil) > now) {

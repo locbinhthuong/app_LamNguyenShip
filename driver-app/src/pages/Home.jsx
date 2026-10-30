@@ -84,6 +84,10 @@ const getCardDriverReminder = (reminder) => {
 
 const calcOrderCooldown = (ord) => {
   if (!ord) return 0;
+  // Đơn gán tự động Fulltime hoặc đơn gán gần: Bỏ đếm 10s để tài xế nhận chạy ngay!
+  if (ord.autoAssignNearest || (ord.pendingAssignTo && ord.pendingAssignTo.length > 0)) {
+    return 0;
+  }
   const orderTime = new Date(ord.updatedAt || ord.createdAt).getTime();
   let elapsedMs;
   if (typeof ord.serverTime === 'number' && typeof ord._receivedPerfNow === 'number') {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createOrder, getDrivers, searchSavedPlaces, upsertSavedPlace } from '../services/api';
+import { createOrder, getDrivers, searchSavedPlaces, matchSavedPlace, upsertSavedPlace } from '../services/api';
 import CurrencyInput from '../components/CurrencyInput';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -160,6 +160,7 @@ export default function CreateOrder() {
   const [savedPlaces, setSavedPlaces] = useState([]);
   const [showSavedPlaceDropdown, setShowSavedPlaceDropdown] = useState(false);
   const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
+  const [matchedPlaceMsg, setMatchedPlaceMsg] = useState('');
 
   // Debounced search quán quen khi gõ pickupAddress
   useEffect(() => {
@@ -461,7 +462,26 @@ export default function CreateOrder() {
         newForm.note = '';
     }
 
+    setMatchedPlaceMsg('');
     setForm(newForm);
+
+    // Tự động kiểm tra xem điểm lấy này đã từng lưu/ghim định vị trong Database chưa
+    if (newForm.pickupAddress || newForm.pickupPhone) {
+      matchSavedPlace({ address: newForm.pickupAddress, phone: newForm.pickupPhone })
+        .then(res => {
+          if (res?.matched && res?.data?.coordinates?.lat != null) {
+            const place = res.data;
+            setForm(prev => ({
+              ...prev,
+              pickupCoordinates: place.coordinates,
+              pickupAddress: place.address || prev.pickupAddress,
+              pickupPhone: place.phone || prev.pickupPhone
+            }));
+            setMatchedPlaceMsg(`🎯 Đã tự động khớp toạ độ đã ghim: "${place.name || place.address}"`);
+          }
+        })
+        .catch(err => console.warn('Lỗi tự động khớp điểm lấy:', err));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -574,8 +594,12 @@ export default function CreateOrder() {
           <span>🤖 Dán Nhanh Đơn Zalo / Facebook</span>
           <button 
             type="button" 
-            onClick={() => { setSmartText(''); setForm(prev => ({ ...prev, customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', deliveryAddress: '', items: '', note: '', driverReminder: '', codAmount: '', deliveryFee: '', feePaidBy: 'RECEIVER', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null })); }}
-            className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100"
+            onClick={() => { 
+              setSmartText(''); 
+              setMatchedPlaceMsg('');
+              setForm(prev => ({ ...prev, customerName: '', customerPhone: '', pickupPhone: '', pickupAddress: '', pickupCoordinates: null, deliveryAddress: '', deliveryCoordinates: null, items: '', note: '', driverReminder: '', codAmount: '', deliveryFee: '', feePaidBy: 'RECEIVER', adminBonus: '', scheduledPublishAt: '', forceAssignDriverId: '', commissionRate: null })); 
+            }}
+            className="text-[10px] bg-white border border-blue-200 text-blue-600 px-2 py-1 rounded hover:bg-blue-100 font-bold"
           >
             🔄 Tạo Mới Lại
           </button>
@@ -587,7 +611,14 @@ export default function CreateOrder() {
           placeholder="Dán nguyên văn tin nhắn của khách vào đây...&#10;Ví dụ:&#10;📍Điểm Lấy: 120 Tân An 0788123123&#10;Điểm Giao: 132 Hùng Vương 0367123123&#10;Thu 425k - Ship 17k"
           className="w-full rounded-xl border border-blue-200 p-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white placeholder-slate-400 font-mono"
         />
-        <p className="mt-2 text-xs text-blue-600 font-medium">Hệ thống sẽ tự động bắt chữ và điền xuống các ô bên dưới giúp bạn!</p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs text-blue-600 font-medium">Hệ thống sẽ tự động bắt chữ và điền xuống các ô bên dưới giúp bạn!</p>
+          {matchedPlaceMsg && (
+            <div className="rounded-lg bg-emerald-100 border border-emerald-300 px-2.5 py-1 text-xs font-bold text-emerald-800 animate-fadeIn flex items-center gap-1.5 shadow-xs">
+              {matchedPlaceMsg}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-6">
