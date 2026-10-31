@@ -50,17 +50,68 @@ exports.matchSavedPlace = async (req, res) => {
 
     let matched = null;
 
-    // 1. Tìm ưu tiên theo Số điện thoại (nếu có SĐT)
-    if (phone && phone.trim()) {
+    // 1. ƯU TIÊN SỐ 1: Tìm theo Địa chỉ / Tên quán (nếu có truyền address)
+    // Đảm bảo đúng địa chỉ nào thì lấy đúng toạ độ của địa chỉ đó, không bị râu ông nọ cắm cằm bà kia
+    if (address && address.trim()) {
+      const cleanAddr = address.trim();
+      // Tách phần tên quán / số nhà đầu tiên (trước dấu phẩy hoặc dấu gạch ngang)
+      const firstPart = cleanAddr.split(/[,-]/)[0].trim();
+      
+      const escapedQuery = cleanAddr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escapedFirstPart = firstPart.length >= 4 ? firstPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : null;
+
+      const orConditions = [
+        { address: new RegExp(`^${escapedQuery}$`, 'i') },
+        { address: new RegExp(escapedQuery, 'i') }
+      ];
+      if (escapedFirstPart) {
+        orConditions.push({ name: new RegExp(`^${escapedFirstPart}$`, 'i') });
+        orConditions.push({ address: new RegExp(escapedFirstPart, 'i') });
+      }
+
+      // Tìm trong SavedPlace
+      matched = await SavedPlace.findOne({
+        $or: orConditions,
+        'coordinates.lat': { $ne: null }
+      }).sort({ usageCount: -1, lastUsedAt: -1 }).lean();
+
+      // Nếu chưa có trong SavedPlace, tìm trong Order cũ gần nhất có cùng địa chỉ
+      if (!matched) {
+        const orderOrConditions = [
+          { pickupAddress: new RegExp(escapedQuery, 'i') }
+        ];
+        if (escapedFirstPart) {
+          orderOrConditions.push({ pickupAddress: new RegExp(escapedFirstPart, 'i') });
+        }
+
+        const oldOrder = await Order.findOne({
+          $or: orderOrConditions,
+          'pickupCoordinates.lat': { $ne: null }
+        }).sort({ createdAt: -1 }).lean();
+
+        if (oldOrder && oldOrder.pickupCoordinates?.lat) {
+          matched = {
+            name: oldOrder.pickupAddress?.split(/[,-]/)[0]?.trim() || 'Điểm lấy quen',
+            address: oldOrder.pickupAddress,
+            phone: oldOrder.pickupPhone || '',
+            coordinates: oldOrder.pickupCoordinates,
+            fromHistory: true
+          };
+        }
+      }
+    }
+
+    // 2. Chỉ tìm theo Số điện thoại KHI KHÔNG CÓ địa chỉ trong form
+    // (Tránh trường hợp 1 SĐT đặt nhiều quán khác nhau làm lấy nhầm toạ độ/địa chỉ của quán cũ)
+    if (!matched && (!address || !address.trim()) && phone && phone.trim()) {
       const cleanPhone = phone.trim().replace(/\D/g, '');
       if (cleanPhone.length >= 9) {
         matched = await SavedPlace.findOne({
           phone: new RegExp(cleanPhone, 'i'),
           'coordinates.lat': { $ne: null }
-        }).lean();
+        }).sort({ lastUsedAt: -1 }).lean();
 
         if (!matched) {
-          // Tìm trong Order cũ gần nhất
           const oldOrder = await Order.findOne({
             pickupPhone: new RegExp(cleanPhone, 'i'),
             'pickupCoordinates.lat': { $ne: null }
@@ -68,53 +119,13 @@ exports.matchSavedPlace = async (req, res) => {
 
           if (oldOrder && oldOrder.pickupCoordinates?.lat) {
             matched = {
-              name: oldOrder.pickupAddress?.split(',')[0] || 'Điểm lấy quen',
+              name: oldOrder.pickupAddress?.split(/[,-]/)[0]?.trim() || 'Điểm lấy quen',
               address: oldOrder.pickupAddress,
               phone: oldOrder.pickupPhone,
               coordinates: oldOrder.pickupCoordinates,
               fromHistory: true
             };
           }
-        }
-      }
-    }
-
-    // 2. Nếu chưa tìm thấy theo SĐT, tìm theo Địa chỉ / Tên quán
-    if (!matched && address && address.trim()) {
-      const cleanAddr = address.trim();
-      const firstPart = cleanAddr.split(',')[0].trim();
-      
-      const escapedQuery = cleanAddr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const escapedFirstPart = firstPart.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-      // Tìm trong SavedPlace
-      matched = await SavedPlace.findOne({
-        $or: [
-          { name: new RegExp(escapedFirstPart, 'i') },
-          { address: new RegExp(escapedFirstPart, 'i') },
-          { address: new RegExp(escapedQuery, 'i') }
-        ],
-        'coordinates.lat': { $ne: null }
-      }).sort({ usageCount: -1, lastUsedAt: -1 }).lean();
-
-      // Nếu chưa có trong SavedPlace, tìm trong Order cũ gần nhất
-      if (!matched) {
-        const oldOrder = await Order.findOne({
-          $or: [
-            { pickupAddress: new RegExp(escapedFirstPart, 'i') },
-            { pickupAddress: new RegExp(escapedQuery, 'i') }
-          ],
-          'pickupCoordinates.lat': { $ne: null }
-        }).sort({ createdAt: -1 }).lean();
-
-        if (oldOrder && oldOrder.pickupCoordinates?.lat) {
-          matched = {
-            name: oldOrder.pickupAddress?.split(',')[0] || 'Điểm lấy quen',
-            address: oldOrder.pickupAddress,
-            phone: oldOrder.pickupPhone || '',
-            coordinates: oldOrder.pickupCoordinates,
-            fromHistory: true
-          };
         }
       }
     }

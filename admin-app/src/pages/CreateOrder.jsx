@@ -159,6 +159,7 @@ export default function CreateOrder() {
   // State cho Sổ địa chỉ điểm lấy / Quán quen
   const [savedPlaces, setSavedPlaces] = useState([]);
   const [showSavedPlaceDropdown, setShowSavedPlaceDropdown] = useState(false);
+  const [isPickupFocused, setIsPickupFocused] = useState(false);
   const [isSearchingPlaces, setIsSearchingPlaces] = useState(false);
   const [matchedPlaceMsg, setMatchedPlaceMsg] = useState('');
 
@@ -176,7 +177,9 @@ export default function CreateOrder() {
         const res = await searchSavedPlaces(form.pickupAddress.trim());
         if (res?.data && res.data.length > 0) {
           setSavedPlaces(res.data);
-          setShowSavedPlaceDropdown(true);
+          if (isPickupFocused) {
+            setShowSavedPlaceDropdown(true);
+          }
         } else {
           setSavedPlaces([]);
           setShowSavedPlaceDropdown(false);
@@ -189,7 +192,7 @@ export default function CreateOrder() {
     }, 250);
 
     return () => clearTimeout(timer);
-  }, [form.pickupAddress]);
+  }, [form.pickupAddress, isPickupFocused]);
 
   const handleSelectSavedPlace = (place) => {
     setForm(prev => ({
@@ -474,10 +477,11 @@ export default function CreateOrder() {
             setForm(prev => ({
               ...prev,
               pickupCoordinates: place.coordinates,
-              pickupAddress: place.address || prev.pickupAddress,
-              pickupPhone: place.phone || prev.pickupPhone
+              // GIỮ NGUYÊN 100% địa chỉ và SĐT vừa tách từ form dán vào, chỉ bổ sung nếu trong form đang trống!
+              pickupAddress: prev.pickupAddress ? prev.pickupAddress : (place.address || ''),
+              pickupPhone: prev.pickupPhone ? prev.pickupPhone : (place.phone || '')
             }));
-            setMatchedPlaceMsg(`🎯 Đã tự động khớp toạ độ đã ghim: "${place.name || place.address}"`);
+            setMatchedPlaceMsg(`🎯 Đã tự động khớp toạ độ đã ghim: "${newForm.pickupAddress || place.name || place.address}"`);
           }
         })
         .catch(err => console.warn('Lỗi tự động khớp điểm lấy:', err));
@@ -568,7 +572,7 @@ export default function CreateOrder() {
       // Tự động lưu hoặc cập nhật quán / điểm lấy vào cơ sở dữ liệu nếu có toạ độ
       if (form.pickupAddress && form.pickupCoordinates?.lat && form.pickupCoordinates?.lng) {
         upsertSavedPlace({
-          name: form.pickupAddress.split(',')[0].trim() || form.pickupAddress.trim(),
+          name: form.pickupAddress.split(/[,-]/)[0].trim() || form.pickupAddress.trim(),
           address: form.pickupAddress.trim(),
           phone: form.pickupPhone ? form.pickupPhone.trim() : '',
           coordinates: form.pickupCoordinates
@@ -807,7 +811,14 @@ export default function CreateOrder() {
                   name="pickupAddress"
                   value={form.pickupAddress}
                   onChange={handleChange}
-                  onFocus={() => { if (savedPlaces.length > 0) setShowSavedPlaceDropdown(true); }}
+                  onFocus={() => {
+                    setIsPickupFocused(true);
+                    if (savedPlaces.length > 0) setShowSavedPlaceDropdown(true);
+                  }}
+                  onBlur={() => {
+                    setIsPickupFocused(false);
+                    setTimeout(() => setShowSavedPlaceDropdown(false), 180);
+                  }}
                   placeholder="Gõ tên quán hoặc địa chỉ lấy hàng..."
                   className="input-field"
                   autoComplete="off"
