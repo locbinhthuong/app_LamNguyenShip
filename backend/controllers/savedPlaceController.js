@@ -101,9 +101,8 @@ exports.matchSavedPlace = async (req, res) => {
       }
     }
 
-    // 2. Chỉ tìm theo Số điện thoại KHI KHÔNG CÓ địa chỉ trong form
-    // (Tránh trường hợp 1 SĐT đặt nhiều quán khác nhau làm lấy nhầm toạ độ/địa chỉ của quán cũ)
-    if (!matched && (!address || !address.trim()) && phone && phone.trim()) {
+    // 2. Nếu tìm theo địa chỉ chưa thấy, tìm theo Số điện thoại điểm lấy để lấy lại toạ độ đã ghim
+    if (!matched && phone && phone.trim()) {
       const cleanPhone = phone.trim().replace(/\D/g, '');
       if (cleanPhone.length >= 9) {
         matched = await SavedPlace.findOne({

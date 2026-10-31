@@ -214,7 +214,7 @@ export default function CreateOrder() {
           const lat = data.results[0].geometry.location.lat;
           const lon = data.results[0].geometry.location.lng;
           if (type === 'pickup') {
-            setForm(prev => ({...prev, pickupCoordinates: {lat, lng: lon}}));
+            setForm(prev => prev.pickupCoordinates ? prev : ({...prev, pickupCoordinates: {lat, lng: lon}}));
           } else {
             setForm(prev => ({...prev, deliveryCoordinates: {lat, lng: lon}}));
           }
@@ -229,7 +229,7 @@ export default function CreateOrder() {
         const lat = parseFloat(nomData[0].lat);
         const lon = parseFloat(nomData[0].lon);
         if (type === 'pickup') {
-          setForm(prev => ({...prev, pickupCoordinates: {lat, lng: lon}}));
+          setForm(prev => prev.pickupCoordinates ? prev : ({...prev, pickupCoordinates: {lat, lng: lon}}));
         } else {
           setForm(prev => ({...prev, deliveryCoordinates: {lat, lng: lon}}));
         }
