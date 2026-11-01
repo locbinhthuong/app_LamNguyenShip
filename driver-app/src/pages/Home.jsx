@@ -83,11 +83,11 @@ const getCardDriverReminder = (reminder) => {
     .trim();
 };
 
-const calcOrderCooldown = (ord, isFulltimeDriver = false) => {
+const calcOrderCooldown = (ord) => {
   if (!ord) return 0;
-  // Tài xế Fulltime (theo lịch trực hôm nay) hoặc đơn đang gán ưu tiên: Bỏ đếm 10s để tài xế nhận chạy ngay!
+  // Chỉ khi đơn đang ở trạng thái ĐƠN ƯU TIÊN (gán riêng trong pendingAssignTo / isVipAssigning) mới bỏ đếm 10s.
+  // Khi đơn đã chuyển thành ĐƠN TREO (pendingAssignTo rỗng) thì bắt buộc đếm 10s đồng đều cho TẤT CẢ tài xế (cả Fulltime & Part-time)!
   if (
-    isFulltimeDriver ||
     ord.isVipAssigning ||
     (ord.pendingAssignTo && ord.pendingAssignTo.length > 0)
   ) {
@@ -680,10 +680,10 @@ export default function Home() {
            if (!isDriverInGroup) return;
        }
 
-       // Chèn trực tiếp đơn mới vào đầu danh sách mà không cần gọi API (tránh hiện loading spinner)
+       // Chèn trực tiếp đơn mới (hoặc cập nhật lại nếu đơn ưu tiên vừa chuyển sang đơn treo) vào danh sách
        setAvailableOrders(prev => {
           const exists = prev.find(o => o._id === newOrder._id);
-          if (exists) return prev;
+          if (exists) return prev.map(o => o._id === newOrder._id ? newOrder : o);
           return [newOrder, ...prev];
        });
        

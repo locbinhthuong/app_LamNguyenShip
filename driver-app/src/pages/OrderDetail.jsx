@@ -61,12 +61,12 @@ export default function OrderDetail() {
   }, []);
 
   useEffect(() => {
-    const isFulltimeDriver = driver?.driverType !== 'PARTTIME';
+    // Chỉ khi đơn đang ở trạng thái ĐƠN ƯU TIÊN (pendingAssignTo / isVipAssigning) mới nhận ngay 0s.
+    // Khi đơn đã là ĐƠN TREO (pendingAssignTo rỗng) thì đếm ngược 10s đồng đều cho tất cả tài xế.
     if (
       !order ||
       order.status !== 'PENDING' ||
       order.assignedTo ||
-      isFulltimeDriver ||
       order.isVipAssigning ||
       (order.pendingAssignTo && order.pendingAssignTo.length > 0)
     ) {

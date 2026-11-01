@@ -113,11 +113,15 @@ const autoAssignOrBroadcastOrder = async (io, order, excludeDriverIds = [], isSi
 
   // 3. Không có toạ độ HOẶC Không có tài xế Fulltime rảnh trong 1km -> ĐƠN TREO (BROADCAST POOL)
   console.log(`[AutoAssign] Đơn ${orderId} chuyển thành ĐƠN TREO cho toàn bộ tài xế`);
-  const updatedBroadcastOrder = await Order.findByIdAndUpdate(orderId, { pendingAssignTo: [] }, { new: true });
-  if (updatedBroadcastOrder) {
-    payload.updatedAt = updatedBroadcastOrder.updatedAt;
-  }
+  const broadcastAt = new Date();
+  const updatedBroadcastOrder = await Order.findByIdAndUpdate(
+    orderId,
+    { pendingAssignTo: [], isVipAssigning: false, updatedAt: broadcastAt },
+    { new: true, timestamps: false }
+  );
+  payload.updatedAt = updatedBroadcastOrder ? updatedBroadcastOrder.updatedAt : broadcastAt;
   payload.pendingAssignTo = [];
+  payload.isVipAssigning = false;
   emitNewOrder(io, payload, isSilentAdmin);
 };
 
@@ -1212,16 +1216,13 @@ const orderController = {
       }
 
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
-      // KIỂM TRA BẢO MẬT: CHẶN TÀI XẾ PART-TIME GIAN LẬN THỜI GIAN ĐƠN TREO (ĐỢI ĐỦ 10S ĐẾM NGƯỢC ĐỌC ĐƠN)
-      // Tài xế FULLTIME (theo lịch trực hôm nay) hoặc đơn đang gán ưu tiên sẽ được nhận ngay lập tức (không đếm ngược 10s)
-      const { resolveAndSyncDriverTypeToday } = require('../utils/scheduleUtils');
-      const effectiveDriverType = await resolveAndSyncDriverTypeToday(req.driver._id, driver.driverType);
-      const isFulltimeOrPriorityOrder =
-        effectiveDriverType === 'FULLTIME' ||
+      // KIỂM TRA BẢO MẬT: ĐƠN TREO BẮT BUỘC ĐỢI ĐỦ 10S ĐẾM NGƯỢC ĐỒNG ĐỀU CHO TẤT CẢ TÀI XẾ (CẢ FULLTIME VÀ PART-TIME)
+      // Chỉ khi đơn đang ở trạng thái ĐƠN ƯU TIÊN (đang gán riêng trong pendingAssignTo / isVipAssigning) thì tài xế được gán mới nhận ngay 0s
+      const isPriorityAssignedOrder =
         Boolean(existingOrder.isVipAssigning) ||
         (Array.isArray(existingOrder.pendingAssignTo) && existingOrder.pendingAssignTo.length > 0);
       const timeSinceUpdate = Date.now() - new Date(existingOrder.updatedAt || existingOrder.createdAt).getTime();
-      if (!isFulltimeOrPriorityOrder && timeSinceUpdate < 9500) { // Cho phép chênh lệch ping mạng 500ms
+      if (!isPriorityAssignedOrder && timeSinceUpdate < 9500) { // Cho phép chênh lệch ping mạng 500ms
         return res.status(400).json({ success: false, message: 'Thao tác quá nhanh, vui lòng đợi hết 10 giây đếm ngược!' });
       }
 
