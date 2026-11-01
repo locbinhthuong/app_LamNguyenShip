@@ -163,20 +163,23 @@ export default function Orders() {
     });
   };
 
-  const openPublishConfirm = (id) => {
+  const openPublishConfirm = (orderObj) => {
+    const initialAutoAssign = orderObj?.autoAssignNearest !== undefined ? Boolean(orderObj.autoAssignNearest) : true;
     setConfirmModal({
       isOpen: true,
       type: 'publish',
-      data: id,
+      data: orderObj?._id || orderObj,
+      autoAssignNearest: initialAutoAssign,
       title: 'Phát lệnh Đăng Đơn?',
-      message: 'Sau khi đã cập nhật Phí Giao Hàng, bạn có chắc muốn truyền đơn hàng này tới thiết bị của tất cả tài xế không?',
+      message: 'Sau khi đã cập nhật Phí Giao Hàng, hãy chọn chế độ điều phối đơn hàng này:',
       isDestructive: false,
       confirmText: '🚀 Đăng đơn'
     });
   };
 
-  const handleCancelAction = async (actionType, reason) => {
-    const id = cancelModal.order._id;
+  const handleCancelAction = async (actionType, reason, autoAssignNearest = true) => {
+    const targetOrder = cancelModal.order;
+    const id = targetOrder._id;
     setCancelModal({ isOpen: false, order: null });
 
     if (actionType === 'CANCELLED') {
@@ -192,7 +195,7 @@ export default function Orders() {
       }
     } else if (actionType === 'DRAFT') {
       try {
-        const res = await updateOrder(id, { status: 'DRAFT' });
+        const res = await updateOrder(id, { status: 'DRAFT', autoAssignNearest });
         if (res?.data) {
           applyOrderInPlace(res.data);
         } else {
@@ -200,6 +203,30 @@ export default function Orders() {
         }
       } catch (err) {
         alert('Lỗi thu hồi đơn');
+      }
+    } else if (actionType === 'DRAFT_AND_EDIT') {
+      try {
+        const res = await updateOrder(id, { status: 'DRAFT', autoAssignNearest });
+        const updatedOrderObj = res?.data || { ...targetOrder, status: 'DRAFT', assignedTo: null, autoAssignNearest };
+        if (res?.data) {
+          applyOrderInPlace(res.data);
+        } else {
+          await load(pagination.currentPage, true);
+        }
+        setEditingOrder(updatedOrderObj);
+      } catch (err) {
+        alert('Lỗi thu hồi đơn để chỉnh sửa');
+      }
+    } else if (actionType === 'REPUBLISH') {
+      try {
+        const res = await updateOrder(id, { status: 'PENDING', forceAssignDriverId: '', autoAssignNearest });
+        if (res?.data) {
+          applyOrderInPlace(res.data);
+        } else {
+          await load(pagination.currentPage, true);
+        }
+      } catch (err) {
+        alert('Lỗi thu hồi và đẩy lại đơn');
       }
     }
   };
@@ -264,7 +291,7 @@ export default function Orders() {
   };
 
   const enhancedHandleConfirmAction = async () => {
-    const { type, data } = confirmModal;
+    const { type, data, autoAssignNearest } = confirmModal;
     setConfirmModal({ isOpen: false });
     
     if (type === 'delete') {
@@ -276,7 +303,10 @@ export default function Orders() {
       }
     } else if (type === 'publish') {
       try {
-        const res = await updateOrder(data, { status: 'PENDING' });
+        const res = await updateOrder(data, {
+          status: 'PENDING',
+          autoAssignNearest: autoAssignNearest !== undefined ? Boolean(autoAssignNearest) : true
+        });
         if (res?.data) {
           applyOrderInPlace(res.data);
         } else {
@@ -557,11 +587,11 @@ export default function Orders() {
                     </td>
                     <td className="table-td text-right">
                       <div className="flex items-center gap-3">
-                        {order.status !== 'CANCELLED' && order.status !== 'PENDING' && (
+                        {order.status !== 'CANCELLED' && (
                           <button onClick={() => setEditingOrder(order)} className="text-sm font-bold text-orange-500 hover:text-orange-600">✏️ Sửa</button>
                         )}
                         {order.status === 'DRAFT' && (
-                          <button onClick={() => openPublishConfirm(order._id)} className="text-sm font-bold text-blue-600 hover:text-blue-700">🚀 Treo Lại</button>
+                          <button onClick={() => openPublishConfirm(order)} className="text-sm font-bold text-blue-600 hover:text-blue-700">🚀 Treo Lại</button>
                         )}
                         {order.status !== 'COMPLETED' && order.status !== 'CANCELLED' && order.status !== 'DRAFT' && (
                           <button onClick={() => setCancelModal({ isOpen: true, order })} className="text-sm font-medium text-blue-600 hover:text-blue-500">🔄 Thu hồi</button>
@@ -617,11 +647,57 @@ export default function Orders() {
         isOpen={confirmModal.isOpen}
         title={confirmModal.title}
         message={confirmModal.message}
-        confirmText={confirmModal.confirmText}
+        confirmText={confirmModal.type === 'publish' ? (confirmModal.autoAssignNearest ? '🚀 Đăng & Gán Tự Động' : '🚀 Đăng Đơn Treo') : confirmModal.confirmText}
         isDestructive={confirmModal.isDestructive}
         onConfirm={enhancedHandleConfirmAction}
         onCancel={() => setConfirmModal({ isOpen: false })}
-      />
+      >
+        {confirmModal.type === 'publish' && (
+          <div className={`p-3.5 rounded-2xl border transition-all ${
+            confirmModal.autoAssignNearest
+              ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300 shadow-xs'
+              : 'bg-slate-50 border-slate-300'
+          }`}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base font-bold ${
+                  confirmModal.autoAssignNearest ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-300 text-slate-600'
+                }`}>
+                  {confirmModal.autoAssignNearest ? '⚡' : '🛑'}
+                </div>
+                <div>
+                  <h4 className={`text-xs font-black ${
+                    confirmModal.autoAssignNearest ? 'text-emerald-900' : 'text-slate-700'
+                  }`}>
+                    {confirmModal.autoAssignNearest 
+                      ? 'ĐANG BẬT: GÁN ĐƠN TỰ ĐỘNG (FULLTIME 1KM)' 
+                      : 'ĐANG TẮT: LÊN ĐƠN TREO THỦ CÔNG'}
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                    {confirmModal.autoAssignNearest
+                      ? 'Tự quét tài xế Fulltime trong 1km (popup 30s). Không ai nhận mới chuyển sang đơn treo.'
+                      : 'Đơn sẽ treo thẳng lên cho toàn bộ tài xế nhận tự do.'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setConfirmModal(prev => ({ ...prev, autoAssignNearest: !prev.autoAssignNearest }))}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  confirmModal.autoAssignNearest ? 'bg-emerald-600' : 'bg-slate-300'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    confirmModal.autoAssignNearest ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        )}
+      </ConfirmModal>
 
       <CancelRecallModal
         isOpen={cancelModal.isOpen}

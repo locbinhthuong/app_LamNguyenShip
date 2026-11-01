@@ -294,6 +294,7 @@ connectDB()
       // ==================== CRON: HẸN GIỜ LÊN ĐƠN ====================
       const Order = require('./models/Order');
       const { emitNewOrder } = require('./sockets/index');
+      const { autoAssignOrBroadcastOrder } = require('./controllers/orderController');
       setInterval(async () => {
         try {
           const now = new Date();
@@ -311,7 +312,11 @@ connectDB()
               
               // Emit cho tài xế
               const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
-              emitNewOrder(io, payload, false);
+              if (order.autoAssignNearest) {
+                await autoAssignOrBroadcastOrder(io, payload, [], false);
+              } else {
+                emitNewOrder(io, payload, false);
+              }
               console.log(`[Cron] Tự động treo đơn hẹn giờ thành công: ${order._id}`);
             }
           }

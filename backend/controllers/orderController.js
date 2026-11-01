@@ -20,7 +20,7 @@ const { getDrivingDistance } = require('../utils/distance');
  * - Có thông báo trong app (Socket) + Thông báo ngoài app (FCM chuông), timeout 30s.
  * - Nếu không có toạ độ hoặc không có Fulltime thỏa mãn -> Đơn Treo phát cho toàn bộ tài xế (Full & Part).
  */
-const autoAssignOrBroadcastOrder = async (io, order, excludeDriverIds = [], isSilentAdmin = true) => {
+const autoAssignOrBroadcastOrder = async (io, order, excludeDriverIds = [], isSilentAdmin = true, preselectedDriver = null) => {
   if (!io) return;
 
   const orderId = order._id;
@@ -33,13 +33,15 @@ const autoAssignOrBroadcastOrder = async (io, order, excludeDriverIds = [], isSi
 
   if (hasCoords) {
     // 2. Quét tài xế Fulltime trong bán kính 1km (đang rảnh 0 đơn)
-    const eligibleFulltime = await findEligibleFulltimeDriver({
-      pickupLat: payload.pickupCoordinates.lat,
-      pickupLng: payload.pickupCoordinates.lng,
-      radiusKm: 1.0,
-      commissionRate: payload.commissionRate,
-      excludeDriverIds
-    });
+    const eligibleFulltime = (preselectedDriver && excludeDriverIds.length === 0)
+      ? preselectedDriver
+      : await findEligibleFulltimeDriver({
+          pickupLat: payload.pickupCoordinates.lat,
+          pickupLng: payload.pickupCoordinates.lng,
+          radiusKm: 1.0,
+          commissionRate: payload.commissionRate,
+          excludeDriverIds
+        });
 
     if (eligibleFulltime) {
       console.log(`[AutoAssign] Đơn ${orderId} -> Gán độc quyền cho tài xế Fulltime: ${eligibleFulltime.name}`);
@@ -47,11 +49,16 @@ const autoAssignOrBroadcastOrder = async (io, order, excludeDriverIds = [], isSi
       payload.pendingAssignTo = [eligibleFulltime._id];
       payload.timeoutDuration = 30;
       payload.isVipAssigning = false;
+      payload.serverTime = Date.now();
 
-      await Order.findByIdAndUpdate(orderId, {
-        pendingAssignTo: [eligibleFulltime._id],
-        isVipAssigning: false
-      });
+      await Order.findByIdAndUpdate(
+        orderId,
+        {
+          pendingAssignTo: [eligibleFulltime._id],
+          isVipAssigning: false
+        },
+        { timestamps: false }
+      );
 
       // Thông báo trong app (Socket)
       io.to(`driver_${eligibleFulltime._id.toString()}`).emit('nearest_order_assignment', payload);
@@ -98,7 +105,10 @@ const autoAssignOrBroadcastOrder = async (io, order, excludeDriverIds = [], isSi
 
   // 3. Không có toạ độ HOẶC Không có tài xế Fulltime rảnh trong 1km -> ĐƠN TREO (BROADCAST POOL)
   console.log(`[AutoAssign] Đơn ${orderId} chuyển thành ĐƠN TREO cho toàn bộ tài xế`);
-  await Order.findByIdAndUpdate(orderId, { pendingAssignTo: [] });
+  const updatedBroadcastOrder = await Order.findByIdAndUpdate(orderId, { pendingAssignTo: [] }, { new: true });
+  if (updatedBroadcastOrder) {
+    payload.updatedAt = updatedBroadcastOrder.updatedAt;
+  }
   payload.pendingAssignTo = [];
   emitNewOrder(io, payload, isSilentAdmin);
 };
@@ -679,8 +689,8 @@ const orderController = {
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
         } else {
-          if (autoAssignNearest) {
-            await autoAssignOrBroadcastOrder(req.io, payload, [], true);
+          if (isAutoAssignMode) {
+            await autoAssignOrBroadcastOrder(req.io, payload, [], true, eligibleFulltime);
           } else {
             emitNewOrder(req.io, payload, true);
           }
@@ -804,7 +814,7 @@ const orderController = {
 
       if (req.io) {
         const payload = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
-        await autoAssignOrBroadcastOrder(req.io, payload, [], false);
+        await autoAssignOrBroadcastOrder(req.io, payload, [], false, eligibleFulltime);
       }
 
       // --- Bắn Push Notification cho Admin ---
@@ -858,6 +868,7 @@ const orderController = {
       const { id } = req.params;
       const {
         customerName, customerPhone, pickupPhone, pickupAddress, deliveryAddress, senderPhone, receiverPhone, receiverPhone2,
+        pickupCoordinates, deliveryCoordinates,
         items, note, driverReminder, codAmount, deliveryFee, extraSurcharge, status, adminBonus,
         bulkyFee, surcharge, // Các phí mới
         packageDescription, // Chi tiết Hàng hóa / Mua hộ
@@ -878,41 +889,50 @@ const orderController = {
       // Đánh dấu là Admin đã xem/chỉnh sửa đơn này
       orderToUpdate.adminReviewed = true;
 
-      // 1. CẬP NHẬT TRẠNG THÁI (STATUS) THEO YÊU CẦU
-      let isDraftToPending = false;
+      const isAutoAssignMode = autoAssignNearest !== undefined
+        ? (String(autoAssignNearest) === 'true' || autoAssignNearest === true)
+        : Boolean(orderToUpdate.autoAssignNearest);
 
-      // Xử lý cờ Quét Lại Gần Nhất từ Admin (Force restart into PENDING)
-      if (autoAssignNearest) {
-        orderToUpdate.status = 'PENDING';
-        orderToUpdate.assignedTo = null;
-        orderToUpdate.acceptedAt = undefined;
-        orderToUpdate.pickedUpAt = undefined;
-        orderToUpdate.cancelReason = undefined;
-        if (req.io) {
-          req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn
-        }
-      }
+      // 1. CẬP NHẬT TRẠNG THÁI (STATUS) THEO YÊU CẦU
+      let shouldDispatchOrder = false;
+      const wasAssigned = Boolean(orderToUpdate.assignedTo);
+      const isUnassigningDriver = wasAssigned && forceAssignDriverId === '' && status !== 'DRAFT';
 
       // Xử lý nhánh "Thu hồi về Lưu Nháp (DRAFT)" (Gỡ bỏ tài xế, ẩn khỏi chợ)
-      if (status === 'DRAFT' && orderToUpdate.status !== 'DRAFT') {
+      if (status === 'DRAFT') {
+        const wasNotDraft = orderToUpdate.status !== 'DRAFT';
         orderToUpdate.status = 'DRAFT';
         orderToUpdate.assignedTo = null;
         orderToUpdate.acceptedAt = undefined;
         orderToUpdate.pickedUpAt = undefined;
         orderToUpdate.cancelReason = undefined; // Bắt buộc xóa Lý do hủy lỗi cũ để khi Treo lại không bị Rống Chuông Admin
         orderToUpdate.pendingAssignTo = [];
+        orderToUpdate.rejectedBy = [];
 
         // Tước đơn khỏi map của Admin và xóa trên App của tài xế (như hủy nhưng thực ra là thu hồi ẩn)
-        if (req.io) {
+        if (wasNotDraft && req.io) {
           req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn
         }
-      }
-
-      // Xử lý nhánh "Đưa lên Đơn Treo" (Từ DRAFT lên PENDING)
-      if (status === 'PENDING' && orderToUpdate.status === 'DRAFT') {
+      } else if (
+        !forceAssignDriverId &&
+        (
+          status === 'PENDING' ||
+          isUnassigningDriver ||
+          (autoAssignNearest !== undefined && orderToUpdate.status === 'PENDING')
+        )
+      ) {
+        // Đưa đơn lên PENDING (từ DRAFT lên PENDING, hoặc sửa lại cấu hình gán tự động / đơn treo, hoặc gỡ tài xế cũ ra để gán/treo lại)
+        if (orderToUpdate.status !== 'DRAFT' && req.io) {
+          req.io.emit('order_cancelled', { _id: orderToUpdate._id.toString(), status: 'DRAFT' }); // Báo driver gỡ đơn cũ trước khi phát lại
+        }
         orderToUpdate.status = 'PENDING';
+        orderToUpdate.assignedTo = null;
+        orderToUpdate.acceptedAt = undefined;
+        orderToUpdate.pickedUpAt = undefined;
+        orderToUpdate.cancelReason = undefined;
         orderToUpdate.pendingAssignTo = [];
-        isDraftToPending = true;
+        orderToUpdate.rejectedBy = [];
+        shouldDispatchOrder = true;
       }
 
       // 2. GÁN CÁC THÔNG SỐ TEXT VÀ TÀI CHÍNH
@@ -924,6 +944,8 @@ const orderController = {
       if (receiverPhone2 !== undefined) orderToUpdate.receiverPhone2 = receiverPhone2;
       if (pickupAddress !== undefined) orderToUpdate.pickupAddress = pickupAddress;
       if (deliveryAddress !== undefined) orderToUpdate.deliveryAddress = deliveryAddress;
+      if (pickupCoordinates !== undefined) orderToUpdate.pickupCoordinates = pickupCoordinates;
+      if (deliveryCoordinates !== undefined) orderToUpdate.deliveryCoordinates = deliveryCoordinates;
       if (items !== undefined) orderToUpdate.items = items;
       if (note !== undefined) orderToUpdate.note = note;
       if (driverReminder !== undefined) orderToUpdate.driverReminder = driverReminder;
@@ -940,7 +962,7 @@ const orderController = {
       if (commissionRate !== undefined) orderToUpdate.commissionRate = commissionRate;
       if (scheduledPublishAt !== undefined) orderToUpdate.scheduledPublishAt = scheduledPublishAt ? new Date(scheduledPublishAt) : null;
       if (batchedDeliveries !== undefined) orderToUpdate.batchedDeliveries = batchedDeliveries;
-      if (autoAssignNearest !== undefined) orderToUpdate.autoAssignNearest = autoAssignNearest;
+      if (autoAssignNearest !== undefined) orderToUpdate.autoAssignNearest = isAutoAssignMode;
 
       // Cập nhật các phí phát sinh chuyên sâu cho Siêu App
       if (bulkyFee !== undefined || packageDescription !== undefined) {
@@ -988,6 +1010,8 @@ const orderController = {
 
         // Qua ải, được phép chốt đơn cho Tài Xế này
         orderToUpdate.assignedTo = forceAssignDriverId;
+        orderToUpdate.pendingAssignTo = [];
+        orderToUpdate.autoAssignNearest = false;
 
         // Bắt buộc chuyển Order sang Đã nhận (Bất kể DRAFT hay PENDING)
         if (['DRAFT', 'PENDING'].includes(orderToUpdate.status)) {
@@ -1006,6 +1030,24 @@ const orderController = {
           idleOfflineAt: null,
           idleAccumulatedMs: 0
         });
+      }
+
+      // Nếu chuẩn bị phát đơn PENDING và bật chế độ Gán đơn tự động Fulltime 1km -> Quét trước khi save để tránh lộ đơn treo
+      let eligibleFulltime = null;
+      if (
+        shouldDispatchOrder &&
+        !didAdminForceAssign &&
+        orderToUpdate.autoAssignNearest &&
+        orderToUpdate.pickupCoordinates?.lat != null &&
+        orderToUpdate.pickupCoordinates?.lng != null
+      ) {
+        eligibleFulltime = await findEligibleFulltimeDriver({
+          pickupLat: orderToUpdate.pickupCoordinates.lat,
+          pickupLng: orderToUpdate.pickupCoordinates.lng,
+          radiusKm: 1.0,
+          commissionRate: orderToUpdate.commissionRate !== undefined ? orderToUpdate.commissionRate : null
+        });
+        orderToUpdate.pendingAssignTo = eligibleFulltime ? [eligibleFulltime._id] : [];
       }
 
       await orderToUpdate.save();
@@ -1048,65 +1090,9 @@ const orderController = {
             msgBody += `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
             await sendMultipleNotifications([forceAssignedDriverFcm], '🎯 TỔNG ĐÀI ĐIỀU PHỐI ĐƠN CHO MÌNH!', msgBody, { url: `/order/${payload._id}`, orderId: payload._id.toString() }).catch(e => console.log('Push lỗi', e));
           }
-        } else if (isDraftToPending || autoAssignNearest) {
-          if (autoAssignNearest && orderToUpdate.pickupCoordinates && orderToUpdate.pickupCoordinates.lat && orderToUpdate.pickupCoordinates.lng) {
-            const { findNearestAvailableDriversGroup } = require('../utils/driverAssignment');
-            const nearestDrivers = await findNearestAvailableDriversGroup(
-              orderToUpdate.pickupCoordinates.lat,
-              orderToUpdate.pickupCoordinates.lng,
-              orderToUpdate.commissionRate,
-              [],
-              9999
-            );
-            
-            if (nearestDrivers && nearestDrivers.length > 0) {
-              const driverIds = nearestDrivers.map(d => d._id);
-              payload.pendingAssignTo = driverIds;
-              payload.isVipAssigning = false;
-              payload.timeoutDuration = 30;
-              await Order.findByIdAndUpdate(orderToUpdate._id, { pendingAssignTo: driverIds, isVipAssigning: false });
-              
-              const { sendMultipleNotifications } = require('../utils/notification');
-              const feeResponse = payload.deliveryFee ? `${payload.deliveryFee.toLocaleString('vi-VN')}đ` : 'Thỏa thuận';
-              let msgBody = `📍 Đón: ${payload.pickupAddress}\n💵 Phí: ${feeResponse}`;
-              const fcmTokens = [];
-
-              for (const driver of nearestDrivers) {
-                req.io.to(`driver_${driver._id.toString()}`).emit('nearest_order_assignment', payload);
-                if (driver.fcmToken) {
-                  fcmTokens.push(driver.fcmToken);
-                }
-              }
-              
-              if (fcmTokens.length > 0) {
-                await sendMultipleNotifications(fcmTokens, '🚀 CÓ ĐƠN HÀNG MỚI GẦN BẠN!', msgBody, { url: '/', orderId: payload._id.toString(), type: 'NEAREST_ORDER' }).catch(e => console.log('Push lỗi', e));
-              }
-
-              setTimeout(async () => {
-                try {
-                  const checkOrder = await Order.findById(orderToUpdate._id);
-                  if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
-                    const remainingIds = checkOrder.pendingAssignTo;
-                    const forcedOrder = await Order.findOneAndUpdate(
-                      { _id: orderToUpdate._id, status: 'PENDING' },
-                      {
-                        $set: { pendingAssignTo: [] },
-                        $addToSet: { rejectedBy: { $each: remainingIds } }
-                      },
-                      { new: true }
-                    );
-                    if (forcedOrder && req.io) {
-                      const forcedPayload = typeof forcedOrder.toObject === 'function' ? forcedOrder.toObject({ virtuals: true }) : forcedOrder;
-                      emitNewOrder(req.io, forcedPayload, true);
-                    }
-                  }
-                } catch (e) {
-                  console.error('Fallback timeout error:', e);
-                }
-              }, 30000);
-            } else {
-              emitNewOrder(req.io, payload, true);
-            }
+        } else if (shouldDispatchOrder) {
+          if (orderToUpdate.autoAssignNearest) {
+            await autoAssignOrBroadcastOrder(req.io, payload, [], true, eligibleFulltime);
           } else {
             emitNewOrder(req.io, payload, true); // true = isSilentAdmin (Treo lại đơn không báo hú Admin)
           }
@@ -1155,7 +1141,7 @@ const orderController = {
       const isWeb = origin.includes('aloshipp.com') || origin.includes('vercel.app') || req.headers['x-device-platform'] === 'web';
 
       const [driver, appVersionConfig, debtCheck, activeOrdersCount, existingOrder] = await Promise.all([
-        Driver.findById(req.driver._id).select('walletDebt status appVersion idleLockedUntil idleWarningLevel').lean(),
+        Driver.findById(req.driver._id).select('walletDebt status appVersion idleLockedUntil idleWarningLevel driverType').lean(),
         !isWeb ? Config.findOne({ key: 'APP_VERSION_CONFIG' }).lean() : Promise.resolve(null),
         checkDriverDebtBlock(req.driver._id),
         Order.countDocuments({
@@ -1218,9 +1204,15 @@ const orderController = {
       }
 
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
-      // KIỂM TRA BẢO MẬT: CHẶN TÀI XẾ GIAN LẬN THỜI GIAN (ĐỢI ĐỦ 10S ĐẾM NGƯỢC ĐỌC ĐƠN)
+      // KIỂM TRA BẢO MẬT: CHẶN TÀI XẾ PART-TIME GIAN LẬN THỜI GIAN ĐƠN TREO (ĐỢI ĐỦ 10S ĐẾM NGƯỢC ĐỌC ĐƠN)
+      // Tài xế FULLTIME hoặc đơn ưu tiên / gán tự động sẽ được nhận ngay lập tức (không đếm ngược 10s)
+      const isFulltimeOrPriorityOrder =
+        driver.driverType !== 'PARTTIME' ||
+        Boolean(existingOrder.autoAssignNearest) ||
+        Boolean(existingOrder.isVipAssigning) ||
+        (Array.isArray(existingOrder.pendingAssignTo) && existingOrder.pendingAssignTo.length > 0);
       const timeSinceUpdate = Date.now() - new Date(existingOrder.updatedAt || existingOrder.createdAt).getTime();
-      if (timeSinceUpdate < 9500) { // Cho phép chênh lệch ping mạng 500ms
+      if (!isFulltimeOrPriorityOrder && timeSinceUpdate < 9500) { // Cho phép chênh lệch ping mạng 500ms
         return res.status(400).json({ success: false, message: 'Thao tác quá nhanh, vui lòng đợi hết 10 giây đếm ngược!' });
       }
 
@@ -2622,6 +2614,7 @@ const orderController = {
       res.status(500).json({ success: false, message: 'Lỗi server khi gửi đánh giá' });
     }
   },
+  autoAssignOrBroadcastOrder,
 };
 
 module.exports = orderController;

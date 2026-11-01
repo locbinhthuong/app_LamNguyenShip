@@ -32,7 +32,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
     scheduledPublishAt: '',
     batchedDeliveries: [],
     feePaidBy: 'RECEIVER',
-    autoAssignNearest: false
+    autoAssignNearest: true
   });
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
         scheduledPublishAt: order.scheduledPublishAt ? new Date(new Date(order.scheduledPublishAt).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '',
         batchedDeliveries: order.batchedDeliveries || [],
         feePaidBy: order.feePaidBy || 'RECEIVER',
-        autoAssignNearest: false
+        autoAssignNearest: order.autoAssignNearest !== undefined ? Boolean(order.autoAssignNearest) : true
       });
     }
   }, [order]);
@@ -186,17 +186,49 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                </select>
                
                {!formData.forceAssignDriverId && (
-                 <label className="flex items-center gap-2 mt-3 cursor-pointer relative z-10">
-                   <input 
-                     type="checkbox" 
-                     checked={formData.autoAssignNearest}
-                     onChange={(e) => setFormData({...formData, autoAssignNearest: e.target.checked})}
-                     className="w-4 h-4 text-purple-600 border-purple-300 rounded focus:ring-purple-500 cursor-pointer"
-                   />
-                   <span className="text-sm font-bold text-purple-800">
-                     Tự động quét & Gán đơn cho Tài xế gần nhất (Popup 30s)
-                   </span>
-                 </label>
+                 <div className={`mt-3 p-3.5 rounded-2xl border transition-all relative z-10 ${
+                   formData.autoAssignNearest
+                     ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-300 shadow-xs'
+                     : 'bg-slate-50 border-slate-300'
+                 }`}>
+                   <div className="flex items-center justify-between gap-3">
+                     <div className="flex items-center gap-2.5">
+                       <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base font-bold ${
+                         formData.autoAssignNearest ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-300 text-slate-600'
+                       }`}>
+                         {formData.autoAssignNearest ? '⚡' : '🛑'}
+                       </div>
+                       <div>
+                         <h4 className={`text-xs sm:text-sm font-black ${
+                           formData.autoAssignNearest ? 'text-emerald-900' : 'text-slate-700'
+                         }`}>
+                           {formData.autoAssignNearest 
+                             ? 'ĐANG BẬT: GÁN ĐƠN TỰ ĐỘNG (FULLTIME 1KM)' 
+                             : 'ĐANG TẮT: LÊN ĐƠN TREO THỦ CÔNG'}
+                         </h4>
+                         <p className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                           {formData.autoAssignNearest
+                             ? 'Hệ thống tự quét tài xế Fulltime trong 1km, chia đều đơn rảnh (popup đếm 30s). Nếu không ai nhận mới treo lên.'
+                             : 'Đơn sẽ treo thẳng lên cho TOÀN BỘ tài xế nhận tự do như cũ (không qua vòng gán Fulltime 1km).'}
+                         </p>
+                       </div>
+                     </div>
+
+                     <button
+                       type="button"
+                       onClick={() => setFormData(prev => ({ ...prev, autoAssignNearest: !prev.autoAssignNearest }))}
+                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                         formData.autoAssignNearest ? 'bg-emerald-600' : 'bg-slate-300'
+                       }`}
+                     >
+                       <span
+                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                           formData.autoAssignNearest ? 'translate-x-5' : 'translate-x-0'
+                         }`}
+                       />
+                     </button>
+                   </div>
+                 </div>
                )}
                
                <p className="text-[10px] text-purple-600 mt-1.5 font-medium italic relative z-10">
@@ -527,16 +559,27 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
             <textarea name="note" value={formData.note} onChange={handleChange} rows="2" className="w-full rounded-lg border border-slate-300 p-2 text-sm bg-slate-50 focus:border-blue-500 focus:bg-white focus:outline-none" placeholder="Lưu ý khi giao..."></textarea>
           </div>
 
-          <div className="pt-4 flex justify-end gap-3">
+          <div className="pt-4 flex flex-wrap justify-end gap-3">
             <button type="button" onClick={onClose} className="px-5 py-2.5 rounded-xl font-bold text-slate-600 bg-slate-200 hover:bg-slate-300 transition-colors">Hủy</button>
             
             {order.status === 'DRAFT' ? (
               <>
-                {!formData.autoAssignNearest && (
-                  <button type="submit" className="px-5 py-2.5 rounded-xl font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 transition-colors">
-                    Chỉ Lưu Nháp
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const payload = {
+                      ...formData,
+                      items: formData.items ? formData.items.split('\n').filter(i => i.trim()) : [],
+                      status: 'DRAFT',
+                      autoAssignNearest: formData.forceAssignDriverId ? false : formData.autoAssignNearest
+                    };
+                    onSave(order._id, payload);
+                  }}
+                  className="px-5 py-2.5 rounded-xl font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 transition-colors"
+                >
+                  Chỉ Lưu Nháp
+                </button>
                 <button 
                   type="button" 
                   onClick={(e) => {
@@ -553,14 +596,33 @@ export default function EditOrderModal({ isOpen, onClose, order, onSave }) {
                     };
                     onSave(order._id, payload);
                   }}
-                  className="px-5 py-2.5 rounded-xl font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/30"
+                  className={`px-5 py-2.5 rounded-xl font-bold text-white transition-colors shadow-lg ${
+                    formData.autoAssignNearest && !formData.forceAssignDriverId
+                      ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'
+                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'
+                  }`}
                 >
-                  {formData.autoAssignNearest ? "Lưu & Tự Động Quét 🚀" : "Lưu & Treo Đơn Lên"}
+                  {formData.forceAssignDriverId
+                    ? 'Lưu & Gán Tài Xế Ngay'
+                    : formData.autoAssignNearest
+                    ? 'Lưu & Gán Tự Động 🚀'
+                    : 'Lưu & Treo Đơn Lên'}
                 </button>
               </>
             ) : (
-              <button type="submit" className={`px-5 py-2.5 rounded-xl font-bold text-white transition-colors shadow-lg ${formData.autoAssignNearest ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'}`}>
-                {formData.autoAssignNearest ? "Lưu & Tự Động Quét 🚀" : "Lưu thay đổi"}
+              <button
+                type="submit"
+                className={`px-5 py-2.5 rounded-xl font-bold text-white transition-colors shadow-lg ${
+                  !formData.forceAssignDriverId && formData.autoAssignNearest
+                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/30'
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/30'
+                }`}
+              >
+                {formData.forceAssignDriverId
+                  ? 'Lưu thay đổi'
+                  : formData.autoAssignNearest
+                  ? 'Lưu & Gán Tự Động 🚀'
+                  : 'Lưu & Treo Đơn Lên'}
               </button>
             )}
           </div>

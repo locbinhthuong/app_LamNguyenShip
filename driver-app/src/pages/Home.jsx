@@ -83,10 +83,15 @@ const getCardDriverReminder = (reminder) => {
     .trim();
 };
 
-const calcOrderCooldown = (ord) => {
+const calcOrderCooldown = (ord, isFulltimeDriver = false) => {
   if (!ord) return 0;
-  // Đơn gán tự động Fulltime hoặc đơn gán gần: Bỏ đếm 10s để tài xế nhận chạy ngay!
-  if (ord.autoAssignNearest || (ord.pendingAssignTo && ord.pendingAssignTo.length > 0)) {
+  // Tài xế Fulltime hoặc đơn ưu tiên / gán tự động: Bỏ đếm 10s để tài xế nhận chạy ngay!
+  if (
+    isFulltimeDriver ||
+    ord.autoAssignNearest ||
+    ord.isVipAssigning ||
+    (ord.pendingAssignTo && ord.pendingAssignTo.length > 0)
+  ) {
     return 0;
   }
   const orderTime = new Date(ord.updatedAt || ord.createdAt).getTime();
@@ -105,25 +110,25 @@ const calcOrderCooldown = (ord) => {
   return secs > 10 ? 10 : secs;
 };
 
-function OrderCard({ order, onAccept, loading }) {
+function OrderCard({ order, onAccept, loading, isFulltimeDriver = false }) {
   const navigate = useNavigate();
 
-  const [cooldown, setCooldown] = useState(() => calcOrderCooldown(order));
+  const [cooldown, setCooldown] = useState(() => calcOrderCooldown(order, isFulltimeDriver));
 
   useEffect(() => {
-    const initial = calcOrderCooldown(order);
+    const initial = calcOrderCooldown(order, isFulltimeDriver);
     setCooldown(initial);
     if (initial <= 0) return;
 
     const timer = setInterval(() => {
-      const next = calcOrderCooldown(order);
+      const next = calcOrderCooldown(order, isFulltimeDriver);
       setCooldown(prev => (prev !== next ? next : prev));
       if (next <= 0) {
         clearInterval(timer);
       }
     }, 100);
     return () => clearInterval(timer);
-  }, [order._id, order.updatedAt, order.createdAt, order.serverTime, order._receivedPerfNow]);
+  }, [order._id, order.updatedAt, order.createdAt, order.serverTime, order._receivedPerfNow, order.autoAssignNearest, order.isVipAssigning, order.pendingAssignTo, isFulltimeDriver]);
 
   const handleAccept = async () => {
     await onAccept(order._id);
@@ -775,6 +780,7 @@ export default function Home() {
     document.addEventListener('visibilitychange', handleVisibility);
 
     window.addEventListener('driver_new_order', handleNewOrder);
+    window.addEventListener('driver_nearest_order_assignment', handleNewOrder);
     window.addEventListener('driver_force_assigned', loadBackground); // Lắng nghe sự kiện Gán Đơn
     window.addEventListener('driver_order_accepted', handleOrderAccepted);
     window.addEventListener('driver_order_cancelled', handleOrderLost);
@@ -804,6 +810,7 @@ export default function Home() {
       window.removeEventListener('refresh_data', loadForeground);
       window.removeEventListener('focus_available_orders', handleFocusAvailable);
       window.removeEventListener('driver_new_order', handleNewOrder);
+      window.removeEventListener('driver_nearest_order_assignment', handleNewOrder);
       window.removeEventListener('driver_force_assigned', loadBackground);
       window.removeEventListener('driver_order_accepted', handleOrderAccepted);
       window.removeEventListener('driver_order_cancelled', handleOrderLost);
@@ -1225,7 +1232,8 @@ export default function Home() {
                     <OrderCard 
                       key={order._id} 
                       order={order} 
-                      onAccept={() => { driver?.isPriority5s ? handleAccept(order._id) : setConfirmAcceptOrder(order._id) }} 
+                      isFulltimeDriver={driver?.driverType !== 'PARTTIME'}
+                      onAccept={() => { (driver?.isPriority5s || driver?.driverType !== 'PARTTIME') ? handleAccept(order._id) : setConfirmAcceptOrder(order._id) }} 
                       loading={actionLoading === order._id || confirmAcceptOrder === order._id} 
                     />
                   ))}

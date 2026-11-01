@@ -62,8 +62,10 @@ export default function NearestOrderPopup() {
       const res = await acceptOrder(order._id || order.id);
       if (res && res.success === false) {
         alert(res.message || 'Không thể nhận đơn!');
-        setOrder(null);
-        window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+        if (!String(res.message || '').includes('10 giây')) {
+          setOrder(null);
+          window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+        }
         return;
       }
       window.dispatchEvent(new CustomEvent('stop_alarm_event'));
@@ -73,10 +75,13 @@ export default function NearestOrderPopup() {
       setOrder(null);
       navigate(`/order/${order._id || order.id}`, { state: { from: '/' } });
     } catch (err) {
-      alert(err.response?.data?.message || 'Lỗi khi nhận đơn!');
-      // Vẫn tắt popup nếu lỗi (ví dụ đơn đã bị hủy hoặc người khác nhận mất)
-      setOrder(null);
-      window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+      const errMsg = err.response?.data?.message || 'Lỗi khi nhận đơn!';
+      alert(errMsg);
+      // Giữ lại popup nếu là lỗi 10s, còn nếu đơn đã bị hủy hoặc người khác nhận mất thì tắt popup
+      if (!String(errMsg).includes('10 giây')) {
+        setOrder(null);
+        window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+      }
     } finally {
       setLoading(false);
     }

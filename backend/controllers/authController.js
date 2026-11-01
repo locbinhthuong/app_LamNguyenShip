@@ -105,6 +105,7 @@ const authController = {
             licensePlate: driver.licensePlate,
             status: driver.status,
             driverCode: driver.driverCode,
+            driverType: driver.driverType || 'FULLTIME',
             stats: driver.stats
           }
         }
@@ -187,6 +188,7 @@ const authController = {
             stats: driver.stats,
             isOnline: driver.isOnline,
             isPriority5s: driver.isPriority5s,
+            driverType: driver.driverType || 'FULLTIME',
             commissionRate: driver.commissionRate,
             completionRate: driver.completionRate,
             avatar: driver.avatar,
@@ -705,6 +707,7 @@ const authController = {
             stats: driver.stats,
             isOnline: driver.isOnline,
             isPriority5s: driver.isPriority5s,
+            driverType: driver.driverType || 'FULLTIME',
             commissionRate: driver.commissionRate,
             completionRate: driver.completionRate,
             idleSince: driver.idleSince,

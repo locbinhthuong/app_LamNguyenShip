@@ -61,7 +61,16 @@ export default function OrderDetail() {
   }, []);
 
   useEffect(() => {
-    if (!order || order.status !== 'PENDING' || order.assignedTo || order.autoAssignNearest || (order.pendingAssignTo && order.pendingAssignTo.length > 0)) {
+    const isFulltimeDriver = driver?.driverType !== 'PARTTIME';
+    if (
+      !order ||
+      order.status !== 'PENDING' ||
+      order.assignedTo ||
+      isFulltimeDriver ||
+      order.autoAssignNearest ||
+      order.isVipAssigning ||
+      (order.pendingAssignTo && order.pendingAssignTo.length > 0)
+    ) {
       setCooldown(0);
       return;
     }
@@ -94,7 +103,7 @@ export default function OrderDetail() {
       }
     }, 100);
     return () => clearInterval(timer);
-  }, [order?._id, order?.status, order?.assignedTo, order?.updatedAt, order?.createdAt, order?.serverTime, order?._receivedPerfNow]);
+  }, [order?._id, order?.status, order?.assignedTo, order?.updatedAt, order?.createdAt, order?.serverTime, order?._receivedPerfNow, order?.autoAssignNearest, order?.isVipAssigning, order?.pendingAssignTo, driver?.driverType]);
 
   // Logic vuốt ngang thoát trang khóa chặt trục X (không trôi dọc theo ngón tay và không bao giờ bị kẹt)
   const detailContainerRef = useRef(null);
