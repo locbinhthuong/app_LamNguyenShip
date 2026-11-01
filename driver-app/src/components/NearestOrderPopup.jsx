@@ -91,11 +91,15 @@ export default function NearestOrderPopup() {
     if (loading) return;
     setLoading(true);
     window.dispatchEvent(new CustomEvent('stop_alarm_event'));
+    const rejectedOrderId = order?._id || order?.id;
     try {
-      await rejectNearestAssignment(order._id || order.id);
+      await rejectNearestAssignment(rejectedOrderId);
     } catch (err) {
       console.log('Lỗi khi từ chối đơn:', err);
     } finally {
+      if (rejectedOrderId) {
+        window.dispatchEvent(new CustomEvent('driver_order_cancelled', { detail: rejectedOrderId }));
+      }
       setOrder(null);
       setLoading(false);
     }

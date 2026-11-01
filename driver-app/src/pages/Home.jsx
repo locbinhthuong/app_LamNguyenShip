@@ -85,10 +85,9 @@ const getCardDriverReminder = (reminder) => {
 
 const calcOrderCooldown = (ord, isFulltimeDriver = false) => {
   if (!ord) return 0;
-  // Tài xế Fulltime hoặc đơn ưu tiên / gán tự động: Bỏ đếm 10s để tài xế nhận chạy ngay!
+  // Tài xế Fulltime (theo lịch trực hôm nay) hoặc đơn đang gán ưu tiên: Bỏ đếm 10s để tài xế nhận chạy ngay!
   if (
     isFulltimeDriver ||
-    ord.autoAssignNearest ||
     ord.isVipAssigning ||
     (ord.pendingAssignTo && ord.pendingAssignTo.length > 0)
   ) {

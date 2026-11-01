@@ -67,7 +67,6 @@ export default function OrderDetail() {
       order.status !== 'PENDING' ||
       order.assignedTo ||
       isFulltimeDriver ||
-      order.autoAssignNearest ||
       order.isVipAssigning ||
       (order.pendingAssignTo && order.pendingAssignTo.length > 0)
     ) {

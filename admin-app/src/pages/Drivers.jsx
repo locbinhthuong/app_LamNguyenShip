@@ -220,7 +220,14 @@ export default function Drivers() {
                   {driver.name?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-slate-800">{driver.name}</p>
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-bold text-slate-800">{driver.name}</p>
+                    {driver.driverType === 'PARTTIME' ? (
+                      <span className="shrink-0 text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded font-semibold border border-purple-200">⚡ Part-time</span>
+                    ) : (
+                      <span className="shrink-0 text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded font-semibold border border-indigo-200">⭐ Fulltime</span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-500">{VEHICLE_EMOJI[driver.vehicleType]} {driver.phone}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">

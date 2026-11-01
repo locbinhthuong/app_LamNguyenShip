@@ -7,7 +7,8 @@ const {
   getNextWeekKey,
   getWeekDates,
   getDayKeyFromDayOfWeek,
-  getNowVN
+  getNowVN,
+  getEffectiveDriverTypeFromSchedule
 } = require('../utils/scheduleUtils');
 
 const ALL_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -439,6 +440,28 @@ exports.adminUpdateDriverShift = async (req, res) => {
     });
 
     await scheduleDoc.save();
+
+    // Nếu Admin chỉnh sửa lịch trong tuần hiện tại -> Đồng bộ ngay Driver.driverType theo ca hôm nay
+    const currentWeekKey = getWeekKey();
+    const currentDayKey = getDayKeyFromDayOfWeek(getDayOfWeekVN());
+    if (weekKey === currentWeekKey) {
+      const effectiveDriverType = getEffectiveDriverTypeFromSchedule(scheduleDoc, currentDayKey);
+      const updatedDriver = await Driver.findByIdAndUpdate(
+        driverId,
+        { driverType: effectiveDriverType },
+        { new: true }
+      ).select('-password');
+
+      if (req.io && updatedDriver) {
+        req.io.to(`driver_${driverId.toString()}`).emit('driver_updated', updatedDriver);
+        req.io.to('admins').emit('driver_status_change', {
+          driverId: updatedDriver._id,
+          driverType: effectiveDriverType,
+          isOnline: updatedDriver.isOnline,
+          status: updatedDriver.status
+        });
+      }
+    }
 
     return res.json({
       success: true,

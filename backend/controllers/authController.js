@@ -171,6 +171,9 @@ const authController = {
       if (req.headers['x-device-platform']) driver.devicePlatform = req.headers['x-device-platform'];
       await driver.save();
 
+      const { resolveAndSyncDriverTypeToday } = require('../utils/scheduleUtils');
+      const effectiveDriverType = await resolveAndSyncDriverTypeToday(driver._id, driver.driverType);
+
       res.status(200).json({
         success: true,
         message: 'Đăng nhập thành công',
@@ -188,7 +191,7 @@ const authController = {
             stats: driver.stats,
             isOnline: driver.isOnline,
             isPriority5s: driver.isPriority5s,
-            driverType: driver.driverType || 'FULLTIME',
+            driverType: effectiveDriverType,
             commissionRate: driver.commissionRate,
             completionRate: driver.completionRate,
             avatar: driver.avatar,
@@ -238,12 +241,14 @@ const authController = {
         await driver.save();
       }
 
-      // Đồng bộ điểm tuần và cấp bậc của tài xế từ đơn hàng thực tế
+      // Đồng bộ điểm tuần, cấp bậc và loại hình làm việc hôm nay của tài xế
       let tierInfo = null;
       let weekTimeRemainingMs = 0;
       if (driver) {
         const { syncDriverWeeklyStats, getWeekTimeRemainingVN } = require('../utils/weekHelper');
+        const { resolveAndSyncDriverTypeToday } = require('../utils/scheduleUtils');
         tierInfo = await syncDriverWeeklyStats(driver);
+        driver.driverType = await resolveAndSyncDriverTypeToday(driver._id, driver.driverType);
         await driver.save();
         weekTimeRemainingMs = getWeekTimeRemainingVN();
       }
@@ -475,6 +480,7 @@ const authController = {
               } else if (todaySchedule.offlineCount >= 3) {
                 todaySchedule.isDowngraded = true;
                 todaySchedule.downgradedAt = now;
+                updateData.driverType = 'PARTTIME';
                 req.scheduleNotice = '🚨 Bạn đã bấm Offline quá 2 lần trong ca Fulltime hôm nay. Hệ thống đã chuyển bạn về chế độ Part-time cho đến hết ngày hôm nay (chỉ nhận đơn treo)!';
 
                 if (req.io) {

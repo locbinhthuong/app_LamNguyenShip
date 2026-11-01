@@ -37,6 +37,7 @@ function getDayNumInISOWeek(date = new Date()) {
 function getWeekKey(date = new Date()) {
   const vnTimeStr = date.toLocaleString('en-US', { timeZone: TIMEZONE });
   const d = new Date(vnTimeStr);
+  d.setHours(0, 0, 0, 0);
   
   // ISO-8601: Tuần bắt đầu từ Thứ Hai
   const day = d.getDay();
@@ -105,6 +106,42 @@ function getDayKeyFromDayOfWeek(dayNum) {
   }
 }
 
+/**
+ * Xác định hình thức làm việc hiệu lực hôm nay (FULLTIME / PARTTIME) từ bản ghi lịch trực tuần
+ * - Chỉ khi ca hôm nay trên lịch trực là FULLTIME và chưa bị hạ ca (isDowngraded = false) thì mới là FULLTIME.
+ * - Mọi trường hợp khác (PARTTIME, OFF, bị hạ ca, hoặc chưa đăng ký lịch tuần) đều là PARTTIME.
+ */
+function getEffectiveDriverTypeFromSchedule(scheduleDoc, dayKey = getDayKeyFromDayOfWeek(getDayOfWeekVN())) {
+  const dayObj = scheduleDoc?.schedule?.[dayKey];
+  if (dayObj && dayObj.shift === 'FULLTIME' && !dayObj.isDowngraded) {
+    return 'FULLTIME';
+  }
+  return 'PARTTIME';
+}
+
+/**
+ * Lấy hình thức làm việc hiệu lực hôm nay của 1 tài xế từ DB và tự động đồng bộ Driver.driverType
+ */
+async function resolveAndSyncDriverTypeToday(driverId, currentDriverType = null) {
+  try {
+    const DriverSchedule = require('../models/DriverSchedule');
+    const Driver = require('../models/Driver');
+    const currentWeekKey = getWeekKey();
+    const currentDayKey = getDayKeyFromDayOfWeek(getDayOfWeekVN());
+
+    const scheduleDoc = await DriverSchedule.findOne({ driverId, weekKey: currentWeekKey }).lean();
+    const effectiveType = getEffectiveDriverTypeFromSchedule(scheduleDoc, currentDayKey);
+
+    if (currentDriverType !== effectiveType) {
+      await Driver.findByIdAndUpdate(driverId, { driverType: effectiveType });
+    }
+    return effectiveType;
+  } catch (err) {
+    console.error('[scheduleUtils] Lỗi resolveAndSyncDriverTypeToday:', err.message);
+    return currentDriverType || 'PARTTIME';
+  }
+}
+
 module.exports = {
   getNowVN,
   getDayOfWeekVN,
@@ -112,5 +149,7 @@ module.exports = {
   getWeekKey,
   getNextWeekKey,
   getWeekDates,
-  getDayKeyFromDayOfWeek
+  getDayKeyFromDayOfWeek,
+  getEffectiveDriverTypeFromSchedule,
+  resolveAndSyncDriverTypeToday
 };

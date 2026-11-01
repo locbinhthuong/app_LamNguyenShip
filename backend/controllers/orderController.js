@@ -80,15 +80,23 @@ const autoAssignOrBroadcastOrder = async (io, order, excludeDriverIds = [], isSi
       setTimeout(async () => {
         try {
           const checkOrder = await Order.findById(orderId);
-          if (checkOrder && checkOrder.status === 'PENDING' && checkOrder.pendingAssignTo && checkOrder.pendingAssignTo.length > 0) {
+          const isStillAssignedToThisDriver =
+            checkOrder &&
+            checkOrder.status === 'PENDING' &&
+            Array.isArray(checkOrder.pendingAssignTo) &&
+            checkOrder.pendingAssignTo.some(id => id.toString() === eligibleFulltime._id.toString());
+
+          if (isStillAssignedToThisDriver) {
             console.log(`[AutoAssign] Tài xế Fulltime ${eligibleFulltime.name} hết 30s không nhận đơn ${orderId} -> Tìm người tiếp theo hoặc Đơn treo`);
+            // Gỡ đơn khỏi màn hình của tài xế vừa hết 30s
+            io.to(`driver_${eligibleFulltime._id.toString()}`).emit('order_cancelled', { _id: orderId.toString() });
+
             const updated = await Order.findOneAndUpdate(
               { _id: orderId, status: 'PENDING' },
               {
-                $set: { pendingAssignTo: [] },
                 $addToSet: { rejectedBy: eligibleFulltime._id }
               },
-              { new: true }
+              { new: true, timestamps: false }
             );
             if (updated) {
               await autoAssignOrBroadcastOrder(io, updated, updated.rejectedBy || [], true);
@@ -1205,10 +1213,11 @@ const orderController = {
 
       // Race condition prevention: chỉ update nếu status vẫn là PENDING
       // KIỂM TRA BẢO MẬT: CHẶN TÀI XẾ PART-TIME GIAN LẬN THỜI GIAN ĐƠN TREO (ĐỢI ĐỦ 10S ĐẾM NGƯỢC ĐỌC ĐƠN)
-      // Tài xế FULLTIME hoặc đơn ưu tiên / gán tự động sẽ được nhận ngay lập tức (không đếm ngược 10s)
+      // Tài xế FULLTIME (theo lịch trực hôm nay) hoặc đơn đang gán ưu tiên sẽ được nhận ngay lập tức (không đếm ngược 10s)
+      const { resolveAndSyncDriverTypeToday } = require('../utils/scheduleUtils');
+      const effectiveDriverType = await resolveAndSyncDriverTypeToday(req.driver._id, driver.driverType);
       const isFulltimeOrPriorityOrder =
-        driver.driverType !== 'PARTTIME' ||
-        Boolean(existingOrder.autoAssignNearest) ||
+        effectiveDriverType === 'FULLTIME' ||
         Boolean(existingOrder.isVipAssigning) ||
         (Array.isArray(existingOrder.pendingAssignTo) && existingOrder.pendingAssignTo.length > 0);
       const timeSinceUpdate = Date.now() - new Date(existingOrder.updatedAt || existingOrder.createdAt).getTime();
@@ -1281,19 +1290,26 @@ const orderController = {
       if (!order) return res.status(404).json({ success: false, message: 'Đơn hàng không tồn tại' });
       
       if (order.pendingAssignTo && order.pendingAssignTo.length > 0) {
-        // Atomic update to prevent race conditions when multiple drivers timeout at exactly 30s
+        const isSingleAssignee = order.pendingAssignTo.length === 1 && order.pendingAssignTo[0].toString() === driverId.toString();
+
+        // Giữ nguyên khóa độc quyền trong DB cho tới khi autoAssignOrBroadcastOrder chuyển sang tài xế Fulltime tiếp theo hoặc mở Đơn treo
         const updatedOrder = await Order.findOneAndUpdate(
           { _id: id, pendingAssignTo: driverId },
-          {
-            $pull: { pendingAssignTo: driverId },
-            $addToSet: { rejectedBy: driverId }
-          },
-          { new: true }
+          isSingleAssignee
+            ? { $addToSet: { rejectedBy: driverId } }
+            : {
+                $pull: { pendingAssignTo: driverId },
+                $addToSet: { rejectedBy: driverId }
+              },
+          { new: true, timestamps: false }
         );
 
-        // Nếu mảng pendingAssignTo đã trống (tất cả tài xế trong nhóm đều từ chối hoặc hết hạn)
-        // và đơn vẫn đang PENDING
-        if (updatedOrder && updatedOrder.pendingAssignTo.length === 0 && updatedOrder.status === 'PENDING') {
+        if (req.io) {
+          req.io.to(`driver_${driverId.toString()}`).emit('order_cancelled', { _id: id.toString() });
+        }
+
+        // Nếu tài xế được gán độc quyền vừa từ chối (hoặc nhóm đã từ chối hết) và đơn vẫn đang PENDING
+        if (updatedOrder && (isSingleAssignee || updatedOrder.pendingAssignTo.length === 0) && updatedOrder.status === 'PENDING') {
           if (req.io) {
             await autoAssignOrBroadcastOrder(req.io, updatedOrder, updatedOrder.rejectedBy || [], true);
           }

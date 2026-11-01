@@ -78,11 +78,15 @@ const driverController = {
       const Order = require('../models/Order');
 
       const { getStartOfWeekVN, getCurrentWeekVN, getTierConfig, syncDriverWeeklyStats, reconcileUnpaid12PercentDebt } = require('../utils/weekHelper');
+      const DriverSchedule = require('../models/DriverSchedule');
+      const { getWeekKey, getDayOfWeekVN, getDayKeyFromDayOfWeek, getEffectiveDriverTypeFromSchedule } = require('../utils/scheduleUtils');
       await reconcileUnpaid12PercentDebt(req.io);
       const startOfThisWeek = getStartOfWeekVN();
       const currentWeekStr = getCurrentWeekVN();
+      const currentScheduleWeekKey = getWeekKey();
+      const currentDayKey = getDayKeyFromDayOfWeek(getDayOfWeekVN());
 
-      const [todayStats, thisWeekStats] = await Promise.all([
+      const [todayStats, thisWeekStats, currentWeekSchedules] = await Promise.all([
         Order.aggregate([
           {
             $match: {
@@ -118,8 +122,19 @@ const driverController = {
               weekOrders: { $sum: 1 }
             }
           }
-        ])
+        ]),
+        DriverSchedule.find({
+          weekKey: currentScheduleWeekKey,
+          driverId: { $in: drivers.map(d => d._id) }
+        }).lean()
       ]);
+
+      const scheduleMap = {};
+      currentWeekSchedules.forEach(s => {
+        if (s.driverId) {
+          scheduleMap[s.driverId.toString()] = s;
+        }
+      });
 
       const weekOrdersMap = {};
       thisWeekStats.forEach(w => {
@@ -173,11 +188,15 @@ const driverController = {
         const isCustom = isLegacy12 ? false : Boolean(drv.isCustomCommission);
         const expectedRate = isCustom ? drv.commissionRate : tierCfg.commissionRate;
 
+        const scheduleDoc = scheduleMap[drv._id.toString()] || null;
+        const effectiveDriverType = getEffectiveDriverTypeFromSchedule(scheduleDoc, currentDayKey);
+
         if (
           drv.weeklyPoints !== actualWeekPoints ||
           drv.driverTier !== tierCfg.tier ||
           drv.commissionRate !== expectedRate ||
           drv.currentWeek !== currentWeekStr ||
+          drv.driverType !== effectiveDriverType ||
           isLegacy12
         ) {
           bulkOps.push({
@@ -189,7 +208,8 @@ const driverController = {
                   driverTier: tierCfg.tier,
                   commissionRate: expectedRate,
                   isCustomCommission: isCustom,
-                  currentWeek: currentWeekStr
+                  currentWeek: currentWeekStr,
+                  driverType: effectiveDriverType
                 }
               }
             }
@@ -198,6 +218,7 @@ const driverController = {
 
         return {
           ...drv,
+          driverType: effectiveDriverType,
           weeklyPoints: actualWeekPoints,
           driverTier: tierCfg.tier,
           commissionRate: expectedRate,
@@ -245,7 +266,10 @@ const driverController = {
       }
 
       const { syncDriverWeeklyStats } = require('../utils/weekHelper');
+      const { resolveAndSyncDriverTypeToday } = require('../utils/scheduleUtils');
       await syncDriverWeeklyStats(driverDoc);
+      const effectiveDriverType = await resolveAndSyncDriverTypeToday(driverDoc._id, driverDoc.driverType);
+      driverDoc.driverType = effectiveDriverType;
       await driverDoc.save();
       const driver = driverDoc.toObject();
 
@@ -322,7 +346,54 @@ const driverController = {
 
       const updateData = {};
       if (name) updateData.name = name;
-      if (driverType) updateData.driverType = driverType;
+      if (driverType) {
+        updateData.driverType = driverType;
+        // Đồng bộ ngược lại vào Bảng Phân Ca Làm Việc Tuần (ca hôm nay) để 2 mục Lịch trực & Quản lý Tài xế luôn khớp 100%
+        try {
+          const DriverSchedule = require('../models/DriverSchedule');
+          const { getWeekKey, getDayOfWeekVN, getDayKeyFromDayOfWeek } = require('../utils/scheduleUtils');
+          const currentWeekKey = getWeekKey();
+          const currentDayKey = getDayKeyFromDayOfWeek(getDayOfWeekVN());
+          let scheduleDoc = await DriverSchedule.findOne({ driverId: id, weekKey: currentWeekKey });
+          if (!scheduleDoc) {
+            scheduleDoc = new DriverSchedule({
+              driverId: id,
+              weekKey: currentWeekKey,
+              schedule: {
+                monday: { shift: 'PARTTIME' },
+                tuesday: { shift: 'PARTTIME' },
+                wednesday: { shift: 'PARTTIME' },
+                thursday: { shift: 'PARTTIME' },
+                friday: { shift: 'PARTTIME' },
+                saturday: { shift: 'PARTTIME' },
+                sunday: { shift: 'PARTTIME' }
+              }
+            });
+          }
+          if (!scheduleDoc.schedule[currentDayKey]) {
+            scheduleDoc.schedule[currentDayKey] = {};
+          }
+          const targetShift = driverType === 'FULLTIME' ? 'FULLTIME' : 'PARTTIME';
+          const oldShift = scheduleDoc.schedule[currentDayKey].shift || 'PARTTIME';
+          scheduleDoc.schedule[currentDayKey].shift = targetShift;
+          if (targetShift === 'FULLTIME') {
+            scheduleDoc.schedule[currentDayKey].isDowngraded = false;
+            scheduleDoc.schedule[currentDayKey].offlineCount = 0;
+          }
+          if (oldShift !== targetShift) {
+            scheduleDoc.changeHistory.push({
+              dayKey: currentDayKey,
+              oldShift,
+              newShift: targetShift,
+              changedAt: new Date(),
+              reason: `Admin cập nhật Hình thức làm việc tại Hồ sơ Tài xế`
+            });
+          }
+          await scheduleDoc.save();
+        } catch (syncErr) {
+          console.error('[updateDriver] Lỗi đồng bộ DriverSchedule:', syncErr.message);
+        }
+      }
       if (vehicleType) updateData.vehicleType = vehicleType;
       if (licensePlate !== undefined) updateData.licensePlate = licensePlate;
       if (status) {

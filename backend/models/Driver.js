@@ -66,7 +66,7 @@ const driverSchema = new mongoose.Schema({
   driverType: {
     type: String,
     enum: ['FULLTIME', 'PARTTIME'],
-    default: 'FULLTIME'
+    default: 'PARTTIME'
   },
   currentLocation: {
     lat: { type: Number, default: null },
