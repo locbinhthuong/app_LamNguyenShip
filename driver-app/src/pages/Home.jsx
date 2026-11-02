@@ -1190,6 +1190,7 @@ export default function Home() {
             <div className="w-full h-full relative no-swipe overflow-hidden">
               <DriverOrderMap
                 orders={availableOrders}
+                orderCooldowns={orderCooldowns}
                 driverCoords={currentCoords || (driver?.currentLocation?.lat ? { lat: Number(driver.currentLocation.lat), lng: Number(driver.currentLocation.lng) } : null)}
                 onAcceptOrder={(orderId) => {
                   driver?.isPriority5s ? handleAccept(orderId) : setConfirmAcceptOrder(orderId);

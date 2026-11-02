@@ -441,7 +441,15 @@ const orderController = {
         .lean();
 
       const nowServer = Date.now();
-      const ordersWithServerTime = orders.map(o => ({ ...o, serverTime: nowServer }));
+      const ordersWithServerTime = orders.map(o => {
+        const isExclusiveAssigned = Array.isArray(o.pendingAssignTo) && o.pendingAssignTo.length > 0;
+        return {
+          ...o,
+          // Đơn treo (pendingAssignTo rỗng) trả về autoAssignNearest: false cho tài xế để APK hiện tại đếm ngược 10s
+          autoAssignNearest: isExclusiveAssigned ? Boolean(o.autoAssignNearest) : false,
+          serverTime: nowServer
+        };
+      });
 
       res.status(200).json({
         success: true,
@@ -543,6 +551,12 @@ const orderController = {
 
       const nowServer = Date.now();
       order.serverTime = nowServer;
+      if (req.driver && order.status === 'PENDING') {
+        const isExclusiveAssigned = Array.isArray(order.pendingAssignTo) && order.pendingAssignTo.length > 0;
+        if (!isExclusiveAssigned) {
+          order.autoAssignNearest = false;
+        }
+      }
 
       res.status(200).json({
         success: true,
@@ -1115,7 +1129,12 @@ const orderController = {
           
           // Bắn order_updated cho Driver để App Tài Xế lọc lại đơn nếu chiết khấu (commissionRate) thay đổi
           if (payload.status === 'PENDING') {
-            req.io.to('drivers').emit('order_updated', payload);
+            const isExclusiveAssigned = Array.isArray(payload.pendingAssignTo) && payload.pendingAssignTo.length > 0;
+            req.io.to('drivers').emit('order_updated', {
+              ...payload,
+              autoAssignNearest: isExclusiveAssigned ? Boolean(payload.autoAssignNearest) : false,
+              serverTime: Date.now()
+            });
           }
         }
 

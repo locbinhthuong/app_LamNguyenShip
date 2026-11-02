@@ -200,11 +200,19 @@ const broadcastToCreator = (io, order, eventName) => {
 
 const emitNewOrder = async (io, order, isSilentAdmin = false) => {
   const plainOrder = typeof order.toObject === 'function' ? order.toObject({ virtuals: true }) : order;
-  const orderWithTime = { ...plainOrder, serverTime: Date.now() };
+  const nowServer = Date.now();
+  const orderWithTime = { ...plainOrder, serverTime: nowServer };
+  const isExclusiveAssigned = Array.isArray(plainOrder.pendingAssignTo) && plainOrder.pendingAssignTo.length > 0;
+  // Với đơn treo (broadcast cho toàn bộ tài xế, pendingAssignTo rỗng), ép autoAssignNearest = false
+  // trong payload gửi xuống nhóm 'drivers' để các bản APK hiện hành hiển thị đếm ngược 10s mà không cần build lại app.
+  const driverOrderWithTime = {
+    ...orderWithTime,
+    autoAssignNearest: isExclusiveAssigned ? Boolean(plainOrder.autoAssignNearest) : false
+  };
 
   if (order.status !== 'DRAFT') {
     // 1. Bắn Socket event NGAY LẬP TỨC kèm serverTime để app tài xế nhận đơn tức thì không bị trễ bởi query FCM
-    io.to('drivers').emit('new_order', orderWithTime);
+    io.to('drivers').emit('new_order', driverOrderWithTime);
 
     // 2. Kích hoạt Push Notification (Firebase) song song
     try {

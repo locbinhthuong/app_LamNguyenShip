@@ -23,6 +23,7 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
 
 export default function DriverOrderMap({ 
   orders = [], 
+  orderCooldowns = {},
   driverCoords = null, 
   onAcceptOrder = null, 
   onRefresh = null,
@@ -450,14 +451,24 @@ export default function DriverOrderMap({
               >
                 Chi tiết
               </button>
-              <button
-                type="button"
-                disabled={acceptingId === currentOrder._id}
-                onClick={() => handleAcceptMini(currentOrder._id)}
-                className="flex-[2] rounded-2xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 py-3 text-xs font-black text-white shadow-md shadow-emerald-600/30 transition active:scale-95 flex items-center justify-center gap-1.5"
-              >
-                {acceptingId === currentOrder._id ? 'Đang nhận...' : '✅ NHẬN ĐƠN NÀY'}
-              </button>
+              {(() => {
+                const cd = orderCooldowns[currentOrder._id] !== undefined ? orderCooldowns[currentOrder._id] : 0;
+                const isCoolingDown = cd > 0;
+                return (
+                  <button
+                    type="button"
+                    disabled={acceptingId === currentOrder._id || isCoolingDown}
+                    onClick={() => handleAcceptMini(currentOrder._id)}
+                    className={`flex-[2] rounded-2xl py-3 text-xs font-black transition flex items-center justify-center gap-1.5 ${
+                      isCoolingDown
+                        ? 'bg-slate-200 text-slate-600 border border-slate-300 cursor-not-allowed'
+                        : 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white shadow-md shadow-emerald-600/30 active:scale-95'
+                    }`}
+                  >
+                    {acceptingId === currentOrder._id ? 'Đang nhận...' : isCoolingDown ? `ĐỌC ĐƠN HÀNG (${cd}s)` : '✅ NHẬN ĐƠN NÀY'}
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>
